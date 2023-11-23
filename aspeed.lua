@@ -6,13 +6,14 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED.
     title_duration=5,   --DEFAULT=5 SECONDS.  AN audio SCRIPT MAY CONTROL title & clock, UNLESS IT'S MOVING AROUND (video).
     title='{\\fs71\\bord3\\shad1}',   --\\,fs,bord,shad = \,FONTSIZE,BORDER,SHADOW (PIXELS)  REMOVE TO REMOVE title. THIS STYLE CODE SETS THE osd. NO-BOLD MEANS BIGGER FONT.   b1=BOLD i1=ITALIC u1=UNDERLINE s1=STRIKE be1=BLUREDGE fn=FONTNAME c=COLOR
     clock='{\\fs71\\bord2\\shad1\\an3}%I{\\fs50}:%M{\\fs35}:%S{\\fs25} %p',    --an,%I,%M,%S,%p = ALIGNMENT-NUMPAD,HRS(12),MINS,SECS,P/AM  (DEFAULT an0=an7=TOPLEFT)  REMOVE TO remove clock.  BIG:MEDIUM:LITTLE:tiny, RATIO=SQRT(.5)=.71     FORMATTERS: a A b B c d H I M m p S w x X Y y  REQUIRES [vo] TO BE SEEN (NOT RAW MP3).  AN UNUSED BIG SCREEN TV CAN BE A BIG clock WITH BACKGROUND VIDEO. 
+    -- clock='%S',    --an,%I,%M,%S,%p = ALIGNMENT-NUMPAD,HRS(12),MINS,SECS,P/AM  (DEFAULT an0=an7=TOPLEFT)  REMOVE TO remove clock.  BIG:MEDIUM:LITTLE:tiny, RATIO=SQRT(.5)=.71     FORMATTERS: a A b B c d H I M m p S w x X Y y  REQUIRES [vo] TO BE SEEN (NOT RAW MP3).  AN UNUSED BIG SCREEN TV CAN BE A BIG clock WITH BACKGROUND VIDEO. 
     
     normalizer='dynaudnorm=p=1:m=100:c=1',  --(DEFAULTS 0.95:10:0 PEAK-TARGET:MAX-GAIN:CORRECTION-DC) ALL SPEAKERS USE THIS NORMALIZER.
     -- title_clock_only=true,   --NO audio RANDOMIZATION. (normalizer ONLY OVERRIDE).   THIS option MEANS THE clock DOESN'T HAVE TO BE COPY/PASTED INTO OTHER SCRIPT/S (THIS SCRIPT CONTROLS IT).
     
-    -- extra_devices_index_list={2},--EXTRA DEVICES. TRY 2,3,4 ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE DEVICES. 1=auto WHICH MAY DOUBLE-OVERLAP audio TO PRIMARY DEVICE. USER CAN GUESS INDEXES, 3=VIRTUALBOX USB STEREO. EACH CHANNEL FROM EACH device IS A SEPARATE APP.     EACH MPV MAY USE APPROX 1% OF CPU TO DECODE audio, + 30MB RAM.
+    -- extra_devices_index_list={2},--EXTRA DEVICES. TRY 2,3,4 ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE DEVICES. 1=auto WHICH MAY DOUBLE-OVERLAP audio TO PRIMARY DEVICE. USER CAN GUESS INDEXES, 3=VIRTUALBOX USB STEREO. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.     EACH MPV MAY USE APPROX 1% OF CPU TO DECODE audio, + 30MB RAM.
     start=.7,   --DEFAULT=.7 SECONDS  APPROX: .5=SSD .7=AUTOCOMPLEX 1=VIRTUALBOX 2=HDD.  INITIAL HEADSTART OF audio INSTANCES. EACH mpv TAKES TIME TO LOAD, & THEY AREN'T LAUNCHED UNTIL AFTER playback_start (WHICH WORKS FINE ON SSD).
-    DELAY=.5,   --DEFAULT=.5 SECONDS. INITIAL DELAY OF CONTROLLER volume (SUPPORTS FORMULAIC TIMELINE SWITCH). <start BY TRIAL & ERROR. NOT STRICTLY "adelay" NOR "audio-delay", HENCE "DELAY" (NOT CHANGING TIMESTAMPS).
+    DELAY=.5,   --DEFAULT=.5 SECONDS. INITIAL DELAY OF CONTROLLER volume (SUPPORTS FORMULAIC TIMELINE SWITCH). <start BY TRIAL & ERROR. NOT STRICTLY "adelay" NOR "audio-delay", HENCE "DELAY" (NOT CHANGING TIMESTAMPS).   INSERTING SILENCE AT THE START SEEMS TO COMPLICATED, SO INITIAL HALF-SECOND IS LOST.
     
     max_random_percent=10,  --DEFAULT=0. MAX random % DEVIATION FROM PROPER speed. speed UPDATES EVERY HALF A SECOND. E.G. 10%*0.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER. MPV AUTOMATICALLY APPLIES audio-pitch-correction (FILTER scaletempo2?). ISN'T PERFECT, BUT WITHOUT IT THE audio SOUNDS CHIPMUNK.
     max_percent       =20,  --SPEED NEVER CHANGES BY MORE. E.G. speed BOUNDED WITHIN [0.8,1.2].
@@ -42,8 +43,8 @@ do if not o[key] then o[key]=val end end --ESTABLISH DEFAULTS.
 for _,option in pairs(o.config) do mp.command('no-osd set '..option) end  --APPLY config BEFORE scripts.
 
 local mutelr,pid = mp.get_opt('mutelr'),mp.get_opt('pid')  --THESE script-opts FOR audio INSTANCES.
-local cmd,apad = 'mpv','apad,'  --mpv MAY BE ADDRESSED AS EITHER "mpv" OR "./mpv" IN EVERY SYSTEM. LINUX snap ALLOWS mpv TO RUN ITSELF.
-local devices,osd_level = {mp.get_property('audio-device')},mp.get_property_number('osd-level') --devices IS LIST OF audio-devices WHICH WILL ACTIVATE (STARTING WITH EXISTING device). 
+local cmd,apad = 'mpv',',apad'  --mpv MAY BE ADDRESSED AS EITHER "mpv" OR "./mpv" IN EVERY SYSTEM. LINUX snap ALLOWS mpv TO RUN ITSELF.
+local devices,osd_level = {mp.get_property('audio-device')},mp.get_property('osd-level') --devices IS LIST OF audio-devices WHICH WILL ACTIVATE (STARTING WITH EXISTING device). 
 mp.command('no-osd set osd-level 0')    --BLOCK osd INTERFERING WITH title (DUE TO SMPLAYER).
 
 if not (mutelr and pid) then is_controller,pid,apad,mutelr = true,utils.getpid(),'','mutel'  --CONTROLLER DOESN'T APPEND INFINITE SILENCE. MUTES LEFT.
@@ -56,15 +57,15 @@ else o.DELAY=0 end  --ONLY CONTROLLER DELAYS volume.
 local txtname=utils.join_path(directory,('%s-PID%d.txt'):format(label,pid))  --USING .txt INSTEAD OF A PIPE MAY BE LIKE PUTTING PLUMBING THROUGH A FRONT DOOR.
 mp.register_event('shutdown', function() os.remove(txtname) end)    --audio INSTANCES quit @txt REMOVAL. ALTERNATIVE event=end-file
 
-local lavfi=('%sstereotools=%s=1,astats=.5:1,%s,volume=gte(t\\,%s):eval=frame')
-     :format( apad,         mutelr,        o.normalizer,     o.DELAY          )
+local lavfi=('stereotools=%s=1%s,astats=.5:1,%s,volume=gte(t-startt\\,%s):eval=frame')
+     :format(          mutelr,apad,        o.normalizer,            o.DELAY          )
  
 ----lavfi      =[graph] [ao]→[ao] LIBRARY-AUDIO-VIDEO-FILTER LIST. EACH .LUA SCRIPT MAY CONTROL A GRAPH. aspeed IS LIKE A MASK FOR audio, WHICH DISJOINTS IT.
 ----apad        APPENDS SILENCE TO audio INSTANCES, SO THEY NEVER stop UNLESS THE CONTROLLER DOES. INSERTS BEFORE astats OR ELSE astats FAILS TO UPDATE MAIN FUNCTION. USER MAY BACKWARDS seek NEAR end-file. 
-----stereotools=...:mutel:muter (BOOLS) CONVERTS MONO & SURROUND SOUND TO STEREO, & MUTES EITHER SIDE. INSERTS BEFORE astats, WHICH IS UNRELIABLE FOR SURROUND SOUND. softclip OPTION MAY CAUSE A BUG IN LINUX .AppImage. 
+----stereotools=...:mutel:muter (BOOLS) CONVERTS MONO & SURROUND SOUND TO STEREO, & MUTES EITHER SIDE. INSERTS BEFORE astats WHICH NEEDS stereo FOR RELIABILITY. softclip OPTION MAY CAUSE A BUG IN LINUX .AppImage. 
 ----astats     =length:metadata [ao]→[ao] (SECONDS:BOOL)  CONTINUAL SAMPLE COUNT IS BASIS FOR 10 HOUR SYNC. USES APPROX 0% OF CPU. INSERTS BEFORE NORMALIZER BECAUSE THAT MAY SLIGHTLY CHANGE SAMPLE COUNT OVER 10 HOURS.   USING THIS AS PRIMARY METRIC AVOIDS MESSING WITH MPV/SMPLAYER SETTINGS TO ACHIEVE 10 HOUR SYNC. MPV autosync WON'T WORK (MAYBE A FUTURE VERSION, BUT CURRENTLY INCOMPATIBLE).
 ----dynaudnorm =...:p:m:...:c   →s64  DEFAULTS .95:10:0:0 (PEAK TARGET [0,1] : MAX GAIN [1,100] : CORRECTION (DC,0Hz)) ALTERNATIVES INCLUDE loudnorm & acompressor (SMPLAYER DEFAULT).
-----volume     =volume:...:eval  (DEFAULT 1:once)  TIMELINE SWITCH FOR CONTROLLER. 
+----volume     =volume:...:eval  (DEFAULT 1:once)  TIMELINE SWITCH FOR CONTROLLER. startt IS t @GRAPH INSERTION.
 
 
 if o.title_clock_only then lavfi=o.normalizer end  --OVERRIDE: normalizer ONLY (& clock).
@@ -80,11 +81,11 @@ function playback_start(_,seeking)
     mp.add_timeout(2, os_sync)   --get_time() LOSES TIME IF SIMULTANEOUSLY TOGGLING GRAPHS, & HDD LAG.  RESYNC ON timeout REQUIRED FOR audio INSTANCES TOO.
     mp.add_timeout(4, os_sync)
     if not is_controller then return end    --CONTROLLER ONLY, BELOW.
-        
+    
     title.data=o.title..mp.get_property_osd('media-title')   
     title:update()  --DISPLAY title.
     mp.add_timeout(o.title_duration, function() title:remove() end) --remove title
-    mp.command('no-osd set osd-level '..osd_level)  --RETURN osd-level.
+    if OFF==nil then mp.add_timeout(.1, function() mp.command('no-osd set osd-level '..osd_level) end) end   --RETURN osd-level. OFF=nil IF TOGGLE HAS NEVER BEEN USED.
     
     clock_update()  --DISPLAY clock AFTER playback_start OR ELSE LINUX .AppImage RANDOMLY FAILS. (IN WINDOWS THE clock MAY STUTTER IF IT GOES IN EARLIER.)
     if o.title_clock_only then return end    --LAUNCH audio INSTANCES & .txt BELOW.
@@ -165,7 +166,7 @@ function set_speed(observation)    --MAIN FUNCTION. CONTROLLER WRITES TO .txt, O
         if paused                       then volume=-1 end  --NEGATIVE INSTRUCTS ALL audio PLAYERS TO pause. 
 
         txtfile:write(('%s\n%d\n%d\n%s\n%s'):format(mp.get_property('path'),volume,mp.get_property_number('current-tracks/audio/id'),TIMEFROM1970,time_pos))   --%s,%d = string,DECIMAL-INTEGERS. CONTROLLER REPORT. EITHER flush() OR close().  LINES 1,2,3,4,5 = path,volume,aid,time,POSITION   THE LAST 2 COULD BE COMBINED.
-        txtfile:close() --write & close CAN USUALLY BE COMBINED ON 1 LINE, BUT NOT ON SLOW DARWIN (MACOS CATALINA VIRTUALBOX). IT DOESN'T RETURN PROPERLY. 
+        txtfile:close() --write & close CAN USUALLY BE COMBINED ON 1 LINE, BUT NOT ON SLOW DARWIN (MACOS CATALINA VIRTUALBOX, EXTREME LAG). IT DOESN'T RETURN PROPERLY. 
         
         if o.meta_osd then mp.osd_message(mp.get_property_osd('af-metadata/'..label):gsub('\n','    \t')) end   --TAB EACH STAT (TOO MANY LINES).
         return end   --CONTROLLER ENDS HERE (CONSTANT speed).

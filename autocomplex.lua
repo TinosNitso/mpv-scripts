@@ -1,5 +1,5 @@
 ----lavfi-complex SCRIPT WHICH ALSO LIMITS fps & size (TO SCREEN). OVERLAYS STEREO FREQUENCY SPECTRUM + volume BARS (AUDIO VISUALS) ONTO MP4, MP3 (RAW & COVER ART), WITH DOUBLE-mute TOGGLE. ACCURATE 100Hz GRID (LEFT 1kHz TO RIGHT 1kHz).     
-----ARBITRARY SINE WAVES CAN BE ADDED FOR DECORATION & CALIBRATION. MOVES & ROTATES WITH TIME.  CHANGING TRACKS IN SMPLAYER REQUIRES STOP & PLAY (aid vid LOCK BUG).
+----ARBITRARY SINE WAVES CAN BE ADDED FOR CALIBRATION & DECORATION. MOVES & ROTATES WITH TIME.  CHANGING TRACKS IN SMPLAYER REQUIRES STOP & PLAY (aid vid LOCK BUG).
 ----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH IS A PROBLEM ON MACOS. RUNS SLOW IN VIRTUALBOX, BUT FINE IN NATIVE LINUX (LIVE USB, TESTED DEBIAN-MATE).
 local options={ --ALL OPTIONAL & MAY BE REMOVED. TO REMOVE A COMPONENT SET ITS alpha TO 0 (freqs, volume & feet).
     top_scale    =  1,             --REMOVE FOR NO TOP HALF. RANGE [0,1]. SCALES HEIGHT OF TOP HALF.
@@ -9,20 +9,20 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED. TO REMOVE A COMPONENT SET ITS a
     period   =19/25,   --DEFAULT=1 SECONDS. SET TO 0 FOR STATIONARY (GSUBS "t/%s"→"0" ETC). USE EXACT FRAME # RATIO, BECAUSE zoompan USES FRAME #. 19/25=79BPM (BEATS PER MINUTE). UNLIKE A MASK, THESE ANIMATIONS DON'T HAVE TO BE PERIODIC.
     position ='.75+.05*(1-cos(2*PI*n/%s))*mod(floor(n/%s)+1\\,2)',    --%s=fps*period  DEFAULT position=.5, RANGE [0,1]. MAY DEPEND ON TIME t & FRAME # n. mod ACTS AS ON/OFF SWITCH.   SPECTRUM POSITION FROM SCREEN TOP (RATIO), BEFORE autocrop.   THIS EXAMPLE MOVES DOWN→UP→RIGHT→LEFT BY MODDING. TIME-DEPENDENCE SHOULD MATCH OTHER SCRIPT/S, LIKE automask. A BIG-SCREEN TV HELPS WITH POSITIONING.
     rotate   =      'PI/16*sin(2*PI*n/%s)*mod(floor(n/%s)\\,2)',      --%s=fps*period  RADIANS clockWISE, DEFAULT 0. MAY DEPEND ON t & n. PI/16=.2RADS=11°   MAY CLIP @LARGE angle. 
-    zoompan  = '1+.14*(1-cos(2*PI*in/%s))*mod(floor(in/%s)\\,2):0:0', --%s=fps*period  in=INPUT-FRAME-NUMBER  zoom:x:y=1:0:0 BY DEFAULT (MINIMUM).  14% MAY APPROX MATCH GRAPHS LIKE automask. 
+    zoompan  = '1+.2*(1-cos(2*PI*in/%s))*mod(floor(in/%s)\\,2):0:0', --%s=fps*period  in=INPUT-FRAME-NUMBER  zoom:x:y=1:0:0 BY DEFAULT (MINIMUM).  19% MAY APPROX MATCH GRAPHS LIKE automask. 
     
     freqs_lead         =  .24, --DEFAULT=.08 SECONDS. LEAD TIME FOR SPECTRUM (TRIAL & ERROR). BACKDATE audio TIMESTAMPS.     showfreqs HAS AT LEAST 1 FRAME LAG. CAN CHECK AGAINST DRUM BEAT. DEPENDS ON HUMAN AUDIO/VIDEO INTERPRETATION TIME.
     freqs_sr           = 2010, --DEFAULT=2010 Hz. SAMPLE RATE (SAMPLES/SECOND), DOWN FROM 44100. CALIBRATED WITH 1kHz SIGNAL. THESE 3 options ARE FOR CALIBRATION. THIS VERSION ONLY SUPPORTS LR-1kHz.
-    LR_OVERLAP         =    2, --DEFAULT=2 PIXELS. CALIBRATES SPECTRUM BY MOVING RIGHT & LEFT CHANNELS ON TOP OF EACH OTHER, AT THE MIDDLE. (DRAGS IN THE DATA.) 
+    LR_OVERLAP         =    2, --DEFAULT=2 PIXELS. CALIBRATES SPECTRUM BY MOVING RIGHT & LEFT CHANNELS ON TOP OF EACH OTHER, @CENTER (DATA DRAG). 
     -- CALIBRATION={{'100:1',1},{'200:1',1},{'300:1',1},{'400:1',1},{'500:1',.5},{'600:1',1},{'700:1',1},{'800:1',1},{'900:1',1},{'1000:1',1}}, --{{'frequency(Hz):beep_factor',volume},...}. volume & beep_factor RANGE [0,1]. sine WAVES FOR CALIBRATION. MAY ALSO HELP TEST NORMALIZERS, & DECORATE "TEETH". PEAKS ARE A BIT LOW.    SPECTRUM CALIBRATES VIA 3 NUMBERS: freqs_lead freqs_sr LR_OVERLAP   SYNCHRONY IS freqs_lead.
     
     freqs_highpass     =   25, --DEFAULT=25 Hz. DAMPENS SUB-BASS & DC, IN THE MIDDLE.
     freqs_alpha        =    1, --DEFAULT=1, RANGE [0,1]. OPAQUENESS OF SPECTRAL DATA CURVE.
     freqs_fps          = 25/2, --DEFAULT=25/2. 25fps MAY CAUSE LAG. THIS & freqs_clip_h HELP WITH PERFORMANCE.
-    -- freqs_mode      ='bar', --DEFAULT=line. CHOOSE line OR bar (OR dot). ONLY line IS CALIBRATED WITH FURTHER FILTERS (ROUNDS OF BLUR & lut).
+    -- freqs_mode      ='bar', --DEFAULT=line. CHOOSE line OR bar (OR dot). GRAPH OPTIMIZED ONLY FOR line.
     freqs_win_size     =  512, --DEFAULT=512, INTEGER RANGE [128,2048]. ~NUMBER OF DATA POINTS. THINNER CURVE WITH SMALLER #. NEEDS AT LEAST 256 FOR PROPER CALIBRATION. TOO MANY DATA POINTS LOOK BAD.
     freqs_averaging    =    2, --DEFAULT=2. INTEGER, MIN 1. STEADIES SPECTRUM. SLOWS RESPONSE TO AUDIO. TRY 3 IF MORE fps.
-    freqs_magnification=  1.4, --DEFAULT=2. INCREASES CURVE HEIGHT. REDUCES CPU CONSUMPTION (CROPS THE TOP OFF SHARP SIGNAL). IF THE CURVES ARE TOO HIGH THE LIPS LOSE TRACTION. L & R CHANNELS ARE LIKE A DUAL ALIEN MOUTH (LIKE HOW HUMANS ARE BIPEDAL). 
+    freqs_magnification=  1.5, --DEFAULT=2. INCREASES CURVE HEIGHT. REDUCES CPU CONSUMPTION (CROPS THE TOP OFF SHARP SIGNAL), BUT THE LIPS LOSE TRACTION. L & R CHANNELS ARE LIKE A DUAL ALIEN MOUTH (LIKE HOW HUMANS ARE BIPEDAL). 
     freqs_clip_h       = .333, --DEFAULT=.5. MINIMUM=grid_height (CAN'T CLIP LOWER THAN GRID). REDUCES CPU USAGE BY CLIPPING CURVE (LIKE magnification). THE NEED FOR CLIPPING, LOW fps & size PROVE THE CODE MAY BE RETARDED.
     volume_alpha       =   .5, --DEFAULT=.5, RANGE [0,1]. SET TO 0 TO REMOVE BARS (FEET REMAIN). OPAQUENESS OF VOLUME BARS. 
     volume_fade        =  .25, --DEFAULT=.25, RANGE [.001,1]
@@ -71,7 +71,7 @@ if o.bottom_scale and o.bottom_scale~=0 and o.bottom_scale~='0'
 then BOTTOM=('vflip,scale=iw:ih*(%s),pad=0:ih/(%s):0:0:BLACK@0'    ):format(o.bottom_scale,o.bottom_scale) end
 
 if TOP              then ORIENTATION=TOP   ..',pad=0:ih*2:0:0:BLACK@0'     end   --UPRIGHT. PAD DOUBLE SIMPLIFIES CODE.   A DIFFERENT VERSION COULD CONCEIVABLY MAKE THE LIPS SMILE OR FROWN BY VSTACKING THE CURVES SEPARATELY & ROTATING L & R OPPOSITELY. 
-if         BOTTOM   then ORIENTATION=BOTTOM..',pad=0:ih*2:0:oh-ih:BLACK@0' end   --UPSIDE DOWN.
+if         BOTTOM   then ORIENTATION=BOTTOM..',pad=0:ih*2:0:oh-ih:BLACK@0' end   --UPSIDE DOWN. PAD DOUBLE.
 if TOP and BOTTOM   then ORIENTATION=('split[D],%s[U],[D]%s[D],[U][D]vstack'):format(TOP,BOTTOM) end  --TOP,BOTTOM = [U],[D]
 if o.final_colormix then ORIENTATION=('colorchannelmixer=%s,%s'):format(o.final_colormix,ORIENTATION) end   --MIX BEFORE vstack.
 
@@ -104,7 +104,7 @@ local lavfi=('[aid%%d]asplit[ao]%s,aformat=s16:channel_layouts=stereo,dynaudnorm
 ----rotate           =angle:ow:oh:fillcolor  (RADIANS:PIXELS) ROTATES ORIENTATION clockWISE, DEPENDENT ON TIME t & FRAME n.
 ----zoompan          =zoom:x:y:d:s:fps   (z>=1) d=0 FRAMES DURATION-OUT/FRAME-IN. MAY DEPEND ON in,on INPUT-NUMBER,OUTPUT-NUMBER
 ----concat            [T][vid]→[vid]  RESETS STARTPTS USING 1 FRAME. NEEDED TO SYNC WITH automask.
-----setsar            IS THE FINISH. STOPS EMBEDDED MPV SNAPPING ITS OWN WINDOW (CAN VERIFY WITH mute TOGGLE IN SMPLAYER).
+----setsar           =sar IS THE FINISH. STOPS EMBEDDED MPV SNAPPING ITS OWN WINDOW (CAN VERIFY WITH DOUBLE-mute TOGGLE IN SMPLAYER). MACOS BUGFIX REQUIRES sar.
 
 ----anullsrc,anullsink,anull    FOR TRIVIAL lavfi-complex SETTING. anull FOR TOGGLE OFF: THE SPECTRUM PAUSES & MUSIC KEEPS PLAYING. (SPECTRAL STILL FRAME.)
 ----showwaves        =size:...:rate  [ao]→[C]  FOR TOGGLE OFF OF COVER ART SPECTRUM (THE HARDEST TOGGLE TO GET SMOOTH). PREPS 1x1 CANVAS [C] FOR SEEKING. SIMPLEST TO USE IN MANY LUA SCRIPTS.
@@ -114,15 +114,15 @@ local lavfi=('[aid%%d]asplit[ao]%s,aformat=s16:channel_layouts=stereo,dynaudnorm
 function file_loaded()
     if not (W and H) then W,H = mp.get_property_number('display-width'),mp.get_property_number('display-height') end  --WINDOWS & MACOS.
     if not (W and H) then W,H = mp.get_property_number('video-params/w'),mp.get_property_number('video-params/h') end  --USE [vo] SIZE.
-    if not (W and H) then W,H = 1024,512 end  --RAW SPECTRUM IF [vo] DOESN'T EXIST (.MP3) & display SIZE UNAVAILABLE (LINUX). APPROX SIZE.
+    if not (W and H) then W,H = 1024,512 end  --RAW SPECTRUM IF [vo] DOESN'T EXIST (RAW .MP3) & display SIZE UNAVAILABLE (LINUX). APPROX SIZE.
     W,H = math.ceil(W/4)*4,math.ceil(H/4)*4     --MULTIPLES OF 4 NECESSARY FOR PERFECT overlay. 
     
     ----5 CASES. 1) JPEG. 2) MP4 LIMITS. 3) MP3 SPECTRUM. 4) MP3+JPEG. 5) MP4.      INSTEAD OF EVERY SCRIPT SETTING ITS OWN lavfi-complex, THEY MAY RELY ON THIS SCRIPT. E.G. autocrop JPEG USES MORE CPU IF COMBINED WITH autocomplex, BECAUSE IT RE-SCALES RUNNING video. ANIME MAY PRODUCE STILL FRAME ONLY WITHOUT THIS SCRIPT.
     local complex,aid,vid,image,duration = nil,mp.get_property_number('current-tracks/audio/id'),mp.get_property_number('current-tracks/video/id'),mp.get_property_bool('current-tracks/video/image'),mp.get_property_number('duration')  --id IS nil OR INTEGER. MULTIPLES OF 4 ONLY.
     if vid and o.max_hours and duration and duration>o.max_hours*60*60 then ORIENTATION='' end  --5 HOURS EQUIVALENT TO NO SPECTRUM.
     
-    if not aid and image                     then complex=('[vid%d]scale=%d:%d,loop=-1:1,fps=%s:%s,setsar[vo]'):format(vid,W,H,o.fps,mp.get_property_number('time-pos')) end   --CASE 1: RAW JPEG. start_time FOR --start (JPEG seek).
-    if vid and not image and ORIENTATION=='' then complex=('[vid%d]fps=%s,scale=%d:%d,setsar[vo]'):format(vid,o.fps,W,H) end   --CASE 2: LIMITS ONLY. [vo] MAY BE SPECIFIED WITHOUT [ao].
+    if not aid and image                     then complex=('[vid%d]scale=%d:%d,loop=-1:1,fps=%s:%s,setsar=1[vo]'):format(vid,W,H,o.fps,mp.get_property_number('time-pos')) end   --CASE 1: RAW JPEG. start_time FOR --start (JPEG seek).
+    if vid and not image and ORIENTATION=='' then complex=('[vid%d]fps=%s,scale=%d:%d,setsar=1[vo]'):format(vid,o.fps,W,H) end   --CASE 2: LIMITS ONLY. [vo] MAY BE SPECIFIED WITHOUT [ao].
     
     if complex then mp.set_property('lavfi-complex',complex) end    --APPLY CASES 1 & 2.
     if not aid or ORIENTATION=='' then return end --CASES 3,4,5 BELOW. complex VARIABLE MUST PRODUCE [vo] WITH SPECTRUM lavfi.
@@ -132,7 +132,7 @@ function file_loaded()
     if     image and vid then complex=('[vid%d]scale=%d:%d[vo],[ao]%s[C],[C][vo]overlay'):format(vid,W,H,CANVAS) end    --CASE 4: COVER ART.
     if not image and vid then complex=('[vid%d]fps=%s,scale=%d:%d'):format(vid,o.fps,W,H) end --CASE 5: NORMAL video. LIMIT fps & scale.
 
-    complex=('%s[vid],%s,split[T],setpts=PTS-STARTPTS[vo],[T]select=lt(n\\,2),trim=end_frame=1,setpts=PTS-1/FRAME_RATE/TB[T],[vo][vid]overlay=0:H*(%s)-h/2[vo],[T][vo]concat,trim=start_frame=1,setsar[vo]'):format(lavfi,complex,o.position)  --"-h/2" DUE TO DOUBLE PAD (SIMPLER CODE). THIS [T] CODE ALWAYS SYNCS zoompan BTWN VARIOUS GRAPHS, EVEN SUB-CLIPS WITH OFF TIMESTAMPS (IMPOSSIBLE TO MANUALLY ENTER CORRECT NUMBERS, LIKE time-pos).
+    complex=('%s[vid],%s,split[T],setpts=PTS-STARTPTS[vo],[T]select=lt(n\\,2),trim=end_frame=1,setpts=PTS-1/FRAME_RATE/TB[T],[vo][vid]overlay=0:H*(%s)-h/2[vo],[T][vo]concat,trim=start_frame=1,setsar=1[vo]'):format(lavfi,complex,o.position)  --"-h/2" DUE TO DOUBLE PAD (SIMPLER CODE). THIS [T] CODE ALWAYS SYNCS zoompan BTWN VARIOUS GRAPHS, EVEN SUB-CLIPS WITH OFF TIMESTAMPS (IMPOSSIBLE TO MANUALLY ENTER CORRECT NUMBERS, LIKE time-pos).
     mp.set_property('lavfi-complex',complex:format(aid,W,H*o.freqs_clip_h*2))    --CASES 3, 4 & 5. aid TO asplit. W,H FOR zoompan (FINAL CLIP HEIGHT FOR PADDED TOP & BOTTOM). mp.set_property IS MORE POWERFUL THAN mp.command (LIKE mp.commandv).
 end 
 mp.register_event('file-loaded', file_loaded)    
@@ -155,8 +155,8 @@ function on_toggle(mute_observed)
     if not aid or ORIENTATION=='' then return end --CASES 1,2. NO SPECTRUM, NO TOGGLE OFF (DO NOTHING).  5 CASES. 1) JPEG. 2) MP4 LIMITS. 3) MP3 SPECTRUM. 4) MP3+JPEG. 5) MP4.
     
     local complex=('[aid%d]anull[ao]'):format(aid)    --CASE 3: RAW audio. 
-    if image then complex=('[vid%d]scale=%d:%d[vo],[aid%d]%s[C],[C][vo]overlay,setsar[vo]'):format(vid,W,H,aid,CANVAS) end   --CASE 4: image WITH audio. HARDEST TO TOGGLE OFF WITHOUT SNAPPING OTHER SCRIPTS WHICH RELY ON LOOPED COVER ART. showwaves PREPS A 1x1 TIMESTAMP CANVAS [C]. NEEDED FOR seeking. RESAMPLE audio FROM 44.1kHz TO 128Hz. 
-    if not image and vid then complex=('%s,[vid%d]fps=%s,scale=%d:%d,setsar[vo]'):format(complex,vid,o.fps,W,H) end   --CASE 5 BUILDS ON CASE 3, BY LIMITING THE video.
+    if image then complex=('[vid%d]scale=%d:%d[vo],[aid%d]%s[C],[C][vo]overlay,setsar=1[vo]'):format(vid,W,H,aid,CANVAS) end   --CASE 4: image WITH audio. HARDEST TO TOGGLE OFF WITHOUT SNAPPING OTHER SCRIPTS WHICH RELY ON LOOPED COVER ART. showwaves PREPS A 1x1 TIMESTAMP CANVAS [C]. NEEDED FOR seeking. RESAMPLE audio FROM 44.1kHz TO 128Hz. 
+    if not image and vid then complex=('%s,[vid%d]fps=%s,scale=%d:%d,setsar=1[vo]'):format(complex,vid,o.fps,W,H) end   --CASE 5 BUILDS ON CASE 3, BY LIMITING THE video.
     mp.set_property('lavfi-complex',complex) 
 end
 for key in (o.key_bindings):gmatch('%g+') do mp.add_key_binding(key, 'toggle_complex_'..key, on_toggle) end --MAYBE SHOULD BE 'toggle_spectrum_' BECAUSE THIS TOGGLE ONLY TURNS OFF/ON THE SPECTRUM.
@@ -167,14 +167,14 @@ mp.observe_property('mute', 'bool', on_toggle)
 ----COMMENT SECTION: DIFFERENT IDEAS. MPV CURRENTLY HAS A 10 HOUR BACKWARDS SEEK BUG (BUFFER ISSUE?).
 ----VERBOSE MESSAGES ALLOW CHANGING AUDIO TRACK IN SMPLAYER (BUT UGLY):   {"event" = "log-message", "level" = "v", "text" = "Set property: aid=2 -> 1    ", "prefix" = "cplayer"}
 
-----option DUMP. BEFORE CHANGING SCRIPT (E.G. FOR LINUX snap) TRY TOGGLE ALL THESE.
+----option DUMP. FOR DEBUG TRY TOGGLE ALL THESE.
 -- 'hr-seek-demuxer-offset 1','cache-pause-wait 0',
 -- 'video-sync desync','vd-lavc-dropframe nonref','vd-lavc-skipframe nonref',   --none default nonref(SKIPnonref) bidir(SKIPBFRAMES) 
 -- 'demuxer-lavf-buffersize 1e9','demuxer-max-bytes 1e9','stream-buffer-size 1e9','vd-queue-max-bytes 1e9','ad-queue-max-bytes 1e9','demuxer-max-back-bytes 1e9','audio-reversal-buffer 1e9','video-reversal-buffer 1e9','audio-buffer 1e9',
 -- 'chapter-seek-threshold 1e9','vd-queue-max-samples 1e9','ad-queue-max-samples 1e9',
 -- 'demuxer-backward-playback-step 1e9','cache-secs 1e9','demuxer-lavf-analyzeduration 1e9','vd-queue-max-secs 1e9','ad-queue-max-secs 1e9','demuxer-termination-timeout 1e9','demuxer-readahead-secs 1e9', 
 -- 'video-backward-overlap 1e9','audio-backward-overlap 1e9','audio-backward-batch 1e9','video-backward-batch 1e9',
--- 'hr-seek always','index recreate','msg-level ffmpeg=fatal','wayland-content-type none','background red',
+-- 'hr-seek always','index recreate','wayland-content-type none','background red',
 -- 'hr-seek-framedrop yes','framedrop decoder+vo','access-references yes','ordered-chapters no','stop-playback-on-init-failure yes',
 -- 'initial-audio-sync yes','vd-queue-enable yes','ad-queue-enable yes','demuxer-seekable-cache yes','cache yes','demuxer-cache-wait no','cache-pause-initial no','cache-pause no',
 -- 'video-latency-hacks yes','demuxer-lavf-hacks yes','gapless-audio yes','demuxer-donate-buffer yes','demuxer-thread yes','demuxer-seekable-cache yes','force-seekable yes','demuxer-lavf-linearize-timestamps no',
