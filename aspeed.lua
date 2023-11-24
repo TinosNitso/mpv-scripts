@@ -1,41 +1,41 @@
-----ADD CLOCK & TITLE TO video & JPEG, WITH DOUBLE-mute TOGGLE. AUDIO AUTO SPEED SCRIPT. RANDOMIZES SIMULTANEOUS STEREOS IN MPV & SMPLAYER. LAUNCHES A NEW MPV FOR EVERY SPEAKER (EXCEPT ON PRIMARY RIGHT). ADDS AMBIENCE WITH RANDOMIZATION. PAUSE, PLAY, SEEK, STOP, MUTE & VOLUME APPLY TO ALL INSTANCES, AFTER THEY CHECK THE TEMP DATA FILE. ALL AUDIO PLAYERS ADJUST TO VIDEO LAG.   
+----ADD CLOCK & TITLE TO video & JPEG, WITH DOUBLE-mute TOGGLE. AUDIO AUTO SPEED SCRIPT. CLOCK TICKS WITH WINDOWS SYSTEM. RANDOMIZES SIMULTANEOUS STEREOS IN MPV & SMPLAYER. LAUNCHES A NEW MPV FOR EVERY SPEAKER (EXCEPT ON PRIMARY RIGHT). ADDS AMBIENCE WITH RANDOMIZATION. PAUSE, PLAY, SEEK, STOP, MUTE & VOLUME APPLY TO ALL INSTANCES, AFTER THEY CHECK THE TEMP DATA FILE. ALL AUDIO PLAYERS ADJUST TO VIDEO LAG.   
 ----A STEREO COULD BE SET LOUDER IF ONE CHANNEL RANDOMLY SPEEDS UP & DOWN. A SECOND STEREO CAN BE DISJOINT FROM THE FIRST (EXTRA VOLUME).     ORIGINAL CONCEPT WAS TO SYNC MULTIPLE VIDEOS, BUT ONE BIG VIDEO IS SIMPLER. SETTING UP A PIPE INSTEAD OF .txt COULD GIVE INSTANT RESPONSE, BUT COULD ALSO TRIGGER BUGS WITH OTHER SCRIPTS & SMPLAYER. PRIMARY GOAL IS 10 HOUR SYNC + RANDOMIZATION.
 ----CURRENT VERSION TREATS ALL DEVICES AS STEREO. UN/PLUGGING USB STEREO REQUIRES RESTARTING SMPLAYER.    USB→3.5mm SOUND CARDS COST AS LITTLE AS $2 ON EBAY & CAN BE TAPED TO A CABLE. EACH NEW USB STEREO CREATES A NEW "wasapi/" DEVICE (WINDOWS AUDIO SESSION APP. PROGRAM. INTERFACE) OR "pulse/alsa" (LINUX), WHICH CAN BE SEEN IN TASK MANAGER. "coreaudio/" IS MACOS. VIRTUALBOX USB SUPPORT ENABLES MANY audio OUTPUTS.
-----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH IS A PROBLEM ON MACOS.
+----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH IS A PROBLEM ON MACOS.     LIVESTREAM UNTESTED (HTTPS://...)?
 local options={ --ALL OPTIONAL & MAY BE REMOVED.
     title_duration=5,   --DEFAULT=5 SECONDS.  AN audio SCRIPT MAY CONTROL title & clock, UNLESS IT'S MOVING AROUND (video).
     title='{\\fs71\\bord3\\shad1}',   --\\,fs,bord,shad = \,FONTSIZE,BORDER,SHADOW (PIXELS)  REMOVE TO REMOVE title. THIS STYLE CODE SETS THE osd. NO-BOLD MEANS BIGGER FONT.   b1=BOLD i1=ITALIC u1=UNDERLINE s1=STRIKE be1=BLUREDGE fn=FONTNAME c=COLOR
     clock='{\\fs71\\bord2\\shad1\\an3}%I{\\fs50}:%M{\\fs35}:%S{\\fs25} %p',    --an,%I,%M,%S,%p = ALIGNMENT-NUMPAD,HRS(12),MINS,SECS,P/AM  (DEFAULT an0=an7=TOPLEFT)  REMOVE TO remove clock.  BIG:MEDIUM:LITTLE:tiny, RATIO=SQRT(.5)=.71     FORMATTERS: a A b B c d H I M m p S w x X Y y  REQUIRES [vo] TO BE SEEN (NOT RAW MP3).  AN UNUSED BIG SCREEN TV CAN BE A BIG clock WITH BACKGROUND VIDEO. 
-    -- clock='%S',    --an,%I,%M,%S,%p = ALIGNMENT-NUMPAD,HRS(12),MINS,SECS,P/AM  (DEFAULT an0=an7=TOPLEFT)  REMOVE TO remove clock.  BIG:MEDIUM:LITTLE:tiny, RATIO=SQRT(.5)=.71     FORMATTERS: a A b B c d H I M m p S w x X Y y  REQUIRES [vo] TO BE SEEN (NOT RAW MP3).  AN UNUSED BIG SCREEN TV CAN BE A BIG clock WITH BACKGROUND VIDEO. 
     
     normalizer='dynaudnorm=p=1:m=100:c=1',  --(DEFAULTS 0.95:10:0 PEAK-TARGET:MAX-GAIN:CORRECTION-DC) ALL SPEAKERS USE THIS NORMALIZER.
-    -- title_clock_only=true,   --NO audio RANDOMIZATION. (normalizer ONLY OVERRIDE).   THIS option MEANS THE clock DOESN'T HAVE TO BE COPY/PASTED INTO OTHER SCRIPT/S (THIS SCRIPT CONTROLS IT).
+    -- title_clock_only=true,   --OVERRIDE: NO audio EFFECT, EXCEPT FOR normalizer.   THIS option MEANS THE clock DOESN'T HAVE TO BE COPY/PASTED INTO OTHER SCRIPT/S (THIS SCRIPT CONTROLS IT). A video CLOCK MAY BE FANCY & DANCE AROUND, BUT NOT THIS ONE.
     
-    -- extra_devices_index_list={2},--EXTRA DEVICES. TRY 2,3,4 ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE DEVICES. 1=auto WHICH MAY DOUBLE-OVERLAP audio TO PRIMARY DEVICE. USER CAN GUESS INDEXES, 3=VIRTUALBOX USB STEREO. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.     EACH MPV MAY USE APPROX 1% OF CPU TO DECODE audio, + 30MB RAM.
-    start=.7,   --DEFAULT=.7 SECONDS  APPROX: .5=SSD .7=AUTOCOMPLEX 1=VIRTUALBOX 2=HDD.  INITIAL HEADSTART OF audio INSTANCES. EACH mpv TAKES TIME TO LOAD, & THEY AREN'T LAUNCHED UNTIL AFTER playback_start (WHICH WORKS FINE ON SSD).
-    DELAY=.5,   --DEFAULT=.5 SECONDS. INITIAL DELAY OF CONTROLLER volume (SUPPORTS FORMULAIC TIMELINE SWITCH). <start BY TRIAL & ERROR. NOT STRICTLY "adelay" NOR "audio-delay", HENCE "DELAY" (NOT CHANGING TIMESTAMPS).   INSERTING SILENCE AT THE START SEEMS TO COMPLICATED, SO INITIAL HALF-SECOND IS LOST.
+    -- extra_devices_index_list={2},--EXTRA DEVICES. TRY {2,3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. 1=auto WHICH MAY DOUBLE-OVERLAP audio TO PRIMARY DEVICE. USER CAN GUESS INDEXES, 3=VIRTUALBOX USB STEREO. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.     EACH MPV MAY USE APPROX 1% OF CPU TO DECODE audio, + 30MB RAM.
+    start=.7, --DEFAULT=.7 SECONDS  APPROX: .5=SSD .7=AUTOCOMPLEX 1=VIRTUALBOX 2=HDD.  INITIAL HEADSTART OF audio INSTANCES. EACH mpv TAKES TIME TO LOAD, & THEY AREN'T LAUNCHED UNTIL AFTER playback_start (WHICH WORKS FINE ON SSD).
+    DELAY=.5, --DEFAULT=.5 SECONDS. INITIAL DELAY OF CONTROLLER volume (SUPPORTS FORMULAIC TIMELINE SWITCH). <start BECAUSE GRAPH INSERTION TAKES .2s. NOT STRICTLY "adelay" NOR "audio-delay", HENCE "DELAY" (NOT CHANGING TIMESTAMPS).   INSERTING SILENCE @START SEEMS TO COMPLICATED (TIMESTAMP ISSUE), SO INITIAL HALF-SECOND audio IS LOST.
     
-    max_random_percent=10,  --DEFAULT=0. MAX random % DEVIATION FROM PROPER speed. speed UPDATES EVERY HALF A SECOND. E.G. 10%*0.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER. MPV AUTOMATICALLY APPLIES audio-pitch-correction (FILTER scaletempo2?). ISN'T PERFECT, BUT WITHOUT IT THE audio SOUNDS CHIPMUNK.
-    max_percent       =20,  --SPEED NEVER CHANGES BY MORE. E.G. speed BOUNDED WITHIN [0.8,1.2].
+    max_random_percent=10, --DEFAULT=0. MAX random % DEVIATION FROM PROPER speed. speed UPDATES EVERY HALF A SECOND. E.G. 10%*0.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER. MPV AUTOMATICALLY APPLIES audio-pitch-correction (FILTER scaletempo2?). ISN'T PERFECT, BUT WITHOUT IT THE audio SOUNDS CHIPMUNK.
+    max_percent       =20, --SPEED NEVER CHANGES BY MORE. E.G. speed BOUNDED WITHIN [0.8,1.2].
     
-    seek_limit   =2  ,  --DEFAULT=2   SECONDS. SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit. seek CAUSES AUDIO TO SKIP. (SKIP VS JERK.)
-    resync_delay =30 ,  --DEFAULT=30  SECONDS. RANGE [1,60]. RESYNC WITH THIS DELAY, COUNTING FROM 0s ON clock.     mp.get_time() LAGS MAYBE 100ms OVER A MINUTE.   mp.get_time() MAY BE BASED ON os.clock(), WHICH IS BASED ON CPU TIME.
-    os_sync_delay=.01,  --DEFAULT=.01 SECONDS. ACCURACY FOR SYNC TO os.time. E.G. A timer CHECKS SYSTEM clock EVERY 10 MILLISECONDS (FOR THE NEXT TICK) WHENEVER A NEW SYNC IS STARTED. CMD COMMAND "TIME 0>NUL" GIVES 10ms ACCURATE SYSTEM TIME IN WIN10.
-    time_needed  =2  ,  --DEFAULT=2   SECONDS. CONTROLLER DOES NOTHING NEAR end-file. NO RANDOMIZATION WITHIN 2 SECS OF file-loaded & file-end.
-    timeout      =10 ,  --DEFAULT=10  SECONDS. audio INSTANCES ALL shutdown IF CONTROLLER BREAKS FOR THIS LONG.
-    -- meta_osd=true,   --DISPLAY astats METADATA (audio STATISTICS). IRONICALLY astats DOESN'T KNOW ANYTHING ABOUT TIME ITSELF, YET IT'S THE BASIS FOR TEN HOUR SYNCHRONY.
+    seek_limit   =2  , --DEFAULT=2   SECONDS. SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit. seek CAUSES AUDIO TO SKIP. (SKIP VS JERK.)
+    resync_delay =30 , --DEFAULT=30  SECONDS. RANGE [1,60]. RESYNC WITH THIS DELAY, COUNTING FROM 0s ON clock.     mp.get_time() LAGS MAYBE 100ms OVER A MINUTE.   mp.get_time() MAY BE BASED ON os.clock(), WHICH IS BASED ON CPU TIME.
+    os_sync_delay=.01, --DEFAULT=.01 SECONDS. ACCURACY FOR SYNC TO os.time. E.G. A timer CHECKS SYSTEM clock EVERY 10 MILLISECONDS (FOR THE NEXT TICK) WHENEVER A NEW SYNC IS STARTED. CMD COMMAND "TIME 0>NUL" GIVES 10ms ACCURATE SYSTEM TIME IN WIN10.
+    time_needed  =2  , --DEFAULT=2   SECONDS. CONTROLLER DOES NOTHING NEAR end-file. NO RANDOMIZATION WITHIN 2 SECS OF file-loaded & file-end.
+    timeout      =10 , --DEFAULT=10  SECONDS. audio INSTANCES ALL shutdown IF CONTROLLER BREAKS FOR THIS LONG.
+    -- meta_osd=true,  --DISPLAY astats METADATA (audio STATISTICS). IRONICALLY astats DOESN'T KNOW ANYTHING ABOUT TIME ITSELF, YET IT'S THE BASIS FOR TEN HOUR SYNCHRONY.
     
     key_bindings         ='F3', --DEFAULT='' (NO TOGGLE). CASE SENSITIVE. KEYBOARD TOGGLE WORKS IF MPV HAS ITS OWN WINDOW, BUT NOT BY DEFAULT IN SMPLAYER. 'F3 F4' FOR 2 KEYS. F1 & F2 MIGHT BE autocomplex & automask. S=SCREENSHOT.
-    toggle_on_double_mute=  .5, --DEFAULT=0 SECONDS (NO TOGGLE). TIMEOUT FOR DOUBLE-MUTE-TOGGLE. ALL LUA SCRIPTS CAN BE TOGGLED USING DOUBLE MUTE.
+    toggle_on_double_mute=.5,   --DEFAULT=0 SECONDS (NO TOGGLE). TIMEOUT FOR DOUBLE-MUTE-TOGGLE. ALL LUA SCRIPTS CAN BE TOGGLED USING DOUBLE MUTE.
     
     config={
-            'audio-delay 0',    --OVERRIDE SMPLAYER (NON-0 COULD BE ACCIDENT).
+            'audio-delay 0',                --OVERRIDE SMPLAYER (NON-0 COULD BE ACCIDENT).
             'osd-font-size 16','osd-border-size 1','osd-scale-by-window no',   --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
-            'image-display-duration inf','keepaspect no','geometry 50%',      --STOPPING IMAGES CAUSES MPV TO SNAP. no-keepaspect (FREE aspect) & geometry ONLY NEEDED IF MPV HAS ITS OWN WINDOW, OUTSIDE SMPLAYER.
-              -- 'osd-color 1/.5','osd-border-color 0/.5',  --DEFAULTS 1/1,0/1. OPTIONAL: FOR clock. y/a = brightness/alpha (a=OPAQUENESS). TRANSPARENCY MAY MEAN clock HAS TO BE TWICE AS BIG.
+            'image-display-duration inf','video-timing-offset 1', --STOPS IMAGES FROM SNAPPING MPV. DEFAULT offset=.05 SECONDS ALSO WORKS.
+            'hwdec auto-copy','vd-lavc-threads 0',    --IMPROVED PERFORMANCE FOR LINUX .AppImage.  hwdec=HARDWARE DECODER. vd-lavc=VIDEO DECODER-LIBRARY AUDIO VIDEO CORES (0=AUTO). FINAL video-zoom CONTROLLED BY SMPLAYER→GPU.
+            -- 'osd-color 1/.5','osd-border-color 0/.5',  --DEFAULTS 1/1,0/1. OPTIONAL: FOR clock. y/a = brightness/alpha (a=OPAQUENESS). TRANSPARENCY MAY MEAN clock HAS TO BE TWICE AS BIG.
            },
 }
-local o,utils,timers    = options,require 'mp.utils',{} --ABBREV.
+local o,utils,timers = options,require 'mp.utils',{}    --ABBREV.
 local label,directory = mp.get_script_name(),utils.split_path(mp.get_property('scripts'))   --label=aspeed     FROM smplayer.exe FOLDER, directory=".". IN LINUX IT COULD BE "/home/user/Desktop/SMPLAYER".   mp.get_script_directory() HAS BUG.
 
 for key,val in pairs({title_duration=5,title='',clock='',normalizer='anull',extra_devices_index_list={},start=.7,DELAY=.5,max_random_percent=0,seek_limit=2,resync_delay=30,os_sync_delay=.01,time_needed=2,timeout=10,key_bindings='',toggle_on_double_mute=0,config={}})
@@ -57,15 +57,15 @@ else o.DELAY=0 end  --ONLY CONTROLLER DELAYS volume.
 local txtname=utils.join_path(directory,('%s-PID%d.txt'):format(label,pid))  --USING .txt INSTEAD OF A PIPE MAY BE LIKE PUTTING PLUMBING THROUGH A FRONT DOOR.
 mp.register_event('shutdown', function() os.remove(txtname) end)    --audio INSTANCES quit @txt REMOVAL. ALTERNATIVE event=end-file
 
-local lavfi=('stereotools=%s=1%s,astats=.5:1,%s,volume=gte(t-startt\\,%s):eval=frame')
+local lavfi=('stereotools=%s=1%s,astats=.5:1,%s,volume=gte(t\\,startt+%s):eval=frame')
      :format(          mutelr,apad,        o.normalizer,            o.DELAY          )
  
 ----lavfi      =[graph] [ao]→[ao] LIBRARY-AUDIO-VIDEO-FILTER LIST. EACH .LUA SCRIPT MAY CONTROL A GRAPH. aspeed IS LIKE A MASK FOR audio, WHICH DISJOINTS IT.
 ----apad        APPENDS SILENCE TO audio INSTANCES, SO THEY NEVER stop UNLESS THE CONTROLLER DOES. INSERTS BEFORE astats OR ELSE astats FAILS TO UPDATE MAIN FUNCTION. USER MAY BACKWARDS seek NEAR end-file. 
 ----stereotools=...:mutel:muter (BOOLS) CONVERTS MONO & SURROUND SOUND TO STEREO, & MUTES EITHER SIDE. INSERTS BEFORE astats WHICH NEEDS stereo FOR RELIABILITY. softclip OPTION MAY CAUSE A BUG IN LINUX .AppImage. 
-----astats     =length:metadata [ao]→[ao] (SECONDS:BOOL)  CONTINUAL SAMPLE COUNT IS BASIS FOR 10 HOUR SYNC. USES APPROX 0% OF CPU. INSERTS BEFORE NORMALIZER BECAUSE THAT MAY SLIGHTLY CHANGE SAMPLE COUNT OVER 10 HOURS.   USING THIS AS PRIMARY METRIC AVOIDS MESSING WITH MPV/SMPLAYER SETTINGS TO ACHIEVE 10 HOUR SYNC. MPV autosync WON'T WORK (MAYBE A FUTURE VERSION, BUT CURRENTLY INCOMPATIBLE).
-----dynaudnorm =...:p:m:...:c   →s64  DEFAULTS .95:10:0:0 (PEAK TARGET [0,1] : MAX GAIN [1,100] : CORRECTION (DC,0Hz)) ALTERNATIVES INCLUDE loudnorm & acompressor (SMPLAYER DEFAULT).
-----volume     =volume:...:eval  (DEFAULT 1:once)  TIMELINE SWITCH FOR CONTROLLER. startt IS t @GRAPH INSERTION.
+----astats     =length:metadata [ao]→[ao] (SECONDS:BOOL)  CONTINUAL SAMPLE COUNT IS BASIS FOR 10 HOUR SYNC. USES APPROX 0% OF CPU. USING THIS AS PRIMARY METRIC AVOIDS MESSING WITH MPV/SMPLAYER SETTINGS TO ACHIEVE 10 HOUR SYNC. MPV autosync WON'T WORK (MAYBE A FUTURE VERSION, BUT CURRENTLY INCOMPATIBLE).
+----dynaudnorm =...:p:m:...:c   →s64  DEFAULTS .95:10:0:0 (PEAK TARGET [0,1] : MAX GAIN [1,100] : CORRECTION (DC,0Hz)) ALTERNATIVES INCLUDE loudnorm & acompressor (SMPLAYER DEFAULT). INSERTS AFTER astats BECAUSE IT SLIGHTLY CHANGES SAMPLE COUNT OVER 10 HOURS (NORMALIZER MAY NOT BE DETERMINISTIC).   
+----volume     =volume:...:eval  (DEFAULT 1:once)  TIMELINE SWITCH FOR CONTROLLER. startt = t@GRAPH INSERTION.
 
 
 if o.title_clock_only then lavfi=o.normalizer end  --OVERRIDE: normalizer ONLY (& clock).
@@ -85,7 +85,7 @@ function playback_start(_,seeking)
     title.data=o.title..mp.get_property_osd('media-title')   
     title:update()  --DISPLAY title.
     mp.add_timeout(o.title_duration, function() title:remove() end) --remove title
-    if OFF==nil then mp.add_timeout(.1, function() mp.command('no-osd set osd-level '..osd_level) end) end   --RETURN osd-level. OFF=nil IF TOGGLE HAS NEVER BEEN USED.
+    if OFF==nil then mp.add_timeout(.1, function() mp.command('no-osd set osd-level '..osd_level) end) end   --RETURN osd-level. OFF=nil MEANS TOGGLE HAS NEVER BEEN USED. TESTED & WORKS.
     
     clock_update()  --DISPLAY clock AFTER playback_start OR ELSE LINUX .AppImage RANDOMLY FAILS. (IN WINDOWS THE clock MAY STUTTER IF IT GOES IN EARLIER.)
     if o.title_clock_only then return end    --LAUNCH audio INSTANCES & .txt BELOW.
@@ -94,9 +94,9 @@ function playback_start(_,seeking)
     if not aid then return end   --id IS nil or INTEGER. NO audio: DO NOTHING.
     io.open(txtname,'w+') --w+ ERASES ALL PRIOR DATA. audio INSTANCES stop & quit IF THIS FILE DOESN'T EXIST.
     
-    if type(OS)=='string' and OS:upper():sub(1,3)=='WIN' then capture=true end   --WINDOWS MPV BUGFIX (OPPOSITE TO LINUX). SMPLAYER JUMPS TO NEXT TRACK WHEN USER HITS STOP, SOMETIMES (RARE BUG).  MACOS os.getenv RETURNS SOMETHING WHICH ISN'T A string.
+    if type(OS)=='string' and OS:upper():sub(1,3)=='WIN' then capture=true end   --WINDOWS MPV BUGFIX (OPPOSITE TO LINUX). SMPLAYER JUMPS TO NEXT TRACK WHEN USER HITS STOP, SOMETIMES (RARE BUG).  MACOS os.getenv RETURNED SOMETHING WHICH ISN'T A string.
     if priority then priority='--priority='..priority   --WINDOWS. ASSUME PRIORITY DOESN'T CHANGE UNTIL NEXT FILE OR stop.
-    else             priority='--speed=1' end    --LINUX (NULL OP - priority NOT SUPPORTED). ALTERNATIVE TO BUILDING args table.
+    else             priority='--speed=1' end           --LINUX (NULL OP: priority NOT SUPPORTED). ALTERNATIVE TO BUILDING args table.
     
     for _,device in pairs(devices) do for lr in ('l r'):gmatch('%g') do if not (device==devices[1] and lr=='l') --DON'T LAUNCH ON PRIMARY RIGHT CHANNEL. IF MPV CAN'T BE FOUND, title & clock ONLY.
             then utils.subprocess({detach=true,capture_stdout=capture,
@@ -158,7 +158,7 @@ function set_speed(observation)    --MAIN FUNCTION. CONTROLLER WRITES TO .txt, O
     
     local time_pos,TIMEFROM1970 = mp.get_property_number('time-pos'),os.time()  --THESE METRICS ARE INCORRECT DEFAULTS, TO BE IMPROVED (AFTER SYNC).
     if sync_time and samples_time>o.time_needed then TIMEFROM1970=sync_time+mp.get_time()   --REQUIRE SYNC, WITH ENOUGH DATA. THIS TIMEFROM1970 PRECISE TO 10ms. BEFORE SYNC, pause OVERRIDE STILL APPLIES.
-        if not initial_time_pos then initial_time_pos=time_pos-samples_time end    --INITIALIZE. THIS # STAYS THE SAME FOR THE NEXT 10 HOURS.   LIKE HOW YOGHURT GOES OFF, PERHAPS 100 HRS LATER THE SPEAKERS WILL BE OFF (astats ISSUE). THERE COULD BE A SYSTEMIC ERROR WHERE MAYBE LEFT-CHANNEL IS 10ms BEHIND ON AVERAGE? (UNTESTED.)
+        if not initial_time_pos then initial_time_pos=time_pos-samples_time end    --INITIALIZE. THIS # STAYS THE SAME FOR THE NEXT 10 HOURS.   LIKE HOW YOGHURT GOES OFF, PERHAPS 100 HRS LATER THE SPEAKERS WILL BE OFF (astats ISSUE). DISJOINT STEREO IS LIKE YOGHURT DISJOINT FROM CREAM. 
         time_pos=initial_time_pos+samples_time end   --NEW METRIC WHOSE CHANGE IS BASED ON astats SAMPLE COUNT.
     
     if is_controller then local txtfile,volume = io.open(txtname,'w+'),mp.get_property_number('volume')     --volume RANGE [0,100]
@@ -182,7 +182,7 @@ function set_speed(observation)    --MAIN FUNCTION. CONTROLLER WRITES TO .txt, O
     
     mp.command('set pause no')
     mp.command('set volume '..volume) 
-    mp.command('set aid '..lines()) --LINE3=aid. SET audio TRACK BEFORE TRACKING AGAINST time_gained.   TIMES GO LAST BECAUSE OVERRIDE SWITCHES MAY APPLY BEFORE INITIALIZING THOSE NUMBERS.
+    mp.command('set aid '..lines()) --LINE3=aid, BEFORE TIMING.   TIMES GO LAST, AFTER path & volume OVERRIDES. 
     
     if not (sync_time and samples_time>o.time_needed) then return end    --DON'T RANDOMIZE speed BEFORE INITIAL SYNC OR ENOUGH SAMPLES GATHERED.
     local time_from_write=TIMEFROM1970-lines()  --LINE4=CONTROLLER_TIME
@@ -207,8 +207,8 @@ mp.observe_property('seeking','bool',function() initial_time_pos=nil end) --RESE
 
 
 ----COMMENT SECTION. MPV CURRENTLY HAS A 10 HOUR BACKWARDS SEEK BUG (BACKWARDS BUFFER ISSUE IF BACK-SEEK MORE THAN AN HOUR?).  
-----aformat    =sample_fmts     (u8 s16 s64 ETC) DOWNGRADES FROM s64 (dynaudnorm) TO s16 (wasapi/pulse/coreaudio): SGN+15BIT (-32k→32k). u8 CAUSES HISSING.
-----afade      =...:duration (SECONDS, DEFAULT 1)  CONTROLLER HAS IN-FADE APPENDED TO NORMALIZER. SIMPLER THAN PRE-PENDING SILENCE (SYNC INITIAL DRUM-ROLL).
+----aformat=sample_fmts     (u8 s16 s64 ETC) DOWNGRADES FROM s64 (dynaudnorm) TO s16 (wasapi/pulse/coreaudio): SGN+15BIT (-32k→32k). u8 CAUSES HISSING.
+----afade  =...:duration (SECONDS, DEFAULT 1) 
 
 
 
