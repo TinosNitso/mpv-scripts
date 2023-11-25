@@ -10,7 +10,7 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED.
     normalizer='dynaudnorm=p=1:m=100:c=1',  --(DEFAULTS 0.95:10:0 PEAK-TARGET:MAX-GAIN:CORRECTION-DC) ALL SPEAKERS USE THIS NORMALIZER.
     -- title_clock_only=true,   --OVERRIDE: NO audio EFFECT, EXCEPT FOR normalizer.   THIS option MEANS THE clock DOESN'T HAVE TO BE COPY/PASTED INTO OTHER SCRIPT/S (THIS SCRIPT CONTROLS IT). A video CLOCK MAY BE FANCY & DANCE AROUND, BUT NOT THIS ONE.
     
-    -- extra_devices_index_list={2},--EXTRA DEVICES. TRY {2,3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. 1=auto WHICH MAY DOUBLE-OVERLAP audio TO PRIMARY DEVICE. USER CAN GUESS INDEXES, 3=VIRTUALBOX USB STEREO. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.     EACH MPV MAY USE APPROX 1% OF CPU TO DECODE audio, + 30MB RAM.
+    -- extra_devices_index_list={2}, --EXTRA DEVICES. TRY {2,3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. 1=auto WHICH MAY DOUBLE-OVERLAP audio TO PRIMARY DEVICE. USER CAN GUESS INDEXES, 3=VIRTUALBOX USB STEREO. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.     EACH MPV USES APPROX 2% CPU, + 40MB RAM.
     start=.7, --DEFAULT=.7 SECONDS  APPROX: .5=SSD .7=AUTOCOMPLEX 1=VIRTUALBOX 2=HDD.  INITIAL HEADSTART OF audio INSTANCES. EACH mpv TAKES TIME TO LOAD, & THEY AREN'T LAUNCHED UNTIL AFTER playback_start (WHICH WORKS FINE ON SSD).
     DELAY=.5, --DEFAULT=.5 SECONDS. INITIAL DELAY OF CONTROLLER volume (SUPPORTS FORMULAIC TIMELINE SWITCH). <start BECAUSE GRAPH INSERTION TAKES .2s. NOT STRICTLY "adelay" NOR "audio-delay", HENCE "DELAY" (NOT CHANGING TIMESTAMPS).   INSERTING SILENCE @START SEEMS TO COMPLICATED (TIMESTAMP ISSUE), SO INITIAL HALF-SECOND audio IS LOST.
     
@@ -25,7 +25,7 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED.
     -- meta_osd=true,  --DISPLAY astats METADATA (audio STATISTICS). IRONICALLY astats DOESN'T KNOW ANYTHING ABOUT TIME ITSELF, YET IT'S THE BASIS FOR TEN HOUR SYNCHRONY.
     
     key_bindings         ='F3', --DEFAULT='' (NO TOGGLE). CASE SENSITIVE. KEYBOARD TOGGLE WORKS IF MPV HAS ITS OWN WINDOW, BUT NOT BY DEFAULT IN SMPLAYER. 'F3 F4' FOR 2 KEYS. F1 & F2 MIGHT BE autocomplex & automask. S=SCREENSHOT.
-    toggle_on_double_mute=.5,   --DEFAULT=0 SECONDS (NO TOGGLE). TIMEOUT FOR DOUBLE-MUTE-TOGGLE. ALL LUA SCRIPTS CAN BE TOGGLED USING DOUBLE MUTE.
+    toggle_on_double_mute=.5,   --DEFAULT=0 SECONDS (NO TOGGLE). TIMEOUT FOR DOUBLE-mute-TOGGLE. ALL LUA SCRIPTS CAN BE TOGGLED USING DOUBLE mute.
     
     config={
             'audio-delay 0',                --OVERRIDE SMPLAYER (NON-0 COULD BE ACCIDENT).
@@ -54,17 +54,19 @@ if not (mutelr and pid) then is_controller,pid,apad,mutelr = true,utils.getpid()
         if not table.concat(devices):find(device,1,true) then table.insert(devices,device) end end  --1,true=EXACT FROM 1    concat find DOES SEARCH FOR DUPLICATES, BEFORE INSERTION.
 else o.DELAY=0 end  --ONLY CONTROLLER DELAYS volume.
 
-local txtname=utils.join_path(directory,('%s-PID%d.txt'):format(label,pid))  --USING .txt INSTEAD OF A PIPE MAY BE LIKE PUTTING PLUMBING THROUGH A FRONT DOOR.
-mp.register_event('shutdown', function() os.remove(txtname) end)    --audio INSTANCES quit @txt REMOVAL. ALTERNATIVE event=end-file
+directory=mp.command_native({'expand-path',directory})   --BUGFIX FOR USER ENTERING "~": MUST BE EXPANDED FOR LUA io.lines ETC. command_native RETURNS.
+local txtpath=utils.join_path(directory,('%s-PID%d.txt'):format(label,pid))  --USING .txt INSTEAD OF A PIPE MAY BE LIKE PUTTING PLUMBING THROUGH A FRONT DOOR.
+mp.register_event('shutdown', function() os.remove(txtpath) end)    --audio INSTANCES quit @txt REMOVAL. ALTERNATIVE event=end-file
 
-local lavfi=('stereotools=%s=1%s,astats=.5:1,%s,volume=gte(t\\,startt+%s):eval=frame')
-     :format(          mutelr,apad,        o.normalizer,            o.DELAY          )
+local lavfi=('stereotools=%s=1%s,aformat=s16:44100,astats=.5:1,%s,volume=gte(t-startt\\,%s):eval=frame')
+     :format(          mutelr,apad,                          o.normalizer,            o.DELAY          )
  
-----lavfi      =[graph] [ao]→[ao] LIBRARY-AUDIO-VIDEO-FILTER LIST. EACH .LUA SCRIPT MAY CONTROL A GRAPH. aspeed IS LIKE A MASK FOR audio, WHICH DISJOINTS IT.
+----lavfi      =[graph] [ao]→[ao] LIBRARY-AUDIO-VIDEO-FILTER LIST. EACH .LUA SCRIPT MAY CONTROL A GRAPH, LIKE HOW A CELL CONTROLS DNA. aspeed IS LIKE A MASK FOR audio, WHICH DISJOINTS IT.     CHANGING THE GRAPH NEEDS A FEW HRS FOR TESTING.
 ----apad        APPENDS SILENCE TO audio INSTANCES, SO THEY NEVER stop UNLESS THE CONTROLLER DOES. INSERTS BEFORE astats OR ELSE astats FAILS TO UPDATE MAIN FUNCTION. USER MAY BACKWARDS seek NEAR end-file. 
-----stereotools=...:mutel:muter (BOOLS) CONVERTS MONO & SURROUND SOUND TO STEREO, & MUTES EITHER SIDE. INSERTS BEFORE astats WHICH NEEDS stereo FOR RELIABILITY. softclip OPTION MAY CAUSE A BUG IN LINUX .AppImage. 
+----stereotools=...:mutel:muter (BOOLS) CONVERTS MONO & SURROUND SOUND TO STEREO, & MUTES EITHER SIDE. INSERTS BEFORE astats WHICH NEEDS stereo FOR RELIABILITY. softclip OPTION MAY CAUSE A BUG IN LINUX .AppImage. PREFERRED FOR CONVERSION→stereo.
+----aformat    =sample_fmts  (u8 s16 s64 ETC)  →44.1 kHz TO astats, IRRESPECTIVE OF lavfi-complex. HOWEVER IT'S ALSO RISKY BECAUSE ITS OUTPUT MUST BE DETERMINISTIC OVER 10 HRS.  s16=SGN+15BIT (-32k→32k). u8 CAUSES HISSING.
 ----astats     =length:metadata [ao]→[ao] (SECONDS:BOOL)  CONTINUAL SAMPLE COUNT IS BASIS FOR 10 HOUR SYNC. USES APPROX 0% OF CPU. USING THIS AS PRIMARY METRIC AVOIDS MESSING WITH MPV/SMPLAYER SETTINGS TO ACHIEVE 10 HOUR SYNC. MPV autosync WON'T WORK (MAYBE A FUTURE VERSION, BUT CURRENTLY INCOMPATIBLE).
-----dynaudnorm =...:p:m:...:c   →s64  DEFAULTS .95:10:0:0 (PEAK TARGET [0,1] : MAX GAIN [1,100] : CORRECTION (DC,0Hz)) ALTERNATIVES INCLUDE loudnorm & acompressor (SMPLAYER DEFAULT). INSERTS AFTER astats BECAUSE IT SLIGHTLY CHANGES SAMPLE COUNT OVER 10 HOURS (NORMALIZER MAY NOT BE DETERMINISTIC).   
+----dynaudnorm =...:p:m:...:c  →s64  DEFAULTS .95:10:0:0 (PEAK TARGET [0,1] : MAX GAIN [1,100] : CORRECTION (DC,0Hz)) ALTERNATIVES INCLUDE loudnorm & acompressor (SMPLAYER DEFAULT). INSERTS AFTER astats BECAUSE IT SLIGHTLY CHANGES SAMPLE COUNT OVER 10 HOURS (NORMALIZER MAY NOT BE DETERMINISTIC).   
 ----volume     =volume:...:eval  (DEFAULT 1:once)  TIMELINE SWITCH FOR CONTROLLER. startt = t@GRAPH INSERTION.
 
 
@@ -92,7 +94,7 @@ function playback_start(_,seeking)
     
     local priority,aid,capture,_,OS = mp.get_property('priority'),mp.get_property_number('current-tracks/audio/id'),false,pcall(os.getenv,'OS')   --TO FULLY DETACH audio, CONTROLLER SHOULDN'T capture_stdout.
     if not aid then return end   --id IS nil or INTEGER. NO audio: DO NOTHING.
-    io.open(txtname,'w+') --w+ ERASES ALL PRIOR DATA. audio INSTANCES stop & quit IF THIS FILE DOESN'T EXIST.
+    io.open(txtpath,'w+') --w+ ERASES ALL PRIOR DATA. audio INSTANCES stop & quit IF THIS FILE DOESN'T EXIST.
     
     if type(OS)=='string' and OS:upper():sub(1,3)=='WIN' then capture=true end   --WINDOWS MPV BUGFIX (OPPOSITE TO LINUX). SMPLAYER JUMPS TO NEXT TRACK WHEN USER HITS STOP, SOMETIMES (RARE BUG).  MACOS os.getenv RETURNED SOMETHING WHICH ISN'T A string.
     if priority then priority='--priority='..priority   --WINDOWS. ASSUME PRIORITY DOESN'T CHANGE UNTIL NEXT FILE OR stop.
@@ -109,7 +111,7 @@ timers.mute:kill()
 timers.mute.oneshot=true
 
 function on_toggle(mute)   --TOGGLE title & clock. shutdown ALL audio INSTANCES, OR RESTART THEM. CAN CHECK TASK MANAGER.
-    if mute=='mute' and not timers.mute:is_enabled() then timers.mute:resume() --if mute_observed DON'T TOGGLE UNLESS TIMER'S RUNNING.
+    if mute=='mute' and not timers.mute:is_enabled() then timers.mute:resume() --IF 'mute' DON'T TOGGLE UNLESS TIMER'S RUNNING, OR START TIMER.
         return end
     
     OFF,initial_time_pos = not OFF,nil   --OFF=MEMORY FOR SWITCH. FORCE initial_time_pos RESET.
@@ -118,7 +120,7 @@ function on_toggle(mute)   --TOGGLE title & clock. shutdown ALL audio INSTANCES,
     else mp.command( 'no-osd af remove @'..label)   --TOGGLE OFF. remove GRAPH, kill timers, clock & DELETE.
          for _,timer in pairs(timers) do timer:kill() end
          clock_update()    --REMOVES.
-         os.remove(txtname) end --shutdown ALL audio PLAYERS. NO RECYCLE BIN. 
+         os.remove(txtpath) end --shutdown ALL audio PLAYERS. NO RECYCLE BIN. 
 end
 mp.observe_property('mute','bool',on_toggle)
 for key in (o.key_bindings):gmatch('%g+') do mp.add_key_binding(key, 'toggle_speed_'..key, on_toggle)  end 
@@ -152,7 +154,7 @@ timers.os_sync=mp.add_periodic_timer(o.os_sync_delay,os_sync)
 timers.os_sync:kill()
 
 function set_speed(observation)    --MAIN FUNCTION. CONTROLLER WRITES TO .txt, OR audio INSTANCES READ FROM IT.
-    local paused,samples_time = mp.get_property_bool('pause'),mp.get_property_native('af-metadata/'..label)['lavfi.astats.Overall.Number_of_samples']/mp.get_property_number('audio-params/samplerate') --samplerate TIME = #SAMPLES/SR         time-pos, playback-time & audio-pts WORK WELL OVER 1 MINUTE, BUT NOT 1 HOUR. AUTO-SYNC MAY WORK IN MPV-V36, BUT NOT V35. SO THIS FUNCTION USES AUDIO STATS FILTER, SAMPLE COUNT.    audio-params/samplerate USUALLY= current-tracks/audio/demux-samplerate
+    local paused,samples_time = mp.get_property_bool('pause'),mp.get_property_native('af-metadata/'..label)['lavfi.astats.Overall.Number_of_samples']/44100 --samplerate TIME = #SAMPLES/SR         time-pos, playback-time & audio-pts WORK WELL OVER 1 MINUTE, BUT NOT 1 HOUR. AUTO-SYNC MAY WORK IN MPV-V36, BUT NOT V35. SO THIS FUNCTION USES AUDIO STATS FILTER, SAMPLE COUNT.    INSTEAD OF 44100 CAN CHECK PROPERTIES audio-params/samplerate & current-tracks/audio/demux-samplerate
     if not paused and (not observation or is_controller and mp.get_property_number('time-remaining')<o.time_needed)
     then return end    --DO NOTHING IF PLAYING BUT NOT AN OBSERVATION, OR CONTROLLER PLAYING NEAR end-file.   THE auto timer ONLY EXISTS FOR WHEN paused (NO astats UPDATE).
     
@@ -161,7 +163,7 @@ function set_speed(observation)    --MAIN FUNCTION. CONTROLLER WRITES TO .txt, O
         if not initial_time_pos then initial_time_pos=time_pos-samples_time end    --INITIALIZE. THIS # STAYS THE SAME FOR THE NEXT 10 HOURS.   LIKE HOW YOGHURT GOES OFF, PERHAPS 100 HRS LATER THE SPEAKERS WILL BE OFF (astats ISSUE). DISJOINT STEREO IS LIKE YOGHURT DISJOINT FROM CREAM. 
         time_pos=initial_time_pos+samples_time end   --NEW METRIC WHOSE CHANGE IS BASED ON astats SAMPLE COUNT.
     
-    if is_controller then local txtfile,volume = io.open(txtname,'w+'),mp.get_property_number('volume')     --volume RANGE [0,100]
+    if is_controller then local txtfile,volume = io.open(txtpath,'w+'),mp.get_property_number('volume')     --volume RANGE [0,100]
         if mp.get_property_bool('mute') then volume=0 end 
         if paused                       then volume=-1 end  --NEGATIVE INSTRUCTS ALL audio PLAYERS TO pause. 
 
@@ -171,7 +173,7 @@ function set_speed(observation)    --MAIN FUNCTION. CONTROLLER WRITES TO .txt, O
         if o.meta_osd then mp.osd_message(mp.get_property_osd('af-metadata/'..label):gsub('\n','    \t')) end   --TAB EACH STAT (TOO MANY LINES).
         return end   --CONTROLLER ENDS HERE (CONSTANT speed).
     
-    local pstatus,lines = pcall(io.lines,txtname)  --AUDIO ADJUSTS TO LAG. io.lines RAISES ERROR AFTER FILE REMOVED. lines ITERATOR RETURNS 4 LINES.
+    local pstatus,lines = pcall(io.lines,txtpath)  --AUDIO ADJUSTS TO LAG. io.lines RAISES ERROR AFTER FILE REMOVED. lines ITERATOR RETURNS 4 LINES.
     if not pstatus then mp.command('quit') end    --EXIT & DELETE. NO .txt MEANS CONTROLLER HAS STOPPED. 'stop' INCOMPATIBLE WITH LINUX .AppImage ('quit' INSTEAD).
     
     local path,volume = lines(),0+lines()  --LINES 1,2 = path,volume        ACT AS playlist,pause OVERRIDES. 0+ CONVERTS tonumber
@@ -195,7 +197,7 @@ function set_speed(observation)    --MAIN FUNCTION. CONTROLLER WRITES TO .txt, O
     if not randomseed then randomseed=TIMEFROM1970      --INITIALIZE random # GENERATOR. WITHOUT A seed THE NUMBERS ARE EASY TO PREDICT.
         math.randomseed(randomseed) end  
     
-    local speed=1-time_gained/.5+math.random(-o.max_random_percent,o.max_random_percent)/100    --time_gained→0 OVER THE NEXT 0.5 SECONDS,+RANDOM. 0.5s IS DEFAULT TIME FOR astats TO UPDATE.
+    local speed=1-time_gained/.5+math.random(-o.max_random_percent,o.max_random_percent)/100    --time_gained→0 OVER THE NEXT .5 SECONDS, + RANDOM. .5s IS TIME FOR astats TO UPDATE.
     if o.max_percent then speed=math.max(1-o.max_percent/100, math.min(1+o.max_percent/100, speed)) end    --speed LIMIT. LUA DOESN'T HAVE math.clip.
     mp.command('set speed '..speed)
 end
@@ -204,11 +206,12 @@ for _,timer in pairs(timers) do timer:kill() end    --timers CARRY OVER TO NEXT 
 
 mp.observe_property('af-metadata/'..label, 'native', function(arg) pcall(set_speed,arg) end)   --arg='af-metadata/aspeed'    THIS TRIGGERS EVERY HALF A SECOND. astats WORKS LIKE cropdetect. pcall IS SAFER WHEN end-file TRIGGERS (OR ELSE SCRIPT MAY FAIL TO DELETE DATA FILE). pcall SIMPLIFIES CODE BY REMOVING RETURNS.
 mp.observe_property('seeking','bool',function() initial_time_pos=nil end) --RESET SAMPLE COUNT WHENEVER THE USER SEEKS.
+mp.observe_property('pause'  ,'bool',function() initial_time_pos=nil end) --ON pause TOO?
 
 
 ----COMMENT SECTION. MPV CURRENTLY HAS A 10 HOUR BACKWARDS SEEK BUG (BACKWARDS BUFFER ISSUE IF BACK-SEEK MORE THAN AN HOUR?).  
-----aformat=sample_fmts     (u8 s16 s64 ETC) DOWNGRADES FROM s64 (dynaudnorm) TO s16 (wasapi/pulse/coreaudio): SGN+15BIT (-32k→32k). u8 CAUSES HISSING.
-----afade  =...:duration (SECONDS, DEFAULT 1) 
+--GET SAMPLERATE IF NOT SET  local paused,samples_time = mp.get_property_bool('pause'),mp.get_property_native('af-metadata/'..label)['lavfi.astats.Overall.Number_of_samples']/mp.get_property_number('audio-params/samplerate') --samplerate TIME = #SAMPLES/SR         time-pos, playback-time & audio-pts WORK WELL OVER 1 MINUTE, BUT NOT 1 HOUR. AUTO-SYNC MAY WORK IN MPV-V36, BUT NOT V35. SO THIS FUNCTION USES AUDIO STATS FILTER, SAMPLE COUNT.    INSTEAD OF 44100 CAN CHECK PROPERTIES audio-params/samplerate & current-tracks/audio/demux-samplerate
+-- mp.register_event('playback-restart',function() initial_time_pos=nil end) --MAY HELP WITH EXTREME LAG (CAUSES DESYNC).
 
 
 

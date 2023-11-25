@@ -1,8 +1,8 @@
 ----AUTO-LOADER FOR OTHER SCRIPTS (IF THEY AREN'T ALREADY LOADED). MAY ALSO SET CONFIG OPTIONS. PUT ALL SCRIPTS IN THE SAME FOLDER, & LIST THEM HERE. TOGGLE THEM WITH TYPOS. INSTEAD OF ALL SCRIPTS LAUNCHING EACH OTHER WITH THE SAME CODE, 1 SCRIPT LAUNCHES THEM ALL.
-----IN SMPLAYER'S ADVANCED mpv PREFERENCES ENTER  --script=autoloader.lua  (WINDOWS smplayer.exe FOLDER).  LINUX: --script=/home/user/Desktop/mpv-scripts/autoloader.lua  MACOS: --script=/Users/user/Desktop/mpv-scripts/autoloader.lua
+----IN SMPLAYER'S ADVANCED mpv PREFERENCES ENTER  --script=autoloader.lua  (WINDOWS smplayer.exe FOLDER).  LINUX: --script=/home/user/Desktop/mpv-scripts/autoloader.lua  MACOS: --script=~/Desktop/mpv-scripts/autoloader.lua
 local options={ --ALL OPTIONAL & CAN BE REMOVED.
     scripts={"aspeed.lua",      --CLOCK & TITLE. ALSO AUDIO DEVICES SPEED RANDOMIZATION OVER SEVERAL HOURS (astats METRIC). CONVERTS MONO TO (RANDOMIZED) SURROUND SOUND. MY FAVOURITE OVERALL.
-             "autocrop.lua",    --CROPS BLACK BARS BEFORE MASK, BUT AFTER SPECTRAL OVERLAY.
+             "autocrop.lua",    --CROPS BLACK BARS BEFORE MASK, BUT AFTER SPECTRAL OVERLAY.     ON LINUX DON'T USE snap (BREAKS TIME DEPENDENT SMOOTH-CROPPING).
              "autocomplex.lua", --ANIMATED AUDIO SPECTRUM, VOLUME BARS, FPS LIMITER. LAVFI-COMPLEX OVERLAY. EVERY SCRIPT CONTROLS 1 GRAPH EACH. 
              "automask.lua",    --ANIMATED FILTERS (MOVING BINOCULARS, ETC). LENS FORMULA MAY NEGATE BRIGHTNESS.
             },
@@ -29,7 +29,8 @@ mp.register_event('file-loaded', function() if o.loop_limit>mp.get_property_numb
 ----https://smplayer.info/en/download-linux & https://apt.fruit.je/ubuntu/jammy/mpv/ FOR LINUX SMPLAYER & MPV.
 ----sudo apt install snapd flatpak smplayer mpv     FOR RELEVANT LINUX INSTALLS.
 ----snap run smplayer   flatpak run info.smplayer.SMPlayer      FOR TESTING.
-----LINUX snap WON'T WORK WITH SOME FILTERS THE SAME WAY, LIKE shuffleplanes,negate=y,scale. ALL SCRIPTS MUST PASS snap INSPECTION.
+----LINUX snap WON'T WORK WITH autocrop, "~/", NOR SOME FILTERS THE EXACT SAME WAY, LIKE shuffleplanes,negate=y,scale=flags:eval. IT ALSO BLOCKS SYSTEM COMMANDS.
+----THESE SCRIPTS CAN PROBABLY BE RE-WRITTEN IN PYTHON (.py). EACH PREPS ffmpeg-filters. LIKE HOW GIMP HAS SCM (SCHEME), NOTEPAD++ HAS SCINTILLA, MATH HAS OCTAVE/MATLAB, STATS HAS R, ELECTRUM HAS PYTHON, WINDOWS HAS AUTOHOTKEY (AHK), WEB HAS JAVASCRIPT, MPV HAS LUA.
 
 
 
