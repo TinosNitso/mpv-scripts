@@ -1,27 +1,28 @@
-----AUTO ANIMATED MASK GENERATOR & MERGE SCRIPT, FOR VIDEO & IMAGES, IN MPV, WITH DOUBLE-mute TOGGLE. APPLIES ANY LIST OF FILTERS (lutyuv FORMULA) TO MASKED REGION, WITH MOVING POSITIONS, ROTATIONS & ZOOM. INVERTS/TOGGLES. FULLY PERIODIC FOR BEST RES & PERFORMANCE.    
+----AUTO ANIMATED MASK GENERATOR & MERGE SCRIPT, FOR VIDEO & IMAGES, IN MPV, WITH DOUBLE-mute TOGGLE. APPLIES ANY LIST OF FILTERS (lutyuv FORMULA) TO MASKED REGION, WITH MOVING POSITIONS, ROTATIONS & ZOOM. INVERTS/TOGGLES. FULLY PERIODIC FOR BEST RES & PERFORMANCE. IT'S LIKE AN OPTOMETRIST FOR TELEVISION.
 ----WORKS WITH JPG, PNG, GIF, BMP, MP3 COVER ART, MP4 ETC, IN SMPLAYER & MPV (DRAG & DROP). .TIFF ONLY DISPLAYS 1 LAYER (BUG). NO WEBP, PDF OR TXT. START/TOGGLE SLOW DUE TO LACK OF BUFFERING. RAW JPEG & COVER ART USE 0% CPU. (COMBINE automask WITH autocomplex.lua FOR JPEG ANIME). CHANGING TRACKS (MP3 TAGS) SUPPORTED.
 ----LENS lutyuv FORMULA USES A QUARTIC REDUCTION +- gauss CORRECTIONS FOR BLACK-IS-BLACK & WHITE-IS-WHITE. COLORS USE QUARTER POWER LAW FOR NON-LINEAR SATURATION. A BIG-SCREEN NEGATIVE IS TOO BRIGHT, SO INSTEAD OF HALVING BRIGHTNESS A QUARTIC IS SHARPER. gauss SIZES ARE minval*2 SHIFTED 1.5x, BUT TUNING EACH # SEEMS TOO DIFFICULT - TOO MANY VIDEOS TO CHECK. IT'S A STATISTICAL PROBLEM - HIT & MISS. ONE IDEA IS TO VARY THE FILTERS WITH TIMELINE SWITCHES.
 ----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH IS A PROBLEM ON MACOS (A BIBLE HAS NO SCROLLBAR). NO FANCY TITLE OR CLOCK (drawtext NOT WORKING IN WINDOWS directwrite WITHOUT EXTRA FONT FILE?).  THE MASK HELPS DETECT DEFECTS, LIKE HAIR ON A PASSPORT SCAN. THE LENS MAY AS WELL TAKE ON THE FORM OF A MASK. TO REPRODUCE AN automask, SIMPLY COPY/PASTE PLAIN TEXT .LUA SCRIPT, FROM WEB BROWSER TO VIRTUAL MACHINE, ETC, WITHOUT ANY GRAPHICS FILE.
 local options={ --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATION).      nil & false → DEFAULT VALUES    (BUT BLANK string ''=true).
     FILTERS='lutyuv=minval+(maxval-minval)*((negval/maxval)^4*(1+1/6)+1/6*(2*gauss(negval/minval/2-1.5)-1*gauss(val/minval/1.5-1.5))/gauss(0))'   --negval/minval APPROX= (255-val)/(255-maxval)
                  ..':128*(1+(val/128-1)/abs(val/128.01-1)^.25)'   --u & v USE A POWER LAW NON-LINEAR SATURATION. sqrt ("^.5") TOO POWERFUL, SO CAN DIVIDE BY "^.25". GREYSCALE IS CENTERED ON 128 NOT 127.5 (128 MEANS 0 IN POPULAR YUV COVERSION FORMULAS).     RUNNING THE SCRIPT TWICE (DOUBLE MASK) ADDS MORE COLOR (MYSTERY). 2 FILTERS MAY SHARE THE SAME LABEL IF THEY append INSTANTLY.
-                 ..':128*(1+(val/128-1)/abs(val/128.01-1)^.25)',  --sgn FUNCTION NOT LINUX snap COMPATIBLE, HENCE 128.01 ISSUE. THIS FILTERS MOVES PERCENTAGE saturation INTO NON-LINEAR EXPONENT (uv INSTEAD OF rgb).
-                
+                 ..':128*(1+(val/128-1)/abs(val/128.01-1)^.25)'   --sgn FUNCTION NOT LINUX snap COMPATIBLE, HENCE 128.01 ISSUE. THIS FILTERS MOVES PERCENTAGE saturation INTO NON-LINEAR EXPONENT (uv INSTEAD OF rgb).
+         ..',null',                                               --REPLACE null TO TEST MORE FILTERS, LIKE pp (POSTPROCESSING).
+    
     period =19/25, --DEFAULT=0 SECONDS (LEAD-FRAME ONLY). USE EXACT fps RATIO, BECAUSE zoompan USES "in" NOT "t". 19/25=79BPM (BEATS PER MINUTE). SHOULD MATCH OTHER SCRIPT/S, E.G. autocomplex (SYNCED EYES & MOUTH).  FOR BEST QUALITY (HD*2), ALL TIME DEPENDENCE IS PERIODIC.  UNFORTUNATELY A SLOW ANIMATION TAKE AGES TO LOAD (REDUCE RES_MULT).
     periods=    2, --DEFAULT=1, INTEGER. INFINITE loop OVER period*periods.  0 period OR periods FOR STATIC. E.G. INVERT BRIGHTNESS EVERY 3 PERIODS.       
     
-    INVERT='1-between(t/%s\\,.5\\,1.5)',      --DEFAULT='0' (NO BLINKING). %s=period  TIMELINE SWITCH FOR INVERTING INSIDE/OUTSIDE FILTERING (BLINKER SWITCH). E.G. TO START OPPOSITE, USE "1-...". THIS ONE BLINKS @BOTTOM.
+    INVERT='1-between(t/%s\\,.5\\,1.5)',    --DEFAULT='0' (NO BLINKING). %s=period  TIMELINE SWITCH FOR INVERTING INSIDE/OUTSIDE FILTERING (BLINKER SWITCH). E.G. TO START OPPOSITE, USE "1-...". THIS ONE BLINKS @BOTTOM.
     -- DISABLE='1-between(t/%s\\,.5\\,1.5)',--DEFAULT='0'. UNCOMMENT FOR INVISIBILITY. %s=period  TIMELINE SWITCH FOR MASK.     AN ALTERNATIVE CODE WOULD BE TO PLACE THIS *BEFORE* THE INVERTER, SO THE DISABLER ITSELF CAN BE INVERTED.
     
     SECTIONS=6,    --0 FOR BLINKING FULL SCREEN. DEFAULT COUNTS widths & heights. MAY LIMIT NUMBER OF DISCS (BEFORE FLIP & STACK). AUTO-GENERATES DISCS IF widths & heights ARE MISSING. ELLIPTICITY=0 BY DEFAULT.
-    DUAL    =true, --REMOVE FOR LEFT-ONLY. ENABLES LEFT→RIGHT FLIP. 
+    DUAL    =true, --REMOVE FOR LEFT-ONLY. ENABLES LEFT→RIGHT FLIP, & HALVES INITIAL iw (display CANVAS).
     -- SQUARE=true,--FOR RECTANGULAR SECTIONS, INSTEAD OF DISCS. 
     
-    widths ='iw*1.1 iw*.6            ', --iw=INPUT-WIDTH oh=OUTPUT-HEIGHT. BASED ON SCREEN CANVAS. DEFAULT=CIRCLE/SQUARE(ELLIPTICITY=0)     REMOVE THESE 6 LINES TO AUTO-GENERATE DISCS.     WORK IN PROGRESS BECAUSE WE MAY WANT TO RANDOMIZE AUTO-MASK (NEW MASK FOR EVERY VIDEO).
-    heights='ih/2   ih/2 ih ih/2 ih/8', --ih=INPUT-HEIGHT   EXACT POSITIONING IS TRIAL & ERROR (INITIAL oh=ih SLIGHTLY SHORT). PUPILS SHOULD BE CIRCLE WHEN SEEN THROUGH SPECTACLES. EYELIDS OVER PUPIL IS SQUINT, BUT OVER OUTER-PUPIL IS LAZY-EYE.  SECTIONS: 1=SPECTACLE,2=EYELID,3=EYE,4=PUPIL,5=NERVE
+    widths ='iw*1.1 iw*.6', --iw=INPUT-WIDTH  AUTO-GENERATES IF ABSENT. BASED ON display CANVAS. DEFAULT ELLIPTICITY=0 (CIRCLE/SQUARE)     REMOVE THESE 5 LINES TO AUTO-GENERATE DISCS. 
+    heights='ih/2   ih/2.2  ih       ih/2           ih/8', --ih=INPUT-HEIGHT   EXACT POSITIONING IS TRIAL & ERROR. PUPILS SHOULD BE CIRCLE WHEN SEEN THROUGH SPECTACLES. EYELIDS COVERING INNER PUPIL IS SQUINTING, BUT ONLY COVERING OUTER-PUPIL IS LAZY-EYE.  SECTIONS: 1=SPECTACLE,2=EYELID,3=EYE,4=PUPIL,5=NERVE,6=INNER-NERVE.
     x='-W/64*(s)       0    W/16*(c) W/32*(c)       W/64', --(c),(s) = (cos),(sin) WAVES IN t/period. overlay COORDS FROM CENTER=DEFAULT. W IS THE BIGGER DISC/CANVAS, & w IS THE DISC.  (t)=(time) (n)=(frame#) (p)→(period) (c)→(cos(2*PI*(t)/(p))) (s)→(sin(2*PI*(t)/(p))) (T)→((t)/(p))   %s=period=(p)
-    y='-H*((c)/16+1/6) H/16 H/32*(s) H/32*((c)+1)/2 H/64', --DEFAULT CENTERS, DOWNWARD.  (c),(s) = (cos),(sin)  NEGATIVE MEANS UP.    %s=period
-    crops='iw:ih*.8:0:ih-oh  iw*.99:ih:0',   --DEFAULT NO crop. SPECTACLE-TOP & RED-EYE CROPS. oh=OUTPUT-HEIGHT  crops GO BEFORE x & y. 
+    y='-H*((c)/16+1/6) H/16 H/32*(s) H/32*((c)+1)/2 H/64', --DEFAULT CENTERS, DOWNWARD (NEGATIVE MEANS UP).  (c),(s) = (cos),(sin)      %s=period
+    crops='iw:ih*.8:0:ih-oh  iw*.98:ih:0',   --DEFAULT NO crop. SPECTACLE-TOP & RED-EYE CROPS. oh=OUTPUT-HEIGHT  crops GO BEFORE x & y. 
     
     rotations='PI/16*(s)*mod(floor((t)/%s)\\,2)  PI/32*(c)  -PI/64*(c)',       --%s=period (USE t NOT n). DEFAULT='0'. RADIANS CLOCKWISE. CROPS @t,n=0,0 SO USE cos TO AVOID CLIPPING.  PI/32=.1RADS=6° (QUITE A LOT)    SPECIFIES ROTATION OF EACH DISC, RELATIVE TO THE LAST, AFTER crop, EXCEPT THE FIRST (0TH) ROTATION WHICH APPLIES TO ENTIRE DUAL (& MAY NEED INCREASED RES_SAFETY).
     zoompan  ='1+.2*(1-cos(2*PI*((in)/%s-.2)))*mod(floor((in)/%s-.2)\\,2):0:0',--%s=FRAMES-PER-PERIOD=fps*period  (zoom:x:y)  in=INPUTFRAME#=on=OUTPUTNUMBER  mod IS AN ON/OFF SWITCH. DILATING PUPILS NOT CURRENTLY SUPPORTED.     20% FOR RIGHT PUPIL TO PASS SCREEN EDGE.
@@ -196,20 +197,20 @@ mp.observe_property('mute', 'bool', on_toggle)
 ----eq     =contrast:brightness:saturation  OPTIONAL EQUALIZER, MAY APPEND TO FILTERS. ACCEPTS LIVE vf-command FROM SCRIPT. DEFAULT 1:0:1  RANGES [-2,2]:[-1,1]:[0,3]    CAN NEGATE, DARKEN & SATURATE. HOWEVER NON-LINEAR FORMULAS WORK BETTER.
 ----negate =components  (y=lum)  components AREN'T snap COMPATIBLE. DEFAULT FILTERS.
 
---eq ONLY:          formula='eq=-1:-0.25:1.1',  
---50% DROP QUAD GAUSS formula='lutyuv=minval+.4*(negval-minval+128/gauss(0)*(1*gauss((255-val)/(255-maxval)/.9-1)-.6*gauss((255-val)/(255-maxval)/.9-2)-1*gauss(val/minval/.9-1)+.6*gauss(val/minval/.9-2))),eq=1.2:0:1.2',  -- .6=exp(-.5)    negval/minval APPROX (255-val)/(255-maxval)
---QUAD-GAUSS        formula='lutyuv=.75*(negval-minval)+minval+100/gauss(0)*(1*gauss((255-val)/(255-maxval)/2-1)-.6*gauss((255-val)/(255-maxval)/2-2)-1*gauss(val/minval/1.7-1)+.6*gauss(val/minval/1.7-2)),eq=saturation=1.1',  -- .6=exp(-.5)
---TRIPLE GAUSS      formula='lutyuv=.75*(negval-minval)+minval+(64*gauss((255-val)/(255-maxval)/1.7-1)-64*gauss(val/minval/1.5-1)+32*gauss(val/minval/1.5-2))/gauss(0),eq=saturation=1.1',  -- .6=exp(-.5)
---SINGLE SINE WAVE: formula='lutyuv=minval+.75*(negval-minval+8*minval*sin(2*PI*(negval/minval-1)/4)),eq=saturation=1.2',    --PERIOD=AMPLITUDE/2.
---2 SINE WAVES:     formula='lutyuv=minval+.75*(negval-minval)+4*minval*(sin(2*PI*(negval/minval-1)/4)*lt(negval/minval\\,2)+sin(2*PI*(negval-maxval)/minval/4)*lt((maxval-negval)/minval\\,4)),eq=saturation=1.2', 
---ASIN:             formula='lutyuv=minval+255*asin(negval/maxval)^.5/PI*2,eq=saturation=1.2', 
---ASIN ASIN         formula='lutyuv=255*asin(asin(negval/maxval)/PI*2)^.3/PI*2,eq=saturation=1.2', 
---SQRT+SQRT(1-X)    formula='lutyuv=.8*255*(lt(negval\\,128)*(negval/maxval)^.5+gte(negval\\,128)*(1-negval/maxval)^.5),eq=saturation=1.2', 
---SIGNED POWERS     formula='lutyuv=.8*128*(1+sgn(128-val)*abs(1-val/255/.5)^(3^abs(1-val/255/.5))),eq=saturation=1.1', 
---X^(1+X^2)         formula='lutyuv=.75*128*(1+sgn(128-val)*abs(1-val/255/.5)^(1+(2*abs(1-val/255/.5))^2)),eq=saturation=1.1', 
---X^(3^(X^2))       formula='lutyuv=.75*128*(1+sgn(128-val)*abs(1-val/255/.5)^(3^(abs(1-val/255/.5)^2))),eq=saturation=1.1', 
+--eq ONLY:          FILTERS='eq=-1:-0.25:1.1',  
+--50% DROP QUAD GAUSS FILTERS='lutyuv=minval+.4*(negval-minval+128/gauss(0)*(1*gauss((255-val)/(255-maxval)/.9-1)-.6*gauss((255-val)/(255-maxval)/.9-2)-1*gauss(val/minval/.9-1)+.6*gauss(val/minval/.9-2))),eq=1.2:0:1.2',  -- .6=exp(-.5)    negval/minval APPROX (255-val)/(255-maxval)
+--QUAD-GAUSS        FILTERS='lutyuv=.75*(negval-minval)+minval+100/gauss(0)*(1*gauss((255-val)/(255-maxval)/2-1)-.6*gauss((255-val)/(255-maxval)/2-2)-1*gauss(val/minval/1.7-1)+.6*gauss(val/minval/1.7-2)),eq=saturation=1.1',  -- .6=exp(-.5)
+--TRIPLE GAUSS      FILTERS='lutyuv=.75*(negval-minval)+minval+(64*gauss((255-val)/(255-maxval)/1.7-1)-64*gauss(val/minval/1.5-1)+32*gauss(val/minval/1.5-2))/gauss(0),eq=saturation=1.1',  -- .6=exp(-.5)
+--SINGLE SINE WAVE: FILTERS='lutyuv=minval+.75*(negval-minval+8*minval*sin(2*PI*(negval/minval-1)/4)),eq=saturation=1.2',    --PERIOD=AMPLITUDE/2.
+--2 SINE WAVES:     FILTERS='lutyuv=minval+.75*(negval-minval)+4*minval*(sin(2*PI*(negval/minval-1)/4)*lt(negval/minval\\,2)+sin(2*PI*(negval-maxval)/minval/4)*lt((maxval-negval)/minval\\,4)),eq=saturation=1.2', 
+--ASIN:             FILTERS='lutyuv=minval+255*asin(negval/maxval)^.5/PI*2,eq=saturation=1.2', 
+--ASIN ASIN         FILTERS='lutyuv=255*asin(asin(negval/maxval)/PI*2)^.3/PI*2,eq=saturation=1.2', 
+--SQRT+SQRT(1-X)    FILTERS='lutyuv=.8*255*(lt(negval\\,128)*(negval/maxval)^.5+gte(negval\\,128)*(1-negval/maxval)^.5),eq=saturation=1.2', 
+--SIGNED POWERS     FILTERS='lutyuv=.8*128*(1+sgn(128-val)*abs(1-val/255/.5)^(3^abs(1-val/255/.5))),eq=saturation=1.1', 
+--X^(1+X^2)         FILTERS='lutyuv=.75*128*(1+sgn(128-val)*abs(1-val/255/.5)^(1+(2*abs(1-val/255/.5))^2)),eq=saturation=1.1', 
+--X^(3^(X^2))       FILTERS='lutyuv=.75*128*(1+sgn(128-val)*abs(1-val/255/.5)^(3^(abs(1-val/255/.5)^2))),eq=saturation=1.1', 
 
---nullsrc EQUAL RAM  local lavfi=('fps=%s,scale=%%d:%%d,split[vo],%s[vf],nullsrc=s=2x2:r=%s:d=0.01,format=y8[1],[1][vo]scale2ref[1][vo],[1]split[1],crop=iw/%d:ih,pad=iw*(%s):ow/a,lut=0[0],[1]crop=2:2,lut=255,pad=iw+2:ow:1:1:WHITE,pad=iw+2:ow:1:1:GRAY,pad=iw+2:ow:1:1%s[1],[1][0]scale2ref=oh:ceil(ih*2.2/4)*4[1][0],[1]crop=%%d*(%s):ow,lut=255*gt(val\\,74)[1],[1][0]scale2ref=%s:%s[1][0],[1]loop=%s:1,negate=y,%s,format=y8[M],[M][vo]scale2ref=iw:-1[M][vo],[M]loop=%d:2^14,setpts=PTS-(%s)/TB,select=gte(t\\,0),loop=%s:1,negate=y:enable=%s,lut=0:enable=%s,zoompan=%s:d=0:s=%%dx%%d:%s,loop=-1:2^14,setpts=PTS+(%%s-(%s))/TB[M],[vf][M]alphamerge[vf],[vo][vf]overlay=0:0:endall,setsar'):format(o.fps,o.formula,o.fps,o.DUAL,o.RES_MULT,blur,o.RES_MULT,g.w[1],g.h[1],p*o.fps-1,MASK,o.periods-o.periods_skipped,p,p*o.periods_skipped*o.fps,o.INVERT,o.DISABLE,o.zoompan,o.fps,o.lead)    --period FOR loop (TWIRL) setpts (DISCARD FIRST) & select (SKIP).  UNFORTUNATELY A SLOW ANIMATION TAKE AGES TO LOAD (FOR SMOOTH INITIAL TWIRL IN HD).
+--nullsrc EQUAL RAM  local lavfi=('fps=%s,scale=%%d:%%d,split[vo],%s[vf],nullsrc=s=2x2:r=%s:d=0.01,format=y8[1],[1][vo]scale2ref[1][vo],[1]split[1],crop=iw/%d:ih,pad=iw*(%s):ow/a,lut=0[0],[1]crop=2:2,lut=255,pad=iw+2:ow:1:1:WHITE,pad=iw+2:ow:1:1:GRAY,pad=iw+2:ow:1:1%s[1],[1][0]scale2ref=oh:ceil(ih*2.2/4)*4[1][0],[1]crop=%%d*(%s):ow,lut=255*gt(val\\,74)[1],[1][0]scale2ref=%s:%s[1][0],[1]loop=%s:1,negate=y,%s,format=y8[M],[M][vo]scale2ref=iw:-1[M][vo],[M]loop=%d:2^14,setpts=PTS-(%s)/TB,select=gte(t\\,0),loop=%s:1,negate=y:enable=%s,lut=0:enable=%s,zoompan=%s:d=0:s=%%dx%%d:%s,loop=-1:2^14,setpts=PTS+(%%s-(%s))/TB[M],[vf][M]alphamerge[vf],[vo][vf]overlay=0:0:endall,setsar'):format(o.fps,o.FILTERS,o.fps,o.DUAL,o.RES_MULT,blur,o.RES_MULT,g.w[1],g.h[1],p*o.fps-1,MASK,o.periods-o.periods_skipped,p,p*o.periods_skipped*o.fps,o.INVERT,o.DISABLE,o.zoompan,o.fps,o.lead)    --period FOR loop (TWIRL) setpts (DISCARD FIRST) & select (SKIP).  UNFORTUNATELY A SLOW ANIMATION TAKE AGES TO LOAD (FOR SMOOTH INITIAL TWIRL IN HD).
 
 --CAN SNAP GRAPH ON SCRIPT LOAD. local lavfi='setsar=1'..o.format
 -- if W and H then lavfi=('scale=%s:%s,%s'):format(W,H,lavfi) end  --OPTIONAL scale OVERRIDE: SNAP GRAPH STOPS EMBEDDED MPV SNAPPING.

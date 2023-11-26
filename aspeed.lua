@@ -17,11 +17,11 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED.
     max_random_percent=10, --DEFAULT=0. MAX random % DEVIATION FROM PROPER speed. speed UPDATES EVERY HALF A SECOND. E.G. 10%*0.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER. MPV AUTOMATICALLY APPLIES audio-pitch-correction (FILTER scaletempo2?). ISN'T PERFECT, BUT WITHOUT IT THE audio SOUNDS CHIPMUNK.
     max_percent       =20, --SPEED NEVER CHANGES BY MORE. E.G. speed BOUNDED WITHIN [0.8,1.2].
     
-    seek_limit   =2  , --DEFAULT=2   SECONDS. SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit. seek CAUSES AUDIO TO SKIP. (SKIP VS JERK.)
-    resync_delay =30 , --DEFAULT=30  SECONDS. RANGE [1,60]. RESYNC WITH THIS DELAY, COUNTING FROM 0s ON clock.     mp.get_time() LAGS MAYBE 100ms OVER A MINUTE.   mp.get_time() MAY BE BASED ON os.clock(), WHICH IS BASED ON CPU TIME.
+    seek_limit   =  2, --DEFAULT=2   SECONDS. SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit. seek CAUSES AUDIO TO SKIP. (SKIP VS JERK.)
+    resync_delay = 30, --DEFAULT=30  SECONDS. RANGE [1,60]. RESYNC WITH THIS DELAY, COUNTING FROM 0s ON clock.     mp.get_time() LAGS MAYBE 100ms OVER A MINUTE.   mp.get_time() MAY BE BASED ON os.clock(), WHICH IS BASED ON CPU TIME.
     os_sync_delay=.01, --DEFAULT=.01 SECONDS. ACCURACY FOR SYNC TO os.time. E.G. A timer CHECKS SYSTEM clock EVERY 10 MILLISECONDS (FOR THE NEXT TICK) WHENEVER A NEW SYNC IS STARTED. CMD COMMAND "TIME 0>NUL" GIVES 10ms ACCURATE SYSTEM TIME IN WIN10.
-    time_needed  =2  , --DEFAULT=2   SECONDS. CONTROLLER DOES NOTHING NEAR end-file. NO RANDOMIZATION WITHIN 2 SECS OF file-loaded & file-end.
-    timeout      =10 , --DEFAULT=10  SECONDS. audio INSTANCES ALL shutdown IF CONTROLLER BREAKS FOR THIS LONG.
+    time_needed  =  2, --DEFAULT=2   SECONDS. CONTROLLER DOES NOTHING NEAR end-file. NO RANDOMIZATION WITHIN 2 SECS OF file-loaded & file-end.
+    timeout      = 10, --DEFAULT=10  SECONDS. audio INSTANCES ALL shutdown IF CONTROLLER BREAKS FOR THIS LONG.
     -- meta_osd=true,  --DISPLAY astats METADATA (audio STATISTICS). IRONICALLY astats DOESN'T KNOW ANYTHING ABOUT TIME ITSELF, YET IT'S THE BASIS FOR TEN HOUR SYNCHRONY.
     
     key_bindings         ='F3', --DEFAULT='' (NO TOGGLE). CASE SENSITIVE. KEYBOARD TOGGLE WORKS IF MPV HAS ITS OWN WINDOW, BUT NOT BY DEFAULT IN SMPLAYER. 'F3 F4' FOR 2 KEYS. F1 & F2 MIGHT BE autocomplex & automask. S=SCREENSHOT.
@@ -134,7 +134,7 @@ function clock_update() --SIMPLE clock WHICH DOESN'T DANCE AROUND (LIKE A MASK M
 end
 timers.osd=mp.add_periodic_timer(1, clock_update)   
 
-function os_sync()  --os.time() HAS 1s PRECISION WHICH MAY BE IMPROVED TO 10ms, TO SYNC playback-time WITH OTHER MPV INSTANCES. RUN 10ms LOOP UNTIL clock TICKS. 
+function os_sync()  --os.time() HAS 1s PRECISION WHICH MAY BE IMPROVED TO 10ms, TO SYNC playback-time WITH OTHER MPV INSTANCES. RUN 10ms LOOP UNTIL clock TICKS. audio SYNC CAN'T BE BETTER THAN THE EXACT TICK OF THE CLOCK.
     if not time1 and not mp.get_property_bool('seeking') then time1=os.time()  
         timers.os_sync:resume()    --STARTING time.
         timers. resync:resume() 
