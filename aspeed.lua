@@ -10,11 +10,11 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED.
     normalizer='dynaudnorm=p=1:m=100:c=1',  --(DEFAULTS 0.95:10:0 PEAK-TARGET:MAX-GAIN:CORRECTION-DC) ALL SPEAKERS USE THIS NORMALIZER.
     -- title_clock_only=true,   --OVERRIDE: NO audio EFFECT, EXCEPT FOR normalizer.   THIS option MEANS THE clock DOESN'T HAVE TO BE COPY/PASTED INTO OTHER SCRIPT/S (THIS SCRIPT CONTROLS IT). A video CLOCK MAY BE FANCY & DANCE AROUND, BUT NOT THIS ONE.
     
-    -- extra_devices_index_list={2}, --EXTRA DEVICES. TRY {2,3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. 1=auto WHICH MAY DOUBLE-OVERLAP audio TO PRIMARY DEVICE. USER CAN GUESS INDEXES, 3=VIRTUALBOX USB STEREO. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.     EACH MPV USES APPROX 2% CPU, + 40MB RAM.
+    -- extra_devices_index_list={2}, --EXTRA DEVICES. TRY {2,3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. 1=auto WHICH MAY DOUBLE-OVERLAP audio TO PRIMARY DEVICE. 3=VIRTUALBOX USB STEREO. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.     EACH MPV USES APPROX 1% CPU, + 40MB RAM.
     start=.7, --DEFAULT=.7 SECONDS  APPROX: .5=SSD .7=AUTOCOMPLEX 1=VIRTUALBOX 2=HDD.  INITIAL HEADSTART OF audio INSTANCES. EACH mpv TAKES TIME TO LOAD, & THEY AREN'T LAUNCHED UNTIL AFTER playback_start (WHICH WORKS FINE ON SSD).
     DELAY=.5, --DEFAULT=.5 SECONDS. INITIAL DELAY OF CONTROLLER volume (SUPPORTS FORMULAIC TIMELINE SWITCH). <start BECAUSE GRAPH INSERTION TAKES .2s. NOT STRICTLY "adelay" NOR "audio-delay", HENCE "DELAY" (NOT CHANGING TIMESTAMPS).   INSERTING SILENCE @START SEEMS TO COMPLICATED (TIMESTAMP ISSUE), SO INITIAL HALF-SECOND audio IS LOST.
     
-    max_random_percent=10, --DEFAULT=0. MAX random % DEVIATION FROM PROPER speed. speed UPDATES EVERY HALF A SECOND. E.G. 10%*0.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER. MPV AUTOMATICALLY APPLIES audio-pitch-correction (FILTER scaletempo2?). ISN'T PERFECT, BUT WITHOUT IT THE audio SOUNDS CHIPMUNK.
+    max_random_percent=10, --DEFAULT=0. MAX random % DEVIATION FROM PROPER speed. speed UPDATES EVERY HALF A SECOND. E.G. 10%*.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER.
     max_percent       =20, --SPEED NEVER CHANGES BY MORE. E.G. speed BOUNDED WITHIN [0.8,1.2].
     
     seek_limit   =  2, --DEFAULT=2   SECONDS. SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit. seek CAUSES AUDIO TO SKIP. (SKIP VS JERK.)
@@ -32,7 +32,8 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED.
             'osd-font-size 16','osd-border-size 1','osd-scale-by-window no',   --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
             'image-display-duration inf','video-timing-offset 1', --STOPS IMAGES FROM SNAPPING MPV. DEFAULT offset=.05 SECONDS ALSO WORKS.
             'hwdec auto-copy','vd-lavc-threads 0',    --IMPROVED PERFORMANCE FOR LINUX .AppImage.  hwdec=HARDWARE DECODER. vd-lavc=VIDEO DECODER-LIBRARY AUDIO VIDEO CORES (0=AUTO). FINAL video-zoom CONTROLLED BY SMPLAYER→GPU.
-            -- 'osd-color 1/.5','osd-border-color 0/.5',  --DEFAULTS 1/1,0/1. OPTIONAL: FOR clock. y/a = brightness/alpha (a=OPAQUENESS). TRANSPARENCY MAY MEAN clock HAS TO BE TWICE AS BIG.
+            -- 'audio-pitch-correction no' --DEFAULT=yes. no=CHIPMUNK MODE. DISABLES scaletempo2(?) FILTER. SCALING TEMPO IS FUNDAMENTAL TO RANDOMIZATION.
+            -- 'osd-color 1/.5','osd-border-color 0/.5',  --DEFAULTS 1/1,0/1. OPTIONAL: FOR clock. y/a = brightness/alpha (a=OPAQUENESS). A TRANSPARENT clock CAN BE TWICE AS BIG.
            },
 }
 local o,utils,timers = options,require 'mp.utils',{}    --ABBREV.
@@ -206,7 +207,7 @@ for _,timer in pairs(timers) do timer:kill() end    --timers CARRY OVER TO NEXT 
 
 mp.observe_property('af-metadata/'..label, 'native', function(arg) pcall(set_speed,arg) end)   --arg='af-metadata/aspeed'    THIS TRIGGERS EVERY HALF A SECOND. astats WORKS LIKE cropdetect. pcall IS SAFER WHEN end-file TRIGGERS (OR ELSE SCRIPT MAY FAIL TO DELETE DATA FILE). pcall SIMPLIFIES CODE BY REMOVING RETURNS.
 mp.observe_property('seeking','bool',function() initial_time_pos=nil end) --RESET SAMPLE COUNT WHENEVER THE USER SEEKS.
-mp.observe_property('pause'  ,'bool',function() initial_time_pos=nil end) --ON pause TOO?
+-- mp.observe_property('pause'  ,'bool',function() initial_time_pos=nil end) --ON pause TOO?
 
 
 ----COMMENT SECTION. MPV CURRENTLY HAS A 10 HOUR BACKWARDS SEEK BUG (BACKWARDS BUFFER ISSUE IF BACK-SEEK MORE THAN AN HOUR?).  

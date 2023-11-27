@@ -6,7 +6,9 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED. TO REMOVE A COMPONENT SET ITS a
     bottom_scale = .5,             --REMOVE FOR NO BOTTOM HALF (vflip). RANGE [0,1].   FUTURE VERSION COULD SUPPORT SURROUND SOUND FOR BOTTOM HALF.
     -- final_colormix='gb=1:bb=0', --UNCOMMENT FOR GREEN & RED, INSTEAD OF BLUE & RED (DEFAULT).  FOR BLACK: 'rr=0:gg=0:bb=0'  &  FOR PLAIN WHITE: 'gr=1:gb=1:rb=1:br=1'   BLUE, DARKBLUE & BLACK ARE COMPATIBLE WITH cropdetect (autocrop), BUT RED TIPS MAY INTERFERE WHEN SIDE-BARS AREN'T PERFECT BLACK. RED LIPS MAKE SENSE, BUT WHITE BATONS FOR TEETH IS AN ALTERNATIVE.
     
-    period   =19/25,   --DEFAULT=1 SECONDS. SET TO 0 FOR STATIONARY (GSUBS "t/%s"→"0" ETC). USE EXACT FRAME # RATIO, BECAUSE zoompan USES FRAME #. 19/25=79BPM (BEATS PER MINUTE). UNLIKE A MASK, THESE ANIMATIONS DON'T HAVE TO BE PERIODIC.
+    fps   =   25, --DEFAULT=25 FRAMES PER SECOND. SCRIPT LIMITS fps & scale. 
+    period=19/25, --DEFAULT=1 SECOND. SET TO 0 FOR STATIONARY. (GSUBS "n/%s"→"0" ETC). USE EXACT fps RATIO (E.G. 19/25=79BPM, BEATS PER MINUTE). UNLIKE A MASK, MOTION MAY NOT BE PERIODIC.
+    
     position ='.75+.05*(1-cos(2*PI*n/%s))*mod(floor(n/%s)+1\\,2)',    --%s=fps*period  DEFAULT position=.5, RANGE [0,1]. MAY DEPEND ON TIME t & FRAME # n. mod ACTS AS ON/OFF SWITCH.   SPECTRUM POSITION FROM SCREEN TOP (RATIO), BEFORE autocrop.   THIS EXAMPLE MOVES DOWN→UP→RIGHT→LEFT BY MODDING. TIME-DEPENDENCE SHOULD MATCH OTHER SCRIPT/S, LIKE automask. A BIG-SCREEN TV HELPS WITH POSITIONING.
     rotate   =      'PI/16*sin(2*PI*n/%s)*mod(floor(n/%s)\\,2)',      --%s=fps*period  RADIANS clockWISE, DEFAULT 0. MAY DEPEND ON t & n. PI/16=.2RADS=11°   MAY CLIP @LARGE angle. 
     zoompan  = '1+.19*(1-cos(2*PI*(in/%s-.2)))*mod(floor(in/%s-.2)\\,2):0:0', --%s=fps*period  in=INPUT-FRAME-NUMBER  zoom:x:y=1:0:0 BY DEFAULT (MINIMUM).  BEFORE A CRAFT ZOOMS RIGHT IT ROTATES, HENCE 20% DELAY.  19% MAY APPROX MATCH GRAPHS LIKE automask @20%, BECAUSE autocrop MAY MAGNIFY IT (DEPENDING ON BLACK BARS). 
@@ -16,16 +18,17 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED. TO REMOVE A COMPONENT SET ITS a
     LR_OVERLAP         =    2, --DEFAULT=2 PIXELS. CALIBRATES SPECTRUM BY MOVING RIGHT & LEFT CHANNELS ON TOP OF EACH OTHER, @CENTER (DATA DRAG). 
     -- CALIBRATION={{'100:1',1},{'200:1',2},{'300:1',1},{'400:1',2},{'500:1',1},{'600:1',2},{'700:1',1},{'800:1',2},{'900:1',1},{'1000:1',2}}, --{{'frequency(Hz):beep_factor',volume},...}. volume & beep_factor RANGE [0,1]. sine WAVES FOR CALIBRATION. MAY ALSO HELP TEST NORMALIZERS, & DECORATE "TEETH". PEAKS ARE A BIT LOW.    SPECTRUM CALIBRATES VIA 3 NUMBERS: freqs_lead freqs_sr LR_OVERLAP   SYNCHRONY IS freqs_lead.
     
-    freqs_highpass     =   25, --DEFAULT= 10 Hz. DAMPENS SUB-BASS & DC, IN THE MIDDLE.
+    freqs_highpass     =   25, --DEFAULT= 25 Hz. DAMPENS SUB-BASS & DC, IN THE MIDDLE. 10 Hz LETS THROUGH TOO MUCH SUB-BASS.
     freqs_alpha        =    1, --DEFAULT=  1, RANGE [0,1]. OPAQUENESS OF SPECTRAL DATA CURVE.
     freqs_fps          = 25/2, --DEFAULT=25/2. 25fps MAY CAUSE LAG. THIS & freqs_clip_h HELP WITH PERFORMANCE.
     -- freqs_mode      ='bar', --DEFAULT=line. CHOOSE line OR bar (OR dot). GRAPH OPTIMIZED ONLY FOR line.
     freqs_win_size     =  512, --DEFAULT=512, INTEGER RANGE [128,2048]. APPROX # OF DATA POINTS. THINNER CURVE WITH SMALLER #. NEEDS AT LEAST 256 FOR PROPER CALIBRATION. TOO MANY DATA POINTS LOOK BAD.
     freqs_averaging    =    2, --DEFAULT=  2. INTEGER, MIN 1. STEADIES SPECTRUM. SLOWS RESPONSE TO AUDIO. TRY 3 IF MORE fps.
-    freqs_magnification=  1.4, --DEFAULT=1.4. INCREASES CURVE HEIGHT. REDUCES CPU CONSUMPTION, BUT THE LIPS LOSE TRACTION. L & R CHANNELS ARE LIKE A DUAL ALIEN MOUTH (LIKE HOW HUMANS ARE BIPEDAL). 
+    freqs_magnification=  1.3, --DEFAULT=1.3. INCREASES CURVE HEIGHT. REDUCES CPU CONSUMPTION, BUT THE LIPS LOSE TRACTION. L & R CHANNELS ARE LIKE A DUAL ALIEN MOUTH (LIKE HOW HUMANS ARE BIPEDAL).    TO INCREASE MAGNIFICATION A NEW FILTER IS NEEDED TO STOP EXCESSIVE SHARPNESS.
     freqs_clip_h       = .333, --DEFAULT= .5. MINIMUM=grid_height (CAN'T CLIP LOWER THAN GRID). REDUCES CPU USAGE BY CLIPPING CURVE (CROPS THE TOP OFF SHARP SIGNAL). THE NEED FOR CLIPPING, LOW fps & size PROVE THE CODE MAY BE SLOW.
     volume_alpha       =   .5, --DEFAULT= .5, RANGE [0,1]. SET TO 0 TO REMOVE BARS (FEET REMAIN). OPAQUENESS OF VOLUME BARS. 
     volume_fade        =    0, --DEFAULT=  0, RANGE [0,1].
+    -- volume_dm       =    1, --DEFAULT=  0 (NO DISPLAYMAX LINES). ALSO SET volume_alpha=1 (& pause) TO SEE THESE.
     volume_width       =  .04, --DEFAULT=.04, RANGE (0,1]. WIDTH OF BAR RELATIVE TO VIDEO.
     volume_height      =  .15, --DEFAULT= .2, RANGE (0,1]. HEIGHT OF BAR (BEFORE STACKING FEET), RELATIVE TO SCREEN. autocrop MAY MAGNIFY ITS SIZE, BY ACCIDENT. MOVING THE BAR UPWARD WOULD TAKE CENTER STAGE (THE NOSE MIGHT BE DEAD-CENTER).
     grid_height        =   .1, --DEFAULT=.15, RANGE (0,1]. GRID HEIGHT RELATIVE TO SCREEN, BEFORE STACKING FEET.  GRID TICKS ARE LIKE volume BATONS, OR TEETH BRACES FOR THE LIPS (freqs).
@@ -34,11 +37,11 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED. TO REMOVE A COMPONENT SET ITS a
     feet_height        =  .05, --DEFAULT=.05, RANGE [.01,1]. RELATIVE TO BARS.  FEET (INNER) LIGHT UP @MAX VOLUME.
     
     max_hours=5,          --DISABLE SPECTRUM IF MP4 OR MP3 LONGER THAN THIS AMOUNT. 0% CPU USAGE FOR 10 HOUR MP3 MAYBE REQUIRED. 
-    fps      =25,         --DEFAULT=25 FRAMES PER SECOND. SCRIPT LIMITS fps & scale. 
-    -- scale={1680,1052}, --DEFAULT=display SIZE, OR OTHERWISE [vo] SIZE. scale OVERRIDE.   WITH MY EXACT CODE YOU LOSE QUALITY IF autocrop CROPS OFF BLACK BARS (MAYBE USE [vo] INSTEAD OF display, EXCEPT THAT CAUSES MORE CPU USAGE OR ELSE EMBEDDED MPV SNAPS IF ANY OTHER SCRIPT TRIES TO REDUCE→display).
+    -- scale ={1680,1052},--DEFAULT=display SIZE, OR OTHERWISE [vo] SIZE. scale OVERRIDE.   WITH MY EXACT CODE YOU LOSE QUALITY IF autocrop CROPS OFF BLACK BARS (MAYBE USE [vo] INSTEAD OF display, EXCEPT THAT CAUSES MORE CPU USAGE OR ELSE EMBEDDED MPV SNAPS IF ANY OTHER SCRIPT TRIES TO REDUCE→display).
     
     key_bindings         ='F1',--DEFAULT='' (NO TOGGLE). CASE SENSITIVE. F=FULLSCREEN NOT FREQS, O=OSD, C=autocrop. V FOR VOLUME? S=SCREENSHOT NOT SPECTRUM. 'F1 F2' FOR 2 KEYS.    KEYBOARD TOGGLE WORKS IF MPV HAS ITS OWN WINDOW, BUT NOT BY DEFAULT IN SMPLAYER.
     toggle_on_double_mute=.5,  --DEFAULT=0 SECONDS (NO TOGGLE). TIMEOUT FOR DOUBLE-MUTE-TOGGLE. ALL LUA SCRIPTS CAN BE TOGGLED USING DOUBLE MUTE.
+    -- osd_on_toggle     ='af\n%s\n\nvf\n%s\n\nlavfi-complex\n%s', --DISPLAYS ALL ACTIVE FILTERS AFTER TOGGLE. END-USERS MAY INSPECT/SCREENSHOT ALL ACTIVE OPEN-SOURCE CODES BY DOUBLE-CLICKING MUTE. %s=string. SET TO '' TO CLEAR osd.
     
     config={
             'keepaspect no','geometry 50%',   --ONLY NEEDED IF MPV HAS ITS OWN WINDOW, OUTSIDE SMPLAYER. FREE aspect & 50% INITIAL SIZE.
@@ -49,7 +52,7 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED. TO REMOVE A COMPONENT SET ITS a
 }
 local o=options   --ABBREV. options.
 
-for key,val in pairs({volume_height=.2,grid_height=.15,period=1,position='.5',rotate='0',zoompan='1:0:0',freqs_lead=.08,freqs_sr=2010,LR_OVERLAP=2,freqs_highpass=10,freqs_alpha=1,freqs_fps=25/2,freqs_mode='line',freqs_win_size=512,freqs_averaging=2,freqs_magnification=1.4,freqs_clip_h=.5,volume_alpha=.5,volume_fade=0,volume_width=.04,grid_thickness=.1,feet_alpha=1,feet_height=.05,fps=25,scale={},key_bindings='',toggle_on_double_mute=0,config={}})
+for key,val in pairs({volume_height=.2,grid_height=.15,period=1,position='.5',rotate='0',zoompan='1:0:0',freqs_lead=.08,freqs_sr=2010,LR_OVERLAP=2,freqs_highpass=25,freqs_alpha=1,freqs_fps=25/2,freqs_mode='line',freqs_win_size=512,freqs_averaging=2,freqs_magnification=1.3,freqs_clip_h=.5,volume_alpha=.5,volume_fade=0,volume_dm=0,volume_width=.04,grid_thickness=.1,feet_alpha=1,feet_height=.05,fps=25,scale={},key_bindings='',toggle_on_double_mute=0,config={}})
 do if not o[key] then o[key]=val end end --ESTABLISH DEFAULTS. 
 
 for _,option in pairs(o.config) do mp.command('no-osd set '..option) end    --APPLY config BEFORE scripts.
@@ -74,10 +77,10 @@ if TOP              then ORIENTATION=TOP   ..',pad=0:ih*2:0:0:BLACK@0'     end  
 if         BOTTOM   then ORIENTATION=BOTTOM..',pad=0:ih*2:0:oh-ih:BLACK@0' end   --UPSIDE DOWN. PAD DOUBLE.
 if TOP and BOTTOM   then ORIENTATION=('split[D],%s[U],[D]%s[D],[U][D]vstack'):format(TOP,BOTTOM) end  --TOP,BOTTOM = [U],[D]
 if o.final_colormix then ORIENTATION=('colorchannelmixer=%s,%s'):format(o.final_colormix,ORIENTATION) end   --MIX BEFORE vstack.
+function f(arg) return math.floor(arg*1e3)/1e3 end  --PRECISION LIMITER FOR freqs_clip_h. FINAL CODE ON display & INSPECTION SHOULD LOOK GOOD. AN ALTERNATIVE IS TO USE STRINGS FOR EVERYTHING, BUT THAT'S HARDER.
 
-local lavfi=('[aid%%d]asplit[ao]%s,aformat=s16:channel_layouts=stereo,dynaudnorm=p=1:m=100:c=1:b=1,asplit[af],aformat=s16,showvolume=%s:0:%s:8:%s:t=0:v=0:o=v,colorchannelmixer=gg=0:bg=1:aa=%s,split[BAR],crop=iw/2*3/4:ih*(%s),lut=a=255*(%s),pad=iw*4/3:ih+(ow-iw)/a:(ow-iw)/2:oh-ih:WHITE@%s,split,hstack[FEET],[BAR][FEET]vstack,split=3[VOL][BAR],crop=iw/2:ih:0,pad=iw/%s:0:0:0:BLACK@0,split=10,hstack=10,crop=iw-4:ih:iw-ow,pad=iw+4:0:0:0:BLACK@0[LGRID],[BAR]crop=iw/2:ih:iw/2,pad=iw/%s:0:ow-iw:0:BLACK@0,split=10,hstack=10,crop=iw-4:ih:0,pad=iw+4:0:ow-iw:0:BLACK@0[RGRID],[LGRID][RGRID]hstack,pad=0:ih/(%s):0:oh-ih:BLACK@0[GRID],[af]aformat=s16:%s,asetpts=PTS-(%s)/TB,apad,highpass=%s,dynaudnorm=p=1:m=100:c=1:b=1,aformat=s16,showfreqs=256x512:mode=%s:ascale=lin:fscale=lin:win_size=%s:win_func=parzen:averaging=%s:colors=BLUE|RED,fps=%s,crop=iw:ceil(ih*(%s)/4)*4:0:ih-oh,format=rgb24,scale=iw*2:-1,avgblur,lutrgb=255*gt(val\\,140):0:255*gt(val\\,140),avgblur=2,lutrgb=255*gt(val\\,90):0:255*gt(val\\,90),format=rgb32,split[L],colorchannelmixer=br=1:ar=%s:rr=0:bb=0:aa=0[R],[L]colorchannelmixer=ab=%s:rr=0:aa=0,hflip[L],[GRID][R]scale2ref=iw*2-(%s):ih,overlay=W-w:0:endall[GRID],[GRID][L]overlay=0:0:endall,scale=ceil(iw/8)*8:ceil(ih/4)*4,split=3[HIGHR][LOWS],crop=iw/4:ih:0[HIGHL],[LOWS]crop=iw/2,colorchannelmixer=rr=0:bb=0:rb=1:br=1[LOWS],[HIGHR]crop=iw/4:ih:iw-ow[HIGHR],[HIGHL][LOWS][HIGHR]hstack=3[vid],[VOL][vid]scale2ref=floor(iw*%s/4)*4:ih*(%s)[VOL][vid],[vid][VOL]overlay=(W-w)/2:H-h,%s,setpts=PTS-STARTPTS,rotate=%s:iw:ih:BLACK@0,zoompan=%s:0:%%dx%%d:%s[vid],%%s,split[T],setpts=PTS-STARTPTS[vo],[vo][vid]overlay=0:H*(%s)-h/2[vo],[T]select=lt(n\\,2),trim=end_frame=1,setpts=PTS-1/FRAME_RATE/TB[T],[T][vo]concat,trim=start_frame=1,setsar=1[vo]')
-     :format(CALIBRATION,o.fps,math.max(100,1080*o.volume_height),o.volume_fade,o.volume_alpha,o.feet_height,o.feet_alpha,o.feet_alpha*.25,o.grid_thickness,o.grid_thickness,o.grid_height/o.freqs_clip_h,o.freqs_sr,o.freqs_lead,o.freqs_highpass,o.freqs_mode,o.freqs_win_size,o.freqs_averaging,o.freqs_fps,o.freqs_clip_h/o.freqs_magnification,o.freqs_alpha,o.freqs_alpha,o.LR_OVERLAP,o.volume_width,o.volume_height/o.freqs_clip_h,ORIENTATION,o.rotate,o.zoompan,o.fps,o.position)    --%s SUBS ('2+1'=3 ETC). fps FOR volume & zoompan. 1080p FOR APPROX RES OF volume. feet_alpha REPEATS FOR INNER & OUTER FEET. freqs_clip_h CROPS freqs & PADS volume & GRID. freqs_alpha REPEATS FOR L & R CHANNELS. 
-
+local lavfi=('[aid%%d]asplit[ao]%s,aformat=s16:channel_layouts=stereo,dynaudnorm=p=1:m=100:c=1:b=1,asplit[af],aformat=s16,showvolume=%s:0:%s:8:%s:t=0:v=0:o=v:dm=%s,colorchannelmixer=gg=0:bg=1:aa=%s,split[BAR],crop=iw/2*3/4:ih*(%s),lut=a=255*(%s),pad=iw*4/3:ih+(ow-iw)/a:(ow-iw)/2:oh-ih:WHITE@%s,split,hstack[FEET],[BAR][FEET]vstack,split=3[VOL][BAR],crop=iw/2:ih:0,pad=iw/%s:0:0:0:BLACK@0,split=10,hstack=10,crop=iw-4:ih:iw-ow,pad=iw+4:0:0:0:BLACK@0[LGRID],[BAR]crop=iw/2:ih:iw/2,pad=iw/%s:0:ow-iw:0:BLACK@0,split=10,hstack=10,crop=iw-4:ih:0,pad=iw+4:0:ow-iw:0:BLACK@0[RGRID],[LGRID][RGRID]hstack,pad=0:ih/(%s):0:oh-ih:BLACK@0[GRID],[af]aformat=s16:%s,asetpts=PTS-(%s)/TB,apad,highpass=%s,dynaudnorm=p=1:m=100:c=1:b=1,aformat=s16,showfreqs=256x512:mode=%s:ascale=lin:fscale=lin:win_size=%s:win_func=parzen:averaging=%s:colors=BLUE|RED,fps=%s,crop=iw:ceil(ih*(%s)/4)*4:0:ih-oh,format=rgb24,scale=iw*2:-1,avgblur,lutrgb=255*gt(val\\,140):0:255*gt(val\\,140),avgblur=2,lutrgb=255*gt(val\\,90):0:255*gt(val\\,90),format=rgb32,split[L],colorchannelmixer=br=1:ar=%s:rr=0:bb=0:aa=0[R],[L]colorchannelmixer=ab=%s:rr=0:aa=0,hflip[L],[GRID][R]scale2ref=iw*2-(%s):ih,overlay=W-w:0:endall[GRID],[GRID][L]overlay=0:0:endall,scale=ceil(iw/8)*8:ceil(ih/4)*4,split=3[HIGHR][LOWS],crop=iw/4:ih:0[HIGHL],[LOWS]crop=iw/2,colorchannelmixer=rr=0:bb=0:rb=1:br=1[LOWS],[HIGHR]crop=iw/4:ih:iw-ow[HIGHR],[HIGHL][LOWS][HIGHR]hstack=3[vid],[VOL][vid]scale2ref=floor(iw*%s/4)*4:ih*(%s)[VOL][vid],[vid][VOL]overlay=(W-w)/2:H-h,%s,setpts=PTS-STARTPTS,rotate=%s:iw:ih:BLACK@0,zoompan=%s:0:%%dx%%d:%s[vid],%%s,split[T],setpts=PTS-STARTPTS[vo],[vo][vid]overlay=0:H*(%s)-h/2[vo],[T]select=lt(n\\,2),trim=end_frame=1,setpts=PTS-1/FRAME_RATE/TB[T],[T][vo]concat,trim=start_frame=1,setsar=1[vo]')
+     :format(CALIBRATION,o.fps,math.max(100,1080*o.volume_height),o.volume_fade,o.volume_dm,o.volume_alpha,o.feet_height,o.feet_alpha,o.feet_alpha*.25,o.grid_thickness,o.grid_thickness,f(o.grid_height/o.freqs_clip_h),o.freqs_sr,o.freqs_lead,o.freqs_highpass,o.freqs_mode,o.freqs_win_size,o.freqs_averaging,o.freqs_fps,f(o.freqs_clip_h/o.freqs_magnification),o.freqs_alpha,o.freqs_alpha,o.LR_OVERLAP,o.volume_width,f(o.volume_height/o.freqs_clip_h),ORIENTATION,o.rotate,o.zoompan,o.fps,o.position)    --%s SUBS ('2+1'=3 ETC). fps FOR volume & zoompan. 1080p FOR APPROX RES OF volume. feet_alpha REPEATS FOR INNER & OUTER FEET. freqs_clip_h CROPS freqs & PADS volume & GRID. freqs_alpha REPEATS FOR L & R CHANNELS. 
 
 
 ----lavfi            =graph  (SPECTRUM) LIBRARY-AUDIO-VIDEO-FILTER LIST. SELECT FILTER NAME TO HIGHLIGHT IT (NO WORD-WRAP). SOME PAIR UP. lavfi-complex MAY COMBINE MANY audio & video INPUTS. %% SUBS OCCUR LATER. A lavfi string IS LIKE DNA & CAN CREATE ANY CREATURE. SEE ffmpeg-filters MANUAL.   TIMESTAMP FRAME [T] CODE EXISTS JUST TO SYNC THE MOVING SPECTRUM WITH OTHER GRAPHS, LIKE automask. [T] CODE ALWAYS SYNCS zoompan BTWN VARIOUS GRAPHS, EVEN SUB-CLIPS WITH OFF TIMESTAMPS (IMPOSSIBLE TO MANUALLY ENTER CORRECT NUMBERS, LIKE time-pos).
@@ -120,7 +123,7 @@ function file_loaded()
     if not (W and H) then W,H = 1024,512 end  --RAW SPECTRUM IF [vo] DOESN'T EXIST (RAW .MP3) & display SIZE UNAVAILABLE (LINUX). APPROX SIZE.
     W,H = math.ceil(W/4)*4,math.ceil(H/4)*4     --MULTIPLES OF 4 NECESSARY FOR PERFECT overlay. 
     
-    ----5 CASES. 1) JPEG. 2) MP4 LIMITS. 3) MP3 SPECTRUM. 4) MP3+JPEG. 5) MP4.      INSTEAD OF EVERY SCRIPT SETTING ITS OWN lavfi-complex, THEY MAY RELY ON THIS SCRIPT. E.G. autocrop JPEG USES MORE CPU IF COMBINED WITH autocomplex, BECAUSE IT RE-SCALES RUNNING video. ANIME MAY PRODUCE STILL FRAME ONLY WITHOUT THIS SCRIPT.
+    ----5 CASES. 1) JPEG. 2) MP4 LIMITS. 3) MP3 SPECTRUM. 4) MP3+JPEG. 5) MP4.      INSTEAD OF EVERY SCRIPT SETTING ITS OWN lavfi-complex, THEY MAY RELY ON THIS SCRIPT. E.G. autocrop JPEG USES MORE CPU IF COMBINED WITH autocomplex, BECAUSE IT RE-SCALES RUNNING video. JPEG ANIME MAY PRODUCE A STILL FRAME ONLY, WITHOUT THIS SCRIPT.
     local complex,aid,vid,image,duration = nil,mp.get_property_number('current-tracks/audio/id'),mp.get_property_number('current-tracks/video/id'),mp.get_property_bool('current-tracks/video/image'),mp.get_property_number('duration')  --id IS nil OR INTEGER. MULTIPLES OF 4 ONLY.
     if vid and o.max_hours and duration and duration>o.max_hours*60*60 then ORIENTATION='' end  --5 HOURS EQUIVALENT TO NO SPECTRUM.
     
@@ -144,22 +147,22 @@ timer=mp.add_periodic_timer(o.toggle_on_double_mute, function()end)  --CREATE DO
 timer.oneshot=true
 timer:kill()    --CARRIES OVER SAFELY TO NEXT video IN PLAYLIST.
 
-function on_toggle(mute_observed)
-    if mute_observed and not timer:is_enabled() then timer:resume() --if mute_observed DON'T TOGGLE UNLESS TIMER'S RUNNING.
+function on_toggle(mute)
+    if mute=='mute' and not timer:is_enabled() then timer:resume() --if mute_observed DON'T TOGGLE UNLESS TIMER'S RUNNING.
         return end
     
     OFF = not OFF    --REMEMBERS TOGGLE STATE.
     if not OFF then file_loaded()   --TOGGLE ON.    UNFORTUNATELY THIS SNAPS COVER ART IN SMPLAYER.
-        return end  --TOGGLE OFF, BELOW.
-    timer:kill()
+    else timer:kill()    --TOGGLE OFF, BELOW.
 
-    local aid,vid,image = mp.get_property_number('current-tracks/audio/id'),mp.get_property_number('current-tracks/video/id'),mp.get_property_bool('current-tracks/video/image')  --id IS nil OR INTEGER.
-    if not aid or ORIENTATION=='' then return end --CASES 1,2. NO SPECTRUM, NO TOGGLE OFF (DO NOTHING).  5 CASES. 1) JPEG. 2) MP4 LIMITS. 3) MP3 SPECTRUM. 4) MP3+JPEG. 5) MP4.
-    
-    local complex=('[aid%d]anull[ao]'):format(aid)    --CASE 3: RAW audio. 
-    if image then complex=('[vid%d]scale=%d:%d[vo],[aid%d]%s[C],[C][vo]overlay,setsar=1[vo]'):format(vid,W,H,aid,CANVAS) end   --CASE 4: image WITH audio. HARDEST TO TOGGLE OFF WITHOUT SNAPPING OTHER SCRIPTS WHICH RELY ON LOOPED COVER ART. showwaves PREPS A 1x1 TIMESTAMP CANVAS [C]. NEEDED FOR seeking. RESAMPLE audio FROM 44.1kHz TO 128Hz. 
-    if not image and vid then complex=('%s,[vid%d]fps=%s,scale=%d:%d,setsar=1[vo]'):format(complex,vid,o.fps,W,H) end   --CASE 5 BUILDS ON CASE 3, BY LIMITING THE video.
-    mp.set_property('lavfi-complex',complex) 
+        local aid,vid,image = mp.get_property_number('current-tracks/audio/id'),mp.get_property_number('current-tracks/video/id'),mp.get_property_bool('current-tracks/video/image')  --id IS nil OR INTEGER.
+        if not aid or ORIENTATION=='' then return end --CASES 1,2. NO SPECTRUM, NO TOGGLE OFF (DO NOTHING).  5 CASES. 1) JPEG. 2) MP4 LIMITS. 3) MP3 SPECTRUM. 4) MP3+JPEG. 5) MP4.
+        
+        local complex=('[aid%d]anull[ao]'):format(aid)    --CASE 3: RAW audio. 
+        if image then complex=('[vid%d]scale=%d:%d[vo],[aid%d]%s[C],[C][vo]overlay,setsar=1[vo]'):format(vid,W,H,aid,CANVAS) end   --CASE 4: image WITH audio. HARDEST TO TOGGLE OFF WITHOUT SNAPPING OTHER SCRIPTS WHICH RELY ON LOOPED COVER ART. showwaves PREPS A 1x1 TIMESTAMP CANVAS [C]. NEEDED FOR seeking. RESAMPLE audio FROM 44.1kHz TO 128Hz. 
+        if not image and vid then complex=('%s,[vid%d]fps=%s,scale=%d:%d,setsar=1[vo]'):format(complex,vid,o.fps,W,H) end   --CASE 5 BUILDS ON CASE 3, BY LIMITING THE video.
+        mp.set_property('lavfi-complex',complex) end
+    if o.osd_on_toggle then mp.osd_message(o.osd_on_toggle:format(mp.get_property_osd('af'),mp.get_property_osd('vf'),mp.get_property_osd('lavfi-complex')), 5) end  --OPTIONAL osd, 5 SECONDS.
 end
 for key in (o.key_bindings):gmatch('%g+') do mp.add_key_binding(key, 'toggle_complex_'..key, on_toggle) end --MAYBE SHOULD BE 'toggle_spectrum_' BECAUSE THIS TOGGLE ONLY TURNS OFF/ON THE SPECTRUM.
 mp.observe_property('mute', 'bool', on_toggle)

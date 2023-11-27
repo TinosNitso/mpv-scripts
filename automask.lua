@@ -1,4 +1,4 @@
-----AUTO ANIMATED MASK GENERATOR & MERGE SCRIPT, FOR VIDEO & IMAGES, IN MPV, WITH DOUBLE-mute TOGGLE. APPLIES ANY LIST OF FILTERS (lutyuv FORMULA) TO MASKED REGION, WITH MOVING POSITIONS, ROTATIONS & ZOOM. INVERTS/TOGGLES. FULLY PERIODIC FOR BEST RES & PERFORMANCE. IT'S LIKE AN OPTOMETRIST FOR TELEVISION.
+----AUTO ANIMATED MASK GENERATOR & MERGE SCRIPT, FOR VIDEO & IMAGES, IN MPV, WITH INSTANT DOUBLE-mute TOGGLE. APPLIES ANY LIST OF FILTERS (lutyuv FORMULA) TO MASKED REGION, WITH MOVING POSITIONS, ROTATIONS & ZOOM. INVERTS/TOGGLES. FULLY PERIODIC FOR BEST RES & PERFORMANCE. IT'S LIKE AN OPTOMETRIST FOR TELEVISION.
 ----WORKS WITH JPG, PNG, GIF, BMP, MP3 COVER ART, MP4 ETC, IN SMPLAYER & MPV (DRAG & DROP). .TIFF ONLY DISPLAYS 1 LAYER (BUG). NO WEBP, PDF OR TXT. START/TOGGLE SLOW DUE TO LACK OF BUFFERING. RAW JPEG & COVER ART USE 0% CPU. (COMBINE automask WITH autocomplex.lua FOR JPEG ANIME). CHANGING TRACKS (MP3 TAGS) SUPPORTED.
 ----LENS lutyuv FORMULA USES A QUARTIC REDUCTION +- gauss CORRECTIONS FOR BLACK-IS-BLACK & WHITE-IS-WHITE. COLORS USE QUARTER POWER LAW FOR NON-LINEAR SATURATION. A BIG-SCREEN NEGATIVE IS TOO BRIGHT, SO INSTEAD OF HALVING BRIGHTNESS A QUARTIC IS SHARPER. gauss SIZES ARE minval*2 SHIFTED 1.5x, BUT TUNING EACH # SEEMS TOO DIFFICULT - TOO MANY VIDEOS TO CHECK. IT'S A STATISTICAL PROBLEM - HIT & MISS. ONE IDEA IS TO VARY THE FILTERS WITH TIMELINE SWITCHES.
 ----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH IS A PROBLEM ON MACOS (A BIBLE HAS NO SCROLLBAR). NO FANCY TITLE OR CLOCK (drawtext NOT WORKING IN WINDOWS directwrite WITHOUT EXTRA FONT FILE?).  THE MASK HELPS DETECT DEFECTS, LIKE HAIR ON A PASSPORT SCAN. THE LENS MAY AS WELL TAKE ON THE FORM OF A MASK. TO REPRODUCE AN automask, SIMPLY COPY/PASTE PLAIN TEXT .LUA SCRIPT, FROM WEB BROWSER TO VIRTUAL MACHINE, ETC, WITHOUT ANY GRAPHICS FILE.
@@ -6,9 +6,10 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATION).      nil 
     FILTERS='lutyuv=minval+(maxval-minval)*((negval/maxval)^4*(1+1/6)+1/6*(2*gauss(negval/minval/2-1.5)-1*gauss(val/minval/1.5-1.5))/gauss(0))'   --negval/minval APPROX= (255-val)/(255-maxval)
                  ..':128*(1+(val/128-1)/abs(val/128.01-1)^.25)'   --u & v USE A POWER LAW NON-LINEAR SATURATION. sqrt ("^.5") TOO POWERFUL, SO CAN DIVIDE BY "^.25". GREYSCALE IS CENTERED ON 128 NOT 127.5 (128 MEANS 0 IN POPULAR YUV COVERSION FORMULAS).     RUNNING THE SCRIPT TWICE (DOUBLE MASK) ADDS MORE COLOR (MYSTERY). 2 FILTERS MAY SHARE THE SAME LABEL IF THEY append INSTANTLY.
                  ..':128*(1+(val/128-1)/abs(val/128.01-1)^.25)'   --sgn FUNCTION NOT LINUX snap COMPATIBLE, HENCE 128.01 ISSUE. THIS FILTERS MOVES PERCENTAGE saturation INTO NON-LINEAR EXPONENT (uv INSTEAD OF rgb).
-         ..',null',                                               --REPLACE null TO TEST MORE FILTERS, LIKE pp (POSTPROCESSING).
+         ..',null',                                               --CAN REPLACE null WITH OTHER FILTERS, LIKE pp (POSTPROCESSING).
     
-    period =19/25, --DEFAULT=0 SECONDS (LEAD-FRAME ONLY). USE EXACT fps RATIO, BECAUSE zoompan USES "in" NOT "t". 19/25=79BPM (BEATS PER MINUTE). SHOULD MATCH OTHER SCRIPT/S, E.G. autocomplex (SYNCED EYES & MOUTH).  FOR BEST QUALITY (HD*2), ALL TIME DEPENDENCE IS PERIODIC.  UNFORTUNATELY A SLOW ANIMATION TAKE AGES TO LOAD (REDUCE RES_MULT).
+    fps    =   25, --DEFAULT=25 FRAMES PER SECOND. fps SHOULD MATCH OTHER SCRIPTS (autocomplex) FOR SIMPLICITY. 
+    period =19/25, --DEFAULT=0 SECONDS (LEAD-FRAME ONLY). USE EXACT fps RATIO TO MATCH t & in. 19/25=79BPM (BEATS PER MINUTE). SHOULD MATCH OTHER SCRIPT/S, E.G. autocomplex (SYNCED EYES & MOUTH).  FOR BEST QUALITY (HD*2), ALL TIME DEPENDENCE IS PERIODIC.  UNFORTUNATELY A SLOW ANIMATION IS SLOW TO LOAD (REDUCE RES_MULT).
     periods=    2, --DEFAULT=1, INTEGER. INFINITE loop OVER period*periods.  0 period OR periods FOR STATIC. E.G. INVERT BRIGHTNESS EVERY 3 PERIODS.       
     
     INVERT='1-between(t/%s\\,.5\\,1.5)',    --DEFAULT='0' (NO BLINKING). %s=period  TIMELINE SWITCH FOR INVERTING INSIDE/OUTSIDE FILTERING (BLINKER SWITCH). E.G. TO START OPPOSITE, USE "1-...". THIS ONE BLINKS @BOTTOM.
@@ -18,11 +19,11 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATION).      nil 
     DUAL    =true, --REMOVE FOR LEFT-ONLY. ENABLES LEFT→RIGHT FLIP, & HALVES INITIAL iw (display CANVAS).
     -- SQUARE=true,--FOR RECTANGULAR SECTIONS, INSTEAD OF DISCS. 
     
-    widths ='iw*1.1 iw*.6', --iw=INPUT-WIDTH  AUTO-GENERATES IF ABSENT. BASED ON display CANVAS. DEFAULT ELLIPTICITY=0 (CIRCLE/SQUARE)     REMOVE THESE 5 LINES TO AUTO-GENERATE DISCS. 
-    heights='ih/2   ih/2.2  ih       ih/2           ih/8', --ih=INPUT-HEIGHT   EXACT POSITIONING IS TRIAL & ERROR. PUPILS SHOULD BE CIRCLE WHEN SEEN THROUGH SPECTACLES. EYELIDS COVERING INNER PUPIL IS SQUINTING, BUT ONLY COVERING OUTER-PUPIL IS LAZY-EYE.  SECTIONS: 1=SPECTACLE,2=EYELID,3=EYE,4=PUPIL,5=NERVE,6=INNER-NERVE.
-    x='-W/64*(s)       0    W/16*(c) W/32*(c)       W/64', --(c),(s) = (cos),(sin) WAVES IN t/period. overlay COORDS FROM CENTER=DEFAULT. W IS THE BIGGER DISC/CANVAS, & w IS THE DISC.  (t)=(time) (n)=(frame#) (p)→(period) (c)→(cos(2*PI*(t)/(p))) (s)→(sin(2*PI*(t)/(p))) (T)→((t)/(p))   %s=period=(p)
-    y='-H*((c)/16+1/6) H/16 H/32*(s) H/32*((c)+1)/2 H/64', --DEFAULT CENTERS, DOWNWARD (NEGATIVE MEANS UP).  (c),(s) = (cos),(sin)      %s=period
-    crops='iw:ih*.8:0:ih-oh  iw*.98:ih:0',   --DEFAULT NO crop. SPECTACLE-TOP & RED-EYE CROPS. oh=OUTPUT-HEIGHT  crops GO BEFORE x & y. 
+    widths ='iw*1.1    iw*.6', --iw=INPUT-WIDTH  AUTO-GENERATES IF ABSENT. BASED ON display CANVAS. DEFAULT ELLIPTICITY=0 (CIRCLE/SQUARE)     REMOVE THESE 5 LINES TO AUTO-GENERATE DISCS. 
+    heights='ih/2      ih*.5 ih          ih/2           ih/8', --ih=INPUT-HEIGHT   EXACT POSITIONING IS TRIAL & ERROR. PUPILS SHOULD BE CIRCLE WHEN SEEN THROUGH SPECTACLES. EYELIDS COVERING INNER PUPIL IS SQUINTING, BUT ONLY COVERING OUTER-PUPIL IS LAZY-EYE.  SECTIONS: 1=SPECTACLE,2=EYELID,3=EYE,4=PUPIL,5=NERVE,6=INNER-NERVE.
+    x='-W/64*(s)       W/32 W/16*(1+(c)) W/32*(c)       W/64', --(c),(s) = (cos),(sin) WAVES IN t/period. overlay COORDS FROM CENTER=DEFAULT. W IS THE BIGGER DISC/CANVAS, & w IS THE DISC.  (t)=(time) (n)=(frame#) (p)→(period) (c)→(cos(2*PI*(t)/(p))) (s)→(sin(2*PI*(t)/(p))) (T)→((t)/(p))   %s=period=(p)
+    y='-H*((c)/16+1/6) H/16 H/32*(s)     H/32*((c)+1)/2 H/64', --DEFAULT CENTERS, DOWNWARD (NEGATIVE MEANS UP).  (c),(s) = (cos),(sin)      %s=period
+    crops='iw:ih*.8:0:ih-oh  iw*.98:ih:0',   --DEFAULT NO crop. SPECTACLE-TOP & RED-EYE CROPS CLEAR MASK TOP & MIDDLE. oh=OUTPUT-HEIGHT  crops GO BEFORE x & y. 
     
     rotations='PI/16*(s)*mod(floor((t)/%s)\\,2)  PI/32*(c)  -PI/64*(c)',       --%s=period (USE t NOT n). DEFAULT='0'. RADIANS CLOCKWISE. CROPS @t,n=0,0 SO USE cos TO AVOID CLIPPING.  PI/32=.1RADS=6° (QUITE A LOT)    SPECIFIES ROTATION OF EACH DISC, RELATIVE TO THE LAST, AFTER crop, EXCEPT THE FIRST (0TH) ROTATION WHICH APPLIES TO ENTIRE DUAL (& MAY NEED INCREASED RES_SAFETY).
     zoompan  ='1+.2*(1-cos(2*PI*((in)/%s-.2)))*mod(floor((in)/%s-.2)\\,2):0:0',--%s=FRAMES-PER-PERIOD=fps*period  (zoom:x:y)  in=INPUTFRAME#=on=OUTPUTNUMBER  mod IS AN ON/OFF SWITCH. DILATING PUPILS NOT CURRENTLY SUPPORTED.     20% FOR RIGHT PUPIL TO PASS SCREEN EDGE.
@@ -33,7 +34,6 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATION).      nil 
     -- LEAD_T=1/25,      --DEFAULT=0 SECONDS. LEAD TIME FOR SYNC OF MASK WITH OTHER FILTERS/GRAPHS. CAN LEAD IN FRONT OF OTHER GRAPHS.
     -- t=5/25, n=5,      --UNCOMMENT FOR STATIONARY SPECTACLES. SUBSTITUTIONS FOR (t) & (n)=(in). MAY CHOOSE A SPECIFIC TIME OF FAV. ANIME. DOESN'T APPLY TO INVERT & DISABLE.
     -- periods_skipped=1,--DEFAULT=0, INTEGER. LEAD FRAME ONLY (NO TIME DEPENDENCE) FOR THESE STARTING PERIODS, PER loop. (A BIRD MAY ONLY FLAP ITS WINGS HALF THE TIME, BUT FASTER.) DOES NOT APPLY TO INVERT & DISABLE. SIMPLIFIES CODING ON/OFF MOVEMENT, WITHOUT PUTTING mod IN EVERY COORD, ETC.
-    -- msg_on_toggle='af\n%s\n\nvf\n%s',  --SET TO '' TO CLEAR osd. CAN DISPLAY af & vf osd_message AFTER TOGGLE. %s=string.     THIS SCRIPT'S TOGGLE CAN DISPLAY ALL ACTIVE FILTERS.
     
     ----10 EXAMPLES: 0) NULL 1) BLINKING MONACLE/SQUARE  2) BINACLES  3) OSCILLATING VISOR  4) BUTTERFLY SWIM  5) DOUBLE-TWIRL & SKIP  6) 10*ZOOMY DISCS  7) ELLIPTICAL VISOR  8) SCANNING VISOR (SIDEWAYS)  9) FALLING VISOR.         UNCOMMENT LINES TO ACTIVATE. USERS CAN ALSO COPY-PASTE PARTS OF THESE. nil IS SAFER THAN ''.
     -- SECTIONS=0,periods=0, --NULL OVERRIDE. CALIBRATE FILTERS USING TOGGLE. MASK SLOWS DOWN TOGGLE.   CHECK A FEW THINGS: 1) BROWN SUN, NOT BLACK. 2) BRIGHT CLOTHING OF MARCHING ARMY (CREASES IN PANTS). 3) BROWN HAMMER & SICKLE.
@@ -47,12 +47,12 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATION).      nil 
     -- SECTIONS=1,DUAL=nil,periods=1,period=4,RES_MULT=1,INVERT=nil,widths='iw/3',heights='ih',x='(W+w)*(t/%s-1/2)',y=nil,crops=nil,rotations=nil,SQUARE=true, --VERTICAL VISOR, SCANNING TIME 4 SECONDS.
     -- zoompan=nil,SECTIONS=1,DUAL=nil,periods=1,period=4,INVERT=nil,widths='iw',heights='ih/3',x=nil,y='(H+h)*(t/%s-1/2)',crops=nil,rotations=nil,SQUARE=true, --HORIZONTAL VISOR @4 SECONDS.
     
-    -- scale={1680,1050},   --NEEDED IN LINUX & MACOS FOR PERFECT CIRCLES ON FINAL SCREEN display. ALSO STOPS EMBEDDED MPV SNAPPING (APPLY FINAL scale IN ADVANCE). DEFAULT=display SIZE (WINDOWS & MACOS), OR OTHERWISE LINUX IS [vo] SIZE. scale OVERRIDE USES NEAREST MULTIPLES OF 4 (ceil).
-    fps   =25,              --DEFAULT=25 FRAMES PER SECOND. fps SHOULD MATCH OTHER SCRIPTS FOR SIMPLICITY (autocomplex). 
-    format='yuv420p',       --FINAL format, FOR TOGGLE WITH NO-SNAP (OR format MAY CHANGE). SMPLAYER MAY CONTROL THE FINAL OUTPUT TO GPU.  
+    -- scale={1680,1050},--NEEDED IN LINUX & MACOS FOR PERFECT CIRCLES ON FINAL SCREEN display. ALSO STOPS EMBEDDED MPV SNAPPING (APPLY FINAL scale IN ADVANCE). DEFAULT=display SIZE (WINDOWS & MACOS), OR OTHERWISE LINUX IS [vo] SIZE. OVERRIDE USES NEAREST MULTIPLES OF 4 (ceil).
+    -- format='yuv420p',    --FINAL format, FOR TOGGLE WITH NO-SNAP (OR format MAY CHANGE). SMPLAYER MAY CONTROL THE FINAL OUTPUT TO GPU.  MPV HAS video-params/pixelformat=nil @file-loaded (DELAY).
     
     key_bindings         ='F2',--DEFAULT='' (NO TOGGLE). CASE SENSITIVE. KEYBOARD TOGGLE WORKS IF MPV HAS ITS OWN WINDOW, BUT NOT BY DEFAULT IN SMPLAYER. 'F2 F3' FOR 2 KEYS. M IS MUTE. F1 MAY BE autocomplex, WHICH GOES BEFORE automask.  THIS TOGGLE SNAPS THE WINDOW, UNFORTUNATELY.
     toggle_on_double_mute=.5,  --DEFAULT=0 SECONDS (NO TOGGLE). TIMEOUT FOR DOUBLE-mute TOGGLE. ALL LUA SCRIPTS CAN BE TOGGLED USING DOUBLE MUTE. NEGATE BY DOUBLE-CLICKING MUTE.
+    -- osd_on_toggle     ='af\n%s\n\nvf\n%s\n\nlavfi-complex?\n%s', --DISPLAYS ALL ACTIVE FILTERS AFTER TOGGLE. END-USERS MAY INSPECT/SCREENSHOT ALL ACTIVE OPEN-SOURCE CODES BY DOUBLE-CLICKING MUTE. %s=string. SET TO '' TO CLEAR osd. lavfi-complex='' BY DEFAULT.
     
     config={
             'osd-font-size 16','osd-border-size 1','osd-scale-by-window no', --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
@@ -66,7 +66,7 @@ local o,label = options,mp.get_script_name() --ABBREV. options, GRAPH label='aut
 if o.DUAL then o.DUAL=2 end --1 OR 2.  CONVERT BOOL INTO NUMBER OF REFLECTIONS (+1).
 for key,val in pairs(o) do if val=='' then o[key]=nil end end   --LUA INTERPRETS ''→true. BUT IT MAY MEAN DEFAULT FOR automask OPTIONS (0TH ROTATION MUST BE 0, ETC).
 
-for key,val in pairs({FILTERS='lutyuv=negval',periods=1,DUAL=1,INVERT='0',DISABLE='0',x='0',y='0',rotations='0',zoompan='1:0:0',RES_MULT=1,RES_SAFETY=1,LEAD_T=0,periods_skipped=0,fps=25,format='',scale={},key_bindings='',toggle_on_double_mute=0,config={}})
+for key,val in pairs({FILTERS='lutyuv=negval',fps=25,periods=1,DUAL=1,INVERT='0',DISABLE='0',x='0',y='0',rotations='0',zoompan='1:0:0',RES_MULT=1,RES_SAFETY=1,LEAD_T=0,periods_skipped=0,scale={},key_bindings='',toggle_on_double_mute=0,config={}})
 do if not o[key] then o[key]=val end end      --ESTABLISH DEFAULTS. 
 
 for _,option in pairs(o.config) do mp.command('no-osd set '..option) end    --APPLY config.
@@ -80,9 +80,7 @@ o.periods_skipped=math.min(o.periods_skipped,o.periods) --MAX-SKIP = periods
 for key in ('INVERT DISABLE x y rotations'):gmatch('%g+') do o[key]=o[key]:format(p,p,p,p,p,p,p,p) end  --%s=p    BLINKER SWITCH, INVISIBILITY, POSITIONS & ROTATIONS.
 local FP,W,H = o.fps*p,o.scale[1],o.scale[2] --FRAMES/PERIOD & scale OVERRIDE.
 o.zoompan=o.zoompan:format(FP,FP,FP,FP,FP,FP,FP,FP) --%s=FP
-
-if o.format~='' then o.format=',format='..o.format end   --LEADING "," HELPS WITH HIGHLIGHTING.
-if W and H then mp.command(('no-osd vf append @%s:lavfi=[scale=%s:%s,setsar=1%s]'):format(label,W,H,o.format)) end    --OPTIONAL scale OVERRIDE: SNAP GRAPH STOPS EMBEDDED MPV SNAPPING.
+if W and H then mp.command(('no-osd vf append @%s:lavfi=[scale=%s:%s,setsar=1]'):format(label,W,H)) end    --OPTIONAL scale OVERRIDE: SNAP GRAPH STOPS EMBEDDED MPV SNAPPING.
 
 for pTcs,SUB in pairs({p='%s',T='(t)/(%s)',c='cos(2*PI*(t)/(%s))',s='sin(2*PI*(t)/(%s))'}) do for xyr in ('x y rotations'):gmatch('%g+') do if o[xyr]   --period, SCALED TIME, COS & SIN SUBSTITUTIONS.
         then o[xyr]=o[xyr]:gsub('%('..pTcs..'%)',SUB:format(p)) end end end     --%s=period
@@ -128,11 +126,13 @@ while N<o.SECTIONS do N=N+1 --MASK CONSTRUCTION, BEFORE DUAL.   FOR DILATING PUP
 MASK=MASK:format('')..',format=y8' --REMOVE alpha AFTER FINAL overlay. MASK TERMINATOR %s=''. 
 if o.DUAL==2 then MASK=MASK..',split[L],hflip[R],[L][R]hstack' end   --STARTING "," MAY BE MORE ELEGANT, TO MINIMIZE USE OF LABELS.
 
-local lavfi=('%%s,scale=%%s:%%s,split=3[vo][T],%s[vf],[T]select=lt(n\\,2),trim=end_frame=1,setpts=PTS-(1/FRAME_RATE+%s)/TB,format=y8,split[T],setpts=0,crop=1:1,lut=0,split[0],pad=2:2,lut=255,pad=iw+2:ow:1:1:WHITE,pad=iw+2:ow:1:1:GRAY,pad=iw+2:ow:1:1%s[1],[0][T]scale2ref=oh*a/%d:ih*(%s)[0][T],[1][0]scale2ref=oh:ih*2.2:bicubic[1][0],[1]crop=iw/2.2:ow,lut=255*gt(val\\,74)[1],[1][0]scale2ref=%s:%s[1][0],[1]loop=%s:1%s[M],[M][T]scale2ref=oh*a:ih*(%s)[M][T],[M]loop=%d:2^14,loop=%s:1,rotate=%s:oh*iw/ih:ih/(%s),lut=val*gt(val\\,16),zoompan=%s:0:%%dx%%d:%s,negate=y:enable=%s,lut=0:enable=%s,loop=-1:2^14,setpts=PTS-(%s)/TB,select=gte(t\\,0)[M],[T][M]concat=unsafe=1,trim=start_frame=1[M],[vf][M]alphamerge[vf],[vo][vf]overlay=0:0:endall,setsar=1%%s')
+local lavfi=('%%s,scale=%%s:%%s,split=3[vo][T],%s[vf],[T]select=lt(n\\,2),trim=end_frame=1,setpts=PTS-(1/FRAME_RATE+%s)/TB,format=y8,split[T],setpts=0,crop=1:1,lut=0,split[0],pad=2:2,lut=255,pad=iw+2:ow:1:1:WHITE,pad=iw+2:ow:1:1:GRAY,pad=iw+2:ow:1:1%s[1],[0][T]scale2ref=oh*a/%d:ih*(%s)[0][T],[1][0]scale2ref=oh:ih*2.2:bicubic[1][0],[1]crop=iw/2.2:ow,lut=255*gt(val\\,74)[1],[1][0]scale2ref=%s:%s[1][0],[1]loop=%s:1%s[M],[M][T]scale2ref=oh*a:ih*(%s)[M][T],[M]loop=%d:2^14,loop=%s:1,rotate=%s:oh*iw/ih:ih/(%s),lut=val*gt(val\\,16),zoompan=%s:0:%%dx%%d:%s,negate=y:enable=%s,lut=0:enable=%s,loop=-1:2^14,setpts=PTS-(%s)/TB,select=gte(t\\,0)[M],[T][M]concat=unsafe=1,trim=start_frame=1,eq[M],[vf][M]alphamerge[vf],[vo][vf]overlay=0:0:endall,setsar=1')
     :format(o.FILTERS,o.LEAD_T,blur,o.DUAL,o.RES_MULT,g.w[1],g.h[1],p*o.fps-1,MASK,o.RES_SAFETY,o.periods-o.periods_skipped-1,p*o.periods_skipped*o.fps,g.rots[1],o.RES_SAFETY,o.zoompan,o.fps,o.INVERT,o.DISABLE,p*o.periods)    --RES_SAFETY REPEATS FOR rotate TO CROP DOWN ON THE MASK EXCESS. fps REPEATS WHEN LOOPING LEAD FRAME. p REPEATS FOR SELECTOR & LEAD-SKIP. 
 
-----lavfi  =[graph] [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTER LIST. SELECT FILTER NAME TO HIGHLIGHT IT (NO WORD-WRAP). %% SUBSTITUTIONS OCCUR LATER. NO audio ALLOWED (vf append). RE-USING LABELS IS SIMPLER. [vo] IS VIDEO-OUT. [vf] IS FORMULA-FILTERED VIDEO. [T] IS TIME METADATA FRAME. [0] IS CANVAS. [1] & [2] ARE DISC INITIALIZATION (SUPERPOSITION): THEN [1][2]...[N] ARE DISCS. [M] IS MASK. 
+----lavfi  =[graph] [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTER LIST.  vo=VIDEO-OUT.  SELECT FILTER NAME TO HIGHLIGHT IT (NO WORD-WRAP). %% SUBSTITUTIONS OCCUR LATER. NO audio ALLOWED (vf append). RE-USING LABELS IS SIMPLER. [vo] IS VIDEO-OUT. [vf] IS FORMULA-FILTERED VIDEO. [T] IS TIME METADATA FRAME. [0] IS CANVAS. [1] & [2] ARE DISC INITIALIZATION (SUPERPOSITION): THEN [1][2]...[N] ARE DISCS. [M] IS MASK. 
 ----lutyuv,lut      FOR FORMATS yuv422p,y8  LOOK-UP-TABLE BRIGHTNESS-UV  DEFAULT val RANGE [0,255]. negval clipval RANGE [minval,maxval]  val MAY GO BELOW minval & ABOVE maxval (DEAD-ZONES ABOVE 0 & BELOW 255). negval IS CLIPPED. USE lutyuv NOT lut, FOR COLORS (lutrgb IS BUGGY/SLOW). u=v=128=GREYSCALE CORRESPOND TO 0 IN CONVERSION FORMULAE (SIGNED 8-BIT).        COMPUTES TABLE IN ADVANCE SO USES VERY LITTLE CPU. NOT A 1-1 FUNCTION (THAT MAY BE DULL). BROWN=BLACK ALSO DEPENDS ON WHETHER SOMEONE IS LOOKING UP AT AN LCD, OR DOWN.     
+----lut2    [1][2]→[1]  GEOMETRICALLY COMBINES [1][2] avgblur CLOUDS. A SIMPLE overlay WOULDN'T WORK (x*y/255 BEATS (x+y)/2). sqrt(x*y) ALSO DOESN'T WORK (TRIAL & ERROR).
+----null    PLACEHOLDER.
 ----fps    =fps     FRAMES PER SECOND LIMIT.
 ----split  =outputs   CLONES video. MASK IS BASED ON THE 3RD, [T].
 ----alphamerge  [vf][M]→[vf]  USES lum OF MASK [M] AS alpha OF [vf]. SIMPLER THAN TRIMMING maskedmerge. WITH split, CONVERTS BLACK TO TRANSPARENCY. ALTERNATIVES INCLUDE colorkey & colorchannelmixer.
@@ -143,17 +143,18 @@ local lavfi=('%%s,scale=%%s:%%s,split=3[vo][T],%s[vf],[T]select=lt(n\\,2),trim=e
 ----concat =...:unsafe  [T][M]→[M]  INSERTS STARTING TIMESTAMP (WHENEVER USER SEEKS). TO MAKE ALL POSSIBLE CASES safe IS EASY BUT REQUIRES MORE CODE (setsar=1,keep_aspect=1 ETC).
 ----crop   =out_w:out_h:x:y:keep_aspect    DEFAULT=iw:ih:(iw-ow)/2:(ih-oh)/2:0   SET keep_aspect=1 FOR SAFE concat OF VIDEO BUILT FROM 1x1.   OVER-CROPPING DISC (THE 2.2) MAY CAUSE GRIZZLE AFTER DISC ROTATIONS. LINUX snap DOESN'T ALLOW oh BEFORE COMPUTING IT (USE ow INSTEAD OF oh).
 ----pad    =w:h:x:y:color  PREPS 4x4/8x8 FOR avgblur, USING WHITE, GRAY & BLACK.   2x2/4x4 TOO SMALL. A LITTLE SQUARE IS LIKE A DISC WHO IS A LITTLE OFF & NEEDS A ROUND OF BLUR & SHARP.
-----lut2    [1][2]→[1]  GEOMETRICALLY COMBINES [1][2] avgblur CLOUDS. A SIMPLE overlay WOULDN'T WORK (x*y/255 BEATS (x+y)/2). sqrt(x*y) ALSO DOESN'T WORK (TRIAL & ERROR).
 ----avgblur (AVERAGE BLUR) PAIRS WITH scale, TO SHARPEN A CIRCLE FROM BRIGHTNESS. ACTS ON 4x4/8x8 SQUARE. REMOVE FOR DIAGONAL-CUT RECTANGLES.   ALTERNATIVES INCLUDE gblur & boxblur.
 ----scale,scale2ref=width:height:flags   [1][vf]→[1][vf]  SCALES [1]→[1] USING DIMENSIONS OF [vf]. FORMS PAIR WITH overlay.  bicubic FOR LINUX snap COMPATIBILITY. ITS DEFAULT IS bilinear WHICH FAILS, BUT bicubic spline lanczos ARE ALL VALID. bicubic ALSO STANDARD ON LINUX, BUT NOT snap. CONVERT TO SCREEN SIZE BECAUSE OF zoompan. ONLY USE MULTIPLES OF 4 BECAUSE OF AN overlay BUG (OFF BY 1 FOR 1050p). PREPARES EACH DISC FROM THE LAST, & INITIALIZES 2048p DISC.     SCALES TO 2.2x BIG DISC, CALIBRATED WITH lut>74.  THE IDEA IS TO scale,crop A TINY SYMMETRIC BLUR TO HALF-10%, TO lut A DECENT CIRCLE. IN MS PAINT A PERFECT CIRCLE SHOULD INSCRIBE A MONACLE SCREENSHOT. SOMETIMES A SMOOTHER CIRCLE MAY BE MORE OBLONG.
 ----overlay=x:y:eof_action  [N-1][N]→[N-1]  (DEFAULT 0:0:repeat) endall ENDS MORE ABRUPTLY. MAY PAIR WITH scale2ref. THIS FILTER CAN BE OFF-BY-1 IF W OR H ISN'T DIVISIBLE BY 4.
 ----rotate =angle:ow:oh:fillcolor  (RADIANS:PIXELS CLOCKWISE) ROTATES EACH DISC, BEFORE FINAL scale2ref. PI/4 & PI/8 HELP PREPARE INITIAL DISC (MAY USE INTERMEDIATE scale, TOO). THE 0TH (DUAL zoompan) ROTATION IS SPECIAL.
 ----zoompan=zoom:x:y:d:s:fps  (z>=1) d=0 FRAMES DURATION-OUT PER FRAME-IN. SLOW FILTER, LIKE geq, BUT WORKS FINE IN THIS EXACT CASE.
-----format =pix_fmts   CONVERTS TO y8 (MOST EFFICIENT). ALSO NEEDED TO STOP EMBEDDED MPV SNAPPING ON TOGGLE (BY TRIAL & ERROR). HOWEVER IT MAY ALSO SLOW DOWN INSERTION. 
-----setsar =sar IS THE FINISH (PAIRED WITH format). STOPS EMBEDDED MPV SNAPPING WINDOW. (CAN VERIFY WITH DOUBLE-mute TOGGLE IN SMPLAYER.) MACOS BUGFIX REQUIRES sar.
+----negate =components  (y=lum)  IMPLEMENTS INVERT SWITCH. components MAY NOT BE snap COMPATIBLE.
+----eq     =contrast:brightness:saturation  DEFAULT=1:0:1  RANGES [-2,2]:[-1,1]:[0,3]  INSTANT SNAP-FREE TOGGLE ON & OFF, DIRECTLY FROM LUA. HOWEVER A streamselect IS MORE RIGOROUS BECAUSE eq IS POWERFUL & ISN'T INTENDED TO BE USED IN THIS WAY (0% CPU USAGE - NULL OP). IF IT'S ALSO PLACED IN FILTERS, THEN DOUBLE-TOGGLE WOULD CAUSE BUG (vf-command CONFUSES MULTIPLE EQUALIZERS).
+----format =pix_fmts   CONVERTS TO y8=8-BIT BRIGHTNESS (MOST EFFICIENT).
+----setsar =sar IS THE FINISH. STOPS EMBEDDED MPV SNAPPING WINDOW. MACOS BUGFIX REQUIRES sar.
 
 
-if NULL_OVERRIDE then lavfi=o.FILTERS end  --OVERRIDE FOR SPEED.
+if NULL_OVERRIDE then lavfi=o.FILTERS end  --NULL_OVERRIDE FOR SPEED.
 
 function file_loaded(_,seeking) --OVERLOADS FOR vid TRACK CHANGE - INITIAL SEEK. TRACK CHANGE IS LIKE A NEW FILE-LOAD.
     if seeking then return end   --NEW vid STILL seeking.
@@ -165,13 +166,12 @@ function file_loaded(_,seeking) --OVERLOADS FOR vid TRACK CHANGE - INITIAL SEEK.
         return end  
     W,H,fps = math.ceil(W/4)*4,math.ceil(H/4)*4,'fps='..o.fps    --BUGFIX: MULTIPLES OF 4 NECESSARY FOR PERFECT overlay.
     
-    if not mp.get_property_number('current-tracks/video/id') then o.format='' end   --DON'T REFORMAT WITHOUT vid.
     if mp.get_property_bool('current-tracks/video/image') then fps='null'   --fps ONLY FOR not image.
-        if mp.get_property('lavfi-complex')=='' then unpause = not mp.get_property_bool('pause')  --JPEG (NO loop) OVERRIDE USES 0% CPU. IMAGES MAY BE JPG, PNG, BMP, MP3. GIF IS not image. NO WEBP. TIFF TOP LAYER ONLY. 
-            mp.command('no-osd set pause yes') end end  --JPEG MASK NEEDS INITIAL pause OR loop (autocomplex, FASTER). unpause RETURNS pause STATE.
+        if mp.get_property('lavfi-complex')=='' then unpause=not mp.get_property_bool('pause')  --JPEG (NO loop) OVERRIDE USES 0% CPU. IMAGES MAY BE JPG, PNG, BMP, MP3. GIF IS not image. NO WEBP. TIFF TOP LAYER ONLY. 
+            mp.command('set pause yes') end end  --pause DOESN'T TRIGGER osd. JPEG MASK NEEDS INITIAL pause OR lavfi-complex. unpause RETURNS pause STATE.
     
-    mp.command(('no-osd vf append @%s:lavfi=[%s]'):format(label,lavfi):format(fps,W,H,W,H,o.format))     --INSERT GRAPH. IT GOES AFTER autocrop. W,H REPEAT FOR zoompan.
-    if unpause then mp.command('no-osd set pause no') end
+    mp.command(('no-osd vf append @%s:lavfi=[%s]'):format(label,lavfi):format(fps,W,H,W,H))     --INSERT GRAPH. IT GOES AFTER autocrop. W,H REPEAT FOR zoompan.
+    if unpause then mp.command('set pause no') end
 end
 mp.register_event('file-loaded', file_loaded)    
 mp.observe_property('current-tracks/video/id','number',function() if fps then mp.observe_property('seeking','bool',file_loaded) end end)  --fps MEANS INITIALIZED. CHANGE OF VIDEO TRACK IS TREATED SAME AS LOADING A NEW FILE. AN MP3 IS LIKE A COLLECTION OF JPEG IMAGES (MP3TAG) WHICH NEED CROPPING (& HAVE RUNNING audio).
@@ -180,13 +180,15 @@ local timer=mp.add_periodic_timer(o.toggle_on_double_mute, function()end)    --D
 timer.oneshot=true 
 timer:kill()
 
-function on_toggle(mute_observed)
-    if mute_observed and not timer:is_enabled() then timer:resume() --DON'T TOGGLE UNLESS timer IS RUNNING.
+function on_toggle(mute)
+    if mute=='mute' and not timer:is_enabled() then timer:resume() --DON'T TOGGLE UNLESS timer IS RUNNING.
         return end
     OFF = not OFF
-    if OFF then mp.command(('no-osd vf append @%s:lavfi=[scale=%d:%d%s,setsar=1]'):format(label,W,H,o.format))     --TOGGLE OFF. REPLACE MASK WITH SNAP GRAPH, TO STOP EMBEDDED MPV FROM SNAPPING.
-    else file_loaded() end   --TOGGLE ON.
-    if o.msg_on_toggle then mp.osd_message(o.msg_on_toggle:format(mp.get_property_osd('af'), mp.get_property_osd('vf')), 4) end  --OPTIONAL osd, 4 SECONDS.
+    if OFF then mp.command(('vf-command %s brightness -1'):format(label))     --TOGGLE OFF. YOU MAY COMMAND automask DIRECTLY FROM LUA. vf-command MEANS NO SNAPPING EMBEDDED MPV.
+        mp.add_timeout(1,function() mp.command(('vf-command %s brightness -1'):format(label)) end) --vf-command MAY NOT WORK IF seeking, SO RE-RUN AFTER timeout.
+    else        mp.command(('vf-command %s brightness  0'):format(label))  --TOGGLE ON.
+        mp.add_timeout(1,function() mp.command(('vf-command %s brightness 0'):format(label)) end) end --vf-command MAY NOT WORK IF seeking, SO RE-RUN AFTER timeout.
+    if o.osd_on_toggle then mp.osd_message(o.osd_on_toggle:format(mp.get_property_osd('af'),mp.get_property_osd('vf'),mp.get_property_osd('lavfi-complex')), 5) end  --OPTIONAL osd, 5 SECONDS.
 end
 for key in o.key_bindings:gmatch('%g+') do mp.add_key_binding(key, 'toggle_mask_'..key, on_toggle) end
 mp.observe_property('mute', 'bool', on_toggle)
@@ -194,8 +196,6 @@ mp.observe_property('mute', 'bool', on_toggle)
 
 ----COMMENTS SECTION (CODE EXAMPLES). MPV CURRENTLY HAS A 10 HOUR BACKWARDS SEEK BUG (BUFFER ISSUE?). 
 ----drawtext=...:expansion:...:text    NOT WORKING IN WINDOWS, WITHOUT SPELLING OUT FULL PATHS TO SYSTEM FONT TYPE FILES.
-----eq     =contrast:brightness:saturation  OPTIONAL EQUALIZER, MAY APPEND TO FILTERS. ACCEPTS LIVE vf-command FROM SCRIPT. DEFAULT 1:0:1  RANGES [-2,2]:[-1,1]:[0,3]    CAN NEGATE, DARKEN & SATURATE. HOWEVER NON-LINEAR FORMULAS WORK BETTER.
-----negate =components  (y=lum)  components AREN'T snap COMPATIBLE. DEFAULT FILTERS.
 
 --eq ONLY:          FILTERS='eq=-1:-0.25:1.1',  
 --50% DROP QUAD GAUSS FILTERS='lutyuv=minval+.4*(negval-minval+128/gauss(0)*(1*gauss((255-val)/(255-maxval)/.9-1)-.6*gauss((255-val)/(255-maxval)/.9-2)-1*gauss(val/minval/.9-1)+.6*gauss(val/minval/.9-2))),eq=1.2:0:1.2',  -- .6=exp(-.5)    negval/minval APPROX (255-val)/(255-maxval)
