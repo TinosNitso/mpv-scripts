@@ -2,16 +2,16 @@
 ----ARBITRARY SINE WAVES CAN BE ADDED FOR CALIBRATION & DECORATION. MOVES & ROTATES WITH TIME.  CHANGING TRACKS IN SMPLAYER REQUIRES STOP & PLAY (aid vid LOCK BUG).
 ----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH IS A PROBLEM ON MACOS. RUNS SLOW IN VIRTUALBOX, BUT FINE IN NATIVE LINUX (LIVE USB, DEBIAN-MATE). LIVE-STREAM SPECTRUM UNTESTED (E.G. PLAYING GUITAR LIVE).
 local options={ --ALL OPTIONAL & MAY BE REMOVED. TO REMOVE A COMPONENT SET ITS alpha TO 0 (freqs, volume & feet).
-    top_scale    =  1,             --REMOVE FOR NO TOP HALF. RANGE [0,1]. SCALES HEIGHT OF TOP HALF.
-    bottom_scale = .5,             --REMOVE FOR NO BOTTOM HALF (vflip). RANGE [0,1].   FUTURE VERSION COULD SUPPORT SURROUND SOUND FOR BOTTOM HALF.
-    -- final_colormix='gb=1:bb=0', --UNCOMMENT FOR GREEN & RED, INSTEAD OF BLUE & RED (DEFAULT).  FOR BLACK: 'rr=0:gg=0:bb=0'  &  FOR PLAIN WHITE: 'gr=1:gb=1:rb=1:br=1'   BLUE, DARKBLUE & BLACK ARE COMPATIBLE WITH cropdetect (autocrop), BUT RED TIPS MAY INTERFERE WHEN SIDE-BARS AREN'T PERFECT BLACK. RED LIPS MAKE SENSE, BUT WHITE BATONS FOR TEETH IS AN ALTERNATIVE.
+    top_scale    =  1,            --REMOVE FOR NO TOP HALF. RANGE [0,1]. SCALES HEIGHT OF TOP HALF.
+    bottom_scale = .5,            --REMOVE FOR NO BOTTOM HALF (vflip). RANGE [0,1].   FUTURE VERSION COULD SUPPORT SURROUND SOUND FOR BOTTOM HALF.
+    -- final_colormix='gb=1:bb=0',--UNCOMMENT FOR RED & GREEN, INSTEAD OF RED & BLUE (DEFAULT).  FOR BLACK 'rr=0:gg=0:bb=0' & FOR WHITE: 'gr=1:gb=1:rb=1:br=1'   BLUE, DARKBLUE & BLACK ARE COMPATIBLE WITH cropdetect (autocrop), BUT RED TIPS MAY INTERFERE WHEN SIDE-BARS AREN'T PERFECT BLACK. RED LIPS MAKE SENSE. WHITE BATONS FOR TEETH IS AN ALTERNATIVE.
     
     fps   =   25, --DEFAULT=25 FRAMES PER SECOND. SCRIPT LIMITS fps & scale. 
     period=19/25, --DEFAULT=1 SECOND. SET TO 0 FOR STATIONARY. (GSUBS "n/%s"→"0" ETC). USE EXACT fps RATIO (E.G. 19/25=79BPM, BEATS PER MINUTE). UNLIKE A MASK, MOTION MAY NOT BE PERIODIC.
     
-    position ='.75+.05*(1-cos(2*PI*n/%s))*mod(floor(n/%s)+1\\,2)',    --%s=fps*period  DEFAULT position=.5, RANGE [0,1]. MAY DEPEND ON TIME t & FRAME # n. mod ACTS AS ON/OFF SWITCH.   SPECTRUM POSITION FROM SCREEN TOP (RATIO), BEFORE autocrop.   THIS EXAMPLE MOVES DOWN→UP→RIGHT→LEFT BY MODDING. TIME-DEPENDENCE SHOULD MATCH OTHER SCRIPT/S, LIKE automask. A BIG-SCREEN TV HELPS WITH POSITIONING.
-    rotate   =      'PI/16*sin(2*PI*n/%s)*mod(floor(n/%s)\\,2)',      --%s=fps*period  RADIANS clockWISE, DEFAULT 0. MAY DEPEND ON t & n. PI/16=.2RADS=11°   MAY CLIP @LARGE angle. 
-    zoompan  = '1+.19*(1-cos(2*PI*(in/%s-.2)))*mod(floor(in/%s-.2)\\,2):0:0', --%s=fps*period  in=INPUT-FRAME-NUMBER  zoom:x:y=1:0:0 BY DEFAULT (MINIMUM).  BEFORE A CRAFT ZOOMS RIGHT IT ROTATES, HENCE 20% DELAY.  19% MAY APPROX MATCH GRAPHS LIKE automask @20%, BECAUSE autocrop MAY MAGNIFY IT (DEPENDING ON BLACK BARS). 
+    position=    '.75+.05*(1-cos(2*PI*n/%s))*mod(floor(n/%s)+1\\,2)',      --%s=fps*period  DEFAULT position=.5, (0=TOP, 1=BOTTOM). MAY DEPEND ON TIME t & FRAME # n. mod ACTS AS ON/OFF SWITCH.   SPECTRUM POSITION FROM SCREEN TOP (RATIO), BEFORE autocrop.   THIS EXAMPLE MOVES DOWN→UP→RIGHT→LEFT BY MODDING. TIME-DEPENDENCE SHOULD MATCH OTHER SCRIPT/S, LIKE automask. A BIG-SCREEN TV HELPS WITH POSITIONING.  THE IDEAL COMPLEX COULD BE POSITIONED BY GAMEPAD CONTROLLER, BUT NOT THIS ONE.
+    rotate  =          'PI/16*sin(2*PI*n/%s)*mod(floor(n/%s)\\,2)',        --%s=fps*period  RADIANS clockWISE, DEFAULT 0. MAY DEPEND ON t & n. PI/16=.2RADS=11°   MAY CLIP @LARGE angle. 
+    zoompan ='1+.19*(1-cos(2*PI*(in/%s-.2)))*mod(floor(in/%s-.2)\\,2):0:0',--%s=fps*period  in=INPUT-FRAME-NUMBER  zoom:x:y=1:0:0 BY DEFAULT (MINIMUM).  BEFORE A CRAFT ZOOMS RIGHT IT ROTATES, HENCE 20% DELAY.  19% MAY APPROX MATCH GRAPHS LIKE automask @20%, BECAUSE autocrop MAY MAGNIFY IT (DEPENDING ON BLACK BARS). 
     
     freqs_lead         =  .24, --DEFAULT=.08 SECONDS. LEAD TIME FOR SPECTRUM (TRIAL & ERROR). BACKDATE audio TIMESTAMPS. showfreqs HAS AT LEAST 1 FRAME LAG. CAN CHECK AGAINST DRUM BEAT. DEPENDS MORE ON HUMAN AUDIO/VIDEO INTERPRETATION TIME.
     freqs_sr           = 2010, --DEFAULT=2010 Hz. SAMPLE RATE (SAMPLES/SECOND), DOWN FROM 44100. CALIBRATED WITH 1kHz SIGNAL. THESE 3 options ARE FOR CALIBRATION. THIS VERSION ONLY SUPPORTS LR-1kHz.
@@ -41,7 +41,7 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED. TO REMOVE A COMPONENT SET ITS a
     
     key_bindings         ='F1',--DEFAULT='' (NO TOGGLE). CASE SENSITIVE. F=FULLSCREEN NOT FREQS, O=OSD, C=autocrop. V FOR VOLUME? S=SCREENSHOT NOT SPECTRUM. 'F1 F2' FOR 2 KEYS.    KEYBOARD TOGGLE WORKS IF MPV HAS ITS OWN WINDOW, BUT NOT BY DEFAULT IN SMPLAYER.
     toggle_on_double_mute=.5,  --DEFAULT=0 SECONDS (NO TOGGLE). TIMEOUT FOR DOUBLE-MUTE-TOGGLE. ALL LUA SCRIPTS CAN BE TOGGLED USING DOUBLE MUTE.
-    -- osd_on_toggle     ='af\n%s\n\nvf\n%s\n\nlavfi-complex\n%s', --DISPLAYS ALL ACTIVE FILTERS AFTER TOGGLE. END-USERS MAY INSPECT/SCREENSHOT ALL ACTIVE OPEN-SOURCE CODES BY DOUBLE-CLICKING MUTE. %s=string. SET TO '' TO CLEAR osd.
+    -- osd_on_toggle     ='af\n%s\n\nvf\n%s\n\nlavfi-complex\n%s', --DISPLAY ALL ACTIVE FILTERS on_toggle. DOUBLE-CLICKING MUTE ENABLES CODE INSPECTION INSIDE SMPLAYER. %s=string. SET TO '' TO CLEAR osd.
     
     config={
             'keepaspect no','geometry 50%',   --ONLY NEEDED IF MPV HAS ITS OWN WINDOW, OUTSIDE SMPLAYER. FREE aspect & 50% INITIAL SIZE.
@@ -132,7 +132,7 @@ function file_loaded()
     
     if complex then mp.set_property('lavfi-complex',complex) end    --APPLY CASES 1 & 2.
     if not aid or ORIENTATION=='' then return end --CASES 3,4,5 BELOW. complex VARIABLE MUST PRODUCE [vo].
-    CANVAS=('asplit[ao],aformat=s16:128:mono,showwaves=1x1:r=%s:colors=BLACK@0,format=yuv420p,scale=%d:%d'):format(o.fps,W,H)    --CASES 3 & 4 (+TOGGLE OFF). SPLITS audio TO BLANK CANVAS. BY TRIAL & ERROR yuv420p USES HALF AS MUCH RAM. CHECK TASK MANAGER IF TESTING A NEW CANVAS (MPV+FFMPEG HAS MEMORY LEAK ISSUES). AN ALTERNATIVE IS TO USE [T] FRAME & loop.
+    CANVAS=('asplit[ao],aformat=s16:128:mono,showwaves=1x1:r=%s,select=lt(n\\,2),trim=end_frame=1,lutyuv=0:128:128:0,scale=%d:%d'):format(o.fps,W,H)    --CASES 3 & 4 (+TOGGLE OFF). SPLITS audio TO BLANK CANVAS. BY TRIAL & ERROR MUST TRIM OFF STARTING FRAME OR IT BUILDS 3GB RAM. THE WHOLE POINT IS seeking WITH MINIMAL RAM USAGE.
 
     if           not vid then complex=                        '[ao]'..CANVAS end    --CASE 3: RAW MP3. 
     if     image and vid then complex=('[vid%d]scale=%d:%d[vo],[ao]%s[C],[C][vo]overlay'):format(vid,W,H,CANVAS) end    --CASE 4: COVER ART.
@@ -148,14 +148,12 @@ timer.oneshot=true
 timer:kill()    --CARRIES OVER SAFELY TO NEXT video IN PLAYLIST.
 
 function on_toggle(mute)
-    if mute=='mute' and not timer:is_enabled() then timer:resume() --if mute_observed DON'T TOGGLE UNLESS TIMER'S RUNNING.
+    if mute=='mute' and not timer:is_enabled() then timer:resume() --START timer OR ELSE TOGGLE.
         return end
     
     OFF = not OFF    --REMEMBERS TOGGLE STATE.
     if not OFF then file_loaded()   --TOGGLE ON.    UNFORTUNATELY THIS SNAPS COVER ART IN SMPLAYER.
-    else timer:kill()    --TOGGLE OFF, BELOW.
-
-        local aid,vid,image = mp.get_property_number('current-tracks/audio/id'),mp.get_property_number('current-tracks/video/id'),mp.get_property_bool('current-tracks/video/image')  --id IS nil OR INTEGER.
+    else local aid,vid,image = mp.get_property_number('current-tracks/audio/id'),mp.get_property_number('current-tracks/video/id'),mp.get_property_bool('current-tracks/video/image')  --TOGGLE OFF, BELOW. id IS nil OR INTEGER.
         if not aid or ORIENTATION=='' then return end --CASES 1,2. NO SPECTRUM, NO TOGGLE OFF (DO NOTHING).  5 CASES. 1) JPEG. 2) MP4 LIMITS. 3) MP3 SPECTRUM. 4) MP3+JPEG. 5) MP4.
         
         local complex=('[aid%d]anull[ao]'):format(aid)    --CASE 3: RAW audio. 

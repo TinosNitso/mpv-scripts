@@ -207,7 +207,7 @@ for _,timer in pairs(timers) do timer:kill() end    --timers CARRY OVER TO NEXT 
 
 mp.observe_property('af-metadata/'..label, 'native', function(arg) pcall(set_speed,arg) end)   --arg='af-metadata/aspeed'    THIS TRIGGERS EVERY HALF A SECOND. astats WORKS LIKE cropdetect. pcall IS SAFER WHEN end-file TRIGGERS (OR ELSE SCRIPT MAY FAIL TO DELETE DATA FILE). pcall SIMPLIFIES CODE BY REMOVING RETURNS.
 mp.observe_property('seeking','bool',function() initial_time_pos=nil end) --RESET SAMPLE COUNT WHENEVER THE USER SEEKS.
--- mp.observe_property('pause'  ,'bool',function() initial_time_pos=nil end) --ON pause TOO?
+-- mp.observe_property('pause'  ,'bool',function() initial_time_pos=nil end) --ON pause TOO?  EXCESSIVE LAG OFFS initial_time_pos. UNSOLVED PROBLEM.
 
 
 ----COMMENT SECTION. MPV CURRENTLY HAS A 10 HOUR BACKWARDS SEEK BUG (BACKWARDS BUFFER ISSUE IF BACK-SEEK MORE THAN AN HOUR?).  
