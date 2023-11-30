@@ -20,7 +20,7 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED.
     seek_limit   =  2, --DEFAULT=2   SECONDS. SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit. seek CAUSES AUDIO TO SKIP. (SKIP VS JERK.)
     resync_delay = 30, --DEFAULT=30  SECONDS. RANGE [1,60]. RESYNC WITH THIS DELAY, COUNTING FROM 0s ON clock.     mp.get_time() LAGS MAYBE 100ms OVER A MINUTE.   mp.get_time() MAY BE BASED ON os.clock(), WHICH IS BASED ON CPU TIME.
     os_sync_delay=.01, --DEFAULT=.01 SECONDS. ACCURACY FOR SYNC TO os.time. E.G. A timer CHECKS SYSTEM clock EVERY 10 MILLISECONDS (FOR THE NEXT TICK) WHENEVER A NEW SYNC IS STARTED. CMD COMMAND "TIME 0>NUL" GIVES 10ms ACCURATE SYSTEM TIME IN WIN10.
-    time_needed  =  2, --DEFAULT=2   SECONDS. CONTROLLER DOES NOTHING NEAR end-file. NO RANDOMIZATION WITHIN 2 SECS OF file-loaded & file-end.
+    time_needed  =  2, --DEFAULT=2   SECONDS. CONTROLLER DOES NOTHING NEAR end-file. NO RANDOMIZATION WITHIN 5 SECS OF file-loaded & file-end.
     timeout      = 10, --DEFAULT=10  SECONDS. audio INSTANCES ALL shutdown IF CONTROLLER BREAKS FOR THIS LONG.
     -- meta_osd=true,  --DISPLAY astats METADATA (audio STATISTICS). IRONICALLY astats DOESN'T KNOW ANYTHING ABOUT TIME ITSELF, YET IT'S THE BASIS FOR TEN HOUR SYNCHRONY.
     
@@ -32,7 +32,7 @@ local options={ --ALL OPTIONAL & MAY BE REMOVED.
             'osd-font-size 16','osd-border-size 1','osd-scale-by-window no',   --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
             'image-display-duration inf','video-timing-offset 1', --STOPS IMAGES FROM SNAPPING MPV. DEFAULT offset=.05 SECONDS ALSO WORKS.
             'hwdec auto-copy','vd-lavc-threads 0',    --IMPROVED PERFORMANCE FOR LINUX .AppImage.  hwdec=HARDWARE DECODER. vd-lavc=VIDEO DECODER-LIBRARY AUDIO VIDEO CORES (0=AUTO). FINAL video-zoom CONTROLLED BY SMPLAYER→GPU.
-            -- 'audio-pitch-correction no' --DEFAULT=yes. no=CHIPMUNK MODE. DISABLES scaletempo2(?) FILTER. SCALING TEMPO IS FUNDAMENTAL TO RANDOMIZATION.
+            -- 'audio-pitch-correction no' --DEFAULT=yes  no=CHIPMUNK MODE, DISABLES scaletempo2(?) FILTER. SCALING TEMPO IS FUNDAMENTAL TO RANDOMIZATION.
             -- 'osd-color 1/.5','osd-border-color 0/.5',  --DEFAULTS 1/1,0/1. OPTIONAL: FOR clock. y/a = brightness/alpha (a=OPAQUENESS). A TRANSPARENT clock CAN BE TWICE AS BIG.
            },
 }
@@ -76,7 +76,7 @@ mp.command(('no-osd af append @%s:lavfi=[%s]'):format(label,lavfi))     --LINUX 
 
 local title,clock = mp.create_osd_overlay('ass-events'),mp.create_osd_overlay('ass-events')   --ass-events IS THE ONLY VALID OPTION, FOR TITLE & clock.
 function playback_start(_,seeking) 
-    if seeking and is_controller then return end  --CONTROLLER WAITS UNTIL INITIAL SEEK IS COMPLETE & ALL OTHER SCRIPT GRAPHS INSERTED. SOME VIDEOS START WITH OFF INITIAL TIMESTAMP, DESPITE time-pos=0 @file-loaded.
+    if seeking and is_controller then return end  --CONTROLLER WAITS UNTIL INITIAL SEEK IS COMPLETE. SOME VIDEOS START WITH OFF INITIAL TIMESTAMP, DESPITE time-pos=0 @file-loaded.
     mp.unobserve_property(playback_start) --BELOW RUNS ONLY ONCE (BEFORE TOGGLING).
     
     timers.auto:resume()    --THIS & astats MAY TRIGGER set_speed.
@@ -160,7 +160,8 @@ function set_speed(observation)    --MAIN FUNCTION. CONTROLLER WRITES TO .txt, O
     then return end    --DO NOTHING IF PLAYING BUT NOT AN OBSERVATION, OR CONTROLLER PLAYING NEAR end-file.   THE auto timer ONLY EXISTS FOR WHEN paused (NO astats UPDATE).
     
     local time_pos,TIMEFROM1970 = mp.get_property_number('time-pos'),os.time()  --THESE METRICS ARE INCORRECT DEFAULTS, TO BE IMPROVED (AFTER SYNC).
-    if sync_time and samples_time>o.time_needed then TIMEFROM1970=sync_time+mp.get_time()   --REQUIRE SYNC, WITH ENOUGH DATA. THIS TIMEFROM1970 PRECISE TO 10ms. BEFORE SYNC, pause OVERRIDE STILL APPLIES.
+    if sync_time and samples_time>o.time_needed and not mp.get_property_bool('seeking')
+    then TIMEFROM1970=sync_time+mp.get_time()   --SYNC, WITH ENOUGH DATA. THIS TIMEFROM1970 PRECISE TO 10ms. BEFORE SYNC, pause OVERRIDE STILL APPLIES.
         if not initial_time_pos then initial_time_pos=time_pos-samples_time end    --INITIALIZE. THIS # STAYS THE SAME FOR THE NEXT 10 HOURS.   LIKE HOW YOGHURT GOES OFF, PERHAPS 100 HRS LATER THE SPEAKERS WILL BE OFF (astats ISSUE). DISJOINT STEREO IS LIKE YOGHURT DISJOINT FROM CREAM. 
         time_pos=initial_time_pos+samples_time end   --NEW METRIC WHOSE CHANGE IS BASED ON astats SAMPLE COUNT.
     
@@ -206,11 +207,12 @@ timers.auto=mp.add_periodic_timer(.5, function() pcall(set_speed) end)    --time
 for _,timer in pairs(timers) do timer:kill() end    --timers CARRY OVER TO NEXT FILE IN PLAYLIST.
 
 mp.observe_property('af-metadata/'..label, 'native', function(arg) pcall(set_speed,arg) end)   --arg='af-metadata/aspeed'    THIS TRIGGERS EVERY HALF A SECOND. astats WORKS LIKE cropdetect. pcall IS SAFER WHEN end-file TRIGGERS (OR ELSE SCRIPT MAY FAIL TO DELETE DATA FILE). pcall SIMPLIFIES CODE BY REMOVING RETURNS.
-mp.observe_property('seeking','bool',function() initial_time_pos=nil end) --RESET SAMPLE COUNT WHENEVER THE USER SEEKS.
--- mp.observe_property('pause'  ,'bool',function() initial_time_pos=nil end) --ON pause TOO?  EXCESSIVE LAG OFFS initial_time_pos. UNSOLVED PROBLEM.
+mp.observe_property('seeking','bool',function() initial_time_pos=nil end) --RESET SAMPLE COUNT WHENEVER seeking.
 
 
-----COMMENT SECTION. MPV CURRENTLY HAS A 10 HOUR BACKWARDS SEEK BUG (BACKWARDS BUFFER ISSUE IF BACK-SEEK MORE THAN AN HOUR?).  
+----COMMENT SECTION. THERE'S A BUG IF THIS STARTS WITH EXCESSIVE LAG ALONG WITH autocomplex. MAYBE THE audio SPLIT?
+----MPV CURRENTLY HAS A 10 HOUR BACKWARDS SEEK BUG (BACKWARDS BUFFER ISSUE IF BACK-SEEK MORE THAN AN HOUR?).  
+
 --GET SAMPLERATE IF NOT SET  local paused,samples_time = mp.get_property_bool('pause'),mp.get_property_native('af-metadata/'..label)['lavfi.astats.Overall.Number_of_samples']/mp.get_property_number('audio-params/samplerate') --samplerate TIME = #SAMPLES/SR         time-pos, playback-time & audio-pts WORK WELL OVER 1 MINUTE, BUT NOT 1 HOUR. AUTO-SYNC MAY WORK IN MPV-V36, BUT NOT V35. SO THIS FUNCTION USES AUDIO STATS FILTER, SAMPLE COUNT.    INSTEAD OF 44100 CAN CHECK PROPERTIES audio-params/samplerate & current-tracks/audio/demux-samplerate
 -- mp.register_event('playback-restart',function() initial_time_pos=nil end) --MAY HELP WITH EXTREME LAG (CAUSES DESYNC).
 
