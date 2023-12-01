@@ -12,9 +12,9 @@ local options = {
     crop_time     =.5,      --DEFAULT=.5 SECONDS. TIME TO STRETCH OUT BLACK BARS, BY SMOOTHLY VARYING ASPECT. TOO FAST & IT HAS TOO MUCH ENERGY.
     command_prefix='no-osd',--DEFAULT=''. CAN SUPPRESS osd.
     
-    detect_limits ={        --NOT CASE SENSITIVE. detect_limit MAY VARY WITH media-title IF THE FOLLOWING SUBSTRINGS ARE FOUND.
+    detect_limits ={        --NOT CASE SENSITIVE. detect_limit MAY VARY WITH media-title IF THE FOLLOWING SUBSTRINGS ARE FOUND. EXTRA ZOOM.
                     ['We are army of people - Red Army Choir']= 64,
-                    [                       'L.A.D.Y G.A.G.A']=100,
+                    [                       'L.A.D.Y G.A.G.A']=100, 
                    },
     
     MAINTAIN_CENTER_X=  0, --TOLERANCE, 0 MEANS NEVER MOVE THE CENTER (LIKE CROSSHAIRS). A SINGLE BLACK BAR ON 1 SIDE MAY BE OK.
@@ -23,14 +23,15 @@ local options = {
     TOLERANCE_TIME   = 10, --DEFAULT=10 SECONDS. IRRELEVANT IF TOLERANCE=0.
     
     USE_INNER_RECTANGLE=true,--BOTH cropdetect & bbox GENERATE UNNECESSARY x1 x2 y1 y2 NUMBERS, WHICH ENABLE THE INNER RECTANGLE (MORE AGGRESSIVE crop). COMPUTE x1,x2 = max(x1,x2-w,x),min(x2,x1+w,x+w) ETC BY SYMMETRY, THEN SHRINK w TO THE NEW X2-X1. 
-    -- USE_MIN_RATIO   =true,--CROP ALL THE WAY DOWN TO detect_min_ratio.
+    -- USE_MIN_RATIO   =true,--CROP ALL THE WAY DOWN TO detect_min_ratio. CAN BE SPURIOUS.
     time_needed        =2,   --DEFAULT=0 SECONDS. DO NOTHING IF THIS CLOSE TO VIDEO END. NEEDED FOR RELIABILITY.
     
     -- scale    ={1680,1050},--STOPS EMBEDDED MPV SNAPPING (APPLY FINAL scale IN ADVANCE).     CHANGING vid (MP3 TAGS) CAUSES EMBEDDED MPV TO SNAP UNLESS AN ABSOLUTE scale IS USED (SO I DON'T USE [vo]). EMBEDDING MPV CAUSES ANOTHER LAYER OF BLACK BARS (WINDOW SNAP).   DEFAULT scale=display SIZE (WINDOWS & MACOS), OR OTHERWISE LINUX IS [vo] SIZE. scale OVERRIDE USES NEAREST MULTIPLES OF 4 (ceil).
     -- meta_osd =true,       --DISPLAY ALL DETECTOR METADATA.
+    -- msg_info =true,       --REPORT info MESSAGES TO MPV LOG. THEY TEND TO FILL THE LOG (NO CHANGE IN GEOMETRY, ETC).
     -- detectors='bbox=%s',  --DEFAULT='cropdetect=limit=%s:round=%s:reset=1:0'. bbox IS AUTO-JPEG OVERRIDE. MULTIPLE detectors='cropdetect=%s:%s:1:0,cropdetect=%s:%s:1:0' FOR IMPROVED RELIABILITY?   %s=string SUBSTITUTION, FORMATTED @file-loaded. reset>0.
     
-    key_bindings         ='C c J j',--DEFAULT='C'. CASE SENSITIVE. C→J IN DVORAK, BUT J IS ALSO next_subtitle (& IN VLC IS dec_audio_delay). THESE DON'T WORK INSIDE SMPLAYER. 
+    key_bindings         ='C c J j',--DEFAULT='C'. CASE SENSITIVE. C→J IN DVORAK, BUT J IS ALSO next_subtitle (& IN VLC IS dec_audio_delay). M IS MUTE SO CAN DOUBLE-PRESS M. key_bindings DON'T WORK INSIDE SMPLAYER. 
     toggle_on_double_mute=.5,       --DEFAULT=0 SECONDS (NO TOGGLE). TIMEOUT FOR DOUBLE-mute-TOGGLE. IN SMPLAYER (OR ON SMARTPHONE) TOGGLE CROPPING BY MUTING, INSTEAD OF KEYBOARD SHORTCUT. ONLY WORKS IF THERE'S AN aid TO mute (E.G. CAN'T TOGGLE ON RAW .JPG).
     
     io_write=' ',   --DEFAULT=''  (INPUT OUTPUT)  io.write THIS @EVERY CHANGE IN vf (VIDEO FILTERS). STOPS EMBEDDED MPV FROM SNAPPING ON COVER ART. MPV MAY COMMUNICATE WITH ITS PARENT APP.
@@ -43,11 +44,11 @@ local options = {
               'pause yes',  --RETURNS INITIAL PAUSED STATE. EMBEDDED MPV MAY SNAP IF IT ISN'T PAUSED BEFORE A GRAPH'S INSERTED.
              },       
 }
-local o,label,timers = options,mp.get_script_name(),{} --ABBREV. options. label=autocrop   m=crop MEMORY
-local m,unpause = {},not mp.get_property_bool('pause') --PAUSED STATE.
+local o,label,timers = options,mp.get_script_name(),{} --ABBREV. options. label=autocrop   
+local m,unpause = {},not mp.get_property_bool('pause') --m=crop MEMORY  ALSO pause STATE.
 
-require 'mp.options'   --OPTIONAL
-read_options(o)
+require 'mp.options'
+read_options(o)    --OPTIONAL?
 
 for key,val in pairs({command_prefix='',detect_limits={},TOLERANCE=0,TOLERANCE_TIME=10,time_needed=0,crop_time=.5,scale={},detectors='cropdetect=limit=%s:round=%s:reset=1:0',key_bindings='C',toggle_on_double_mute=0,io_write='',config={}})
 do if not o[key] then o[key]=val end end --ESTABLISH DEFAULTS. 
@@ -63,7 +64,7 @@ function file_loaded()
     m.width,m.height = o.scale[1],o.scale[2]
     if not (m.width and m.height) then m.width,m.height = mp.get_property_number('display-width'),mp.get_property_number('display-height') end  --WINDOWS & MACOS.
     if not (m.width and m.height) then m.width,m.height = mp.get_property_number('video-params/w'),mp.get_property_number('video-params/h') end --USE [vo] SIZE (LINUX).  current-tracks/video/demux-w IS RAW TRACK WIDTH.
-    if not (m.width and m.height) then mp.add_timeout(.05,file_loaded)   --LINUX FALLBACK: RE-RUN & return. 
+    if not (m.width and m.height) then mp.add_timeout(.05,file_loaded)   --LINUX FALLBACK: RE-RUN & return. DUE TO EXTREME LAG IN VIRTUALBOX.
         return end
     m.width,m.height,is1frame = math.ceil(m.width/4)*4,math.ceil(m.height/4)*4,false   --MULTIPLES OF 4 WORK BETTER WITH overlay (FURTHER GRAPHS LIKE automask). MPV MAY SNAP INSIDE SMPLAYER ON ODD NUMBERED SIZES.
     
@@ -134,7 +135,7 @@ function detect_crop()
         if message then mp.osd_message(message) end end   --DISPLAY COORDS FOR 1 SEC. message=nil→FAIL
     
     if not meta then mp.msg.error("No crop metadata.")  --Verify the existence of metadata. SOMETIMES IT'S AN EMPTY table, WHICH FAILS THE NEXT TEST.
-        mp.msg.info("Was the cropdetect filter successfully inserted?\nDoes your version of ffmpeg/libav support AVFrame metadata?")
+        if o.msg_info then mp.msg.info("Was the cropdetect filter successfully inserted?\nDoes your version of ffmpeg/libav support AVFrame metadata?") end
         return end 
     
     for key in ('w h x1 y1 x2 y2 x y'):gmatch('%g+') do local value=meta['lavfi.cropdetect.'..key]      
@@ -142,7 +143,6 @@ function detect_crop()
         meta[key]=tonumber(value) end   --tonumber(nil)=nil (BUT 0+nil FAILS).
     
     if not (meta.w and meta.h and meta.x1 and meta.y1 and meta.x2 and meta.y2) then mp.msg.error("Got empty crop data.")   --THIS CAN HAPPEN IF VID IS PAUSED.   
-         mp.msg.info("You might need to increase detect_seconds.")
          return end 
     
     if not meta.x or not meta.y then meta.x,meta.y = (meta.x1+meta.x2-meta.w)/2,(meta.y1+meta.y2-meta.h)/2 end     --bbox GIVES x1 & x2 BUT NOT x. CALCULATE x & y BY TAKING AVERAGE.
@@ -170,13 +170,13 @@ function detect_crop()
     meta.out_w,meta.out_h = meta.w,meta.h   --w,h → out_w,out_h 
     
     -- Verify if it is necessary to crop.
-    local is_effective=(not m.playtime_remaining  --PROCEED IF m.playtime_remaining=nil
+    local is_effective=(not m.playtime_remaining  --PROCEED IF INITIALIZING.
         or math.abs(playtime_remaining-m.playtime_remaining)>o.TOLERANCE_TIME) --PROCEED IF TIME CHANGES TOO MUCH,
             and (meta.out_w~=m.out_w or meta.out_h~=m.out_h or meta.x~=m.x or meta.y~=m.y)  --UNLESS ALL COORDS EXACTLY THE SAME.
         or math.abs(meta.out_w-m.out_w)>m.out_w*o.TOLERANCE or math.abs(meta.out_h-m.out_h)>m.out_h*o.TOLERANCE --CHECK meta IS EFFECTIVE AT CHANGING CURRENT GEOMETRY.
         or math.abs(meta.x-m.x)>m.out_w*o.TOLERANCE or math.abs(meta.y-m.y)>m.out_h*o.TOLERANCE
     
-    if not is_effective then mp.msg.info("No area detected for cropping.") 
+    if not is_effective then if o.msg_info then mp.msg.info("No area detected for cropping.") end
         return end
     
     m.playtime_remaining=playtime_remaining --→MEMORY.
