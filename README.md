@@ -12,6 +12,6 @@ IN SMPLAYER ADVANCED PREFERENCES. IN LINUX & MACOS EXTRACT TO Desktop FOLDER `mp
 IN LINUX DON'T USE snap. TRY `sudo apt install smplayer` OR `.AppImage` OR `flatpak`.
 `~/` MEANS HOME FOLDER IN LINUX & MACOS.
 
-autocrop & automask HAVE INSTA-TOGGLES - THE OTHER 2 ARE SLOW TOGGLE.
+autocrop, automask & aspeed HAVE INSTA-TOGGLES, BUT NOT autocomplex (SO SLOW TOGGLE IF TOGGLING ALL 4 SIMULTANEOUSLY). THE aspeed ABOVE HAS INSTA-TOGGLE (DIFFERENT GRAPH USING astreamselect), UNLIKE v1.2.1. THERE'S ALSO AN autoloader BUGFIX.
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
