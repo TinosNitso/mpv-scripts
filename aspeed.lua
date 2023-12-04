@@ -50,16 +50,17 @@ for key,val in pairs({title_duration=5,title='',clock='',FILTERS='anull',extra_d
 do if not o[key] then o[key]=val end end --ESTABLISH DEFAULTS. 
 for _,option in pairs(o.config) do mp.command('no-osd set '..option) end 
 
-mpv,devices = 'mpv',{mp.get_property('audio-device')} --mpv MAY BE ADDRESSED AS EITHER "mpv" OR "./mpv" IN EVERY SYSTEM. LINUX snap ALLOWS IT TO RUN ITSELF.  devices IS LIST OF audio-devices WHICH WILL ACTIVATE (STARTING WITH EXISTING device). 
+mpv,devices,device_list = 'mpv',{mp.get_property('audio-device')},mp.get_property_native('audio-device-list') --mpv MAY BE ADDRESSED AS EITHER "mpv" OR "./mpv" IN EVERY SYSTEM. LINUX snap ALLOWS IT TO RUN ITSELF.  devices IS LIST OF audio-devices WHICH WILL ACTIVATE (STARTING WITH EXISTING device). device_list IS COMPLETE LIST.
 mutelr,pid = mp.get_opt('mutelr'),mp.get_opt('pid')   --THESE script-opts FOR audio INSTANCES.
 
 if not (mutelr and pid) then is_controller,pid,mutelr = true,utils.getpid(),o.mutelr  --CONTROLLER MUTES LEFT.
     if utils.subprocess({args={mpv}}).error:upper()=='INIT' then mpv='./mpv' end --error=init FOR INCORRECT COMMAND.  EITHER mpv (WINDOWS & LINUX) OR ./mpv (MACOS & LINUX .AppImage)    OTHERWISE error=killed (NULL CMD). CAN SCAN OVER ALL POSSIBLE COMMANDS.  MACOS working-directory=/Applications/SMPlayer.app/Contents/MacOS
-    device_list=mp.get_property_native('audio-device-list') --device_list IS COMPLETE LIST. CHECK EVERY ENTRY FROM OPTION.
-    for _,index in pairs(o.extra_devices_index_list) do device=device_list[index].name
-        if not table.concat(devices):find(device,1,true) then table.insert(devices,device) end end  --1,true=EXACT FROM 1    concat find DOES SEARCH FOR DUPLICATES, BEFORE INSERTION.
+    for _,index in pairs(o.extra_devices_index_list) do is_present,device = false,device_list[index].name
+        for _,find in pairs(devices) do if device:upper()==find:upper() then is_present=true    --SEARCH FOR DUPLICATES BEFORE INSERTION. SIMILAR LOGIC TO autoloader.
+            return end end
+        if not is_present then table.insert(devices,device) end end
 else o.DELAY=0   --ONLY CONTROLLER DELAYS volume.
-     mp.command('set loop inf') end --STOP audio INSTANCES FROM EXITING, WITHOUT apad. USER MAY BACKWARDS seek NEAR end-file. 
+     mp.command('no-osd set keep-open yes') end --STOP audio INSTANCES FROM EXITING, WITHOUT apad NOR loop=inf. USER MAY BACKWARDS seek NEAR end-file. 
 
 lavfi=('stereotools,aformat=s16:44100,astats=.5:1,%s,volume=gte(t-startt\\,%s):eval=frame,asplit[0],stereotools=%s=1[1],[0][1]astreamselect=2:1')
     :format(o.FILTERS,o.DELAY,mutelr)
@@ -71,7 +72,7 @@ lavfi=('stereotools,aformat=s16:44100,astats=.5:1,%s,volume=gte(t-startt\\,%s):e
 ----aformat      =sample_fmts  (u8 s16 s64 ETC)  →44.1 kHz BEFORE astats, IRRESPECTIVE OF lavfi-complex. ITS OUTPUT MUST BE DETERMINISTIC OVER 10 HRS.  s16=SGN+15BIT (-32k→32k). u8 CAUSES HISSING.   OTHERWISE MUST CHECK audio-params/samplerate OR current-tracks/audio/demux-samplerate      
 ----astats       =length:metadata (SECONDS:BOOL)  CONTINUAL SAMPLE COUNT IS BASIS FOR 10 HOUR SYNC. USES APPROX 0% OF CPU. USING THIS AS PRIMARY METRIC AVOIDS MESSING WITH MPV/SMPLAYER SETTINGS TO ACHIEVE 10 HOUR SYNC. MPV autosync WON'T WORK (MAYBE A FUTURE VERSION, BUT CURRENTLY INCOMPATIBLE).
 ----volume       =volume:...:eval  (DEFAULT 1:once)  TIMELINE SWITCH FOR CONTROLLER. startt=t@INSERTION.
-----asplit        [ao]→[2CHANNELS][1CHANNEL]  
+----asplit        [ao]→[NOMUTE][MUTE]  
 ----astreamselect=inputs:map  ENABLES INSTA-TOGGLE. "af-command" NOT "af toggle". ANY ATTEMPT TO DOUBLE CHANGE GRAPHS OR DO A FULL TOGGLE CAUSES CONTROLLER GLITCH (CAN VERIFY BY TOGGLING NORMALIZER IN SMPLAYER). SHOULD BE PLACED LAST BECAUSE SOME FILTERS (dynaudnorm) DON'T INSTANTLY KNOW WHICH STREAM TO FILTER, BECAUSE THAT'S DETERMINED BY REMOTE CONTROL (af-command 0 OR 1). ON=1 BY DEFAULT.
 
 
@@ -113,7 +114,6 @@ function playback_start(_,seeking)  --ONLY EVER CALLED VIA OBSERVATION.
 end 
 mp.register_event('file-loaded',function() mp.observe_property('seeking','bool',playback_start) end)   --AT LEAST 4 STAGES: LOAD-SCRIPT start-file file-loaded playback-restart  (restart & START TOGETHER)  ALL audio PLAYERS stop & THEN ALL NEW ONES START IF file CHANGES, OR USER TOGGLES.
 mp.register_event('shutdown'   ,function() os.remove(txtpath) end)  --NO RECYCLE BIN. audio INSTANCES quit.
-mp.register_event('end-file'   ,function() mp.command('set pause yes') end)  --ALTERNATIVE event=end-file       NO RECYCLE BIN. audio INSTANCES quit.
 
 timers.mute=mp.add_periodic_timer(o.toggle_on_double_mute, function()end )  --mute timer. VALID EVEN FOR 0 TIME (DISABLED).
 timers.mute.oneshot=true
@@ -191,7 +191,7 @@ function set_speed(property)    --property='af-metadata/aspeed' OR nil     THIS 
     
     mp.command('set pause no'         )
     mp.command('set volume  '..volume ) 
-    mp.command('set aid     '..lines()) --LINE3=aid     TIMES GO LAST, AFTER path & volume OVERRIDES. 
+    mp.command('set aid     '..lines()) --LINE3=aid   THIS IS UNTESTED.   TIMES GO LAST, AFTER path & volume OVERRIDES.
     
     if not sync_time then return end    --DON'T CHANGE speed BEFORE INITIAL SYNC. 
     time_from_write=TIMEFROM1970-lines()  --LINE4=TIME OF WRITE (CONTROLLER TIME @MEASUREMENT).
@@ -204,10 +204,10 @@ function set_speed(property)    --property='af-metadata/aspeed' OR nil     THIS 
     if not randomseed then randomseed=TIMEFROM1970  --INITIALIZE random # GENERATOR. WITHOUT seed THE NUMBERS ARE EASY TO PREDICT.
         math.randomseed(randomseed) end  
     
-    speed=1-time_gained/.5    --time_gained→0 OVER NEXT .5 SECONDS (astats UPDATE TIME)
+    speed=1-time_gained/.5    --time_gained→0 OVER NEXT .5 SECONDS (astats UPDATE TIME).
     if samples_time>o.time_needed and mp.get_property_number('time-remaining')>o.time_needed   --DON'T RANDOMIZE BEFORE samples_time STABILIZES, NOR NEAR end-file. 
     then speed=speed+math.random(-o.max_random_percent,o.max_random_percent)/100 end 
-    if o.max_percent then    speed=math.max( 1-o.max_percent/100 , math.min(1+o.max_percent/100, speed) ) end  --speed LIMIT. LUA DOESN'T HAVE math.clip
+    if o.max_percent then speed=math.max( 1-o.max_percent/100 , math.min(1+o.max_percent/100, speed) ) end  --speed LIMIT. LUA DOESN'T SUPPORT math.clip
     mp.command('set speed '..speed)
 end
 timers.auto=mp.add_periodic_timer(.5 , function() pcall(set_speed) end)   --timer KEEPS CHECKING txtfile WHEN PAUSED, WITHOUT astats OBSERVATION.
@@ -217,7 +217,7 @@ mp.observe_property('af-metadata/'..label,'native',function(property) pcall(set_
 mp.observe_property('seeking'            ,'bool'  ,function() initial_time_pos=nil end) --RESET SAMPLE COUNT WHENEVER seeking.
 
 
-----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (TECH SPECS), & END (MISC.). ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY. 
+----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (TECH SPECS), & END (MISC.). ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
 ----SERIOUS  BUG: EXCESSIVE LAG ALONG WITH autocomplex. IN CASE OF DESYNC MUST STOP & PLAY (RESET).     IT COULD BE DUE TO asplit IN lavfi-complex. autosync DOESN'T HELP.
 ----POSSIBLE BUG: aid TRACK CHANGE UNTESTED. MAY NEED on_aid_change FUNCTION, SINCE BOTH automask & autocrop NEED on_vid FUNCTIONS FOR PROPER TRACK CHANGES.
 

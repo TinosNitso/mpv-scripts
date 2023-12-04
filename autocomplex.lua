@@ -5,8 +5,8 @@
 options={ --ALL OPTIONAL & MAY BE REMOVED. TO REMOVE A COMPONENT SET ITS alpha TO 0 (freqs, volume & feet).
     top_scale   = 1, --REMOVE FOR NO TOP HALF. RANGE [0,1]. SCALES HEIGHT OF TOP HALF.
     bottom_scale=.5, --REMOVE FOR NO BOTTOM HALF (vflip). RANGE [0,1].   FUTURE VERSION COULD SUPPORT SURROUND SOUND FOR BOTTOM HALF.
-    dual_scale  =.9, --REMOVE FOR NO STATIONARY SECOND complex. POSITION CENTERED. IT CAN BE READ MORE EASILY.
-    -- final_colormix='gb=1:bb=0',--UNCOMMENT FOR RED & GREEN, INSTEAD OF RED & BLUE (DEFAULT). PREDATOR-GREY='rr=.75:gr=.75:br=.75:rb=.25:gb=.25:bb=.25'.  BLUE, DARKBLUE & BLACK HIGHS ARE COMPATIBLE WITH cropdetect (autocrop), BUT RED TIPS MAY INTERFERE WHEN SIDE-BARS AREN'T PERFECT BLACK. RED LIPS MAKE SENSE. WHITE BATONS FOR TEETH IS AN ALTERNATIVE.
+    dual_scale  =.9, --REMOVE FOR NO DUAL COMPLEX (CENTERED). RANGE [0,1]. AS CENTER-PIECE, IT CAN BE READ MORE EASILY. THE IDEA COMES FROM HOW RAW MP3 WORKS.    TOTAL 8 SPECTRA, LIKE OCTOPUS LEGS (LEGS MOVING, ARMS STILL). IT'S ALSO POSSIBLE TO ADD A 3RD COMPLEX ON TOP, LIKE PYRAMID.
+    -- final_colormix='gb=1:bb=0',--UNCOMMENT FOR RED & GREEN, INSTEAD OF RED & BLUE (DEFAULT). GREY-PREDATOR='rr=.75:gr=.75:br=.75:rb=.25:gb=.25:bb=.25'.  BLUE, DARKBLUE & BLACK HIGHS ARE COMPATIBLE WITH cropdetect (autocrop), BUT RED TIPS MAY INTERFERE WHEN SIDE-BARS AREN'T PERFECT BLACK. RED LIPS MAKE SENSE. WHITE BATONS FOR TEETH IS AN ALTERNATIVE.
     
     fps   =   25, --DEFAULT=25 FRAMES PER SECOND. SCRIPT LIMITS fps & scale. 
     period=19/25, --DEFAULT=1 SECOND. SET TO 0 FOR STATIONARY. USE EXACT fps RATIO (E.G. 19/25=79BPM, BEATS PER MINUTE). UNLIKE A MASK, MOTION MAY NOT BE PERIODIC. ENSEMBLE MAY FREELY FLOAT AROUND. (IF 0 "n/%s"→"0" GSUBS OCCUR ETC). 
@@ -16,28 +16,28 @@ options={ --ALL OPTIONAL & MAY BE REMOVED. TO REMOVE A COMPONENT SET ITS alpha T
     zoompan ='1+.19*(1-cos(2*PI*(in/%s-.2)))*mod(floor(in/%s-.2)\\,2):0:0',--%s=fps*period  in=INPUT-FRAME-NUMBER  zoom:x:y=1:0:0 BY DEFAULT (MINIMUM).  BEFORE A HOVERCRAFT SCOOTS RIGHT IT MAY ROTATE, HENCE 20% DELAY.  19% zoom GETS MAGNIFIED BY autocrop, DEPENDING ON BLACK BARS. REMOVE THIS LINE TO STOP THE SPECTRUM SCOOTING AROUND. A STILL SPECTRUM MAY DRAW MORE ATTENTION.
     
     freqs_lead         =  .24, --DEFAULT=.08 SECONDS. LEAD TIME FOR SPECTRUM (TRIAL & ERROR). BACKDATE audio TIMESTAMPS. showfreqs HAS AT LEAST 1 FRAME LAG. CAN CHECK AGAINST DRUM BEAT. DEPENDS MORE ON HUMAN AUDIO/VIDEO INTERPRETATION TIME.
-    freqs_sr           = 2010, --DEFAULT=2010 Hz. SAMPLE RATE (SAMPLES/SECOND), DOWN FROM 44100. CALIBRATED WITH 1kHz SIGNAL. THESE 3 options ARE FOR CALIBRATION. THIS VERSION ONLY SUPPORTS LR-1kHz. A SINGER'S VOICE CAN PRIMARILY GO OVER 1kHz...
+    freqs_sr           = 2010, --DEFAULT=2010 Hz. SAMPLE RATE (SAMPLES/SECOND), DOWN FROM 44100. CALIBRATED WITH 1kHz SIGNAL. THESE 4 options ARE FOR CALIBRATION. THIS VERSION ONLY SUPPORTS LR-1kHz. A SINGER'S VOICE CAN PRIMARILY GO OVER 1kHz.  THE 1kHz CALIBRATION WAVE IS CLEARLY FADED, DUE TO NYQUIST. IT'S A MATTER OF TASTE WHETHER TO IMPROVE THIS - THE LIPS CLOSE @END.
     LR_OVERLAP         =    2, --DEFAULT=2 PIXELS. CALIBRATES SPECTRUM BY MOVING RIGHT & LEFT CHANNELS ON TOP OF EACH OTHER, @CENTER (DATA DRAG). 
     -- CALIBRATION={{100,1},{'200:1',2},{300,1},{'400:1',2},{500,1},{'600:1',2},{700,1},{'800:1',2},{900,1},{'1000:1',2}}, --{{frequency(Hz):beep_factor,volume},}  beep_factor=OPTIONAL  sine WAVES FOR CALIBRATION.  THIS EXAMPLE BEEPS DOUBLE ON EVEN.   COULD HELP TEST NORMALIZERS, & DECORATE freqs.  SPECTRUM CALIBRATES VIA 3 NUMBERS: freqs_lead freqs_sr LR_OVERLAP   SYNCHRONY IS freqs_lead.
     
-    freqs_highpass     =  100,   --DEFAULT=100 Hz. DAMPENS SUB-BASS & DC, NEAR volume BAR.
-    freqs_alpha        =    1,   --DEFAULT=  1, RANGE [0,1]. OPAQUENESS OF SPECTRAL DATA CURVE.
-    freqs_fps          = 25/2,   --DEFAULT=25/2. 25fps MAY CAUSE LAG. THIS & freqs_clip_h HELP WITH PERFORMANCE.
-    -- freqs_mode      ='bar',   --DEFAULT='line'. CHOOSE line OR bar (OR dot). SET freqs_alpha=.25 FOR bar. GRAPH OPTIMIZED FOR line.
-    freqs_win_size     =  512,   --DEFAULT=512, INTEGER RANGE [128,2048]. APPROX # OF DATA POINTS. THINNER CURVE WITH SMALLER #. NEEDS AT LEAST 256 FOR PROPER CALIBRATION. TOO MANY DATA POINTS LOOK BAD.
+    freqs_highpass     = 100, --DEFAULT=100 Hz. DAMPENS SUB-BASS & DC, NEAR volume BAR. 100 Hz FOR BASS HEAVY TRACKS.
+    freqs_alpha        =   1, --DEFAULT=  1, RANGE [0,1]. OPAQUENESS OF SPECTRAL DATA CURVE.
+    freqs_fps          =25/2, --DEFAULT=25/2. 25fps MAY CAUSE LAG. THIS & freqs_clip_h HELP WITH PERFORMANCE.
+    -- freqs_mode      ='bar',--DEFAULT='line'. CHOOSE line OR bar (OR dot). SET freqs_alpha=.25 FOR bar. GRAPH OPTIMIZED FOR line.
+    freqs_win_size     = 512, --DEFAULT=512, INTEGER RANGE [128,2048]. APPROX # OF DATA POINTS. THINNER CURVE WITH SMALLER #. NEEDS AT LEAST 256 FOR PROPER CALIBRATION. TOO MANY DATA POINTS LOOK BAD.
     freqs_win_func     ='parzen',--DEFAULT='parzen'. poisson cauchy flattop MAYBE OK, BUT THE OTHERS ARE UGLY: rect bartlett hanning hamming blackman welch bharris bnuttal bhann sine nuttall lanczos gauss tukey dolph
-    freqs_averaging    =    2,   --DEFAULT=  2. INTEGER, MIN 1. STEADIES SPECTRUM. SLOWS RESPONSE TO AUDIO. TRY 3 IF MORE freqs_fps. 
-    freqs_magnification=  1.3,   --DEFAULT=1.3. INCREASES CURVE HEIGHT. REDUCES CPU CONSUMPTION, BUT THE LIPS LOSE TRACTION. L & R CHANNELS ARE LIKE A DUAL ALIEN MOUTH (LIKE HOW HUMANS ARE BIPEDAL).    TO INCREASE MAGNIFICATION A NEW FILTER IS NEEDED TO STOP EXCESSIVE SHARPNESS.
-    freqs_clip_h       =  1/3,   --DEFAULT= .5. MINIMUM=grid_height (CAN'T CLIP LOWER THAN GRID). REDUCES CPU USAGE BY CLIPPING CURVE (CROPS THE TOP OFF SHARP SIGNAL). THE NEED FOR CLIPPING, LOW fps & size PROVE THE CODE MAY BE SLOW.
-    volume_alpha       =   .5,   --DEFAULT= .5, RANGE [0,1]. SET TO 0 TO REMOVE BARS (FEET REMAIN). OPAQUENESS OF VOLUME BARS. 
-    volume_fade        =    0,   --DEFAULT=  0, RANGE [0,1].
-    -- volume_dm       =    1,   --DEFAULT=  0 (NO DISPLAYMAX LINES). ALSO SET volume_alpha=1 (& pause) TO SEE THESE.
-    volume_width       =  .04,   --DEFAULT=.04, RANGE (0,1]. WIDTH OF BAR RELATIVE TO VIDEO.
-    volume_height      =  .15,   --DEFAULT= .2, RANGE (0,1]. HEIGHT OF BAR (BEFORE STACKING FEET), RELATIVE TO SCREEN. autocrop MAY MAGNIFY ITS SIZE, BY ACCIDENT. MOVING THE BAR UPWARD WOULD TAKE CENTER STAGE (THE NOSE MIGHT BE DEAD-CENTER).
-    grid_height        =   .1,   --DEFAULT=.15, RANGE (0,1]. GRID HEIGHT RELATIVE TO SCREEN, BEFORE STACKING FEET.  GRID TICKS ARE LIKE volume BATONS, OR TEETH BRACES FOR THE LIPS (freqs).
-    grid_thickness     =  .15,   --DEFAULT= .1, RANGE (0,1], RELATIVE TO GRID SPACING. APPROX AS THICK AS CURVE.
-    feet_alpha         =    1,   --DEFAULT=  1, RANGE [0,1]. SET TO 0 TO REMOVE FEET (I.E. INVISIBLE). alpha MULTIPLIER.
-    feet_height        =  .05,   --DEFAULT=.05, RANGE [.01,1]. RELATIVE TO BARS.  FEET (INNER) LIGHT UP @MAX VOLUME.
+    freqs_averaging    =   2, --DEFAULT=  2. INTEGER, MIN 1. STEADIES SPECTRUM. SLOWS RESPONSE TO AUDIO. TRY 3 IF MORE freqs_fps. 
+    freqs_magnification= 1.3, --DEFAULT=1.3. INCREASES CURVE HEIGHT. REDUCES CPU CONSUMPTION, BUT THE LIPS LOSE TRACTION. L & R CHANNELS ARE LIKE A DUAL ALIEN MOUTH (LIKE HOW HUMANS ARE BIPEDAL).    TO INCREASE MAGNIFICATION A NEW FILTER IS NEEDED TO STOP EXCESSIVE SHARPNESS.
+    freqs_clip_h       =  .3, --DEFAULT= .3. MINIMUM=grid_height (CAN'T CLIP LOWER THAN GRID). REDUCES CPU USAGE BY CLIPPING CURVE (CROPS THE TOP OFF SHARP SIGNAL). THE NEED FOR CLIPPING, LOW fps & size PROVE THE CODE MAY BE SLOW.
+    volume_alpha       =  .5, --DEFAULT= .5, RANGE [0,1]. SET TO 0 TO REMOVE BARS (FEET REMAIN). OPAQUENESS OF VOLUME BARS. 
+    volume_fade        =   0, --DEFAULT=  0, RANGE [0,1].
+    -- volume_dm       =   1, --DEFAULT=  0 (NO DISPLAYMAX LINES). ALSO SET volume_alpha=1 (& pause) TO SEE THESE.
+    volume_width       = .04, --DEFAULT=.04, RANGE (0,1]. WIDTH OF BAR RELATIVE TO VIDEO.
+    volume_height      = .15, --DEFAULT= .2, RANGE (0,1]. HEIGHT OF BAR (BEFORE STACKING FEET), RELATIVE TO SCREEN. autocrop MAY MAGNIFY ITS SIZE.
+    grid_height        =  .1, --DEFAULT=.15, RANGE (0,1]. GRID HEIGHT RELATIVE TO SCREEN, BEFORE STACKING FEET.  GRID TICKS ARE LIKE volume BATONS, OR TEETH BRACES FOR THE LIPS (freqs).
+    grid_thickness     = .15, --DEFAULT= .1, RANGE (0,1], RELATIVE TO GRID SPACING. APPROX AS THICK AS CURVE.
+    feet_alpha         =   1, --DEFAULT=  1, RANGE [0,1]. SET TO 0 TO REMOVE FEET (I.E. INVISIBLE). alpha MULTIPLIER.
+    feet_height        = .05, --DEFAULT=.05, RANGE [.01,1]. RELATIVE TO BARS.  FEET (INNER) LIGHT UP @MAX VOLUME.
     
     max_hours=5,          --DISABLE SPECTRUM IF MP4 OR MP3 LONGER THAN THIS AMOUNT. 0% CPU USAGE FOR 10 HOUR MP3 MAYBE REQUIRED. 
     format   ='yuv420p',  --DEFAULT='yuv420p'  FINAL format IMPROVES PERFORMANCE. 420p REDUCES COLOR RESOLUTION TO HALF-WIDTH & HALF-HEIGHT.
@@ -57,7 +57,7 @@ options={ --ALL OPTIONAL & MAY BE REMOVED. TO REMOVE A COMPONENT SET ITS alpha T
 }
 o=options   --ABBREV. options.
 
-for key,val in pairs({volume_height=.2,grid_height=.15,period=1,position='.5',rotate='0',zoompan='1:0:0',freqs_lead=.08,freqs_sr=2010,LR_OVERLAP=2,freqs_highpass=100,freqs_alpha=1,freqs_fps=25/2,freqs_mode='line',freqs_win_size=512,freqs_win_func='parzen',freqs_averaging=2,freqs_magnification=1.3,freqs_clip_h=.5,volume_alpha=.5,volume_fade=0,volume_dm=0,volume_width=.04,grid_thickness=.1,feet_alpha=1,feet_height=.05,fps=25,format='yuv420p',scale={},key_bindings='',toggle_on_double_mute=0,io_write='',config={}})
+for key,val in pairs({volume_height=.2,grid_height=.15,period=1,position='.5',rotate='0',zoompan='1:0:0',freqs_lead=.08,freqs_sr=2010,LR_OVERLAP=2,freqs_highpass=100,freqs_alpha=1,freqs_fps=25/2,freqs_mode='line',freqs_win_size=512,freqs_win_func='parzen',freqs_averaging=2,freqs_magnification=1.3,freqs_clip_h=.3,volume_alpha=.5,volume_fade=0,volume_dm=0,volume_width=.04,grid_thickness=.1,feet_alpha=1,feet_height=.05,fps=25,format='yuv420p',scale={},key_bindings='',toggle_on_double_mute=0,io_write='',config={}})
 do if not o[key] then o[key]=val end end --ESTABLISH DEFAULTS. 
 
 for _,option in pairs(o.config) do mp.command('no-osd set '..option) end    --APPLY config BEFORE scripts.
@@ -132,7 +132,7 @@ function file_loaded()
     W,H = math.ceil(W/4)*4,math.ceil(H/4)*4     --MULTIPLES OF 4 NECESSARY FOR PERFECT overlay. 
     scale=('scale=%d:%d,setsar=1,format=%s'):format(W,H,o.format)   --FOR EVERY CASE.
     
-    ----5 CASES. 1) JPEG. 2) MP4 LIMITS. 3) MP3  4) MP3+JPEG  5) MP4     INSTEAD OF EVERY SCRIPT SETTING ITS OWN lavfi-complex, THEY MAY RELY ON THIS SCRIPT. E.G. autocrop JPEG USES MORE CPU IF COMBINED WITH autocomplex, FOR THE BLACK-BAR-STRETCH.
+    ----5 CASES. 1) JPEG. 2) MP4 LIMITS. 3) MP3  4) MP3+JPEG  5) MP4     INSTEAD OF EVERY SCRIPT SETTING ITS OWN lavfi-complex, THEY MAY RELY ON THIS SCRIPT. E.G. automask JPEG ANIME USES MORE CPU IF COMBINED WITH autocomplex, FOR THE BLACK-BAR-STRETCH.
     complex,aid,vid,image,duration = nil,mp.get_property_number('current-tracks/audio/id'),mp.get_property_number('current-tracks/video/id'),mp.get_property_bool('current-tracks/video/image'),mp.get_property_number('duration')  --id IS nil OR INTEGER. MULTIPLES OF 4 ONLY.
     if vid and o.max_hours and duration and duration>o.max_hours*60*60 then ORIENTATION='' end  --5 HOURS → NO SPECTRUM.
     
@@ -146,13 +146,13 @@ function file_loaded()
     if not aid or ORIENTATION=='' then if not complex then mp.set_property('lavfi-complex','') end  --NULLIFY NULL complex. OTHER SCRIPTS CAN CHECK BACK WITHIN 50ms.
         return end --CASES 3,4,5 BELOW. complex VARIABLE MUST PRODUCE %%s=[vo] INSERT.
 
-    if           not vid then o.dual_scale=nil  --NO dual_scale FOR RAW MP3. IT USES ITSELF AS [vo].
-                              complex=('[vid]split[vid],%s'):format(scale) end    --CASE 3: RAW MP3 DOUBLE-SPECTRUM (STILL & MOVING).
+    if           not vid then o.dual_scale=nil  --NO dual_scale FOR RAW MP3. IT USES ITSELF AS [vo], WHICH IS WHERE THE IDEA COMES FROM.
+                              complex=('[vid]split[vid],%s'):format(scale) end    --CASE 3: RAW MP3.
     if     image and vid then complex=('[vid%d]%s[vo],[vid]split[vid],crop=1:1:0:0:1:1[C],[C][vo]scale2ref,overlay'):format(vid,scale) end    --CASE 4: MP3 COVER ART.   FOR PROPER MOTION, [vo] GETS SANDWICHED BTWN CANVAS [C] & [vid] (SPECTRUM).
     if not image and vid then complex=('[vid%d]fps=%s,%s'):format(vid,o.fps,scale) end --CASE 5: NORMAL video. LIMIT fps & scale.
     
-    clip_h=H*o.freqs_clip_h*2   --AMPLITUDE CLIP.
-    if o.dual_scale then complex=complex..('[vo],[vid]split[vid],scale=%d:%d[v2],[vo][v2]overlay=(W-w)/2:(H-h)/2'):format(W*o.dual_scale,clip_h*o.dual_scale) end  --[v2]=DUAL overlay  [vid1],[vid2] ETC NOT USUALLY ALLOWED.
+    clip_h=H*o.freqs_clip_h*2   --AMPLITUDE CLIP (scale FACTOR).
+    if o.dual_scale then complex=complex..('[vo],[vid]split[vid],scale=%d:%d[v2],[vo][v2]overlay=(W-w)/2:(H-h)/2'):format(W*o.dual_scale,clip_h*o.dual_scale) end  --[v2]=DUAL overlay   LABELS [vid1][vid2] ETC NOT ALLOWED.
     mp.set_property('lavfi-complex',lavfi:format(aid,complex,W,clip_h))    --CASES 3, 4 & 5. aid TO asplit. W,H FOR zoompan (FINAL CLIP HEIGHT FOR PADDED TOP & BOTTOM). mp.set_property IS MORE POWERFUL THAN mp.command (LIKE mp.commandv).
 end 
 mp.register_event('file-loaded', file_loaded)    
@@ -162,7 +162,7 @@ timer=mp.add_periodic_timer(o.toggle_on_double_mute, function()end)  --CREATE DO
 timer.oneshot=true
 timer:kill()    --CARRIES OVER TO NEXT FILE IN PLAYLIST.
 
-function on_toggle(mute)
+function on_toggle(mute)    --SLOW TOGGLE.
     if mute=='mute' and not timer:is_enabled() then timer:resume() --START timer OR ELSE TOGGLE.
         return end
     
@@ -172,7 +172,7 @@ function on_toggle(mute)
         if not aid or ORIENTATION=='' then return end --CASES 1,2: DO NOTHING. OPEN TO INTERPRETATION: NO SPECTRUM, NO TOGGLE OFF.  5 CASES. 1) JPEG. 2) MP4 LIMITS. 3) MP3 SPECTRUM. 4) MP3+JPEG. 5) MP4.
         
         complex=('[aid%d]anull[ao]'):format(aid)    --CASE 3: RAW audio. STILL FRAME SPECTRUM, audio PLAYS ON. CASES 4 & 5 BUILD ON THIS.
-        if             image then complex=('%s,[vid%d]%s,loop=-1:1,fps=%s:%s[vo]'):format(complex,vid,scale,o.fps,mp.get_property_number('time-pos')) end   --CASE 4: COVER ART. NEED start_time FOR ZOOMING automask (E.G. CAN TOGGLE "F1" @30MINS). STILL USES APPROX 5% CPU TO INFINITE loop. 
+        if             image then complex=('%s,[vid%d]%s,loop=-1:1,fps=%s:%s[vo]'):format(complex,vid,scale,o.fps,mp.get_property_number('time-pos')) end   --CASE 4: COVER ART. NEED start_time FOR ZOOMING automask (E.G. CAN TOGGLE "F1" @30MINS). STILL USES APPROX 5% CPU TO INFINITE loop.    MACOS TAKES A STILL FRAME (DIFFERENT, BUT VALID).
         if vid and not image then complex=('%s,[vid%d]fps=%s,%s[vo]'):format(complex,vid,o.fps,scale) end   --LIMIT [vo], WITH NO SPECTRUM.
         mp.set_property('lavfi-complex',complex) end
     if o.osd_on_toggle then mp.osd_message(o.osd_on_toggle:format(mp.get_property_osd('af'),mp.get_property_osd('vf'),mp.get_property_osd('lavfi-complex')), 5) end  --OPTIONAL osd, 5 SECONDS.
@@ -181,7 +181,7 @@ mp.observe_property('mute', 'bool', on_toggle)
 for key in (o.key_bindings):gmatch('%g+') do mp.add_key_binding(key, 'toggle_complex_'..key, on_toggle) end --MAYBE SHOULD BE 'toggle_spectrum_' BECAUSE THIS TOGGLE ONLY TURNS OFF/ON THE SPECTRUM.
 
 
-----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (TECH SPECS), & END (MISC.). ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY. 
+----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (TECH SPECS), & END (MISC.). ALSO BLURBS ON WEB, & DESCRIPTION OF 5 CASES. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
 ----VERBOSE MESSAGES ALLOW CHANGING TRACK IN SMPLAYER (BUT UGLY). E.G.:   {"event" = "log-message", "level" = "v", "text" = "Set property: aid=2 -> 1    ", "prefix" = "cplayer"}
  
 ----ALTERNATIVE FILTERS:

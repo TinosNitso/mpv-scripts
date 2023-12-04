@@ -1,6 +1,8 @@
-----FOR MPV & SMPLAYER. CROP BLACKBARS OFF JPEG, PNG, BMP, GIF, MP3 (COVER ART), & MP4. .TIFF ONE-LAYER ONLY. CAN CHANGE vid TRACK (MP3TAG) & crop.
+----THIS SCRIPT WORKED OK BEFORE THE DUAL autocomplex. IT CAUSES TOO MUCH LAG WITH MY CHEAP CPU. BUT WITHOUT autocomplex IT'S IMPRESSIVE.
+
+----FOR MPV & SMPLAYER. SMOOTHLY CROP BLACKBARS OFF JPEG, PNG, BMP, GIF, MP3 (COVER ART), & MP4. .TIFF ONE-LAYER ONLY. CAN CHANGE vid TRACK (MP3TAG) & crop. FOR RAW JPEG SMOOTH STRETCH NEEDS autocomplex LOOP.
 ----USE DOUBLE-mute TO TOGGLE. FRAME-STEPS WHEN PAUSED (ACTS AS A frame-step TOGGLE). CAN MAINTAIN CENTER IN HORIZONTAL/VERTICAL, WITH TOLERANCE VALUES. FULLY SUPPORTS cropdetect & bbox (ffmpeg-filters). 
-----THIS VERSION HAS NO SMOOTH-CROP. A SINGLE CROP IS MORE EFFICIENT WHEN COMBINED WITH DUAL autocomplex + automask. BASED ON https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua
+----THIS VERSION USES A MAGNIFIED NEGATIVE overlay FOR SMOOTH crop (BUG WORKAROUND). MAY LAG IF IT MAGNIFIES 4xDISPLAY, BEFORE CROPPING DOWN TO IT. AS SMOOTH AS STRETCHING PARCHMENT. BASED ON https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua
 
 options = {
     auto            =true,--IF false, CROPS OCCUR ONLY on_seek & on_toggle.
@@ -9,15 +11,17 @@ options = {
     detect_round    =  2, --ORIGINAL DEFAULT=2, cropdetect DEFAULT=16.
     detect_min_ratio=.25, --ORIGINAL DEFAULT=0.5.
     
-    --ALL THE FOLLOWING ARE OPTIONAL & MAY BE REMOVED. (JPEG NEEDS pause THOUGH.) SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH IS A PROBLEM ON MACOS.    IN SMPLAYER AN ADVANCED PREFERENCE IS TO RUN action=aspect_none (SET KEYBOARD SHORTCUT=Tab) FOR ALL FILES (IT HAS SOME FINAL GPU OVERRIDE).
+    ----ALL THE FOLLOWING ARE OPTIONAL & MAY BE REMOVED. SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH IS A PROBLEM ON MACOS.    IN SMPLAYER AN ADVANCED PREFERENCE IS TO RUN action=aspect_none (SET KEYBOARD SHORTCUT=Tab) FOR ALL FILES (IT HAS SOME FINAL GPU OVERRIDE).
+    crop_time     =.5,      --DEFAULT=.5 SECONDS. TIME TO STRETCH OUT BLACK BARS, BY SMOOTHLY VARYING ASPECT. TOO FAST & IT HAS TOO MUCH ENERGY. ALSO TIME-STEP OF TOGGLE WHEN PAUSED.
     command_prefix='no-osd',--DEFAULT=''. CAN SUPPRESS osd.
+    
     detect_limits ={        --NOT CASE SENSITIVE. detect_limit MAY VARY WITH media-title IF THE FOLLOWING SUBSTRINGS ARE FOUND. EXTRA ZOOM.
                     ['We are army of people - Red Army Choir']= 64,
                     [                       'L.A.D.Y G.A.G.A']=100, 
                    },
     
     MAINTAIN_CENTER_X=  0, --TOLERANCE, 0 MEANS NEVER MOVE THE CENTER (LIKE CROSSHAIRS). A SINGLE BLACK BAR ON 1 SIDE MAYBE OK.
-    MAINTAIN_CENTER_Y= .1, --TOLERANCE. A TRIBAR FLAG WITH BLACK ON TOP OR BOTTOM NEEDS RATIO<1/3.
+    MAINTAIN_CENTER_Y= .1, --TOLERANCE. A TRIBAR FLAG WITH BLACK ON TOP OR BOTTOM NEEDS RATIO<1/3. 10% MOVEMENT MAYBE OK.
     TOLERANCE        =.05, --DEFAULT=0%=JPEG. INSTANTANEOUS TOLERANCE. WHAT PERCENTAGE BLACK BARS ARE TOLERATED FOR UP TO 10 SECONDS? A BIG crop IS INSTANT, BUT NOT LITTLE CROPS, OTHERWISE AN IMAGE MAY KEEP FIDGETING BY A PIXEL OR TWO.
     TOLERANCE_TIME   = 10, --DEFAULT=10 SECONDS. IRRELEVANT IF TOLERANCE=0.
     
@@ -39,11 +43,11 @@ options = {
     config  ={
               'osd-font-size 16','osd-border-size 1','osd-scale-by-window no',  --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
               'keepaspect no','geometry 50%', --ONLY NEEDED IF MPV HAS ITS OWN WINDOW, OUTSIDE SMPLAYER. FREE aspect & 50% INITIAL SIZE.
+              'image-display-duration inf','video-timing-offset 1', --inf STOPS IMAGES FROM SNAPPING MPV. DEFAULT offset=.05 SECONDS ALSO WORKS.
               'hwdec auto-copy','vd-lavc-threads 0', --IMPROVED PERFORMANCE FOR LINUX .AppImage.  hwdec=HARDWARE DECODER. vd-lavc=VIDEO DECODER-LIBRARY AUDIO VIDEO CORES (0=AUTO). FINAL video-zoom CONTROLLED BY SMPLAYER→GPU.
               'alpha blend', --BUGFIX FOR LINUX flatpak (blend-tiles BUG).
-              'image-display-duration inf','video-timing-offset 1', --inf REQUIRED FOR JPEG. DEFAULT offset=.05 SECONDS ALSO WORKS.
               
-              'pause yes',  --THEN UNPAUSE @file-loaded. REQUIRED FOR JPEG. EMBEDDED MPV MAY SNAP IF IT ISN'T PAUSED BEFORE GRAPH'S INSERTED.    automask SHOULD ALSO UNPAUSE AFTER GRAPH INSERTION, SO IMPOSSIBLE TO START PAUSED (IRONICALLY).
+              'pause yes',  --THEN UNPAUSE @file-loaded. EMBEDDED MPV MAY SNAP IF IT ISN'T PAUSED BEFORE GRAPH'S INSERTED.    automask SHOULD ALSO UNPAUSE AFTER GRAPH INSERTION, SO IMPOSSIBLE TO START PAUSED (IRONICALLY).
              },       
 }
 o,label,timers,m = options,mp.get_script_name(),{},{} --ABBREV. options. label=autocrop   m=crop MEMORY
@@ -51,7 +55,7 @@ o,label,timers,m = options,mp.get_script_name(),{},{} --ABBREV. options. label=a
 require 'mp.options'
 read_options(o)    --OPTIONAL?
 
-for key,val in pairs({command_prefix='',detect_limits={},TOLERANCE=0,TOLERANCE_TIME=10,time_needed=0,detectors='cropdetect=limit=%s:round=%s:reset=1:0',format='yuv420p',scale={},key_bindings='C',toggle_on_double_mute=0,io_write='',config={}})
+for key,val in pairs({command_prefix='',detect_limits={},TOLERANCE=0,TOLERANCE_TIME=10,time_needed=0,crop_time=.5,detectors='cropdetect=limit=%s:round=%s:reset=1:0',format='yuv420p',scale={},key_bindings='C',toggle_on_double_mute=0,io_write='',config={}})
 do if not o[key] then o[key]=val end end --ESTABLISH DEFAULTS. 
 
 for _,option in pairs(o.config) do mp.command(o.command_prefix..' set '..option) end   --APPLY config BEFORE scripts.
@@ -79,15 +83,17 @@ function file_loaded()
     mp.observe_property('vf','native',function() io.write(o.io_write) end)
     o.detectors=o.detectors:format( l,r , l,r , l,r , l,r ) --CAN COMBINE A FEW DETECTORS, IN 1 GRAPH.
     
-    mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,setsar=1]')     :format(o.command_prefix,label,W,H)) --ANTI-SNAP GRAPH - STOPS EMBEDDED MPV SNAPPING.
-    mp.command(('%s vf pre @%s:lavfi=[format=%s,%s,crop=iw:ih:0:0:1:1]'):format(o.command_prefix,label,o.format,o.detectors))   --CENTRAL GRAPH.
+    mp.command(('%s vf pre @%s-crop:lavfi=[scale=%d:%d:eval=frame,crop=%d:%d:0:0:1:1,setsar=1]'):format(o.command_prefix,label,W,H,W,H))    --INSERT scale @INSERTION TO AVOID STARTING GLITCH ON LOW-RES video.
+    mp.command(('%s vf pre @%s:lavfi=[format=%s,scale=ceil(iw/4)*4:ceil(ih/4)*4,%s,split,overlay]'):format(o.command_prefix,label,o.format,o.detectors))   --CENTRAL GRAPH. BY TRIAL & ERROR NEEDS width & height INSTANTLY TO AVOID RARE STARTING GLITCH.
     
-    ----lavfi     =[graph]  [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTER LIST. REQUIRE 2 GRAPHS DUE TO crop BUG. CAN'T COMBINE IT WITH ANTI-SNAP GRAPH.
+    ----lavfi     =[graph]  [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTER LIST. THIS ONE ACHIEVES SMOOTH crop WITH A BUGGY crop FILTER, WHICH REQUIRES A SECOND GRAPH.
     ----cropdetect=limit:round:reset:skip  DEFAULT=24/255:16:0  LINUX .AppImage FAILS IF skip IS NAMED (INCOMPATIBLE).  alpha TRIGGERS BAD PERFORMANCE.
     ----bbox      =min_val  (BOUNDING BOX) DEFAULT=16  REQUIRED FOR JPEG.
     ----format    =pix_fmts   BUGFIX FOR cropdetect alpha. SET TO yuva420p TO PROVE THERE'S A BUG.
-    ----crop      =w:h:x:y:keep_aspect:exact  DEFAULT=iw:ih:(iw-ow)/2:(ih-oh)/2:0:0  CAN'T BE COMBINED WITH scale & vf-command ("w" & "h" AMBIGUOUS - NO SOLUTION). CURRENTLY HAS BUGS. WON'T CHANGE DIMENSIONS WITH t OR n, NOR eval=frame NOR enable=1 (TIMELINE SWITCH). BUGS OUT IF w OR h IS TOO BIG. SAFER TO AVOID SMOOTH-CROPPING.
-    ----scale     =w:h:...:eval    n=0@INSERTION  DEFAULTS iw:ih:once  USING [vo] scale WOULD CAUSE SNAPPING on_vid, SO CAN USE display INSTEAD.
+    ----scale     =w:h:...:eval    n=0@INSERTION  DEFAULTS iw:ih:once  USING [vo] scale WOULD CAUSE SNAPPING on_vid, SO CAN USE display. TRIVIAL PRE-scale BECAUSE overlay HAS OFF-BY-1 BUG.
+    ----split      CLONES video. THIS IS A WORKAROUND FOR crop BECAUSE IT ISN'T SMOOTH. WHAT'S SMOOTH IS A SCALED NEGATIVE overlay, WHICH IS THEN CROPPED FROM x,y = 0,0 CONSTANT COORDS. THERE IS NO WORKAROUND FOR HAVING TO MAGNIFY UP FIRST, SO POOR PPL WITH CHEAP CPU MUST SUFFER LAG.
+    ----overlay   =x:y DEFAULT=0:0 n=1@INSERTION (OFF)  THIS FILTER CAN BE OFF-BY-1 IF W OR H ISN'T DIVISIBLE BY 4.
+    ----crop      =w:h:x:y:keep_aspect:exact  DEFAULT=iw:ih:(iw-ow)/2:(ih-oh)/2:0:0  HAS BUGS. vf-command CRASHES IT. WON'T CHANGE DIMENSIONS WITH t OR n, NOR eval=frame NOR enable=1 (TIMELINE SWITCH). BUGS OUT IF w OR h IS TOO BIG. A BUGGY FILTER CAN HAVE ITS OWN GRAPH.
     ----setsar    =sar  IS THE FINISH. STOPS EMBEDDED MPV SNAPPING on_vid. MACOS BUGFIX REQUIRES sar (WINDOWS & LINUX DON'T). 
     
     
@@ -102,7 +108,7 @@ function on_vid(_,vid)  --AN MP3 MAY BE A COLLECTION OF JPEG IMAGES (MP3TAG) WIT
 end
 mp.observe_property('current-tracks/video/id','number',on_vid)  --TRIGGERS INSTANTLY & AFTER file-loaded.
 
-function on_seek()  --crop ON seek (GRAPH STATE IS RESET).
+function on_seek()  --SMOOTH crop ON seek (GRAPH STATE IS RESET).
     m.x,m.playtime_remaining = nil,nil  --DELETE ALL COORDS (m.x=nil RE-INITIALIZES).
     if not is1frame then timers.auto_delay:resume() end     --is1frame RE-SEEKS ON crop. NEEDED IN CASE NOT o.auto.
 end
@@ -124,7 +130,7 @@ function on_toggle(mute)    --BOTH mute & key_binding.
     OFF,m.playtime_remaining = not OFF,nil
     if not OFF then detect_crop()   --TOGGLE ON.
     else timers.auto_delay:kill()               --TOGGLE OFF. 
-        apply_crop({ x=0,y=0, w=m.max_w,h=m.max_h }) end    --CAN ANIMATE NULL crop.
+        apply_crop({ x=0,y=0, w=m.max_w,h=m.max_h }) end    --ANIMATE NULL crop. INSTANT DOUBLE-TOGGLE WOULD REQUIRE ANOTHER LINE TO MEMORIZE THESE COORDS, SO THEY DON'T HAVE TO BE RE-DETECTED.
 end
 mp.observe_property('mute', 'bool', on_toggle)  --mute timer NEEDED, TO ACTIVATE.
 for key in (o.key_bindings):gmatch('%g+') do mp.add_key_binding(key, 'toggle_crop_'..key, on_toggle) end    --gmatch IS GLOBAL MATCH ITERATOR. %g+ IS LONGEST string EXCLUDING SPACE.
@@ -154,13 +160,13 @@ function detect_crop()
             meta.x ,meta.y  = xNEW,yNEW
             meta.w ,meta.h  = meta.x2-meta.x,meta.y2-meta.y end
     
-    m.max_w,m.max_h = mp.get_property_number('video-params/w'),mp.get_property_number('video-params/h')
-    if o.MAINTAIN_CENTER_X then xNEW=math.min( meta.x , m.max_w-(meta.x+meta.w) )  --KEEP HORIZONTAL CENTER, E.G. SO THAT BINOCULARS ARE CENTERED.    SYMMETRIZE UNLESS DEVIATION FROM CENTER IS SMALL.
-        wNEW=m.max_w-xNEW*2  --wNEW ALWAYS BIGGER THAN meta.w, & ALWAYS SUBTRACTS AN EVEN AMOUNT.
+    m.max_w,m.max_h = math.ceil(mp.get_property_number('video-params/w')/4)*4,math.ceil(mp.get_property_number('video-params/h')/4)*4   --ACCOUNT FOR TRIVIAL PRE-scale.
+    if o.MAINTAIN_CENTER_X then xNEW = math.min(meta.x, m.max_w-(meta.x+meta.w))  --KEEP HORIZONTAL CENTER, E.G. SO THAT BINOCULARS ARE CENTERED.    SYMMETRIZE UNLESS DEVIATION FROM CENTER IS SMALL.
+        wNEW = m.max_w-xNEW*2  --wNEW ALWAYS BIGGER THAN meta.w, & ALWAYS SUBTRACTS AN EVEN AMOUNT.
         if wNEW-meta.w>wNEW*o.MAINTAIN_CENTER_X then meta.x,meta.w = xNEW,wNEW end end
-    if o.MAINTAIN_CENTER_Y then yNEW=math.min( meta.y , m.max_h-(meta.y+meta.h) )     -- KEEP VERTICAL CENTERED, E.G. PORTRAITS WHERE FEET GET CROPPED OFF. 
-        hNEW=m.max_h-yNEW*2
-        if hNEW-meta.h>hNEW*o.MAINTAIN_CENTER_Y then meta.y,meta.h = yNEW,hNEW end end     --hNEW ALWAYS BIGGER THAN meta.h. SYMMETRIZE UNLESS DEVIATION FROM CENTER IS SMALL (DEPENDS HOW BIG THE FEET ARE).
+    if o.MAINTAIN_CENTER_Y then yNEW = math.min(meta.y, m.max_h-(meta.y+meta.h))     -- KEEP VERTICAL CENTERED, E.G. PORTRAITS WHERE FEET GET CROPPED OFF. 
+        hNEW = m.max_h-yNEW*2
+        if hNEW-meta.h > hNEW*o.MAINTAIN_CENTER_Y then meta.y,meta.h = yNEW,hNEW end end     --hNEW ALWAYS BIGGER THAN meta.h. SYMMETRIZE UNLESS DEVIATION FROM CENTER IS SMALL (DEPENDS HOW BIG THE FEET ARE).
    
     min_w,min_h = m.max_w*o.detect_min_ratio,m.max_h*o.detect_min_ratio
     if meta.w<min_w then if not o.USE_MIN_RATIO then meta.w,meta.x = m.max_w,0    --NULL w
@@ -180,35 +186,39 @@ function detect_crop()
     
     if not is_effective then if o.msg_info then mp.msg.info("No area detected for cropping.") end
         return end
+    
+    m.playtime_remaining=playtime_remaining --→MEMORY.
     apply_crop(meta)
 end
 timers.auto_delay=mp.add_periodic_timer(o.auto_delay, detect_crop)
-for _,timer in pairs(timers) do timer:kill() end    --timers CARRY OVER TO NEXT FILE IN MPV PLAYLIST.
 
 function apply_crop(meta) 
-    mp.command(('vf-command %s x %d'):format(label,meta.x)) --ANY ORDER.
-    mp.command(('vf-command %s y %d'):format(label,meta.y))
-    mp.command(('vf-command %s w %d'):format(label,meta.w))    
-    mp.command(('vf-command %s h %d'):format(label,meta.h))
-    m.x,m.y,m.w,m.h,m.playtime_remaining = meta.x,meta.y,meta.w,meta.h,playtime_remaining   --meta→m  MEMORY TRANSFER. is1frame DOESN'T NEED IT.
+    if is1frame then timers.auto_delay:kill()   --audio GLITCHES ON crop, SO kill timer.
+        mp.command('set pause yes') --GRAPH REPLACEMENT REQUIRES INSTA-pause, DUE TO INTERFERENCE FROM OTHER GRAPHS.
+        mp.command(('%s vf pre @%s-crop:lavfi=[%s,crop=%d:%d:%d:%d:1:1,scale=%d:%d,setsar=1]')   --REPLACEMENT GRAPH. VERIFY BY TOGGLE "c" REPEATEDLY (WITH &) WITHOUT autocomplex.  REMOVING ANY GRAPH COULD GET THEM IN THE WRONG ORDER ON vid CHANGE OR TOGGLE (2 GRAPHS + FILTER + automask CAN BE DIFFICULT TO ORDER). 
+            :format(o.command_prefix,label,o.detectors,meta.w,meta.h,meta.x,meta.y,W,H))
+        mp.command('set pause no') --image-display-duration=inf
+        return end --video BELOW.
     
-    if mp.get_property_bool('pause') then N=0   --vf-command BUGFIX FOR PAUSED MP4. frame-step IS FASTER & SIMPLER THAN FULL GRAPH TOGGLE.  pause IS NEEDED FOR CALIBRATING lutyuv. 
-        while N<5 do N=N+1  --5 STEPS REQUIRED - SAME AS automask. FRAMES ALREADY DRAWN IN ADVANCE. AN UNPAUSE→pause timer CAN ALSO BE USED.
-            mp.command('frame-step') end end    --DON'T frame-back-step OR seek.
-
-    if not is1frame then return end --JPEG (WITHOUT autocomplex) BELOW. automask SLOWS DOWN CROPS.
-    timers.auto_delay:kill()    --audio GLITCHES ON crop, SO kill timer.
-    mp.command('set pause yes') --GRAPH REPLACEMENT REQUIRES INSTA-pause, DUE TO INTERFERENCE FROM OTHER GRAPHS.
-    mp.command(('%s vf pre @%s:lavfi=[format=%s,%s,crop=%d:%d:%d:%d:1:1]')    --REPLACEMENT GRAPH. VERIFY BY TOGGLE "c" REPEATEDLY (WITH &) WITHOUT autocomplex.  REMOVING ANY GRAPH COULD GET THEM IN THE WRONG ORDER ON vid CHANGE OR TOGGLE (2 GRAPHS + automask CAN BE DIFFICULT TO ORDER). 
-        :format(o.command_prefix,label,o.format,o.detectors,meta.w,meta.h,meta.x,meta.y))
-    mp.command('set pause no') --image-display-duration=inf
+    s=('clip((t-%s)/(%s),0,1)'):format(mp.get_property_number('time-pos'),o.crop_time)  --ABBREV. TIME RATIO AS s=string.  clip BTWN 0 & 1.
+    mp.command(('vf-command %s x                 -((1-%s)*%d+%s*%d)       '):format( label , s,m.x, s,meta.x   ))  --INITIAL→FINAL  (1-s)→s  COORD PAIRS. overlay THEN scale.
+    mp.command(('vf-command %s y                 -((1-%s)*%d+%s*%d)       '):format( label , s,m.y, s,meta.y   ))
+    mp.command(('vf-command %s-crop width  max(iw/((1-%s)*%d+%s*%d)*%d,%d)'):format( label , s,m.w, s,meta.w, W, W)) --w & h ARE AMBIGUOUS.
+    mp.command(('vf-command %s-crop height max(ih/((1-%s)*%d+%s*%d)*%d,%d)'):format( label , s,m.h, s,meta.h, H, H))
+    m.x,m.y,m.w,m.h = meta.x,meta.y,meta.w,meta.h   --meta→m  MEMORY TRANSFER. is1frame DOESN'T NEED IT.
+    
+    if mp.get_property_bool('pause') then mp.command('set pause no') --UNPAUSE FOR crop_time. SAFER THAN frame-step DUE TO DOUBLE-seek CAUSING UNPAUSE (MUST HAVE pause timer ANYWAY). WORKS ON ITS OWN BUT NOT FULLY WITH automask (LAG?).
+        timers.pause:kill()
+        timers.pause:resume() end
 end
+timers.pause=mp.add_periodic_timer(o.crop_time, function() mp.command('set pause yes') end) --pause timer PAUSES.
+timers.pause.oneshot=true
+for _,timer in pairs(timers) do timer:kill() end    --timers CARRY OVER TO NEXT FILE IN MPV PLAYLIST.
 
 
-----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (TECH SPECS), & END (MISC.). ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST. BELOW ARE ALT-FILTERS.
-----noformat=pix_fmts  FAILS TO BLOCK alpha. cropdetect PERFORMS BADLY WITH TRANSPARENT INPUT (EVEN IF 100% OPAQUE). THERE'S A LONG LIST.  PROOF: REPLACE WITH format=yuva420p & IT CAUSES LAG.
-----split      CLONES video. UNNECESSARY. THIS IS A WORKAROUND FOR crop BECAUSE IT ISN'T SMOOTH. WHAT'S SMOOTH IS A SCALED NEGATIVE overlay, WHICH IS THEN CROPPED FROM x,y = 0,0 CONSTANT COORDS. THERE IS NO WORKAROUND FOR HAVING TO MAGNIFY UP FIRST, SO POOR PPL WITH CHEAP CPU MUST SUFFER LAG.
-----overlay   =x:y DEFAULT=0:0 n=1@INSERTION (OFF)  UNNECESSARY. THIS FILTER CAN BE OFF-BY-1 IF W OR H ISN'T DIVISIBLE BY 4.
+
+----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (TECH SPECS), & END (MISC.). ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
+----noformat=pix_fmts  SHOULD BLOCK alpha BUT FAILS TO. cropdetect PERFORMS BADLY WITH TRANSPARENT INPUT (EVEN IF 100% OPAQUE). THERE'S A LONG LIST.  PROOF: REPLACE WITH format=yuva420p & IT CAUSES LAG.
 
 
 
