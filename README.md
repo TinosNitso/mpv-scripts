@@ -5,7 +5,7 @@ Example installation: In Windows extract all `.lua` scripts from `.zip` & copy/p
 
 `--script=autoloader.lua`
 
-Then hit OK & play. In Linux & MacOS create folder `mpv-scripts` on Desktop. Then extract all scripts into it. Then enter
+Then hit OK & play. Overall I consider playback smoother than VLC. In Linux & MacOS create folder `mpv-scripts` on Desktop. Then extract all scripts into it. Then enter
 
 `--script=~/Desktop/mpv-scripts/autoloader.lua`
 
