@@ -27,4 +27,4 @@ Above updates include fixed YouTube title (`aspeed`), many bugfixes. `autocomple
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
 
-<video src='SCREENREC.MP4' width=180/>
+<video src="https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENREC.MP4"></video>
