@@ -19,8 +19,10 @@ In Linux try `sudo apt install smplayer` or double-click the `.AppImage`. All sc
 
 Then Save it & double-click it. The command line shows warnings, etc. MPV pauses when text in CMD is selected. Linux & MacOS are similar. All these scripts can be run from CMD, PowerShell, etc. They do nothing but deliver scripted commands to MPV. But most ppl prefer an interface like SMPlayer.
 
-Before running scripts it's safer to first check them in Notepad++. Ignore all comments (lines starting with `--`). Any code containing `mp.command` (media player), `commandv`, `command_native`, `os.execute` (operating system), `io.popen` (input output process), `subprocess`, etc, can do almost anything, in Windows. To inspect a script highlight those words.
+Before running scripts it's safer to first check them in Notepad++. Ignore all comments (lines starting with `--`). Any code containing `mp.command` (media player), `commandv`, `command_native`, `os.execute` (operating system), `io.popen` (input output process), `subprocess`, etc, can do almost anything, in Windows. To inspect a script highlight/search those words. A set command is safe (like `set_property`).
 
 `autocomplex` zoompan now has perfect sync (important bugfix), on YouTube too. `aspeed` now faster on YouTube, with many speakers/devices. Added options `dual_colormix`, `dual_alpha`, `dual_scale`, `dual_overlay`, `feet_threshold_h`, `SHOE_COLOR` & `gb` for neutral blue shade. Also extra 5% for Nyquist. Can also change video/audio track once inside SMPlayer. `CALIBRATION` waves mix into [ao]. Improved options & codes (e.g. `ROUND_SQUARE` in `automask`). Bugfix for `automask` MP3 cover art insta-toggle. `autocrop` now only uses 1 graph. 🙂
+
+Above updates include fixed YouTube title (`aspeed`), many bugfixes. `autocomplex` double-normalizer & better shoe color. Improved `automask` code. Need some recording/s before next release. 
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
