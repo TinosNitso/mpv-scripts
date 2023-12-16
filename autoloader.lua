@@ -3,10 +3,10 @@
 ----IN SMPLAYER'S ADVANCED mpv PREFERENCES ENTER  --script=autoloader.lua  (WINDOWS smplayer.exe FOLDER).   MACOS: --script=~/Desktop/mpv-scripts/autoloader.lua     LINUX: --script=/home/user/Desktop/mpv-scripts/autoloader.lua  
 
 options={ --ALL OPTIONAL & CAN BE REMOVED.
-    scripts={"aspeed.lua",      --CLOCK, TITLE & AUDIO DEVICES SPEED RANDOMIZATION FOR 10 HOURS. INSTA-TOGGLE. CONVERTS MONO TO (RANDOMIZED) SURROUND SOUND. MY FAVOURITE OVERALL.
-             "autocrop.lua",    --CROP OFF BLACK BARS BEFORE MASK, BUT AFTER SPECTRAL OVERLAY. INSTA-TOGGLE. autocrop-smooth.lua FOR SMOOTH VERSION (MORE CPU).
-             "autocomplex.lua", --ANIMATED AUDIO SPECTRUM, VOLUME BARS, FPS LIMITER. DUAL LAVFI-COMPLEX OVERLAY. SLOW TOGGLE.
-             "automask.lua",    --ANIMATED FILTERS (MOVING BINOCULARS, ETC). INSTA-TOGGLE. LENS FORMULA MAY NEGATE BRIGHTNESS. 
+    scripts={"autocomplex.lua",--ANIMATED AUDIO SPECTRUM, VOLUME BARS, FPS LIMITER. DUAL lavfi-complex OVERLAY. SLOW TOGGLE (INTERRUPTS PLAYBACK).
+             "autocrop.lua",   --CROP OFF BLACK BARS BEFORE MASK, BUT AFTER SPECTRAL OVERLAY. INSTA-TOGGLE. autocrop-smooth.lua FOR SMOOTH VERSION (MORE CPU).
+             "automask.lua",   --ANIMATED FILTERS (MOVING BINOCULARS, ETC). INSTA-TOGGLE. LENS FORMULA ADDS GLOW TO DARKNESS. 
+             "aspeed.lua",     --CLOCK, TITLE & AUDIO DEVICES SPEED RANDOMIZATION FOR 10 HOURS. INSTA-TOGGLE. CONVERTS MONO TO (RANDOMIZED) SURROUND SOUND. MY FAVOURITE OVERALL. CONVERTS A SPEAKER INTO A METAPHORICAL MOCKING-BIRD.
             },
     
     loop_limit=10,  --SECONDS (MAX). INFINITE loop GIF & SHORT MP4 (IN SMPLAYER TOO). STOPS MPV SNAPPING. ALL MY SCRIPTS NEED IT, SO IT FITS IN WITH autoloader.    BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
@@ -28,6 +28,7 @@ if o.scripts then for _,script in pairs(o.scripts) do is_present,scripts = false
 mp.register_event('file-loaded', function() if o.loop_limit>mp.get_property_number('duration') then mp.command('no-osd set loop inf') end end)     --loop GIF. no-osd.  
 
 
+----A FUTURE VERSION SHOULD BE ABLE TO STREAM-DUMP ALL YOUTUBE VIDEOS IN AUTO - A RECYCLE BIN FOR YOUTUBE.
 ----ALL SCRIPTS TESTED IN WIN10, LINUX (DEBIAN-MATE) & MACOS-CATALINA, USING MPV v0.36 (INCL. v3) & v0.35. TESTED SMPLAYER RELEASES .7z .exe .dmg .AppImage .flatpak .snap  ALL SCRIPTS NOW PASS snap INSPECTION.
 ----"autoload.lua" NAME IS ALREADY TAKEN BY A PLAYLIST SCRIPT WHICH LOADS ALL VIDEO FILES IN FOLDER. autoloader MAY LOAD SCRIPTS INSTEAD.
 ----SMPLAYER ACTIONS  aspect_none reset_zoom  CAN START EACH FILE (ADVANCED PREFERENCES). IT MAY CONTROL FINAL GPU WINDOW. MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO zoom. seek WITH GRAPHS IS TOO SLOW (FULL automask REGEN), BUT zoom INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→GPU.
