@@ -26,3 +26,5 @@ Before running scripts it's safer to first check them in Notepad++. Ignore all c
 Above updates include fixed YouTube title (`aspeed`), many bugfixes. `autocomplex` double-normalizer & better shoe color. Improved `automask` code. Need some recording/s before next release. 
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
+
+<video src='SCREENREC.MP4' width=180/>
