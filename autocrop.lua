@@ -29,7 +29,7 @@ options={
     -- USE_MIN_RATIO   =true,--CROP ALL THE WAY DOWN TO detect_min_ratio. CAN BE SPURIOUS.
     time_needed        =2,   --DEFAULT=0 SECONDS. DO NOTHING IF THIS CLOSE TO end-file. NEEDED FOR RELIABILITY.
     
-    format='yuv420p',    --DEFAULT='yuv420p'  MUST REMOVE alpha DUE TO cropdetect BAD PERFORMANCE BUG.  420p REDUCES COLOR RESOLUTION TO HALF-WIDTH & HALF-HEIGHT.
+    format='yuv420p',    --DEFAULT='yuv420p'  SHOULD REMOVE alpha DUE TO cropdetect BAD PERFORMANCE BUG.  420p REDUCES COLOR RESOLUTION TO HALF-WIDTH & HALF-HEIGHT.
     -- scale={1680,1050},--STOPS EMBEDDED MPV SNAPPING (APPLY FINAL scale IN ADVANCE).     CHANGING vid (MP3 TAGS) CAUSES EMBEDDED MPV TO SNAP UNLESS AN ABSOLUTE scale IS USED (SO I DON'T USE [vo]). EMBEDDING MPV CAUSES ANOTHER LAYER OF BLACK BARS (WINDOW SNAP).   DEFAULT scale=display SIZE (WINDOWS & MACOS), OR OTHERWISE LINUX IS [vo] SIZE. scale OVERRIDE USES NEAREST MULTIPLES OF 4 (ceil).
     
     -- detector='bbox=%s',--DEFAULT='cropdetect=limit=%s:round=%s:reset=1:0'. bbox IS JPEG OVERRIDE. %s=string SUBSTITUTION, FORMATTED @file-loaded. reset>0.
@@ -42,18 +42,7 @@ options={
         'keepaspect no','geometry 50%', --ONLY NEEDED IF MPV HAS ITS OWN WINDOW, OUTSIDE SMPLAYER. FREE aspect & 50% INITIAL DEFAULT SIZE.
         'image-display-duration inf','vd-lavc-threads 0',    --inf STOPS JPEG FROM SNAPPING MPV.  0=AUTO, vd-lavc=VIDEO DECODER - LIBRARY AUDIO VIDEO.
     
-    
-    -- 'video-timing-offset 1','hr-seek-demuxer-offset 1','cache-pause-wait 0',
--- 'video-sync desync','vd-lavc-dropframe nonref','vd-lavc-skipframe nonref',   --none default nonref(SKIPnonref) bidir(SKIPBFRAMES) 
--- 'demuxer-lavf-buffersize 1e9','demuxer-max-bytes 1e9','stream-buffer-size 1e9','vd-queue-max-bytes 1e9','ad-queue-max-bytes 1e9','demuxer-max-back-bytes 1e9','audio-reversal-buffer 1e9','video-reversal-buffer 1e9','audio-buffer 1e9',
--- 'chapter-seek-threshold 1e9','vd-queue-max-samples 1e9','ad-queue-max-samples 1e9',
--- 'demuxer-backward-playback-step 1e9','cache-secs 1e9','demuxer-lavf-analyzeduration 1e9','vd-queue-max-secs 1e9','ad-queue-max-secs 1e9','demuxer-termination-timeout 1e9','demuxer-readahead-secs 1e9', 
--- 'video-backward-overlap 1e9','audio-backward-overlap 1e9','audio-backward-batch 1e9','video-backward-batch 1e9',
--- 'hr-seek always','index recreate','wayland-content-type none','background red','alpha blend',
--- 'hr-seek-framedrop yes','framedrop decoder+vo','access-references yes','ordered-chapters no','stop-playback-on-init-failure yes',
--- 'initial-audio-sync no','vd-queue-enable yes','ad-queue-enable yes','demuxer-seekable-cache yes','cache yes','demuxer-cache-wait no','cache-pause-initial no','cache-pause no',
--- 'keepaspect-window no','video-latency-hacks yes','demuxer-lavf-hacks yes','gapless-audio no','demuxer-donate-buffer yes','demuxer-thread yes','demuxer-seekable-cache yes','force-seekable yes','demuxer-lavf-linearize-timestamps no',
-
+    'video-timing-offset 1',
     
     },       
 }
@@ -66,6 +55,7 @@ for key,val in pairs({command_prefix='',detect_limit_image=o.detect_limit,detect
 do if not o[key] then o[key]=val end end --ESTABLISH DEFAULTS. 
 for _,option in pairs(o.config) do mp.command(o.command_prefix..' set '..option) end
 
+mp.set_property('script-opts','loop=inf,'..mp.get_property('script-opts')) --PREPEND NEW SCRIPT-OPT: WARNING image WILL INFINITE loop. TRAILING "," ALLOWED.
 function start_file()   --EMBEDDED MPV PLAYLISTS REQUIRE INSTA-pause BEFORE GRAPH INSERTION, TO AVOID SNAPPING.
     paused=false    --ALWAYS UNPAUSE @start-file→file-loaded.
     mp.command('set pause yes') 
@@ -74,7 +64,7 @@ end
 mp.register_event('start-file',start_file) 
 
 function file_loaded()  --ALSO STREAM.
-    if OFF or not mp.get_property_number('current-tracks/video/id') then mp.command('set pause no')   --DO NOTHING IF NO vid OR OFF: unpause & return.
+    if not mp.get_property_number('current-tracks/video/id') then mp.command('set pause no')   --DO NOTHING IF NO vid OR OFF: unpause & return.
         return end   --OFF TOGGLE & NO vid → NO crop.
     
     W,H = o.scale[1],o.scale[2]
@@ -84,11 +74,13 @@ function file_loaded()  --ALSO STREAM.
         return end
     W,H = math.ceil(W/4)*4,math.ceil(H/4)*4   --MULTIPLES OF 4 WORK BETTER WITH overlay (FURTHER GRAPHS LIKE automask). MPV MAY SNAP INSIDE SMPLAYER ON ODD NUMBERED SIZES.
     
-    is1frame,loop,MEDIA_TITLE = false,0,mp.get_property('media-title'):upper()
+    complex_opt,MEDIA_TITLE = mp.get_opt('lavfi-complex'),mp.get_property('media-title'):upper()
+    is1frame,loop,complex_opt = false,0,complex_opt and complex_opt~='' and complex_opt~='no'
+    if mp.get_property_bool('current-tracks/video/albumart') and not complex_opt then is1frame,o.auto = true,false end  --albumart IS DIFFERENT TO image. REQUIRE GRAPH REPLACEMENT IF NO complex. NO auto BECAUSE audio GLITCHES.
+    
     detector,detect_limit = o.detector,o.detect_limit   --detect_limit MAY VARY, BUT NOT o.detect_limit
-    if mp.get_property_bool('current-tracks/video/albumart') and mp.get_property('lavfi-complex')=='' then is1frame,o.auto = true,false end   --REQUIRE GRAPH REPLACEMENT (NO autocomplex LOOP). NO auto BECAUSE audio GLITCHES. albumart WITHOUT complex IS SPECIAL & DOESN'T loop.
     if mp.get_property_bool('current-tracks/video/image') then o.TOLERANCE,detector,detect_limit = 0,'bbox=%s',o.detect_limit_image --JPEG: bbox & 0 TOLERANCE (E.G. on_vid CHANGE). IMAGES MAY BE JPG, PNG, BMP, MP3. GIF IS not image. NO WEBP. TIFF TOP LAYER ONLY. AN MP3 IS LIKE A COLLECTION OF JPEG IMAGES (SEE MP3TAG) WHICH NEED CROPPING (& HAVE RUNNING audio).
-        if mp.get_property('lavfi-complex')=='' then loop,o.MAINTAIN_CENTER_X,o.MAINTAIN_CENTER_Y = -1,nil,nil end end --RAW JPEG CAN MOVE CENTER.
+        if not complex_opt then loop,o.MAINTAIN_CENTER_X,o.MAINTAIN_CENTER_Y = -1,nil,nil end end --RAW JPEG CAN MOVE CENTER, UNLESS complex.
     if mp.get_property_bool('current-tracks/video/image') and o.io_write=='' then o.io_write=' ' end    --image NEEDS io FIX.
     mp.observe_property('vf','native',function() io.write(o.io_write) end)
     
@@ -96,30 +88,29 @@ function file_loaded()  --ALSO STREAM.
         then detect_limit=limit end end --detect_limit FINAL OVERRIDE. 
     detector=detector:format(detect_limit,o.detect_round)
     
-    mp.command(('%s vf pre @%s-scale:scale=w=%d:h=%d'):format(o.command_prefix,label,W,H)) --SEPARATE: "w" & "h" COMMANDS ARE AMBIGUOUS.
-    mp.command(('%s vf pre @%s:lavfi=[setsar=1,format=%s,loop=%d:1,%s,crop=iw:ih:0:0:1:1]')
+    mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,setsar=1]'):format(o.command_prefix,label,W,H)) --SEPARATE: "w" & "h" COMMANDS ARE AMBIGUOUS.
+    mp.command(('%s vf pre @%s:lavfi=[format=%s,loop=%d:1,%s,crop=iw:ih:0:0:1:1]')
         :format(o.command_prefix,label,             o.format, loop,detector))
     
-    ----lavfi     =[graph]  [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTER LIST. REQUIRE 1 GRAPH + SEPARATE FILTER. LABELS REQUIRED FOR REPLACEMENT/COMMANDS.
+    ----lavfi     =[graph]  [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTER LIST. REQUIRE 2 GRAPHS. LABELS REQUIRED FOR REPLACEMENT/COMMANDS.
     ----cropdetect=limit:round:reset:skip  DEFAULT=24/255:16:0  reset & skip BOTH MEASURED IN FRAMES. reset>0 COUNTS HOW MANY FRAMES PER DETECTION. LINUX .AppImage FAILS IF skip IS NAMED (INCOMPATIBLE).  alpha TRIGGERS BAD PERFORMANCE. CAN ALSO COMBINE MULTIPLE DETECTORS IN 1 GRAPH FOR IMPROVED RELIABILITY (LIKE pcall), BUT SHOULD BE UNNECESSARY.
     ----bbox      =min_val  (BOUNDING BOX) DEFAULT=16  REQUIRED FOR JPEG. AN INFINITE loop MAY NOT HAVE SUFFICIENT fps (0% CPU USAGE).
-    ----setsar    =sar  STOPS EMBEDDED MPV SNAPPING on_vid. MACOS BUGFIX REQUIRES sar BEFORE crop (WINDOWS & LINUX DON'T). 
-    ----format    =pix_fmts   BUGFIX FOR alpha CAUSING BAD PERFORMANCE, WITH cropdetect. SET TO yuva420p TO PROVE THERE'S A BUG.
-    ----loop      =loop:size  (LOOPS>=-1 : FRAMES>0)  NEEDED FOR image IN MACOS. MOST RIGOROUS SOLUTION IS TO loop, INFINITE FOR TOGGLE. GRAPH REPLACEMENT CAUSED A BUG IN MACOS-CATALINA.
+    ----format    =pix_fmts   BUGFIX FOR alpha CAUSING BAD PERFORMANCE. SET TO yuva420p TO PROVE THERE'S A BUG.
+    ----loop      =loop:size  ( >=-1 : >0 )  NEEDED FOR image IN MACOS (CATALINA, VIRTUALBOX). INFINITE loop FOR TOGGLE VIA vf-command. GRAPH REPLACEMENT WOULD BE QUICKER (THAN DEFAULT 1fps).
     ----crop      =w:h:x:y:keep_aspect:exact  DEFAULT=iw:ih:(iw-ow)/2:(ih-oh)/2:0:0  CAN'T BE COMBINED WITH scale & vf-command ("w" & "h" AMBIGUOUS - NO SOLUTION). CURRENTLY HAS BUGS. WON'T CHANGE DIMENSIONS WITH t OR n, NOR eval=frame NOR enable=1 (TIMELINE SWITCH). BUGS OUT IF w OR h IS TOO BIG. SAFER TO AVOID SMOOTH-CROPPING.
-    ----scale     =w:h  DEFAULTS iw:ih  IS THE FINISH. USING [vo] scale WOULD CAUSE SNAPPING on_vid, SO CAN USE display INSTEAD. EITHER WINDOW SNAPS IN, OR ELSE video SNAPS OUT.
+    ----scale     =w:h  DEFAULTS iw:ih  USING [vo] scale WOULD CAUSE SNAPPING on_vid, SO CAN USE display INSTEAD. EITHER WINDOW SNAPS IN, OR ELSE video SNAPS OUT.
+    ----setsar    =sar  IS THE FINISH. LINUX BUGFIX REQUIRES IT @END. ALSO STOPS EMBEDDED MPV SNAPPING on_vid. MACOS BUGFIX REQUIRES sar. 
     
     
     if not paused then mp.command('set pause no') end   --UNPAUSE.
     timers.auto_delay:resume() --SMALL DELAY FOR INITIAL DETECTION.
 end
 mp.register_event('file-loaded',file_loaded)
-mp.set_property('script-opts','loop=-1,'..mp.get_property('script-opts')) --PREPEND NEW SCRIPT-OPT, FOR JPEG. TRAILING "," ALLOWED. WARNS automask NOT TO loop OVER LEAD FRAME.
 
 function on_vid(_,vid)  --AN MP3 MAY BE A COLLECTION OF JPEG IMAGES (MP3TAG) WITH DIFFERENT DIMENSIONS.
     if m.vid and m.vid~=vid then paused=mp.get_property_bool('pause')
-        mp.command('set pause yes') 
-        file_loaded()  end  --UNFORTUNATELY EMBEDDED MPV SNAPS DUE TO CHANGING DIMENSIONS.
+        mp.command('set pause yes') --INSTA-pause FOR GRAPH REPLACEMENT. UNFORTUNATELY EMBEDDED MPV MAY SNAP DUE TO CHANGING DIMENSIONS.
+        file_loaded()  end
     m.vid=vid   --→MEMORY.
 end
 mp.observe_property('vid','number',on_vid)  --TRIGGERS INSTANTLY & AFTER file-loaded.   ALTERNATIVE: current-tracks/video/id
@@ -220,7 +211,7 @@ function apply_crop(meta)
         return end --is1frame BELOW.
 
     mp.command('set pause yes') --GRAPH REPLACEMENT REQUIRES INSTA-pause, DUE TO INTERFERENCE FROM OTHER GRAPHS.
-    mp.command(('%s vf pre @%s:lavfi=[setsar=1,format=%s,%s,crop=%d:%d:%d:%d:1:1]')    --REPLACEMENT GRAPH. VERIFY BY TOGGLE "c" REPEATEDLY (WITH &) WITHOUT automask.
+    mp.command(('%s vf pre @%s:lavfi=[format=%s,%s,crop=%d:%d:%d:%d:1:1]') --REPLACEMENT GRAPH. VERIFY BY TOGGLE "c" REPEATEDLY (WITH &) WITHOUT automask.
         :format(o.command_prefix,label,o.format,detector,meta.w,meta.h,meta.x,meta.y))
     if not paused then mp.command('set pause no') end --image-display-duration=inf
 end
