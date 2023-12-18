@@ -20,52 +20,51 @@ options={
                         ['Eminem - Encore']=100,  --REPLACE WITH media-title SUBSTRING & ITS LIMIT.
                        },
     
-    MAINTAIN_CENTER_X=  0, --TOLERANCE. 0 MEANS NEVER MOVE THE CENTER (LIKE CROSSHAIRS). A SINGLE BLACK BAR ON 1 SIDE MAYBE OK (UNLESS 1 FRAME ONLY).
-    MAINTAIN_CENTER_Y=  0, --TOLERANCE. nil FOR is1frame. A TRIBAR FLAG WITH BLACK ON TOP OR BOTTOM NEEDS RATIO<1/3. MOVEMENTS IN CENTER TEND TO BE SPURIOUS (DARK FLOOR).
-    TOLERANCE        =.05, --DEFAULT=0% (FOR image). INSTANTANEOUS TOLERANCE. WHAT PERCENTAGE BLACK BARS ARE TOLERATED FOR UP TO 10 SECONDS? A BIG crop IS INSTANT, BUT NOT LITTLE CROPS, OTHERWISE AN IMAGE MAY KEEP FIDGETING BY A PIXEL OR TWO.
-    TOLERANCE_TIME   = 10, --DEFAULT=10 SECONDS. IRRELEVANT IF TOLERANCE=0.
-    
+    MAINTAIN_CENTER_X  =  0, --TOLERANCE. 0 MEANS NEVER MOVE THE CENTER (LIKE CROSSHAIRS). A SINGLE BLACK BAR ON 1 SIDE MAYBE OK (UNLESS 1 FRAME ONLY).
+    MAINTAIN_CENTER_Y  =  0, --TOLERANCE. nil FOR is1frame. A TRIBAR FLAG WITH BLACK ON TOP OR BOTTOM NEEDS RATIO<1/3. MOVEMENTS IN CENTER TEND TO BE SPURIOUS (DARK FLOOR).
+    TOLERANCE          =.05, --DEFAULT=0%. INSTANTANEOUS TOLERANCE. 0% FOR image. WHAT PERCENTAGE BLACK BARS ARE TOLERATED FOR UP TO 10 SECONDS? A BIG crop IS INSTANT, BUT NOT LITTLE CROPS, OTHERWISE AN IMAGE MAY KEEP FIDGETING BY A PIXEL OR TWO.
+    TOLERANCE_TIME     = 10, --DEFAULT=10 SECONDS. IRRELEVANT IF TOLERANCE=0.
     USE_INNER_RECTANGLE=true,--BOTH cropdetect & bbox GENERATE UNNECESSARY x1 x2 y1 y2 NUMBERS, WHICH ENABLE THE INNER RECTANGLE (MORE AGGRESSIVE crop). COMPUTE x1,x2 = max(x1,x2-w,x),min(x2,x1+w,x+w) ETC BY SYMMETRY, THEN SHRINK w TO THE NEW x2-x1. 
-    -- USE_MIN_RATIO   =true,--CROP ALL THE WAY DOWN TO detect_min_ratio. CAN BE SPURIOUS.
-    time_needed        =2,   --DEFAULT=0 SECONDS. DO NOTHING IF THIS CLOSE TO end-file. NEEDED FOR RELIABILITY.
+    -- USE_MIN_RATIO   =true,--CROP ALL THE WAY DOWN TO detect_min_ratio. CAN BE SPURIOUS. DEFAULT CANCELS EXCESSIVE crop.
     
     format='yuv420p',    --DEFAULT='yuv420p'  SHOULD REMOVE alpha DUE TO cropdetect BAD PERFORMANCE BUG.  420p REDUCES COLOR RESOLUTION TO HALF-WIDTH & HALF-HEIGHT.
     -- scale={1680,1050},--STOPS EMBEDDED MPV SNAPPING (APPLY FINAL scale IN ADVANCE).     CHANGING vid (MP3 TAGS) CAUSES EMBEDDED MPV TO SNAP UNLESS AN ABSOLUTE scale IS USED (SO I DON'T USE [vo]). EMBEDDING MPV CAUSES ANOTHER LAYER OF BLACK BARS (WINDOW SNAP).   DEFAULT scale=display SIZE (WINDOWS & MACOS), OR OTHERWISE LINUX IS [vo] SIZE. scale OVERRIDE USES NEAREST MULTIPLES OF 4 (ceil).
     
-    -- detector='bbox=%s',--DEFAULT='cropdetect=limit=%s:round=%s:reset=1:0'. bbox IS JPEG OVERRIDE. %s=string SUBSTITUTION, FORMATTED @file-loaded. reset>0.
+    -- detector='bbox=%s',--DEFAULT='cropdetect=limit=%s:round=%s:reset=1:0'. bbox IS JPEG OVERRIDE. %s=string SUBSTITUTION @file-loaded. reset>0.  CAN ALSO COMBINE MULTIPLE DETECTORS IN LIST (MORE CPU USAGE?).
     -- meta_osd =true,    --DISPLAY ALL detector METADATA.
-    -- msg_info =true,    --REPORT info MESSAGES TO MPV LOG. THEY FILL THE LOG, BUT MAY HELP WITH DEBUGGING.
+    -- msg_log =true,     --MESSAGE TO MPV LOG. FILLS THE LOG, BUT MAY HELP WITH DEBUGGING.
     
     io_write=' ',--DEFAULT=''  (INPUT/OUTPUT) io.write THIS @EVERY CHANGE IN vf (VIDEO FILTERS). STOPS EMBEDDED MPV FROM SNAPPING ON COVER ART. MPV MAY COMMUNICATE WITH ITS PARENT APP.
     config  ={
         'osd-font-size 16','osd-border-size 1','osd-scale-by-window no',  --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
         'keepaspect no','geometry 50%', --ONLY NEEDED IF MPV HAS ITS OWN WINDOW, OUTSIDE SMPLAYER. FREE aspect & 50% INITIAL DEFAULT SIZE.
         'image-display-duration inf','vd-lavc-threads 0',    --inf STOPS JPEG FROM SNAPPING MPV.  0=AUTO, vd-lavc=VIDEO DECODER - LIBRARY AUDIO VIDEO.
-    
-    'video-timing-offset 1',
-    
     },       
 }
-o,label,timers,m = options,mp.get_script_name(),{},{} --ABBREV. options. label=autocrop   m=crop MEMORY
+o,label,timers,m = options,mp.get_script_name(),{},{} --ABBREV. options. label=autocrop   m=MEMORY-crop 
 
 require 'mp.options'
 read_options(o)    --OPTIONAL?
 
-for key,val in pairs({command_prefix='',detect_limit_image=o.detect_limit,detect_limits={},TOLERANCE=0,TOLERANCE_TIME=10,time_needed=0,detector='cropdetect=limit=%s:round=%s:reset=1:0',format='yuv420p',scale={},key_bindings='C',toggle_on_double_mute=0,io_write='',config={}})
+for key,val in pairs({command_prefix='',detect_limit_image=o.detect_limit,detect_limits={},TOLERANCE=0,TOLERANCE_TIME=10,detector='cropdetect=limit=%s:round=%s:reset=1:0',format='yuv420p',scale={},key_bindings='C',toggle_on_double_mute=0,io_write='',config={}})
 do if not o[key] then o[key]=val end end --ESTABLISH DEFAULTS. 
-for _,option in pairs(o.config) do mp.command(o.command_prefix..' set '..option) end
 
-mp.set_property('script-opts','loop=inf,'..mp.get_property('script-opts')) --PREPEND NEW SCRIPT-OPT: WARNING image WILL INFINITE loop. TRAILING "," ALLOWED.
+for _,option in pairs(o.config) do option=option:gmatch('%g+')  --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.
+    mp.set_property(option(),option()) end
+
 function start_file()   --EMBEDDED MPV PLAYLISTS REQUIRE INSTA-pause BEFORE GRAPH INSERTION, TO AVOID SNAPPING.
-    paused=false    --ALWAYS UNPAUSE @start-file→file-loaded.
-    mp.command('set pause yes') 
+    paused,complex_opt = false,mp.get_opt('lavfi-complex')  --ALWAYS UNPAUSE @start-file→file-loaded.
+    mp.set_property_bool('pause',true)
     
+    complex_opt,loop_opt = mp.get_opt('lavfi-complex'),mp.get_opt('loop')   --autocomplex & autocrop MAY INFINITE loop IMAGES, BEFORE automask.
+    complex_opt,loop_opt = complex_opt and complex_opt~='' and complex_opt~='no',loop_opt and loop_opt~='0' and loop_opt~='no'
+    if not complex_opt and not loop_opt then mp.set_property('script-opts','loop=inf,'..mp.get_property('script-opts')) end  --PREPEND NEW SCRIPT-OPT: WARNING image WILL INFINITE loop. TRAILING "," GETS REMOVED.
 end
 mp.register_event('start-file',start_file) 
 
 function file_loaded()  --ALSO STREAM.
-    if not mp.get_property_number('current-tracks/video/id') then mp.command('set pause no')   --DO NOTHING IF NO vid OR OFF: unpause & return.
-        return end   --OFF TOGGLE & NO vid → NO crop.
+    if not mp.get_property_number('current-tracks/video/id') then mp.set_property_bool('pause',paused)   --unpause & return FOR RAW MP3.
+        return end 
     
     W,H = o.scale[1],o.scale[2]
     if not (W and H) then W,H = mp.get_property_number('display-width'),mp.get_property_number('display-height') end  --WINDOWS & MACOS.
@@ -74,8 +73,7 @@ function file_loaded()  --ALSO STREAM.
         return end
     W,H = math.ceil(W/4)*4,math.ceil(H/4)*4   --MULTIPLES OF 4 WORK BETTER WITH overlay (FURTHER GRAPHS LIKE automask). MPV MAY SNAP INSIDE SMPLAYER ON ODD NUMBERED SIZES.
     
-    complex_opt,MEDIA_TITLE = mp.get_opt('lavfi-complex'),mp.get_property('media-title'):upper()
-    is1frame,loop,complex_opt = false,0,complex_opt and complex_opt~='' and complex_opt~='no'
+    is1frame,loop,MEDIA_TITLE = false,0,mp.get_property('media-title'):upper()    --media-title @file-loaded
     if mp.get_property_bool('current-tracks/video/albumart') and not complex_opt then is1frame,o.auto = true,false end  --albumart IS DIFFERENT TO image. REQUIRE GRAPH REPLACEMENT IF NO complex. NO auto BECAUSE audio GLITCHES.
     
     detector,detect_limit = o.detector,o.detect_limit   --detect_limit MAY VARY, BUT NOT o.detect_limit
@@ -85,7 +83,7 @@ function file_loaded()  --ALSO STREAM.
     mp.observe_property('vf','native',function() io.write(o.io_write) end)
     
     for title,limit in pairs(o.detect_limits) do if MEDIA_TITLE:find(title:upper(),1,true)  --1 IS STARTING INDEX. true MEANS EXACT MATCH.
-        then detect_limit=limit end end --detect_limit FINAL OVERRIDE. 
+        then detect_limit=limit  end end  --detect_limit FINAL OVERRIDE.
     detector=detector:format(detect_limit,o.detect_round)
     
     mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,setsar=1]'):format(o.command_prefix,label,W,H)) --SEPARATE: "w" & "h" COMMANDS ARE AMBIGUOUS.
@@ -102,14 +100,14 @@ function file_loaded()  --ALSO STREAM.
     ----setsar    =sar  IS THE FINISH. LINUX BUGFIX REQUIRES IT @END. ALSO STOPS EMBEDDED MPV SNAPPING on_vid. MACOS BUGFIX REQUIRES sar. 
     
     
-    if not paused then mp.command('set pause no') end   --UNPAUSE.
+    mp.set_property_bool('pause',paused) --UNPAUSE.
     timers.auto_delay:resume() --SMALL DELAY FOR INITIAL DETECTION.
 end
 mp.register_event('file-loaded',file_loaded)
 
 function on_vid(_,vid)  --AN MP3 MAY BE A COLLECTION OF JPEG IMAGES (MP3TAG) WITH DIFFERENT DIMENSIONS.
     if m.vid and m.vid~=vid then paused=mp.get_property_bool('pause')
-        mp.command('set pause yes') --INSTA-pause FOR GRAPH REPLACEMENT. UNFORTUNATELY EMBEDDED MPV MAY SNAP DUE TO CHANGING DIMENSIONS.
+        mp.set_property_bool('pause',true) --INSTA-pause FOR GRAPH REPLACEMENT. UNFORTUNATELY EMBEDDED MPV MAY SNAP DUE TO CHANGING DIMENSIONS.
         file_loaded()  end
     m.vid=vid   --→MEMORY.
 end
@@ -136,7 +134,7 @@ function on_toggle(mute)    --INSTA-TOGGLE (SWITCH), NOT PROPER FULL toggle.
     if not OFF then detect_crop() --TOGGLE ON.
     else apply_crop({ x=0,y=0, w=m.max_w,h=m.max_h }) end    --TOGGLE OFF. NULL crop.
 end
-for key in o.key_bindings:gmatch('%g+') do mp.add_key_binding(key, 'toggle_crop_'..key, on_toggle) end    --gmatch IS GLOBAL MATCH ITERATOR. %g+ IS LONGEST string EXCLUDING SPACE.
+for key in o.key_bindings:gmatch('%g+') do mp.add_key_binding(key, 'toggle_crop_'..key, on_toggle) end
 mp.observe_property('mute', 'bool', on_toggle)
 
 timers.mute=mp.add_periodic_timer(o.toggle_on_double_mute, function()end)    --double_mute timer
@@ -151,7 +149,7 @@ function detect_crop()
         if meta then mp.osd_message(meta) end end   --DISPLAY COORDS FOR 1 SEC.
     
     meta=mp.get_property_native('vf-metadata/'..label)  -- Get the metadata.
-    if not meta then if o.msg_info then mp.msg.error("No crop metadata.")    --Verify the existence of metadata. SOMETIMES IT'S {}, WHICH FAILS THE NEXT TEST.
+    if not meta then if o.msg_log then mp.msg.error("No crop metadata.")    --Verify the existence of metadata. SOMETIMES IT'S {}, WHICH FAILS THE NEXT TEST.
                                         mp.msg.info("Was the cropdetect filter successfully inserted?\nDoes your version of ffmpeg/libav support AVFrame metadata?") end
         return end 
     
@@ -191,7 +189,7 @@ function detect_crop()
         or math.abs(meta.w-m.w)>m.w*o.TOLERANCE or math.abs(meta.h-m.h)>m.h*o.TOLERANCE --CHECK meta IS EFFECTIVE AT CHANGING CURRENT GEOMETRY.
         or math.abs(meta.x-m.x)>m.w*o.TOLERANCE or math.abs(meta.y-m.y)>m.h*o.TOLERANCE
     
-    if not is_effective then if o.msg_info then mp.msg.info("No area detected for cropping.") end
+    if not is_effective then if o.msg_log then mp.msg.info("No area detected for cropping.") end
         return end
     apply_crop(meta)
 end
@@ -210,10 +208,10 @@ function apply_crop(meta)
                 mp.command('frame-step') end end
         return end --is1frame BELOW.
 
-    mp.command('set pause yes') --GRAPH REPLACEMENT REQUIRES INSTA-pause, DUE TO INTERFERENCE FROM OTHER GRAPHS.
+    mp.set_property_bool('pause',true) --GRAPH REPLACEMENT REQUIRES INSTA-pause, DUE TO INTERFERENCE FROM OTHER GRAPHS.
     mp.command(('%s vf pre @%s:lavfi=[format=%s,%s,crop=%d:%d:%d:%d:1:1]') --REPLACEMENT GRAPH. VERIFY BY TOGGLE "c" REPEATEDLY (WITH &) WITHOUT automask.
         :format(o.command_prefix,label,o.format,detector,meta.w,meta.h,meta.x,meta.y))
-    if not paused then mp.command('set pause no') end --image-display-duration=inf
+    mp.set_property_bool('pause',paused) --image-display-duration=inf
 end
 
 

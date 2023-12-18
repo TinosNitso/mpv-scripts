@@ -12,7 +12,7 @@ options={ --ALL OPTIONAL & MAY BE REMOVED.
     clock='{\\fs71\\bord2\\shad1\\an3}%I{\\fs50}:%M{\\fs35}:%S{\\fs25} %p', --DEFAULT='' (NO clock)  an,%I,%M,%S,%p = ALIGNMENT-NUMPAD,HRS(12),MINS,SECS,P/AM  (DEFAULT an0=an7=TOPLEFT)  REMOVE TO remove clock.  BIG:MEDIUM:LITTLE:tiny, RATIO=SQRT(.5)=.71     FORMATTERS: a A b B c d H I M m p S w x X Y y  REQUIRES [vo] TO BE SEEN (NOT RAW MP3).  AN UNUSED BIG SCREEN TV CAN BE A BIG clock WITH BACKGROUND video. 
     
     filters='anull,'                        --CAN REPLACE anull WITH EXTRA FILTERS (highpass aresample vibrato ...). 
-          ..'dynaudnorm=250:11:1:100:0:0:1',--DEFAULT=500:31:.95:10:0:1:0=f:g:p:m:r:n:c  DYNAMIC AUDIO NORMALIZER. ALL INSTANCES USE THIS NORMALIZER. GRAPH COMMENTARY HAS MORE DETAILS.
+          ..'dynaudnorm=250:11:1:100',--DEFAULT=500:31:.95:10:0:1:0=f:g:p:m  DYNAMIC AUDIO NORMALIZER. ALL INSTANCES USE THIS NORMALIZER. GRAPH COMMENTARY HAS MORE DETAILS.
     -- title_clock_only=true,   --OVERRIDE, WITH filters. NO audio INSTANCES. HOWEVER filters STILL ACTIVE.   THIS option MEANS THE clock DOESN'T HAVE TO BE COPY/PASTED INTO OTHER SCRIPT/S (THIS SCRIPT CAN CONTROL IT).
     
     -- extra_devices_index_list={2},--EXTRA DEVICES. TRY {2,3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. 1=auto WHICH MAY DOUBLE-OVERLAP audio TO PRIMARY DEVICE. 3=VIRTUALBOX USB STEREO. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.     EACH MPV USES APPROX 1% CPU, + 40MB RAM.
@@ -21,11 +21,11 @@ options={ --ALL OPTIONAL & MAY BE REMOVED.
     max_random_percent=10, --DEFAULT=0. MAX random % DEVIATION FROM PROPER speed. speed UPDATES EVERY HALF A SECOND. E.G. 10%*.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER.
     max_percent       =15, --DEFAULT=15. SPEED NEVER CHANGES BY MORE. E.G. speed BOUNDED WITHIN [.8,1.2].    1.2 SOUNDS OK, BUT MAYBE NOT .8.
     
-    start        = .3, --DEFAULT=.3 SECONDS. APPROX:  .3=SSD  2=HDD.  INITIAL HEADSTART OF audio INSTANCES, EXCEPT ON YOUTUBE. EACH mpv TAKES TIME TO LOAD, & FOR MP4 THEY AREN'T LAUNCHED UNTIL AFTER INITIAL seeking (WHICH WORKS FINE ON SSD).
+    start        = .3, --DEFAULT=.3  SECONDS. APPROX:  .3=SSD  2=HDD  INITIAL HEADSTART OF audio INSTANCES, EXCEPT ON YOUTUBE. EACH mpv TAKES TIME TO LOAD, & FOR MP4 THEY AREN'T LAUNCHED UNTIL AFTER INITIAL seeking (WHICH WORKS FINE ON SSD).
     seek_limit   =  1, --DEFAULT=1   SECONDS. SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit. seek CAUSES AUDIO TO SKIP. (SKIP VS JERK.) IT'S LIKE TRYING TO SING FASTER TO CATCH UP TO THE OTHERS.
     resync_delay = 30, --DEFAULT=60  SECONDS. os_sync RESYNC WITH THIS DELAY.   mp.get_time() & os.clock() MAY BE BASED ON CPU TIME, WHICH GOES OFF WITH RANDOM LAG.
     os_sync_delay=.01, --DEFAULT=.01 SECONDS. ACCURACY FOR SYNC TO os.time. A perodic_timer CHECKS SYSTEM clock EVERY 10 MILLISECONDS (FOR THE NEXT TICK).  WIN10 CMD "TIME 0>NUL" GIVES 10ms ACCURATE SYSTEM TIME.
-    time_needed  =  5, --DEFAULT=5   SECONDS. NO RANDOMIZATION WITHIN 5 SECS OF end-file (STRONG FINISH) & GRAPH INSERTION. ALSO WAITS THIS LONG FOR astats TO STABILIZE SAMPLE COUNT.
+    time_needed  =  5, --DEFAULT=5   SECONDS. NO RANDOMIZATION WITHIN 5 SECS OF end-file (STRONG FINISH) & GRAPH INSERTION.
     timeout      = 10, --DEFAULT=10  SECONDS. audio INSTANCES ALL shutdown IF CONTROLLER HARD BREAKS FOR THIS LONG.
     
     samplerate=44100, --DEFAULT=44100 Hz. IDEAL SETTING (MAYBE 48 kHz) DEPENDS ON wasapi ETC.
@@ -44,7 +44,8 @@ label,directory = mp.get_script_name(),utils.split_path(mp.get_property('scripts
 
 for key,val in pairs({key_bindings='',title_duration=5,clock='',filters='anull',extra_devices_index_list={},mutelr='mutel',start=.3,max_random_percent=0,max_percent=15,seek_limit=1,resync_delay=60,os_sync_delay=.01,time_needed=5,timeout=10,toggle_on_double_mute=0,samplerate=44100,config={}})
 do if not o[key] then o[key]=val end end --ESTABLISH DEFAULTS. 
-for _,option in pairs(o.config) do mp.command('no-osd set '..option) end --set config
+for _,option in pairs(o.config) do option=option:gmatch('%g+')  --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.
+    mp.set_property(option(),option()) end
 
 mpv,directory = 'mpv',mp.command_native({'expand-path',directory}) --mpv MAY BE ADDRESSED AS EITHER "mpv" OR "./mpv" IN EVERY SYSTEM. LINUX snap ALLOWS IT TO RUN ITSELF.  command_native RETURNS ~ EXPANDED.
 devices,device_list = {mp.get_property('audio-device')},mp.get_property_native('audio-device-list') --devices IS LIST OF audio-devices WHICH WILL ACTIVATE (STARTING WITH EXISTING device). device_list IS COMPLETE LIST.
@@ -56,17 +57,17 @@ if not (mutelr and pid) then is_controller,pid,mutelr = true,utils.getpid(),o.mu
         for _,find in pairs(devices) do if device:upper()==find:upper() then is_present=true    --SEARCH FOR DUPLICATES BEFORE INSERTION. SIMILAR LOGIC TO autoloader.
             return end end
         if not is_present then table.insert(devices,device) end end
-else mp.command('no-osd set keep-open yes') end --STOP audio INSTANCES FROM EXITING, WITHOUT apad NOR loop=inf. USER MAY BACKWARDS seek NEAR end-file. 
+else mp.set_property_bool('keep-open',true) end --STOP audio INSTANCES FROM EXITING, WITHOUT apad NOR loop=inf. USER MAY BACKWARDS seek NEAR end-file. 
 
 lavfi=('aformat=s16:%d:stereo,astats=.5:1,%s,asplit[0],stereotools=%s=1[1],[0][1]astreamselect=2:1')
-    :format(o.samplerate,o.filters,mutelr)
+    :format(o.samplerate,               o.filters,                 mutelr)
  
-----lavfi        =[graph] [ao]→[ao] LIBRARY-AUDIO-VIDEO-FILTER LIST.  EACH .LUA SCRIPT MAY CONTROL A GRAPH, LIKE HOW A CELL CONTROLS DNA. aspeed IS LIKE A MASK FOR audio, WHICH DISJOINTS IT.     CHANGING GRAPH NEEDS A FEW HRS FOR TESTING.
+----lavfi        =[graph] [ao]→[ao] LIBRARY-AUDIO-VIDEO-FILTER LIST.  EACH LUA SCRIPT MAY CONTROL A GRAPH, LIKE HOW A CELL CONTROLS DNA. aspeed IS LIKE A MASK FOR audio, WHICH DISJOINTS IT.     CHANGING GRAPH NEEDS A FEW HRS FOR TESTING.
 ----anull         PLACEHOLDER.
-----dynaudnorm   =f:g:p:m:r:n:c →s64  DEFAULTS 500:31:.95:10:0:1:0    FRAME(MILLISECONDS):GAUSSIAN_WIN_SIZE(ODD INTEGER):PEAK_TARGET[0,1]:MAX_GAIN[1,100]:CORRECTION_DC(BOOL)   DYNAMIC AUDIO NORMALIZER. IT MAY SLOW DOWN YOUTUBE, BY PRE-LOADING MANY FRAME-LENGTHS (g=31). LOWER g GIVES FASTER RESPONSE. ALTERNATIVES INCLUDE loudnorm & acompressor, BUT dynaudnorm IS BEST. 
+----dynaudnorm   =f:g:p:m →s64  DEFAULTS 500:31:.95:10    FRAME(MILLISECONDS):GAUSSIAN_WIN_SIZE(ODD INTEGER):PEAK_TARGET[0,1]:MAX_GAIN[1,100]   DYNAMIC AUDIO NORMALIZER. IT MAY SLOW DOWN YOUTUBE, BY PRE-LOADING MANY FRAME-LENGTHS (g=31). LOWER g GIVES FASTER RESPONSE. ALTERNATIVES INCLUDE loudnorm & acompressor, BUT dynaudnorm IS BEST. 
 ----aformat      =sample_fmts:sample_rates:channel_layouts  (u8 s16 s64 ETC)  GIVES astats CONSTANT samplerate. CONVERTS MONO & SURROUND SOUND TO stereo BECAUSE astats NEEDS stereo FOR RELIABILITY. ITS OUTPUT MUST BE DETERMINISTIC OVER 10 HRS (UNLIKE OTHER FILTERS).  s16=SGN+15BIT (-32k→32k). u8 CAUSES HISSING.  
 ----astats       =length:metadata (SECONDS:BOOL)  CONTINUAL SAMPLE COUNT IS BASIS FOR 10 HOUR SYNC. USES APPROX 0% OF CPU. USING THIS AS PRIMARY METRIC AVOIDS MESSING WITH MPV/SMPLAYER SETTINGS TO ACHIEVE 10 HOUR SYNC. MPV autosync WON'T WORK (MAYBE A FUTURE VERSION, BUT CURRENTLY INCOMPATIBLE).
-----asplit        [ao]→[NOmutelr][mutelr]
+----asplit        [ao]→[NOmutelr][mutelr]=[0][1]
 ----stereotools  =...:mutel:muter (BOOLS) MUTES EITHER SIDE. softclip OPTION MAY CAUSE A BUG IN LINUX .AppImage. MAY NOT BE DETERMINISTIC OVER 10 HRS?
 ----astreamselect=inputs:map  ENABLES INSTA-TOGGLE. "af-command" NOT "af toggle". ANY ATTEMPT TO DOUBLE CHANGE GRAPHS OR DO A FULL TOGGLE CAUSES CONTROLLER GLITCH (CAN VERIFY BY TOGGLING NORMALIZER IN SMPLAYER). SHOULD BE PLACED LAST BECAUSE SOME FILTERS (dynaudnorm) DON'T INSTANTLY KNOW WHICH STREAM TO FILTER, BECAUSE THAT'S DETERMINED BY REMOTE CONTROL (af-command 0 OR 1). ON=1 BY DEFAULT.
 
@@ -78,16 +79,16 @@ map,timers,txtpath = 1,{},utils.join_path(directory,('%s-PID%d.txt'):format(labe
 mp.register_event('shutdown',function() os.remove(txtpath) end)  --NO RECYCLE BIN. audio INSTANCES quit.
 
 function start_file()  --CONTROLLER ONLY. YOUTUBE LAUNCHES INSTANTLY.  AT LEAST 4 STAGES: LOAD-SCRIPT start-file file-loaded playback-restart  ALL audio PLAYERS quit & THEN ALL NEW ONES START IF file CHANGES.
-    priority,pause,start,path,osd_level = nil,nil,nil,mp.get_property('path'),mp.get_property('osd-level')  --priority ACTS AS LAUNCHED-SWITCH. osd_level RETURNS osd-level, AFTER BLOCKING SMPLAYER INTERFERENCE WITH title.
+    priority,pause,start,path,osd_level = nil,nil,nil,mp.get_property('path'),mp.get_property_number('osd-level')  --priority ACTS AS LAUNCHED-SWITCH. osd_level RETURNS osd-level, AFTER BLOCKING SMPLAYER INTERFERENCE WITH title.
     if o.title then title=mp.create_osd_overlay('ass-events') end
     
-    mp.command('no-osd set osd-level 0')
+    mp.set_property_number('osd-level',0)
     if not utils.file_info(path) then pause,start = 'yes',mp.get_property('start') --YOUTUBE. LAUNCHES ytdl INSTANTLY TO THE NEAREST SECOND, PAUSED.
         subprocesses() end 
 end 
 
 function subprocesses(_,seeking)    --CONTROLLER ONLY. 
-    if seeking or o.title_clock_only or priority then return end  --ONLY EVER LAUNCH ONCE/file (priority SWITCH). MP4 WAITS FOR INITIAL seeking TO FINISH. ALSO OVERRIDE→return.
+    if seeking or o.title_clock_only or priority then return end  --priority SWITCH: ONLY EVER LAUNCH ONCE PER file. MP4 WAITS FOR INITIAL seeking TO FINISH. ALSO OVERRIDE→return.
     if not start then start=mp.get_property_number('time-pos')+o.start end --MP4
     if not pause then pause=mp.get_property       ('pause')            end
     
@@ -126,7 +127,7 @@ function title_remove() --SENDS title→nil ON timeout.
     title=nil 
 end 
 
-function on_toggle(mute)   --INSTA-TOGGLE (SWITCH), NOT PROPER FULL toggle. (PERHAPS A DOUBLE-TAP key_bind COULD TRIGGER FULL TOGGLE.)  audio INSTANCES MAINTAIN SYNC WHEN OFF.
+function on_toggle(mute)   --CONTROLLER ONLY. INSTA-TOGGLE (SWITCH), NOT PROPER FULL toggle. (PERHAPS A DOUBLE-TAP key_bind COULD TRIGGER FULL TOGGLE.)  audio INSTANCES MAINTAIN SYNC WHEN OFF.
     if not start or not is_controller then return end  --NOT STARTED YET.
     if mute and not timers.mute:is_enabled() then timers.mute:resume() --START TIMER OR ELSE TOGGLE.
         return end
@@ -141,7 +142,7 @@ mp.observe_property('mute','bool',on_toggle)
 timers.mute=mp.add_periodic_timer(o.toggle_on_double_mute, function()end )  --mute timer. VALID EVEN FOR 0 TIME (DISABLED).
 timers.mute.oneshot,clock = true,mp.create_osd_overlay('ass-events')   --ass-events IS THE ONLY VALID OPTION, FOR title & clock.
 
-function clock_update() 
+function clock_update()
     if OFF or not o.clock then clock:remove()   --OFF SWITCH.
         return end
     clock.data=os.date(o.clock):gsub('}0','} ') --REMOVE LEADING 0 AFTER "}" STYLE CODE.
@@ -171,7 +172,7 @@ timers. resync=mp.add_periodic_timer(o. resync_delay,os_sync) --KEEP RESYNCING E
 for _,timer in pairs(timers) do timer:kill() end    --kill timers. THEY CARRY OVER TO NEXT FILE IN MPV PLAYLIST.
 
 function set_osd_level()
-    if osd_level then mp.command('no-osd set osd-level '..osd_level) end    --no-osd (RETURN)
+    if osd_level then mp.set_property('osd-level',osd_level) end
     osd_level=nil
 end
 
@@ -203,13 +204,13 @@ function set_speed(property)    --property='af-metadata/aspeed' OR nil     THIS 
     path=lines()  --LINE1=path  
     if not path then return end --SOMETIMES txtfile IS BLANK (@TIME OF write).
     if path~=mp.get_property('path') and sync_time then mp.command('quit') end --EXIT. DIFFERENT FILE (E.G. PLAYLIST). RARE BUG-FIX: ONLY quit AFTER SYNC.
-    mp.command('set aid '..lines()) --LINE2=aid   UNTESTED  
+    mp.set_property('aid',lines()) --LINE2=aid   UNTESTED  
     
     volume,txt_time = 0+lines(),lines()    --LINES 3,4 = volume,TIME_OF_WRITE    0+ CONVERTS tonumber
-    if volume<0 then mp.command('set pause yes')
+    if volume<0 then mp.set_property_bool('pause',true)
         return end
-    mp.command('set pause no')
-    mp.command('set volume '..volume) 
+    mp.set_property_bool  ('pause' ,false)
+    mp.set_property_number('volume',volume)
     if not sync_time or not paused and not property then return end     --DON'T CHANGE speed BEFORE INITIAL SYNC OR IF PLAYING BUT NOT property. 
     
     time_gained=time_pos-lines()-(os_time-txt_time)  --LINE5=POS     SUBTRACT TIME_FROM_WRITE FROM DIFFERENCE BTWN POSITIONS.
@@ -224,7 +225,7 @@ function set_speed(property)    --property='af-metadata/aspeed' OR nil     THIS 
     then speed=speed+math.random(-o.max_random_percent,o.max_random_percent)/100 end 
     
     speed=math.max( 1-o.max_percent/100 , math.min(1+o.max_percent/100, speed) )    --speed LIMIT. LUA DOESN'T SUPPORT math.clip
-    mp.command('set speed '..speed)
+    mp.set_property_number('speed',speed)
 end
 mp.observe_property('af-metadata/'..label,'native',function(property) pcall(set_speed,property) end) --TRIGGERS EVERY HALF A SECOND. pcall SIMPLIFIES set_speed.
 timers.auto=mp.add_periodic_timer(              .5,function()         pcall(set_speed)          end) --timer KEEPS CHECKING txtfile WHEN PAUSED, WITHOUT astats OBSERVATION.
@@ -233,14 +234,16 @@ timers.auto=mp.add_periodic_timer(              .5,function()         pcall(set_
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (TECH SPECS), & END (MISC.). ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
 ----"autospeed.lua" IS A DIFFERENT SCRIPT FOR video speed, NOT audio. 
 ----BUG: EXCESSIVE LAG ALONG WITH autocomplex. IN CASE OF DESYNC MUST STOP & PLAY (RESET).  autosync DOESN'T HELP.
+----audio-params/samplerate current-tracks/audio/demux-samplerate PROPERTIES GIVE samplerate, BUT BETTER TO SET IT IN GRAPH.
 
 ----ALTERNATIVE FILTERS:
 ----apad     (SIMPLER TO USE keep-open=yes)     APPENDS SILENCE TO audio INSTANCES, SO THEY NEVER stop UNLESS THE CONTROLLER DOES. INSERTS BEFORE astats OR ELSE astats FAILS TO UPDATE MAIN FUNCTION. 
-----volume =volume:...:eval  (DEFAULT 1:once)  TIMELINE SWITCH FOR CONTROLLER. startt=t@INSERTION.
-----atrim  =start (SECONDS) TO MATCH lavfi-complex. UNNECESSARY.
-----asetpts=expr            TO MATCH lavfi-complex.
+----volume  =volume:...:eval  (DEFAULT 1:once)  TIMELINE SWITCH FOR CONTROLLER. startt=t@INSERTION.
+----atrim   =start (SECONDS) TO MATCH lavfi-complex. UNNECESSARY.
+----asetpts =expr            TO MATCH lavfi-complex.
+----loudnorm=I:LRA:TP   DEFAULT -24:7:-2. INTENSITY TARGET (-70 TO -5) : LOUDNESS RANGE (1 TO 20) : TRUE PEAK (-9 TO 0). LACKS f & g SETTINGS. SOUNDED OFF.
+----acompressor  SMPLAYER DEFAULT NORMALIZER.
 
-----audio-params/samplerate current-tracks/audio/demux-samplerate PROPERTIES GIVE samplerate, BUT BETTER TO SET IT IN GRAPH.
 
 
 
