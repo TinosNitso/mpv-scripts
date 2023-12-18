@@ -14,6 +14,9 @@ Then hit OK & play. Overall I consider playback smoother than VLC. [autoloader](
 
 In Linux try `sudo apt install smplayer` or double-click the `.AppImage`. All scripts also fully compatible with `.snap` & `.flatpak` releases. `~/` means home folder in Linux & MacOS.
 
+## Safety Inspection
+Before running scripts it's safer to first check them in Notepad++. Check for `os.execute` (operating system), `io.popen` (input output process) & `mp.command*` (media player). Safe commands include `seek` `frame-step` `stop` `quit` `af*` `vf*`, but `load-script` `run` `subprocess*` may be unsafe. To inspect a script use search/highlighting on potentially unsafe words. Ignore all comments (anything following `--`).
+
 ## Advanced (mpv)
 To run in Windows from Command Prompt, create a New Text Document in SMPlayer folder & rename it `TEST.CMD`. Also copy in `TEST.MP4`. Then right-click on `TEST.CMD` & click `Edit`. In Notepad copy/paste:
 
@@ -23,10 +26,7 @@ Then Save it & double-click it. The command line shows warnings, etc. MPV pauses
 
 `/Applications/SMPlayer.app/Contents/MacOS/mpv ~/Desktop/mpv-scripts/TEST.MP4 --script=~/Desktop/mpv-scripts/autoloader.lua`
 
-That uses the MPV bundled with SMPlayer. Only good builds make it into `SMPlayer.app/Contents`. `FFmpeg version: 5.1.2`: the latest is v6, hence graphs require more filter/s for backwards compatibility.
-
-## Safety Inspection
-Before running scripts it's safer to first check them in Notepad++. Any code containing `os.execute` (operating system), `io.popen` (input output process) or `mp.command*` (media player) may be unsafe. However, `seek` `frame-step` `stop` `quit` `af*` `vf*` are all safe, but not `run` or `subprocess`. To inspect a script use search/highlighting on unsafe words. Ignore all comments (lines starting with `--`).
+That uses the MPV bundled with SMPlayer. Only good builds make it into `SMPlayer.app/Contents`. FFmpeg version: 5.1.2, but the latest is v6, hence graphs require more filter/s for backwards compatibility.
 
 ## Latest Updates
 
