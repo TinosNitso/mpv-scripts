@@ -10,7 +10,7 @@ options={ --ALL OPTIONAL & CAN BE REMOVED.
             },
     
     loop_limit=10,  --SECONDS (MAX). INFINITE loop GIF & SHORT MP4 (IN SMPLAYER TOO). STOPS MPV SNAPPING. ALL MY SCRIPTS NEED IT, SO IT FITS IN WITH autoloader.    BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
-    ytdl_path ='~/Desktop/yt-dlp_macos', --YOUTUBE DOWNLOAD. NEEDED IN MACOS. WON'T CONTRADICT EXISTING INSTALLATION.  COPY/PASTE "yt-dlp_macos" (~25MiB) TO MACOS Desktop. EXTRACTING FROM .zip MAY PRODUCE FASTER EXECUTABLE.
+  --  ytdl_path ='~/Desktop/yt-dlp_macos', --YOUTUBE DOWNLOAD. NEEDED IN MACOS. WON'T CONTRADICT EXISTING INSTALLATION.  COPY/PASTE "yt-dlp_macos" (~25MiB) TO MACOS Desktop. EXTRACTING FROM .zip MAY PRODUCE FASTER EXECUTABLE.
     
     config={
         'osd-duration 5000','osd-bar no',  --DEFAULTS 1000,yes  (MILLISECONDS,BOOL)  TAKES TIME TO READ osd. SMPLAYER ALREADY HAS A seek BAR.
