@@ -15,7 +15,7 @@ Then hit OK & play. Overall I consider playback smoother than VLC. [autoloader](
 In Linux try `sudo apt install smplayer` or double-click the `.AppImage`. All scripts also fully compatible with `.snap` & `.flatpak` releases. `~/` means home folder in Linux & MacOS.
 
 ## Safety Inspection
-Before running scripts it's safer to first check them in Notepad++. Search for & highlight `os.execute` (operating system), `io.popen` (input output process) & `mp.command*` (media player). Safe commands include `seek` `frame-step` `stop` `quit` `af*` `vf*`, but `load-script` `run` `subprocess*` may be unsafe. To inspect a script check potentially unsafe commands. Ignore all comments (anything following `--`).
+Before running scripts it's safer to first check them in Notepad++. Search for & highlight `os.execute` (operating system), `io.popen` (input output process) & `mp.command*` (media player). Safe commands include `expand-path` `frame-step` `seek` `stop` `quit` `af*` `vf*`, but `load-script` `run` `subprocess*` may be unsafe. To inspect a script check potentially unsafe commands. Ignore all comments (anything following `--`).
 
 ## Advanced (mpv)
 To run in Windows from Command Prompt, create a New Text Document in SMPlayer folder & rename it `TEST.CMD`. Also copy in `TEST.MP4`. Then right-click on `TEST.CMD` & click `Edit`. In Notepad copy/paste:
@@ -29,8 +29,6 @@ Then Save it & double-click it. The command line shows warnings, etc. MPV pauses
 That uses the MPV bundled with SMPlayer. Only good builds make it into `SMPlayer.app/Contents`. FFmpeg version: 5.1.2, but the latest is v6, hence graphs require more filter/s for backwards compatibility.
 
 ## Latest Updates
-Next release delayed for more testing & improved spells. Above updates include fixed YouTube title (`aspeed`), many bugfixes & improved code (`script-opts` etc). `autocomplex` double-normalizer & better shoe color. Improved `automask` code. Need some recording/s before next release. 
-
-`autocomplex` zoompan now has perfect sync (important bugfix), on YouTube too. `aspeed` now faster on YouTube, with many speakers/devices. Added options `dual_colormix`, `dual_alpha`, `dual_scale`, `dual_overlay`, `feet_activation`, `shoe_color` & `gb` for neutral blue shade. Also extra 5% for Nyquist. Can also change video/audio track once inside SMPlayer. Calibration waves mix into `[ao]`. Improved options & codes (e.g. `ROUND_SQUARE` in `automask`). Bugfix for `automask` MP3 cover art insta-toggle. `autocrop` now only uses 1 graph. 🙂
+Next release delayed for more testing & improved spells. Above updates include fixed YouTube title (`aspeed`), fixed MacOS YouTube (`autoloader`), many bugfixes & improved codes. `autocomplex` double-normalizer & better shoe color. Improved `automask` code. Need some recording/s before next release. 
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
