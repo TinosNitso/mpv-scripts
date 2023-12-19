@@ -28,7 +28,7 @@ options={ --ALL OPTIONAL & MAY BE REMOVED.
     time_needed  =  5, --DEFAULT=5   SECONDS. NO RANDOMIZATION WITHIN 5 SECS OF end-file (STRONG FINISH) & GRAPH INSERTION.
     timeout      = 10, --DEFAULT=10  SECONDS. audio INSTANCES ALL shutdown IF CONTROLLER HARD BREAKS FOR THIS LONG.
     
-    samplerate=44100, --DEFAULT=44100 Hz. IDEAL SETTING (MAYBE 48 kHz) DEPENDS ON wasapi ETC.
+    samplerate=44100, --DEFAULT=44100 Hz. 
     -- meta_osd=true, --DISPLAY astats METADATA (audio STATISTICS). IRONICALLY astats DOESN'T KNOW ANYTHING ABOUT TIME ITSELF, YET IT'S THE BASIS FOR TEN HOUR SYNCHRONY.
     
     config={
@@ -64,7 +64,7 @@ lavfi=('aformat=s16:%d:stereo,astats=.5:1,%s,asplit[0],stereotools=%s=1[1],[0][1
  
 ----lavfi        =[graph] [ao]→[ao] LIBRARY-AUDIO-VIDEO-FILTER LIST.  EACH LUA SCRIPT MAY CONTROL A GRAPH, LIKE HOW A CELL CONTROLS DNA. aspeed IS LIKE A MASK FOR audio, WHICH DISJOINTS IT.     CHANGING GRAPH NEEDS A FEW HRS FOR TESTING.
 ----anull         PLACEHOLDER.
-----dynaudnorm   =f:g:p:m →s64  DEFAULTS 500:31:.95:10    FRAME(MILLISECONDS):GAUSSIAN_WIN_SIZE(ODD INTEGER):PEAK_TARGET[0,1]:MAX_GAIN[1,100]   DYNAMIC AUDIO NORMALIZER. IT MAY SLOW DOWN YOUTUBE, BY PRE-LOADING MANY FRAME-LENGTHS (g=31). LOWER g GIVES FASTER RESPONSE. ALTERNATIVES INCLUDE loudnorm & acompressor, BUT dynaudnorm IS BEST. 
+----dynaudnorm   =f:g:p:m →s64  DEFAULTS 500:31:.95:10    FRAME(MILLISECONDS):GAUSSIAN_WIN_SIZE(ODD INTEGER):PEAK_TARGET[0,1]:MAX_GAIN[1,100]   DYNAMIC AUDIO NORMALIZER. IT MAY SLOW DOWN YOUTUBE, BY PRE-LOADING MANY FRAME-LENGTHS (g=31). LOWER g GIVES FASTER RESPONSE. ALTERNATIVES INCLUDE loudnorm & acompressor, BUT dynaudnorm IS BEST. s64 SHOWS UP AS [wasapi] float IN MPV LOG.
 ----aformat      =sample_fmts:sample_rates:channel_layouts  (u8 s16 s64 ETC)  GIVES astats CONSTANT samplerate. CONVERTS MONO & SURROUND SOUND TO stereo BECAUSE astats NEEDS stereo FOR RELIABILITY. ITS OUTPUT MUST BE DETERMINISTIC OVER 10 HRS (UNLIKE OTHER FILTERS).  s16=SGN+15BIT (-32k→32k). u8 CAUSES HISSING.  
 ----astats       =length:metadata (SECONDS:BOOL)  CONTINUAL SAMPLE COUNT IS BASIS FOR 10 HOUR SYNC. USES APPROX 0% OF CPU. USING THIS AS PRIMARY METRIC AVOIDS MESSING WITH MPV/SMPLAYER SETTINGS TO ACHIEVE 10 HOUR SYNC. MPV autosync WON'T WORK (MAYBE A FUTURE VERSION, BUT CURRENTLY INCOMPATIBLE).
 ----asplit        [ao]→[NOmutelr][mutelr]=[0][1]
@@ -120,7 +120,7 @@ function playback_restart() --playback-restart RESETS GRAPH.
     mp.add_timeout( 8,os_sync)
     mp.add_timeout(16,os_sync)
 end  
-mp.register_event('playback-restart',playback_restart) 
+mp.register_event('playback-restart',playback_restart)  --TRIGGERS TWICE ON seek.
 
 function title_remove() --SENDS title→nil ON timeout.
     if title then title:remove() end
@@ -136,7 +136,7 @@ function on_toggle(mute)   --CONTROLLER ONLY. INSTA-TOGGLE (SWITCH), NOT PROPER 
     playback_restart()  
     clock_update()  --INSTANT clock, OR IT WAITS TO SYNC.
 end
-for key in o.key_bindings:gmatch('%g+') do mp.add_key_binding(key, 'toggle_speed_'..key, on_toggle)  end 
+for key in o.key_bindings:gmatch('%g+') do mp.add_key_binding(key, 'toggle_aspeed_'..key, on_toggle)  end 
 mp.observe_property('mute','bool',on_toggle)
 
 timers.mute=mp.add_periodic_timer(o.toggle_on_double_mute, function()end )  --mute timer. VALID EVEN FOR 0 TIME (DISABLED).
@@ -191,22 +191,22 @@ function set_speed(property)    --property='af-metadata/aspeed' OR nil     THIS 
         if OFF    or mp.get_property_bool('mute')    then volume=0  end --INSTA-TOGGLE REQUIRES volume=0
         if paused or mp.get_property_bool('seeking') then volume=-1 end --NEGATIVE INSTRUCTS audio INSTANCES TO pause. 
 
-        txtfile:write(('%s\n%d\n%d\n%s\n%s'):format(mp.get_property('path'),mp.get_property_number('current-tracks/audio/id'),volume,os_time,time_pos))   --%s,%d = string,DECIMAL-INTEGERS. CONTROLLER REPORT. EITHER flush() OR close().  LINES 1,2,3,4,5 = path,aid,volume,time,POSITION   THE LAST 2 lines COULD BE COMBINED (TIMEFROM1970TO0=DIFFERENCE).
+        txtfile:write(('%s\n%d\n%d\n%s\n%s'):format(mp.get_property('path'),mp.get_property('current-tracks/audio/id'),volume,os_time,time_pos))   --%s,%d = string,DECIMAL-INTEGERS. CONTROLLER REPORT. EITHER flush() OR close().  LINES 1,2,3,4,5 = path,aid,volume,time,POSITION   THE LAST 2 lines COULD BE COMBINED (TIMEFROM1970TO0=DIFFERENCE).
         txtfile:close() --write & close CAN USUALLY BE COMBINED ON 1 LINE, BUT NOT ON SLOW DARWIN (MACOS-CATALINA VIRTUALBOX). IT DOESN'T RETURN PROPERLY. 
         
         if o.meta_osd then mp.osd_message(mp.get_property_osd('af-metadata/'..label):gsub('\n','    \t')) end   --TAB EACH STAT (TOO MANY LINES).
         return end   --CONTROLLER ENDS HERE.  IRONICALLY IT DOESN'T SET SPEED, BECAUSE EACH audio INSTANCE HAS A MIND OF ITS OWN.
     
-    if txt_time and os_time-txt_time>o.timeout then mp.command('quit') end    --EXIT - CONTROLLER HARD BREAKED LONG AGO.
+    if txt_time and os_time-txt_time>o.timeout then mp.command('quit') end --EXIT - CONTROLLER HARD BREAKED LONG AGO.
     pcode,lines = pcall(io.lines,txtpath)    --lines ITERATOR RETURNS ERROR OR 0 OR 5 LINES.     THIS IS A pcall INSIDE ANOTHER pcall.
     if not pcode then mp.command('quit') end --EXIT & DELETE. NO txtfile MEANS CONTROLLER HAS STOPPED. 'stop' INCOMPATIBLE WITH LINUX .AppImage ('quit' INSTEAD).
     
     path=lines()  --LINE1=path  
-    if not path then return end --SOMETIMES txtfile IS BLANK (@TIME OF write).
+    if not path or path=='' then return end --SOMETIMES txtfile IS BLANK.
     if path~=mp.get_property('path') and sync_time then mp.command('quit') end --EXIT. DIFFERENT FILE (E.G. PLAYLIST). RARE BUG-FIX: ONLY quit AFTER SYNC.
     mp.set_property('aid',lines()) --LINE2=aid   UNTESTED  
     
-    volume,txt_time = 0+lines(),lines()    --LINES 3,4 = volume,TIME_OF_WRITE    0+ CONVERTS tonumber
+    volume,txt_time = 0+lines(),0+lines()    --LINES 3,4 = volume,TIME_OF_WRITE    0+ CONVERTS tonumber
     if volume<0 then mp.set_property_bool('pause',true)
         return end
     mp.set_property_bool  ('pause' ,false)
@@ -232,9 +232,13 @@ timers.auto=mp.add_periodic_timer(              .5,function()         pcall(set_
 
 
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (TECH SPECS), & END (MISC.). ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
+----MPV v0.36.0 (INCL. v3) v0.35.0 (.7z) v0.35.1 (.flatpak)  HAVE BEEN FULLY TESTED.
+----FFmpeg v5.1.2(MACOS) v4.3.2(LINUX .AppImage) v6.0(LINUX) HAVE BEEN FULLY TESTED.
 ----"autospeed.lua" IS A DIFFERENT SCRIPT FOR video speed, NOT audio. 
-----BUG: EXCESSIVE LAG ALONG WITH autocomplex. IN CASE OF DESYNC MUST STOP & PLAY (RESET).  autosync DOESN'T HELP.
 ----audio-params/samplerate current-tracks/audio/demux-samplerate PROPERTIES GIVE samplerate, BUT BETTER TO SET IT IN GRAPH.
+
+----MACOS yt-dlp BUG: MUST SET EXTRA SCRIPT-OPT FOR ytdl_hook-ytdl_path.
+----BUG: EXCESSIVE LAG ALONG WITH autocomplex. IN CASE OF DESYNC MUST STOP & PLAY (RESET).  autosync DOESN'T HELP.
 
 ----ALTERNATIVE FILTERS:
 ----apad     (SIMPLER TO USE keep-open=yes)     APPENDS SILENCE TO audio INSTANCES, SO THEY NEVER stop UNLESS THE CONTROLLER DOES. INSERTS BEFORE astats OR ELSE astats FAILS TO UPDATE MAIN FUNCTION. 

@@ -39,6 +39,7 @@ options={
         'osd-font-size 16','osd-border-size 1','osd-scale-by-window no',  --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
         'keepaspect no','geometry 50%', --ONLY NEEDED IF MPV HAS ITS OWN WINDOW, OUTSIDE SMPLAYER. FREE aspect & 50% INITIAL DEFAULT SIZE.
         'image-display-duration inf','vd-lavc-threads 0',    --inf STOPS JPEG FROM SNAPPING MPV.  0=AUTO, vd-lavc=VIDEO DECODER - LIBRARY AUDIO VIDEO.
+        -- 'video-latency-hacks yes',  --BUGFIX FOR MACOS-CATALINA-VIRTUALBOX. SOMETIMES IT NEEDS A DELAY AFTER file-loaded BEFORE GRAPH INSERTION.
     },       
 }
 o,label,timers,m = options,mp.get_script_name(),{},{} --ABBREV. options. label=autocrop   m=MEMORY-crop 
@@ -216,6 +217,8 @@ end
 
 
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (TECH SPECS), & END (MISC.). ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
+----MPV v0.36.0 (INCL. v3) v0.35.0 (.7z) v0.35.1 (.flatpak)  HAVE BEEN FULLY TESTED.
+----FFmpeg v5.1.2(MACOS) v4.3.2(LINUX .AppImage) v6.0(LINUX) HAVE BEEN FULLY TESTED.
 ----BUG: RAW JPEG ON MACOS → BLACK SCREEN. WORKS WITH autocomplex.
 
 ----ALTERNATIVE FILTERS:
