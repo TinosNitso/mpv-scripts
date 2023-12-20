@@ -3,7 +3,7 @@
 ----CURRENT VERSION TREATS ALL DEVICES AS STEREO. UN/PLUGGING USB STEREO REQUIRES RESTARTING SMPLAYER.    USB→3.5mm SOUND CARDS COST AS LITTLE AS $2 ON EBAY & CAN BE TAPED TO A CABLE. EACH NEW USB STEREO CREATES A NEW "wasapi/" DEVICE (WINDOWS AUDIO SESSION APP. PROGRAM. INTERFACE) OR "pulse/alsa" (LINUX), WHICH CAN BE SEEN IN TASK MANAGER. "coreaudio/" IS MACOS. VIRTUALBOX USB SUPPORT ENABLES MANY audio OUTPUTS INSIDE VM.
 ----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS. WORKS WELL WITH YOUTUBE (ytdl).    CHANGING aid UNTESTED (MAY NEED TO STOP & PLAY IN SMPLAYER).
 
-options={ --ALL OPTIONAL & MAY BE REMOVED.
+o={ --options  ALL OPTIONAL & MAY BE REMOVED.
     toggle_on_double_mute=.5,  --SECONDS TIMEOUT FOR DOUBLE-mute-TOGGLE. ALL LUA SCRIPTS CAN BE TOGGLED USING DOUBLE mute.
     key_bindings         ='F3',--CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER. m IS MUTE SO CAN DOUBLE-PRESS m. 'F3 F4' FOR 2 KEYS. F1 & F2 MIGHT BE autocomplex & automask. s=SCREENSHOT (NOT SPEED NOR SPECTRUM). C IS CROP, NOT CLOCK.
     
@@ -22,7 +22,7 @@ options={ --ALL OPTIONAL & MAY BE REMOVED.
     max_percent       =15, --DEFAULT=15. SPEED NEVER CHANGES BY MORE. E.G. speed BOUNDED WITHIN [.8,1.2].    1.2 SOUNDS OK, BUT MAYBE NOT .8.
     
     start        = .3, --DEFAULT=.3  SECONDS. APPROX:  .3=SSD  2=HDD  INITIAL HEADSTART OF audio INSTANCES, EXCEPT ON YOUTUBE. EACH mpv TAKES TIME TO LOAD, & FOR MP4 THEY AREN'T LAUNCHED UNTIL AFTER INITIAL seeking (WHICH WORKS FINE ON SSD).
-    seek_limit   =  1, --DEFAULT=1   SECONDS. SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit. seek CAUSES AUDIO TO SKIP. (SKIP VS JERK.) IT'S LIKE TRYING TO SING FASTER TO CATCH UP TO THE OTHERS.
+    seek_limit   =  2, --DEFAULT=1   SECONDS. SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit. seek CAUSES AUDIO TO SKIP. (SKIP VS JERK.) IT'S LIKE TRYING TO SING FASTER TO CATCH UP TO THE OTHERS.
     resync_delay = 30, --DEFAULT=60  SECONDS. os_sync RESYNC WITH THIS DELAY.   mp.get_time() & os.clock() MAY BE BASED ON CPU TIME, WHICH GOES OFF WITH RANDOM LAG.
     os_sync_delay=.01, --DEFAULT=.01 SECONDS. ACCURACY FOR SYNC TO os.time. A perodic_timer CHECKS SYSTEM clock EVERY 10 MILLISECONDS (FOR THE NEXT TICK).  WIN10 CMD "TIME 0>NUL" GIVES 10ms ACCURATE SYSTEM TIME.
     time_needed  =  5, --DEFAULT=5   SECONDS. NO RANDOMIZATION WITHIN 5 SECS OF end-file (STRONG FINISH) & GRAPH INSERTION.
@@ -31,7 +31,7 @@ options={ --ALL OPTIONAL & MAY BE REMOVED.
     samplerate=44100, --DEFAULT=44100 Hz. 
     -- meta_osd=true, --DISPLAY astats METADATA (audio STATISTICS). IRONICALLY astats DOESN'T KNOW ANYTHING ABOUT TIME ITSELF, YET IT'S THE BASIS FOR TEN HOUR SYNCHRONY.
     
-    config={
+    set={   --set OF FURTHER options.
         'audio-delay 0',    --OVERRIDE SMPLAYER (NON-0 COULD BE ACCIDENT).
         'osd-font-size 16','osd-border-size 1','osd-scale-by-window no',   --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
         'image-display-duration inf','vd-lavc-threads 0',    --inf STOPS JPEG FROM SNAPPING MPV.  0=AUTO, vd-lavc=VIDEO DECODER - LIBRARY AUDIO VIDEO.
@@ -39,20 +39,18 @@ options={ --ALL OPTIONAL & MAY BE REMOVED.
         -- 'audio-pitch-correction no', --UNCOMMENT FOR CHIPMUNK MODE. DEFAULT=yes APPLIES scaletempo2(?) FILTER. SCALING TEMPO IS FUNDAMENTAL TO RANDOMIZATION.
     },
 }
-o,utils = options,require 'mp.utils' --ABBREV.
-label,directory = mp.get_script_name(),utils.split_path(mp.get_property('scripts'))   --label=aspeed     FROM smplayer.exe FOLDER, directory=".". IN LINUX IT COULD BE "/home/user/Desktop/SMPLAYER".   mp.get_script_directory() HAS BUG.
-
-for key,val in pairs({key_bindings='',title_duration=5,clock='',filters='anull',extra_devices_index_list={},mutelr='mutel',start=.3,max_random_percent=0,max_percent=15,seek_limit=1,resync_delay=60,os_sync_delay=.01,time_needed=5,timeout=10,toggle_on_double_mute=0,samplerate=44100,config={}})
+for key,val in pairs({key_bindings='',title_duration=5,clock='',filters='anull',extra_devices_index_list={},mutelr='mutel',start=.3,max_random_percent=0,max_percent=15,seek_limit=1,resync_delay=60,os_sync_delay=.01,time_needed=5,timeout=10,toggle_on_double_mute=0,samplerate=44100,set={}})
 do if not o[key] then o[key]=val end end --ESTABLISH DEFAULTS. 
-for _,option in pairs(o.config) do option=option:gmatch('%g+')  --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.
-    mp.set_property(option(),option()) end
 
-mpv,directory = 'mpv',mp.command_native({'expand-path',directory}) --mpv MAY BE ADDRESSED AS EITHER "mpv" OR "./mpv" IN EVERY SYSTEM. LINUX snap ALLOWS IT TO RUN ITSELF.  command_native RETURNS ~ EXPANDED.
+for _,o in pairs(o.set) do o=o:gmatch('%g+')  --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.
+    mp.set_property(o(),o()) end
+
+mpv,utils,label     = 'mpv',require 'mp.utils',mp.get_script_name() --label=aspeed  mpv MAY BE ADDRESSED AS EITHER "mpv" OR "./mpv" IN EVERY SYSTEM. LINUX snap ALLOWS IT TO RUN ITSELF.  
 devices,device_list = {mp.get_property('audio-device')},mp.get_property_native('audio-device-list') --devices IS LIST OF audio-devices WHICH WILL ACTIVATE (STARTING WITH EXISTING device). device_list IS COMPLETE LIST.
-mutelr,pid = mp.get_opt('mutelr'),mp.get_opt('pid')   --THESE script-opts FOR audio INSTANCES.
+mutelr,pid          = mp.get_opt('mutelr'),mp.get_opt('pid')   --THESE script-opts FOR audio INSTANCES.
 
 if not (mutelr and pid) then is_controller,pid,mutelr = true,utils.getpid(),o.mutelr  --CONTROLLER MUTES LEFT.
-    if utils.subprocess({args={mpv}}).error=='init' then mpv='./mpv' end --error=init FOR INCORRECT COMMAND.  EITHER mpv (WINDOWS & LINUX) OR ./mpv (MACOS & LINUX .AppImage)    OTHERWISE error=killed (NULL CMD). CAN SCAN OVER ALL POSSIBLE COMMANDS.  MACOS working-directory=/Applications/SMPlayer.app/Contents/MacOS
+    if utils.subprocess({args={mpv}}).error:lower()=='init' then mpv='./mpv' end --error=init FOR INCORRECT COMMAND.  EITHER mpv (WINDOWS & LINUX) OR ./mpv (MACOS & LINUX .AppImage)    OTHERWISE error=killed (NULL CMD). CAN SCAN OVER ALL POSSIBLE COMMANDS.  MACOS working-directory=/Applications/SMPlayer.app/Contents/MacOS
     for _,index in pairs(o.extra_devices_index_list) do is_present,device = false,device_list[index].name
         for _,find in pairs(devices) do if device:upper()==find:upper() then is_present=true    --SEARCH FOR DUPLICATES BEFORE INSERTION. SIMILAR LOGIC TO autoloader.
             return end end
@@ -75,14 +73,17 @@ lavfi=('aformat=s16:%d:stereo,astats=.5:1,%s,asplit[0],stereotools=%s=1[1],[0][1
 if o.title_clock_only then lavfi=o.filters end  --OVERRIDE
 mp.command(('no-osd af append @%s:lavfi=[%s]'):format(label,lavfi))
 
-map,timers,txtpath = 1,{},utils.join_path(directory,('%s-PID%d.txt'):format(label,pid))  --map IS GRAPH SWITCH. SETTING UP A PIPE INSTEAD OF txtfile COULD GIVE INSTANT RESPONSE, BUT COULD ALSO TRIGGER BUGS.  USING .txt INSTEAD OF PIPE IS LIKE PUTTING PLUMBING THROUGH FRONT DOOR.
+directory=utils.split_path(mp.get_property('scripts')) --FROM smplayer.exe FOLDER, directory=".". IN LINUX IT COULD BE "/home/user/Desktop/SMPLAYER".   mp.get_script_directory() HAS BUG.
+directory=mp.command_native({'expand-path',directory}) --command_native RETURNS ~ EXPANDED.
+txtpath  =utils.join_path(directory,('%s-PID%d.txt'):format(label,pid))  --SETTING UP A PIPE INSTEAD OF txtfile COULD GIVE INSTANT RESPONSE, BUT COULD ALSO TRIGGER BUGS.  USING .txt INSTEAD OF PIPE IS LIKE PUTTING PLUMBING THROUGH FRONT DOOR.
 mp.register_event('shutdown',function() os.remove(txtpath) end)  --NO RECYCLE BIN. audio INSTANCES quit.
 
 function start_file()  --CONTROLLER ONLY. YOUTUBE LAUNCHES INSTANTLY.  AT LEAST 4 STAGES: LOAD-SCRIPT start-file file-loaded playback-restart  ALL audio PLAYERS quit & THEN ALL NEW ONES START IF file CHANGES.
-    priority,pause,start,path,osd_level = nil,nil,nil,mp.get_property('path'),mp.get_property_number('osd-level')  --priority ACTS AS LAUNCHED-SWITCH. osd_level RETURNS osd-level, AFTER BLOCKING SMPLAYER INTERFERENCE WITH title.
-    if o.title then title=mp.create_osd_overlay('ass-events') end
-    
+    if o.title then title=mp.create_osd_overlay('ass-events') end   --NEW title FOR NEW file.
+    path,osd_level = mp.get_property('path'),mp.get_property_number('osd-level')   --osd_level RETURNS osd-level, AFTER BLOCKING SMPLAYER INTERFERENCE WITH title.
     mp.set_property_number('osd-level',0)
+    
+    priority,pause,start = nil,nil,nil  --priority ACTS AS LAUNCHED-SWITCH. 
     if not utils.file_info(path) then pause,start = 'yes',mp.get_property('start') --YOUTUBE. LAUNCHES ytdl INSTANTLY TO THE NEAREST SECOND, PAUSED.
         subprocesses() end 
 end 
@@ -99,13 +100,14 @@ function subprocesses(_,seeking)    --CONTROLLER ONLY.
     io.open(txtpath,'w+') --w+ ERASES ALL PRIOR DATA. CREATE FILE IN ADVANCE BECAUSE audio INSTANCES quit WITHOUT IT.
     for _,device in pairs(devices) do for mutelr in ('mutel muter'):gmatch('%g+') do if not (device==devices[1] and mutelr==o.mutelr) --DON'T LAUNCH ON PRIMARY device CHANNEL.
             then utils.subprocess({detach=true,playback_only=false,capture_stdout=false,capture_stderr=false,   --FLAGS OPTIONAL BUT MAY BE NEEDED IN SOME LINUX BUILD.  SET CHILD "msg-level=all=no" OR ELSE PARENT LOG FILLS UP. --aid=CAUSES BUG.    run & subprocess_detached ALSO CREATE DETACHED SUBPROCESSES, BUT THEY AREN'T FULLY DETACHED & CAN CAUSE A BUG INSIDE SMPLAYER. command_native DIDN'T WORK.
-                    args={mpv,priority,'--no-vid','--msg-level=all=no','--pause='..pause,'--start='..start,'--volume='..mp.get_property('volume'),('--script-opts=mutelr=%s,pid=%d'):format(mutelr,pid),'--audio-device='..device,'--script='..utils.join_path(directory,label..'.lua'),path}}) end end end 
+                    args={mpv,priority,'--no-vid','--msg-level=all=no','--pause='..pause,'--start='..start,'--volume='..mp.get_property('volume'),('--script-opts=mutelr=%s,pid=%d,%s'):format(mutelr,pid,mp.get_property('script-opts')),'--audio-device='..device,'--script='..utils.join_path(directory,label..'.lua'),path}}) end end end 
 end
 if is_controller then mp.register_event('start-file',start_file)
                       mp.register_event('file-loaded',function() mp.observe_property('seeking','bool',subprocesses) end) end  --OBSERVING seeking MAY BE SLIGHTLY BETTER THAN REGISTERING TO playback-restart (EQUIVALENT).
-    
+
+map,timers = 1,{}   --map IS GRAPH SWITCH. 
 function playback_restart() --playback-restart RESETS GRAPH. 
-    initial_time_pos = nil  --RESET SAMPLE COUNT.
+    initial_time_pos=nil  --RESET SAMPLE COUNT.
     mp.add_timeout(.1,set_osd_level)  --RETURN osd-level IF NECESSARY. timeout TO OVERRIDE SMPLAYER.
     
     if title then title.data=o.title..mp.get_property_osd('media-title') --LINUX .AppImage (VIRTUALBOX) BUGS OUT IF clock OR title INSERT SOONER.
@@ -177,7 +179,7 @@ function set_osd_level()
 end
 
 function set_speed(property)    --property='af-metadata/aspeed' OR nil     THIS IS THE MAIN FUNCTION. CONTROLLER WRITES TO txtfile, OR audio INSTANCES READ FROM IT. BY TRIAL & ERROR SHOULD ONLY EVER BE PCALLED IN CASE OF SUDDEN STOP (SIMULTANEOUS io.remove & io.write).
-    samples_time,os_time = nil,os.time()   --nil WHEN seeking
+    samples_time,os_time = nil,os.time()   --nil WHEN seeking   TIMEFROM1970
     paused,time_pos,meta = mp.get_property_bool('pause'),mp.get_property_number('time-pos'),mp.get_property_native('af-metadata/'..label)
     if meta then samples_time=meta['lavfi.astats.Overall.Number_of_samples']/o.samplerate end    --#samples/samplerate          time-pos, playback-time & audio-pts WORK WELL OVER 1 MINUTE, BUT NOT 1 HOUR. autosync WON'T FIX THIS. SO USE astats INSTEAD.  
     
@@ -191,36 +193,36 @@ function set_speed(property)    --property='af-metadata/aspeed' OR nil     THIS 
         if OFF    or mp.get_property_bool('mute')    then volume=0  end --INSTA-TOGGLE REQUIRES volume=0
         if paused or mp.get_property_bool('seeking') then volume=-1 end --NEGATIVE INSTRUCTS audio INSTANCES TO pause. 
 
-        txtfile:write(('%s\n%d\n%d\n%s\n%s'):format(mp.get_property('path'),mp.get_property('current-tracks/audio/id'),volume,os_time,time_pos))   --%s,%d = string,DECIMAL-INTEGERS. CONTROLLER REPORT. EITHER flush() OR close().  LINES 1,2,3,4,5 = path,aid,volume,time,POSITION   THE LAST 2 lines COULD BE COMBINED (TIMEFROM1970TO0=DIFFERENCE).
+        txtfile:write(('%s\n%d\n%d\n%s\n%s\n%s'):format(mp.get_property('path'),mp.get_property_number('current-tracks/audio/id'),volume,mp.get_property_number('speed'),os_time,time_pos))   --%s,%d = string,DECIMAL-INTEGERS. CONTROLLER REPORT. EITHER flush() OR close().  LINES 1,2,3,4,5,6 = path,aid,volume,speed,time,POSITION   THE LAST 2 lines COULD BE COMBINED (TIMEFROM1970TO0=DIFFERENCE).
         txtfile:close() --write & close CAN USUALLY BE COMBINED ON 1 LINE, BUT NOT ON SLOW DARWIN (MACOS-CATALINA VIRTUALBOX). IT DOESN'T RETURN PROPERLY. 
         
         if o.meta_osd then mp.osd_message(mp.get_property_osd('af-metadata/'..label):gsub('\n','    \t')) end   --TAB EACH STAT (TOO MANY LINES).
         return end   --CONTROLLER ENDS HERE.  IRONICALLY IT DOESN'T SET SPEED, BECAUSE EACH audio INSTANCE HAS A MIND OF ITS OWN.
     
-    if txt_time and os_time-txt_time>o.timeout then mp.command('quit') end --EXIT - CONTROLLER HARD BREAKED LONG AGO.
+    if txt_time and os_time-txt_time>o.timeout and sync_time then mp.command('quit') end --EXIT - CONTROLLER HARD BREAKED LONG AGO.  ONLY quit AFTER SYNC, JUST IN CASE (RARE BUG-FIX).
     pcode,lines = pcall(io.lines,txtpath)    --lines ITERATOR RETURNS ERROR OR 0 OR 5 LINES.     THIS IS A pcall INSIDE ANOTHER pcall.
     if not pcode then mp.command('quit') end --EXIT & DELETE. NO txtfile MEANS CONTROLLER HAS STOPPED. 'stop' INCOMPATIBLE WITH LINUX .AppImage ('quit' INSTEAD).
     
     path=lines()  --LINE1=path  
     if not path or path=='' then return end --SOMETIMES txtfile IS BLANK.
-    if path~=mp.get_property('path') and sync_time then mp.command('quit') end --EXIT. DIFFERENT FILE (E.G. PLAYLIST). RARE BUG-FIX: ONLY quit AFTER SYNC.
+    if path~=mp.get_property('path') and sync_time then mp.command('quit') end --EXIT. DIFFERENT FILE (E.G. PLAYLIST). 
     mp.set_property('aid',lines()) --LINE2=aid   UNTESTED  
     
-    volume,txt_time = 0+lines(),0+lines()    --LINES 3,4 = volume,TIME_OF_WRITE    0+ CONVERTS tonumber
+    volume,speed,txt_time = 0+lines(),0+lines(),0+lines()    --LINES 3,4,5 = volume,speed,TIME_OF_WRITE    0+ CONVERTS tonumber
     if volume<0 then mp.set_property_bool('pause',true)
         return end
     mp.set_property_bool  ('pause' ,false)
     mp.set_property_number('volume',volume)
     if not sync_time or not paused and not property then return end     --DON'T CHANGE speed BEFORE INITIAL SYNC OR IF PLAYING BUT NOT property. 
     
-    time_gained=time_pos-lines()-(os_time-txt_time)  --LINE5=POS     SUBTRACT TIME_FROM_WRITE FROM DIFFERENCE BTWN POSITIONS.
+    time_gained=time_pos-lines()-(os_time-txt_time)  --LINE6=POS     SUBTRACT TIME_FROM_WRITE FROM DIFFERENCE BTWN POSITIONS.
     if o.seek_limit and math.abs(time_gained)>o.seek_limit then mp.command(('seek %s exact'):format(-time_gained)) --INSTANT SYNC USING seek INSTEAD OF speed (BETTER TO SKIP THE TRACK THAN JERK ITS SPEED - LIKE SCRATCHING A RECORD).
         return end   
     
     if not randomseed then randomseed=os_time  --INITIALIZE random # GENERATOR. WITHOUT randomseed THE NUMBERS ARE EASY TO PREDICT.
         math.randomseed(randomseed) end  
     
-    speed=1-time_gained/.5    --time_gained→0 OVER NEXT .5 SECONDS (astats UPDATE TIME).
+    speed=speed-time_gained/.5    --time_gained→0 OVER NEXT .5 SECONDS (astats UPDATE TIME).
     if samples_time>o.time_needed and mp.get_property_number('time-remaining')>o.time_needed   --DON'T RANDOMIZE BEFORE samples_time STABILIZES, NOR NEAR end-file. 
     then speed=speed+math.random(-o.max_random_percent,o.max_random_percent)/100 end 
     
@@ -247,7 +249,6 @@ timers.auto=mp.add_periodic_timer(              .5,function()         pcall(set_
 ----asetpts =expr            TO MATCH lavfi-complex.
 ----loudnorm=I:LRA:TP   DEFAULT -24:7:-2. INTENSITY TARGET (-70 TO -5) : LOUDNESS RANGE (1 TO 20) : TRUE PEAK (-9 TO 0). LACKS f & g SETTINGS. SOUNDED OFF.
 ----acompressor  SMPLAYER DEFAULT NORMALIZER.
-
 
 
 

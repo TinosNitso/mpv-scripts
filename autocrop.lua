@@ -2,7 +2,7 @@
 ----USE DOUBLE-mute TO TOGGLE. FRAME-STEPS WHEN PAUSED (ACTS AS A frame-step TOGGLE). CAN MAINTAIN CENTER IN HORIZONTAL/VERTICAL, WITH TOLERANCE VALUES. FULLY SUPPORTS cropdetect & bbox (ffmpeg-filters). 
 ----THIS VERSION HAS NO SMOOTH-CROP. AN INSTA-crop IS MORE EFFICIENT WHEN COMBINED WITH OTHER GRAPHS. WOLK WELL WITH ytdl (YOUTUBE). BASED ON https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua
 
-options={
+o={ --options
     auto            =true,--IF false, CROPS OCCUR ONLY on_seek & on_toggle.
     auto_delay      = .5, --ORIGINAL DEFAULT=1 SECOND.  
     detect_limit    = 32, --ORIGINAL DEFAULT="24/255".  ONLY INTEGER COMPATIBLE WITH bbox (0→255). autocomplex SPECTRUM INTERFERES ON SIDES (ADD limit).
@@ -31,47 +31,44 @@ options={
     -- scale={1680,1050},--STOPS EMBEDDED MPV SNAPPING (APPLY FINAL scale IN ADVANCE).     CHANGING vid (MP3 TAGS) CAUSES EMBEDDED MPV TO SNAP UNLESS AN ABSOLUTE scale IS USED (SO I DON'T USE [vo]). EMBEDDING MPV CAUSES ANOTHER LAYER OF BLACK BARS (WINDOW SNAP).   DEFAULT scale=display SIZE (WINDOWS & MACOS), OR OTHERWISE LINUX IS [vo] SIZE. scale OVERRIDE USES NEAREST MULTIPLES OF 4 (ceil).
     
     -- detector='bbox=%s',--DEFAULT='cropdetect=limit=%s:round=%s:reset=1:0'. bbox IS JPEG OVERRIDE. %s=string SUBSTITUTION @file-loaded. reset>0.  CAN ALSO COMBINE MULTIPLE DETECTORS IN LIST (MORE CPU USAGE?).
-    -- meta_osd =true,    --DISPLAY ALL detector METADATA.
+    -- meta_osd=true,     --DISPLAY ALL detector METADATA.
     -- msg_log =true,     --MESSAGE TO MPV LOG. FILLS THE LOG, BUT MAY HELP WITH DEBUGGING.
     
-    io_write=' ',--DEFAULT=''  (INPUT/OUTPUT) io.write THIS @EVERY CHANGE IN vf (VIDEO FILTERS). STOPS EMBEDDED MPV FROM SNAPPING ON COVER ART. MPV MAY COMMUNICATE WITH ITS PARENT APP.
-    config  ={
+    io_write=' ',--DEFAULT=''  (INPUT/OUTPUT) io.write THIS @EVERY CHANGE IN vf (VIDEO FILTERS). STOPS EMBEDDED MPV FROM SNAPPING ON COVER ART. MPV COMMUNICATES WITH ITS PARENT APP.
+    set     ={   --set OF FURTHER options.
         'osd-font-size 16','osd-border-size 1','osd-scale-by-window no',  --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
         'keepaspect no','geometry 50%', --ONLY NEEDED IF MPV HAS ITS OWN WINDOW, OUTSIDE SMPLAYER. FREE aspect & 50% INITIAL DEFAULT SIZE.
         'image-display-duration inf','vd-lavc-threads 0',    --inf STOPS JPEG FROM SNAPPING MPV.  0=AUTO, vd-lavc=VIDEO DECODER - LIBRARY AUDIO VIDEO.
-        -- 'video-latency-hacks yes',  --BUGFIX FOR MACOS-CATALINA-VIRTUALBOX. SOMETIMES IT NEEDS A DELAY AFTER file-loaded BEFORE GRAPH INSERTION.
-    },       
+    },
 }
-o,label,timers,m = options,mp.get_script_name(),{},{} --ABBREV. options. label=autocrop   m=MEMORY-crop 
+(require 'mp.options').read_options(o)    --OPTIONAL?
 
-require 'mp.options'
-read_options(o)    --OPTIONAL?
-
-for key,val in pairs({command_prefix='',detect_limit_image=o.detect_limit,detect_limits={},TOLERANCE=0,TOLERANCE_TIME=10,detector='cropdetect=limit=%s:round=%s:reset=1:0',format='yuv420p',scale={},key_bindings='C',toggle_on_double_mute=0,io_write='',config={}})
+for key,val in pairs({command_prefix='',detect_limit_image=o.detect_limit,detect_limits={},TOLERANCE=0,TOLERANCE_TIME=10,detector='cropdetect=limit=%s:round=%s:reset=1:0',format='yuv420p',scale={},key_bindings='C',toggle_on_double_mute=0,io_write='',set={}})
 do if not o[key] then o[key]=val end end --ESTABLISH DEFAULTS. 
 
-for _,option in pairs(o.config) do option=option:gmatch('%g+')  --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.
-    mp.set_property(option(),option()) end
+for _,o in pairs(o.set) do o=o:gmatch('%g+')  --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.
+    mp.set_property(o(),o()) end
 
 function start_file()   --EMBEDDED MPV PLAYLISTS REQUIRE INSTA-pause BEFORE GRAPH INSERTION, TO AVOID SNAPPING.
-    paused,complex_opt = false,mp.get_opt('lavfi-complex')  --ALWAYS UNPAUSE @start-file→file-loaded.
-    mp.set_property_bool('pause',true)
+    paused=false    --ALWAYS UNPAUSE @start-file→file-loaded.
+    mp.set_property_bool('pause',true)  --BUG: INSTA-PAUSE NOT ALLOWED ON DARWIN (MACOS).
     
     complex_opt,loop_opt = mp.get_opt('lavfi-complex'),mp.get_opt('loop')   --autocomplex & autocrop MAY INFINITE loop IMAGES, BEFORE automask.
     complex_opt,loop_opt = complex_opt and complex_opt~='' and complex_opt~='no',loop_opt and loop_opt~='0' and loop_opt~='no'
-    if not complex_opt and not loop_opt then mp.set_property('script-opts','loop=inf,'..mp.get_property('script-opts')) end  --PREPEND NEW SCRIPT-OPT: WARNING image WILL INFINITE loop. TRAILING "," GETS REMOVED.
+    if not complex_opt and not loop_opt then mp.set_property('script-opts','loop=inf,'..mp.get_property('script-opts')) end  --PREPEND NEW SCRIPT-OPT: WARNING image WILL INFINITE loop, BEFORE file-loaded. TRAILING "," IS IGNORED.
 end
 mp.register_event('start-file',start_file) 
 
-function file_loaded()  --ALSO STREAM.
+label,timers,m = mp.get_script_name(),{},{} --label=autocrop   m=MEMORY-crop 
+function file_loaded(loaded)  --ALSO STREAM.
+    if loaded then mp.add_timeout(.05,file_loaded) --BUGFIX FOR EXCESSIVE LAG IN VIRTUALBOX (MACOS & LINUX). ALSO WORKS IN WINDOWS. INSTA-pause LASTS 50ms.
+        return end
     if not mp.get_property_number('current-tracks/video/id') then mp.set_property_bool('pause',paused)   --unpause & return FOR RAW MP3.
         return end 
     
     W,H = o.scale[1],o.scale[2]
     if not (W and H) then W,H = mp.get_property_number('display-width'),mp.get_property_number('display-height') end  --WINDOWS & MACOS.
     if not (W and H) then W,H = mp.get_property_number('video-params/w'),mp.get_property_number('video-params/h') end --USE [vo] SIZE (LINUX).  current-tracks/video/demux-w IS RAW TRACK WIDTH.
-    if not (W and H) then mp.add_timeout(.05,file_loaded)   --LINUX FALLBACK: RE-RUN & return. DUE TO EXCESSIVE LAG IN VIRTUALBOX.
-        return end
     W,H = math.ceil(W/4)*4,math.ceil(H/4)*4   --MULTIPLES OF 4 WORK BETTER WITH overlay (FURTHER GRAPHS LIKE automask). MPV MAY SNAP INSIDE SMPLAYER ON ODD NUMBERED SIZES.
     
     is1frame,loop,MEDIA_TITLE = false,0,mp.get_property('media-title'):upper()    --media-title @file-loaded
@@ -98,7 +95,7 @@ function file_loaded()  --ALSO STREAM.
     ----loop      =loop:size  ( >=-1 : >0 )  NEEDED FOR image IN MACOS (CATALINA, VIRTUALBOX). INFINITE loop FOR TOGGLE VIA vf-command. GRAPH REPLACEMENT WOULD BE QUICKER (THAN DEFAULT 1fps).
     ----crop      =w:h:x:y:keep_aspect:exact  DEFAULT=iw:ih:(iw-ow)/2:(ih-oh)/2:0:0  CAN'T BE COMBINED WITH scale & vf-command ("w" & "h" AMBIGUOUS - NO SOLUTION). CURRENTLY HAS BUGS. WON'T CHANGE DIMENSIONS WITH t OR n, NOR eval=frame NOR enable=1 (TIMELINE SWITCH). BUGS OUT IF w OR h IS TOO BIG. SAFER TO AVOID SMOOTH-CROPPING.
     ----scale     =w:h  DEFAULTS iw:ih  USING [vo] scale WOULD CAUSE SNAPPING on_vid, SO CAN USE display INSTEAD. EITHER WINDOW SNAPS IN, OR ELSE video SNAPS OUT.
-    ----setsar    =sar  IS THE FINISH. LINUX BUGFIX REQUIRES IT @END. ALSO STOPS EMBEDDED MPV SNAPPING on_vid. MACOS BUGFIX REQUIRES sar. 
+    ----setsar    =sar  IS THE FINISH. LINUX BUGFIX REQUIRES IT @END. ALSO STOPS EMBEDDED MPV SNAPPING on_vid. IT CAN ARMOR THE GRAPHS. 
     
     
     mp.set_property_bool('pause',paused) --UNPAUSE.
@@ -120,7 +117,7 @@ function on_seek()  --crop ON seek (GRAPH STATE IS RESET).
 end
 mp.register_event('seek',on_seek) 
 
-function on_pause(_,paused) --BUGFIX FOR NEW DETECTION on_pause (FRAME-STEPS).
+function on_pause(_,paused) --STOP FRAME-STEPS FOR NEW DETECTION on_pause.
     if paused then timers.auto_delay:kill()
     else           timers.auto_delay:resume() end
 end
@@ -205,7 +202,7 @@ function apply_crop(meta)
     m.x,m.y,m.w,m.h,m.playtime_remaining,paused = meta.x,meta.y,meta.w,meta.h,playtime_remaining,mp.get_property_bool('pause')    --meta→m  MEMORY TRANSFER. 
     
     if not is1frame then if paused then N=0   --vf-command BUGFIX FOR PAUSED MP4. frame-step IS SAFER THAN GRAPH REPLACEMENT DUE TO INTERFERENCE FROM OTHER GRAPHS (REPLACING ONE RESETS THEM ALL).
-            while N<6 do                N=N+1  --6 REQUIRED FOR ytdl. SAME AS automask. FRAMES ALREADY DRAWN IN ADVANCE. AN UNPAUSE→pause timer CAN ALSO BE USED.
+            while N<3 do N=N+1 --FRAMES ALREADY DRAWN IN ADVANCE.
                 mp.command('frame-step') end end
         return end --is1frame BELOW.
 
