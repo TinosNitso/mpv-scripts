@@ -8,7 +8,7 @@ In Windows extract all `.lua` scripts from `.zip` & copy/paste them into `smplay
 
 `--script=autoloader.lua`
 
-Then hit OK & play. Overall I consider playback smoother than VLC. [autoloader](autoloader.lua) is itself a README (in LUA). In Linux & MacOS create folder `mpv-scripts` on Desktop. Then extract all scripts into it. Then in SMPlayer enter
+Then hit OK & play. Overall I consider playback smoother than VLC. [autoloader](autoloader.lua) is itself a README (in LUA). In Linux & MacOS create folder `mpv-scripts` on Desktop. Then extract all scripts into it. For YouTube also extract [yt-dlp_linux](https://github.com/yt-dlp/yt-dlp/releases) and/or *yt-dlp_macos* into the same folder. Then in SMPlayer enter
 
 `--script=~/Desktop/mpv-scripts/autoloader.lua`
 
@@ -29,6 +29,6 @@ Then Save it & double-click it. The command line shows warnings, etc. MPV pauses
 That uses the MPV bundled with SMPlayer. Only good builds make it into `SMPlayer.app/Contents`. FFmpeg version: 5.1.2, but the latest is v6, hence graphs require more filter/s for backwards compatibility.
 
 ## Latest Updates
-Next release delayed for more testing & improved spells. Above updates include fixed YouTube title (`aspeed`), fixed MacOS YouTube (`autoloader`), many bugfixes & improved codes. `autocomplex` double-normalizer & better shoe color. Improved `automask` code. Need some recording/s before next release. 
+Next release delayed for more testing & improved spells. Above updates include fixed YouTube title (`aspeed`), fixed MacOS & Linux YouTube (`autoloader`), many bugfixes & improved codes. `autocomplex` double-normalizer & better shoe color. Improved `automask` code. Need some recording/s before next release. 
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
