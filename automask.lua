@@ -1,4 +1,4 @@
-----AUTO ANIMATED MASK GENERATOR & MERGE SCRIPT, FOR VIDEO & IMAGES, IN MPV & SMPLAYER, WITH INSTANT DOUBLE-mute TOGGLE (m&m FOR MASK). IF PAUSED, INSTA-TOGGLE FRAME-STEPS TOO. COMES WITH 10 MORE EXAMPLES INCLUDING MONACLE, BINACLES, VISORS, ETC. MOVING POSITIONS, ROTATIONS & ZOOM. 2 MASKS ALSO POSSIBLE BY RENAMING A COPY OF THE SCRIPT. GENERATOR CAN MAKE MANY DIFFERENT MASKS, WITHOUT BEING AS SPECIFIC AS A .GIF (A GIF IS HARDER TO MAKE). USERS CAN COPY/PASTE PLAIN TEXT INSTEAD.
+----AUTO ANIMATED MASK GENERATOR & MERGE SCRIPT, FOR VIDEO & IMAGES, IN MPV & SMPLAYER, WITH INSTANT DOUBLE-mute TOGGLE (m&m FOR MASK). IF PAUSED, INSTA-TOGGLE FRAME-STEPS TOO. COMES WITH 10 MORE EXAMPLES INCLUDING MONACLE, BINACLES, VISORS, ETC. MOVING POSITIONS, ROTATIONS & ZOOM. 2 MASKS ALSO POSSIBLE BY RENAMING A COPY OF THE SCRIPT automask2.lua. GENERATOR CAN MAKE MANY DIFFERENT MASKS, WITHOUT BEING AS SPECIFIC AS A .GIF (A GIF IS HARDER TO MAKE). USERS CAN COPY/PASTE PLAIN TEXT INSTEAD.
 ----APPLIES ANY LIST OF ffmpeg-filters TO MASKED REGION, WITH INVERSION & INVISIBILITY. filters HELP DETECT DEFECTS, LIKE HAIR ON PASSPORT SCAN. FULLY PERIODIC FOR BEST RES & PERFORMANCE. IT'S LIKE OPTOMETRY FOR TELEVISION, BUT SOME MASKS ARE PURELY DECORATIVE. DILATING PUPILS NOT CURRENTLY SUPPORTED - COULD BREAK LINUX snap COMPATIBILITY. 
 ----WORKS WITH JPG, PNG, GIF, BMP, MP3 COVER ART, MP4 ETC, IN SMPLAYER & MPV (DRAG & DROP). albumart LEAD FRAME ONLY (WITHOUT autocomplex). .TIFF ONLY DISPLAYS 1 LAYER (BUG). NO WEBP, PDF OR TXT. WORKS WELL WITH YOUTUBE (ytdl). LOAD TIME SLOW (LACK OF BUFFERING). FULLY RE-BUILDS ON EVERY seek. CHANGING vid TRACKS (MP3TAG) SUPPORTED. NO FANCY TITLE (drawtext) OR CLOCK IN THIS SCRIPT. SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS (A BIBLE HAS NO SCROLLBAR). 
 ----LENS lutyuv FORMULA USES A QUARTIC REDUCTION +- gauss CORRECTIONS FOR BLACK-IS-BLACK & WHITE-IS-WHITE. COLORS USE QUARTER POWER LAW FOR NON-LINEAR SATURATION. A BIG-SCREEN NEGATIVE IS TOO BRIGHT, SO INSTEAD OF HALVING BRIGHTNESS A QUARTIC IS SHARPER. gauss SIZES ARE APPROX minval*1.5 SHIFTED 1.5x, BUT TUNING EACH # SEEMS TOO DIFFICULT - TOO MANY VIDEOS TO CHECK. IT'S A STATISTICAL PROBLEM - HIT & MISS. 
@@ -8,7 +8,7 @@ o={ --options  ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATIVE).      nil & f
     key_bindings         ='F2',--CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER. m IS MUTE SO CAN DOUBLE-PRESS m FOR MASK. 'F2 F3' FOR 2 KEYS. F1 MAY BE autocomplex (SLOW toggle).
     
     filters='null,' --CAN REPLACE null WITH OTHER FILTERS, LIKE pp (POSTPROCESSING). TIMELINE SWITCHES ALSO POSSIBLE (FILTER1→FILTER2→ETC).
-          ..'lutyuv=255*((1-val/255)^4*(1+.6*.2)+.2*(1.5*gauss((255-val)/(255-maxval)/2-1.5)-1*gauss(val/minval/1.5-1))/gauss(0)+.01*sin(2*PI*val/minval))'  -- +1% SINE WAVE ADDS RIPPLE TO CHANGING DEPTH. FORMS PART OF lutyuv GLOW-LENS.
+          ..'lutyuv=255*((1-val/255)^4*(1+.5*.2)+.2*(1.5*gauss((255-val)/(255-maxval)/2-1.5)-1*gauss(val/minval/1.5-1))/gauss(0)+.01*sin(2*PI*val/minval))'  -- +1% SINE WAVE ADDS RIPPLE TO CHANGING DEPTH. FORMS PART OF lutyuv GLOW-LENS.
                 ..':128*(1+(val/128-1)/abs(val/128.01-1)^.2)'  --u & v USE A POWER LAW, NON-LINEAR SATURATION 20% (IN EXPONENT). GREYSCALE IS CENTERED ON 128 NOT 127.5 (128 MEANS 0 IN POPULAR YUV COVERSION FORMULAS).   autocomplex ALSO STRENGTHENS COLORS (BUG).
                 ..':128*(1+(val/128-1)/abs(val/128.01-1)^.2)', --sgn FUNCTION NOT LINUX snap COMPATIBLE, HENCE 128.01 ISSUE. LOOK-UP-TABLE COMPUTES EVERYTHING @GRAPH INSERTION.
     
@@ -30,7 +30,7 @@ o={ --options  ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATIVE).      nil & f
     heights='ih/2      ih*.5 ih           ih/2           ih/8', -- ih=INPUT-HEIGHT   EXACT POSITIONING IS TRIAL & ERROR. PUPILS SHOULD BE CIRCLE WHEN SEEN THROUGH SPECTACLES. EYELIDS COVERING INNER PUPIL IS SQUINTING, BUT ONLY COVERING OUTER-PUPIL IS LAZY-EYE.  SECTIONS: 1=SPECTACLE,2=EYELID,3=EYE,4=PUPIL,5=NERVE,6=INNER-NERVE.
     x='-W/64*(s)       0     W/16*(1+(c)) W/32*(c)       W/64', -- (c),(s) = (cos),(sin) WAVES IN TIME=t/period. overlay COORDS FROM CENTER. W IS THE BIGGER DISC/CANVAS, & w IS THE DISC.  (t)=(time) (n)=(frame#) (p)→(period) (c)→(cos(2*PI*(t)/(p))) (s)→(sin(2*PI*(t)/(p))) (T)→((t)/(p))   %s=period=(p) 
     y='-H*((c)/16+1/6) H/16  H/32*(s)     H/32*((c)+1)/2 H/64', --DEFAULT CENTERS, DOWNWARD (NEGATIVE MEANS UP).  (c),(s) = (cos),(sin)      %s=period
-    crops='iw:ih*.8:0:ih-oh  iw*.98:ih:0',   --DEFAULT NO crop. SPECTACLE-TOP & RED-EYE CROPS CLEAR MASK'S TOP & MIDDLE. oh=OUTPUT-HEIGHT  crops GO BEFORE x & y. 
+    crops='iw:ih*.8:0:ih-oh  iw*.98:ih:0',   --DEFAULT NO crop. SPECTACLE-TOP & RED-EYE CROPS, CLEAR MASK'S TOP & MIDDLE. oh=OUTPUT-HEIGHT  crops GO BEFORE x & y. 
     
     rotations='PI/16*(s)*mod(floor((t)/%s)\\,2)  PI/32*(c)  -PI/64*(c)',       --(c),(s) = (cos),(sin)  %s=period (t NOT n). DEFAULT='0'. RADIANS CLOCKWISE.  PI/32=.1RADS=6° (QUITE A LOT)    SPECIFIES ROTATION OF EACH DISC, RELATIVE TO THE LAST, AFTER crop, EXCEPT THE FIRST (0TH) ROTATION WHICH APPLIES TO ENTIRE DUAL.
     zoompan  ='1+.2*(1-cos(2*PI*((in)/%s-.2)))*mod(floor((in)/%s-.2)\\,2):0:0',--%s=FRAMES-PER-PERIOD=fps*period  (zoom:x:y)  in=INPUTFRAMENUMBER=on=OUTPUT#  mod IS AN ON/OFF SWITCH.     20% zoom FOR RIGHT PUPIL TO PASS SCREEN EDGE. 20% PHASE OFFSET, LIKE A BASEBALL BAT'S ROTATIVE WIND UP.
@@ -56,19 +56,19 @@ o={ --options  ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATIVE).      nil & f
     -- zoompan=nil,SECTIONS=1,DUAL=nil,periods=1,period=4,INVERT=nil,widths='iw',heights='ih/3',x=nil,y='(H+h)*(t/%s-1/2)',crops=nil,rotations=nil,SQUARE=true,--HORIZONTAL VISOR FALLING @4 SECONDS.
     
     -- osd_on_toggle='Audio filters:\n%s\n\nVideo filters:\n%s\n\nlavfi-complex:\n%s', --DISPLAY ALL ACTIVE FILTERS on_toggle. DOUBLE-CLICKING MUTE ENABLES CODE INSPECTION INSIDE SMPLAYER. %s=string. SET TO '' TO CLEAR osd.
-    io_write=' ',   --DEFAULT=''  (INPUT/OUTPUT) io.write THIS @EVERY CHANGE IN vf. STOPS EMBEDDED MPV FROM SNAPPING ON COVER ART. MPV COMMUNICATES WITH ITS PARENT APP.
-    set     ={   --set OF FURTHER options.
-        'osd-font-size 16','osd-border-size 1','osd-scale-by-window no', --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
-        'keepaspect no','geometry 50%', --ONLY NEEDED IF MPV HAS ITS OWN WINDOW, OUTSIDE SMPLAYER. FREE aspect & 50% INITIAL DEFAULT SIZE.
-        'image-display-duration inf','vd-lavc-threads 0',  --inf STOPS JPEG FROM SNAPPING MPV.  0=AUTO, vd-lavc=VIDEO DECODER - LIBRARY AUDIO VIDEO.
-    },
+    io_write=' ', --DEFAULT=''  (INPUT/OUTPUT) io.write THIS @EVERY vf OBSERVATION. STOPS EMBEDDED MPV FROM SNAPPING ON COVER ART. MPV COMMUNICATES WITH ITS PARENT APP.
+    options =''   --set PROPERTIES @load.
+        ..' osd-font-size           16  osd-border-size 1  osd-scale-by-window no '  --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
+        ..' keepaspect              no  geometry      50% ' --ONLY NEEDED IF MPV HAS ITS OWN WINDOW, OUTSIDE SMPLAYER. FREE aspect & 50% INITIAL DEFAULT SIZE.
+        ..' image-display-duration inf  vd-lavc-threads 0 ' --inf STOPS JPEG FROM SNAPPING MPV.  0=AUTO, vd-lavc=VIDEO DECODER - LIBRARY AUDIO VIDEO.
 }
 if o.DUAL then o.DUAL=2 end --1 OR 2.  CONVERT BOOL INTO NUMBER OF REFLECTIONS (+1).
-for key,val in pairs({toggle_on_double_mute=0,key_bindings='',filters='lutyuv=negval',fps=25,periods=1,DUAL=1,INVERT='0',DISABLE='0',blur_enable=1,x='0',y='0',rotations='0',zoompan='1:0:0',RES_MULT=1,RES_SAFETY=1,lead_t=0,periods_skipped=0,scale={},io_write='',set={}})
-do if not o[key] then o[key]=val end end      --ESTABLISH DEFAULTS. 
+for opt,val in pairs({toggle_on_double_mute=0,key_bindings='',filters='lutyuv=negval',fps=25,periods=1,DUAL=1,INVERT='0',DISABLE='0',blur_enable=1,x='0',y='0',rotations='0',zoompan='1:0:0',RES_MULT=1,RES_SAFETY=1,lead_t=0,periods_skipped=0,scale={},io_write='',options=''})
+do if not o[opt] then o[opt]=val end end      --ESTABLISH DEFAULTS. 
 
-for _,o in pairs(o.set) do o=o:gmatch('%g+')  --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.
-    mp.set_property(o(),o()) end
+opt,o.options = true,o.options:gmatch('%g+') --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.
+while opt do if val then mp.set_property(opt,val) end   --ITERATE OVER ALL o.options.
+      opt,val = o.options(),o.options() end --nil,nil @END
 
 p=o.period --ABBREV.
 if not p or p==0 or o.periods==0 then p,o.periods,o.INVERT,o.DISABLE = 1/o.fps,1,'0','0'   --OVERRIDE: NO TIME DEPENDENCE. p>0 & periods=1. (t) & (n) SUBS DON'T APPLY TO TIMELINE SWITCHES, SO BLINKING IS INDEPENDENT.
@@ -126,7 +126,7 @@ while N<o.SECTIONS do N=N+1 --mask CONSTRUCTION, BEFORE DUAL.
 mask=mask:format('')..',format=y8' --REMOVE alpha AFTER FINAL overlay. TERMINATOR %s=''. 
 if o.DUAL==2 then mask=mask..',split[L],hflip[R],[L][R]hstack' end   --STARTING "," MAY BE MORE ELEGANT, TO MINIMIZE USE OF LABELS.
 
-lavfi=('loop=%%s:1,fps=%s%%s,scale=%%d:%%d,setsar=1,split=3[to][vo],%s[vf],[to]crop=1:1:0:0:1:1,format=ya16,lut=a=0,split[to],select=lt(n\\,2),trim=end_frame=1,setpts=PTS-(%s)/TB,format=y8,split[t0],setpts=0,lut=0,split[0],pad=2:2,lut=255,pad=iw+2:ow:1:1:WHITE,pad=iw+2:ow:1:1:GRAY,pad=iw+2:ow:1:1%s[1],[0][vo]scale2ref=oh*a/%d:ih*(%s)[0][vo],[1][0]scale2ref=oh:ih*2.2:bicubic[1][0],[1]crop=iw/2.2:ow,lut=255*gt(val\\,74)[1],[1][0]scale2ref=%s:%s[1][0],[1]loop=%s:1%s[m],[m][vo]scale2ref=oh*a:ih*(%s)[m][vo],[m]loop=%d:2^14,loop=%s:1,rotate=%s:oh*iw/ih:ih/(%s),lut=val*gt(val\\,16),zoompan=%s:0:%%dx%%d:%s,setsar=1,lut=255-val:enable=%s,lut=0:enable=%s,loop=-1:2^14,setpts=PTS-(%s)/TB,select=gte(t\\,0),eq=1:%%d[m],[t0][m]scale2ref,concat,trim=start_frame=1[m],[m][to]overlay=0:0:endall[m],[vo][vf][m]maskedmerge')
+lavfi=('loop=%%s:1,fps=%s%%s,scale=%%d:%%d,setsar=1,split=3[to][vo],%s[vf],[to]crop=1:1:0:0:1:1,format=ya16,lut=a=0,split[to],select=lt(n\\,2),trim=end_frame=1,setpts=PTS-(%s)/TB,format=y8,split[t0],setpts=0,lut=0,split[0],pad=2:2,lut=255,pad=iw+2:ow:1:1:WHITE,pad=iw+2:ow:1:1:GRAY,pad=iw+2:ow:1:1%s[1],[0][vo]scale2ref=oh*a/%d:ih*(%s)[0][vo],[1][0]scale2ref=oh:ih*2.2:bicubic[1][0],[1]crop=iw/2.2:ow,lut=255*gt(val\\,74)[1],[1][0]scale2ref=%s:%s[1][0],[1]loop=%s:1%s[m],[m][vo]scale2ref=oh*a:ih*(%s)[m][vo],[m]loop=%d:2^14,loop=%s:1,rotate=%s:oh*iw/ih:ih/(%s),lut=val*gt(val\\,16),zoompan=%s:0:%%dx%%d:%s,setsar=1,lut=255-val:enable=%s,lut=0:enable=%s,loop=-1:2^14,setpts=PTS-(%s)/TB,select=gte(t\\,0),eq[m],[t0][m]scale2ref,concat,trim=start_frame=1[m],[m][to]overlay=0:0:endall[m],[vo][vf][m]maskedmerge')
     :format(o.fps,o.filters,o.lead_t,DISC,o.DUAL,o.RES_MULT,g.w[1],g.h[1],p*o.fps-1,mask,o.RES_SAFETY,o.periods-o.periods_skipped-1,p*o.periods_skipped*o.fps,g.rots[1],o.RES_SAFETY,o.zoompan,o.fps,o.INVERT,o.DISABLE,p*o.periods)    --RES_SAFETY REPEATS FOR rotate TO CROP DOWN ON THE mask EXCESS. fps REPEATS WHEN LOOPING LEAD FRAME. p REPEATS FOR SELECTOR & LEAD-SKIP. 
 
 ----lavfi  =[graph] [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTER LIST. SELECT FILTER NAME TO HIGHLIGHT IT. NO WORD-WRAP → SIDE-SCROLL PROGRAMMING, WITH HIGHLIGHTING ETC. %% SUBSTITUTIONS OCCUR @file-loaded. NO audio ALLOWED. RE-USING LABELS IS SIMPLER. [vo]=VIDEO-OUT [vf]=VIDEO-FILTERED [m]=MASK [to]=TIME-OUT(1x1) [t0]=STARTPTS-FRAME [0]=CANVAS. [1] & [2] ARE DISC INITIALIZATION (SUPERPOSITION): THEN [1][2]...[N] ARE DISCS.  [t0] SIMPLIFIES MATH BTWN VARIOUS GRAPHS (ALL MUST SCOOT AROUND TOGETHER, ETC). [to] TIMESTREAM SHOULD USE alpha TO GO ON TOP.
@@ -149,52 +149,50 @@ lavfi=('loop=%%s:1,fps=%s%%s,scale=%%d:%%d,setsar=1,split=3[to][vo],%s[vf],[to]c
 ----pad    =w:h:x:y:color  PREPS 4x4/8x8 FOR avgblur, USING WHITE, GRAY & BLACK.   2x2/4x4 TOO SMALL. A LITTLE SQUARE IS LIKE A DISC WHO IS A LITTLE OFF & NEEDS A ROUND OF BLUR & SHARP.
 ----avgblur (AVERAGE BLUR) PAIRS WITH scale, TO SHARPEN A CIRCLE FROM BRIGHTNESS. ACTS ON 4x4/8x8 SQUARE. REMOVE FOR DIAGONAL-CUT RECTANGLES (enable=0). EXTRA options COULD BE ADDED FOR DIAGONAL CUT & OBLONG-CIRCLE, ETC.   ALTERNATIVES INCLUDE gblur & boxblur.
 ----overlay=x:y:eof_action  [N-1][N]→[N-1]  (DEFAULT 0:0:repeat) endall TRIMS [m]. MAY PAIR WITH scale2ref. THIS FILTER CAN BE OFF-BY-1 IF W OR H ISN'T DIVISIBLE BY 4.
-----eq     =contrast:brightness  DEFAULT=1:0  RANGES [-2,2]:[-1,1]  EQUALIZER FOR INSTA-TOGGLE. MAY ALSO BE USED IN filters, BUT TOGGLE WOULD BREAK ITS brightness (INTERFERENCE).
+----eq     =...:brightness  DEFAULT 0  RANGE [-1,1]  EQUALIZER FOR INSTA-TOGGLE. MAY ALSO BE USED IN filters, BUT TOGGLE WOULD BREAK ITS brightness (INTERFERENCE).  SHOULD BE -1 BY DEFAULT FOR FILM, BUT THAT CAUSED A BUG WHEN LOADING MACOS YOUTUBE (0 FOR SIMPLICITY) EMBEDDED IN SMPLAYER.
 ----trim   =...:start_frame:end_frame  IS THE FINISH FOR mask. TRIMS TIMESTAMP FRAME [t0] TO RESTORE ITS TIME, & PREP CANVAS. DOESN'T CHANGE PTS.
 ----maskedmerge  IS THE FINISH. OPTIMIZED COMPARED TO overlay. REDUCES NET CPU USAGE BY 3%. REQUIRES endall ON [m].
 
-if NULL_OVERRIDE then lavfi,is1frame = o.filters,true end   --FAST LOAD. is1frame RELATIVE TO toggle.
 
 function start_file()   --EMBEDDED MPV PLAYLISTS REQUIRE INSTA-pause BEFORE GRAPH INSERTION, TO AVOID SNAPPING.    'set geometry' ISN'T THE REASON.
     paused=false    --ALWAYS UNPAUSE @start-file→file-loaded.
-    mp.set_property_bool('pause',true)  --BUG: INSTA-PAUSE NOT ALLOWED ON DARWIN (MACOS).
+    mp.set_property_bool('pause',true) 
 end
 mp.register_event('start-file',start_file) 
 
-function file_loaded(loaded) --ALSO on_vid & ytdl.
-    if loaded then mp.add_timeout(.05,file_loaded) --BUGFIX FOR EXCESSIVE LAG IN VIRTUALBOX (MACOS & LINUX). ALSO WORKS IN WINDOWS. INSTA-pause LASTS 50ms.
-        return end
-    
+function file_loaded() --ALSO on_vid & ytdl.
     complex_opt,loop_opt = mp.get_opt('lavfi-complex'),mp.get_opt('loop')   --autocomplex & autocrop MAY INFINITE loop IMAGES, BEFORE automask.
     complex_opt,loop_opt = complex_opt and complex_opt~='' and complex_opt~='no',loop_opt and loop_opt~='0' and loop_opt~='no'
+    if not complex_opt and not mp.get_property_number('current-tracks/video/id') then mp.set_property_bool('pause',paused)  --RAW MP3 & NO complex → NO mask.
+        return end 
     if mp.get_property_bool('current-tracks/video/albumart') and not complex_opt then is1frame=true end   --is1frame RELATIVE TO toggle. albumart WITHOUT complex IS SPECIAL & DOESN'T loop. COMPARE .JPG TO .MP3.
     
     W,H = o.scale[1],o.scale[2]
     if not (W and H) then W,H = mp.get_property_number('display-width'),mp.get_property_number('display-height') end  --WINDOWS & MACOS.
     if not (W and H) then W,H = mp.get_property_number('video-params/w'),mp.get_property_number('video-params/h') end --USE [vo] SIZE (LINUX).
-    if not (W and H) then if not mp.get_property_number('current-tracks/video/id') and not complex_opt then mp.command('set pause no')    --RAW MP3 & NO complex → NO mask.
-        else mp.add_timeout(.05,file_loaded) end  --LINUX FALLBACK: RE-RUN & return FOR DIMENSIONS. DUE TO EXCESSIVE LAG IN VIRTUALBOX.
+    if not (W and H) then mp.add_timeout(.05,file_loaded) --BUGFIX FOR EXCESSIVE LAG IN VIRTUALBOX, COMBINED WITH OTHER SCRIPTS + YOUTUBE. RE-RUN AFTER 50ms.
         return end
     W,H = math.ceil(W/4)*4,math.ceil(H/4)*4 --BUGFIX: MULTIPLES OF 4 NECESSARY FOR PERFECT overlay.
     
-    brightness,loop,start_time = -1,0,''   --LEAD FRAME OF FILM SHOULDN'T BE MASKED (JPEG OPPOSITE).
-    if mp.get_property_bool('current-tracks/video/image') then brightness=0        --IMAGES MAY BE JPG, PNG, BMP, MP3. GIF IS not image. NO WEBP. TIFF TOP LAYER ONLY. 
-        if not complex_opt then start_time=':'..mp.get_property_number('time-pos') --IMAGES MAY BE JPG, PNG, BMP, MP3. GIF IS not image. NO WEBP. TIFF TOP LAYER ONLY. 
+    is1frame,loop,brightness,start_time = false,0,0,'' 
+    if NULL_OVERRIDE then lavfi,is1frame = o.filters,true end --FAST LOAD. is1frame RELATIVE TO toggle.
+    
+    if mp.get_property_bool('current-tracks/video/image') then if o.io_write=='' then o.io_write=' ' end  --image NEEDS io FIX (SNAPS LESS OFTEN). MAY BE JPG, PNG, BMP, MP3. GIF IS not image. NO WEBP. TIFF TOP LAYER ONLY. 
+        if not complex_opt then start_time=':'..mp.get_property_number('time-pos')
             if not loop_opt then loop=-1    --ONLY INFINITE loop IF NO OTHER SCRIPT HAS. 
-                mp.set_property('script-opts','loop=inf,'..mp.get_property('script-opts')) end end  --PREPEND NEW SCRIPT-OPT: WARNING image WILL INFINITE loop. TRAILING "," IS REMOVED.
-        if o.io_write=='' then o.io_write=' ' end end --image NEEDS io FIX (CAN VERIFY SNAPS LESS OFTEN).
+                mp.set_property('script-opts','loop=inf,'..mp.get_property('script-opts')) end end end --PREPEND NEW SCRIPT-OPT: WARNING image WILL INFINITE loop. TRAILING "," IS REMOVED.
     mp.observe_property('vf','native',function() io.write(o.io_write) end)
     
-    mp.command(('no-osd vf append @%s:lavfi=[%s]'):format(label,lavfi):format(loop,start_time,W,H,W,H,brightness))     --INSERT GRAPH. IT GOES AFTER autocrop. W,H REPEAT FOR zoompan.
+    mp.command(('no-osd vf append @%s:lavfi=[%s]'):format(label,lavfi):format(loop,start_time,W,H,W,H)) --INSERT GRAPH. W,H FOR scale & zoompan.
     mp.set_property_bool('pause',paused)
-    brightness=0    --0=ON @playback-restart
+    playback_restart()
 end
-mp.register_event('file-loaded',file_loaded)
+mp.register_event('file-loaded',function() mp.add_timeout(.1,file_loaded) end) --BUGFIX FOR EXCESSIVE LAG IN VIRTUALBOX (MACOS/LINUX), EMBEDDED. MACOS SMPLAYER ALSO REQUIRED "Cocoa shared buffer" WHEN TESTING YOUTUBE. .2s MAYBE SAFER THAN .1s.
 
 function playback_restart(playback_restart) --GRAPH RESETS ON seek.
     mp.command(('vf-command %s brightness %s'):format(label,brightness)) 
-    if not is1frame and not (OFF and playback_restart) and mp.get_property_bool('pause') then N=0   --frame-step IF PAUSED & NOT is1frame & NOT AN OFF SEEK.
-        while N<3 do N=N+1  --FRAMES ALREADY DRAWN IN ADVANCE. AN UNPAUSE→pause timer CAN ALSO BE USED.
+    if not is1frame and mp.get_property_bool('pause') then N=0   --frame-step IF PAUSED & ~is1frame.
+        while N<3 do N=N+1  --2 FRAMES ALREADY DRAWN IN ADVANCE. AN UNPAUSE→pause timer CAN ALSO BE USED.
             mp.command('frame-step') end end    --FASTER & SIMPLER THAN vf toggle WHEN PAUSED.
 end
 mp.register_event('playback-restart',playback_restart)

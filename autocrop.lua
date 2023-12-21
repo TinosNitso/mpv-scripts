@@ -17,7 +17,7 @@ o={ --options
     detect_limit_image=64, --INTEGER 0→255, FOR JPEG & MP3 (bbox).
     detect_limits     ={   --detect_limit OVERRIDES. NOT CASE SENSITIVE. ['media-title']=detect_limit 
                         ['We are army of people - Red Army Choir']=64,
-                        ['Eminem - Encore']=100,  --REPLACE WITH media-title SUBSTRING & ITS LIMIT.
+                        ['Eminem - Encore']=100,  --REPLACE WITH media-title SUBSTRING, & ITS LIMIT.
                        },
     
     MAINTAIN_CENTER_X  =  0, --TOLERANCE. 0 MEANS NEVER MOVE THE CENTER (LIKE CROSSHAIRS). A SINGLE BLACK BAR ON 1 SIDE MAYBE OK (UNLESS 1 FRAME ONLY).
@@ -35,23 +35,23 @@ o={ --options
     -- msg_log =true,     --MESSAGE TO MPV LOG. FILLS THE LOG, BUT MAY HELP WITH DEBUGGING.
     
     io_write=' ',--DEFAULT=''  (INPUT/OUTPUT) io.write THIS @EVERY CHANGE IN vf (VIDEO FILTERS). STOPS EMBEDDED MPV FROM SNAPPING ON COVER ART. MPV COMMUNICATES WITH ITS PARENT APP.
-    set     ={   --set OF FURTHER options.
-        'osd-font-size 16','osd-border-size 1','osd-scale-by-window no',  --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
-        'keepaspect no','geometry 50%', --ONLY NEEDED IF MPV HAS ITS OWN WINDOW, OUTSIDE SMPLAYER. FREE aspect & 50% INITIAL DEFAULT SIZE.
-        'image-display-duration inf','vd-lavc-threads 0',    --inf STOPS JPEG FROM SNAPPING MPV.  0=AUTO, vd-lavc=VIDEO DECODER - LIBRARY AUDIO VIDEO.
-    },
+    options =''  --set PROPERTIES @load.
+        ..' osd-font-size           16  osd-border-size   1  osd-scale-by-window no '  --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
+        ..' keepaspect              no  geometry        50% ' --ONLY NEEDED IF MPV HAS ITS OWN WINDOW, OUTSIDE SMPLAYER. FREE aspect & 50% INITIAL DEFAULT SIZE.
+        ..' image-display-duration inf  vd-lavc-threads   0 ' --inf STOPS JPEG FROM SNAPPING MPV.  0=AUTO, vd-lavc=VIDEO DECODER - LIBRARY AUDIO VIDEO.
 }
 (require 'mp.options').read_options(o)    --OPTIONAL?
 
-for key,val in pairs({command_prefix='',detect_limit_image=o.detect_limit,detect_limits={},TOLERANCE=0,TOLERANCE_TIME=10,detector='cropdetect=limit=%s:round=%s:reset=1:0',format='yuv420p',scale={},key_bindings='C',toggle_on_double_mute=0,io_write='',set={}})
-do if not o[key] then o[key]=val end end --ESTABLISH DEFAULTS. 
+for opt,val in pairs({command_prefix='',detect_limit_image=o.detect_limit,detect_limits={},TOLERANCE=0,TOLERANCE_TIME=10,detector='cropdetect=limit=%s:round=%s:reset=1:0',format='yuv420p',scale={},key_bindings='C',toggle_on_double_mute=0,io_write='',options=''})
+do if not o[opt] then o[opt]=val end end --ESTABLISH DEFAULTS. 
 
-for _,o in pairs(o.set) do o=o:gmatch('%g+')  --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.
-    mp.set_property(o(),o()) end
+opt,o.options = true,o.options:gmatch('%g+') --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.
+while opt do if val then mp.set_property(opt,val) end   --ITERATE OVER ALL o.options.
+      opt,val = o.options(),o.options() end --nil,nil @END
 
-function start_file()   --EMBEDDED MPV PLAYLISTS REQUIRE INSTA-pause BEFORE GRAPH INSERTION, TO AVOID SNAPPING.
+function start_file()   --EMBEDDED MPV PLAYLISTS REQUIRE INSTA-pause BEFORE GRAPH INSERTION, TO AVOID SNAPPING.  
     paused=false    --ALWAYS UNPAUSE @start-file→file-loaded.
-    mp.set_property_bool('pause',true)  --BUG: INSTA-PAUSE NOT ALLOWED ON DARWIN (MACOS).
+    mp.set_property_bool('pause',true) 
     
     complex_opt,loop_opt = mp.get_opt('lavfi-complex'),mp.get_opt('loop')   --autocomplex & autocrop MAY INFINITE loop IMAGES, BEFORE automask.
     complex_opt,loop_opt = complex_opt and complex_opt~='' and complex_opt~='no',loop_opt and loop_opt~='0' and loop_opt~='no'
@@ -60,15 +60,15 @@ end
 mp.register_event('start-file',start_file) 
 
 label,timers,m = mp.get_script_name(),{},{} --label=autocrop   m=MEMORY-crop 
-function file_loaded(loaded)  --ALSO STREAM.
-    if loaded then mp.add_timeout(.05,file_loaded) --BUGFIX FOR EXCESSIVE LAG IN VIRTUALBOX (MACOS & LINUX). ALSO WORKS IN WINDOWS. INSTA-pause LASTS 50ms.
-        return end
+function file_loaded()  --ALSO STREAM.
     if not mp.get_property_number('current-tracks/video/id') then mp.set_property_bool('pause',paused)   --unpause & return FOR RAW MP3.
         return end 
     
     W,H = o.scale[1],o.scale[2]
     if not (W and H) then W,H = mp.get_property_number('display-width'),mp.get_property_number('display-height') end  --WINDOWS & MACOS.
     if not (W and H) then W,H = mp.get_property_number('video-params/w'),mp.get_property_number('video-params/h') end --USE [vo] SIZE (LINUX).  current-tracks/video/demux-w IS RAW TRACK WIDTH.
+    if not (W and H) then mp.add_timeout(.05,file_loaded) --BUGFIX FOR EXCESSIVE LAG IN VIRTUALBOX, COMBINED WITH OTHER SCRIPTS + YOUTUBE. RE-RUN AFTER 50ms.
+        return end
     W,H = math.ceil(W/4)*4,math.ceil(H/4)*4   --MULTIPLES OF 4 WORK BETTER WITH overlay (FURTHER GRAPHS LIKE automask). MPV MAY SNAP INSIDE SMPLAYER ON ODD NUMBERED SIZES.
     
     is1frame,loop,MEDIA_TITLE = false,0,mp.get_property('media-title'):upper()    --media-title @file-loaded
@@ -86,7 +86,7 @@ function file_loaded(loaded)  --ALSO STREAM.
     
     mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,setsar=1]'):format(o.command_prefix,label,W,H)) --SEPARATE: "w" & "h" COMMANDS ARE AMBIGUOUS.
     mp.command(('%s vf pre @%s:lavfi=[format=%s,loop=%d:1,%s,crop=iw:ih:0:0:1:1]')
-        :format(o.command_prefix,label,             o.format, loop,detector))
+        :format(o.command_prefix,label,    o.format, loop,detector))
     
     ----lavfi     =[graph]  [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTER LIST. REQUIRE 2 GRAPHS. LABELS REQUIRED FOR REPLACEMENT/COMMANDS.
     ----cropdetect=limit:round:reset:skip  DEFAULT=24/255:16:0  reset & skip BOTH MEASURED IN FRAMES. reset>0 COUNTS HOW MANY FRAMES PER DETECTION. LINUX .AppImage FAILS IF skip IS NAMED (INCOMPATIBLE).  alpha TRIGGERS BAD PERFORMANCE. CAN ALSO COMBINE MULTIPLE DETECTORS IN 1 GRAPH FOR IMPROVED RELIABILITY (LIKE pcall), BUT SHOULD BE UNNECESSARY.
@@ -95,13 +95,13 @@ function file_loaded(loaded)  --ALSO STREAM.
     ----loop      =loop:size  ( >=-1 : >0 )  NEEDED FOR image IN MACOS (CATALINA, VIRTUALBOX). INFINITE loop FOR TOGGLE VIA vf-command. GRAPH REPLACEMENT WOULD BE QUICKER (THAN DEFAULT 1fps).
     ----crop      =w:h:x:y:keep_aspect:exact  DEFAULT=iw:ih:(iw-ow)/2:(ih-oh)/2:0:0  CAN'T BE COMBINED WITH scale & vf-command ("w" & "h" AMBIGUOUS - NO SOLUTION). CURRENTLY HAS BUGS. WON'T CHANGE DIMENSIONS WITH t OR n, NOR eval=frame NOR enable=1 (TIMELINE SWITCH). BUGS OUT IF w OR h IS TOO BIG. SAFER TO AVOID SMOOTH-CROPPING.
     ----scale     =w:h  DEFAULTS iw:ih  USING [vo] scale WOULD CAUSE SNAPPING on_vid, SO CAN USE display INSTEAD. EITHER WINDOW SNAPS IN, OR ELSE video SNAPS OUT.
-    ----setsar    =sar  IS THE FINISH. LINUX BUGFIX REQUIRES IT @END. ALSO STOPS EMBEDDED MPV SNAPPING on_vid. IT CAN ARMOR THE GRAPHS. 
+    ----setsar    =sar  IS THE FINISH. LINUX & MACOS/YOUTUBE BUGFIXES REQUIRE IT @END. ALSO STOPS EMBEDDED MPV SNAPPING on_vid. ASSERT SAR=1. 
     
     
     mp.set_property_bool('pause',paused) --UNPAUSE.
     timers.auto_delay:resume() --SMALL DELAY FOR INITIAL DETECTION.
 end
-mp.register_event('file-loaded',file_loaded)
+mp.register_event('file-loaded',function() mp.add_timeout(.25,file_loaded) end) --TIMEOUT SHOULD ONLY EXIST FOR DARWIN (ISSUE). BUGFIX FOR EXCESSIVE LAG IN VIRTUALBOX (MACOS/LINUX), EMBEDDED. MACOS SMPLAYER ALSO REQUIRED "Cocoa shared buffer" WHEN TESTING YOUTUBE. autocrop REQUIRED MORE DELAY THAN automask (.25s VS .1s). 
 
 function on_vid(_,vid)  --AN MP3 MAY BE A COLLECTION OF JPEG IMAGES (MP3TAG) WITH DIFFERENT DIMENSIONS.
     if m.vid and m.vid~=vid then paused=mp.get_property_bool('pause')
@@ -148,7 +148,7 @@ function detect_crop()
     
     meta=mp.get_property_native('vf-metadata/'..label)  -- Get the metadata.
     if not meta then if o.msg_log then mp.msg.error("No crop metadata.")    --Verify the existence of metadata. SOMETIMES IT'S {}, WHICH FAILS THE NEXT TEST.
-                                        mp.msg.info("Was the cropdetect filter successfully inserted?\nDoes your version of ffmpeg/libav support AVFrame metadata?") end
+                                       mp.msg.info("Was the cropdetect filter successfully inserted?\nDoes your version of ffmpeg/libav support AVFrame metadata?") end
         return end 
     
     for key in ('w h x1 y1 x2 y2 x y'):gmatch('%g+') do value=meta['lavfi.cropdetect.'..key]      
