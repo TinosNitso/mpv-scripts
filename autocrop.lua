@@ -35,8 +35,9 @@ o={ --options
     -- msg_log =true,     --MESSAGE TO MPV LOG. FILLS THE LOG, BUT MAY HELP WITH DEBUGGING.
     
     io_write=' ',--DEFAULT=''  (INPUT/OUTPUT) io.write THIS @EVERY CHANGE IN vf (VIDEO FILTERS). STOPS EMBEDDED MPV FROM SNAPPING ON COVER ART. MPV COMMUNICATES WITH ITS PARENT APP.
-    options =''  --set PROPERTIES @load.
-        ..' osd-font-size           16  osd-border-size   1  osd-scale-by-window no '  --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
+    options =''  --FREE FORM.
+        -- ..' osd-font-size           16  osd-border-size   1  osd-scale-by-window no '  --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
+        ..' osd-font-size           8  osd-border-size   1  osd-scale-by-window no '  --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
         ..' keepaspect              no  geometry        50% ' --ONLY NEEDED IF MPV HAS ITS OWN WINDOW, OUTSIDE SMPLAYER. FREE aspect & 50% INITIAL DEFAULT SIZE.
         ..' image-display-duration inf  vd-lavc-threads   0 ' --inf STOPS JPEG FROM SNAPPING MPV.  0=AUTO, vd-lavc=VIDEO DECODER - LIBRARY AUDIO VIDEO.
 }
@@ -45,9 +46,9 @@ o={ --options
 for opt,val in pairs({command_prefix='',detect_limit_image=o.detect_limit,detect_limits={},TOLERANCE=0,TOLERANCE_TIME=10,detector='cropdetect=limit=%s:round=%s:reset=1:0',format='yuv420p',scale={},key_bindings='C',toggle_on_double_mute=0,io_write='',options=''})
 do if not o[opt] then o[opt]=val end end --ESTABLISH DEFAULTS. 
 
-opt,o.options = true,o.options:gmatch('%g+') --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.
-while opt do if val then mp.set_property(opt,val) end   --ITERATE OVER ALL o.options.
-      opt,val = o.options(),o.options() end --nil,nil @END
+opt,val,o.options = '','',o.options:gmatch('%g+') --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.  '',''→NULL-SET
+while   val do mp.set_property(opt,val)
+    opt,val = o.options(),o.options() end --nil @END
 
 function start_file()   --EMBEDDED MPV PLAYLISTS REQUIRE INSTA-pause BEFORE GRAPH INSERTION, TO AVOID SNAPPING.  
     paused=false    --ALWAYS UNPAUSE @start-file→file-loaded.
@@ -59,7 +60,7 @@ function start_file()   --EMBEDDED MPV PLAYLISTS REQUIRE INSTA-pause BEFORE GRAP
 end
 mp.register_event('start-file',start_file) 
 
-label,timers,m = mp.get_script_name(),{},{} --label=autocrop   m=MEMORY-crop 
+timers,m,label = {},{},mp.get_script_name() --m=MEMORY  label=autocrop
 function file_loaded()  --ALSO STREAM.
     if not mp.get_property_number('current-tracks/video/id') then mp.set_property_bool('pause',paused)   --unpause & return FOR RAW MP3.
         return end 
@@ -67,12 +68,12 @@ function file_loaded()  --ALSO STREAM.
     W,H = o.scale[1],o.scale[2]
     if not (W and H) then W,H = mp.get_property_number('display-width'),mp.get_property_number('display-height') end  --WINDOWS & MACOS.
     if not (W and H) then W,H = mp.get_property_number('video-params/w'),mp.get_property_number('video-params/h') end --USE [vo] SIZE (LINUX).  current-tracks/video/demux-w IS RAW TRACK WIDTH.
-    if not (W and H) then mp.add_timeout(.05,file_loaded) --BUGFIX FOR EXCESSIVE LAG IN VIRTUALBOX, COMBINED WITH OTHER SCRIPTS + YOUTUBE. RE-RUN AFTER 50ms.
+    if not (W and H) then mp.add_timeout(.05,file_loaded) --BUGFIX FOR EXCESSIVE LAG IN VIRTUALBOX-YOUTUBE-ETC. RE-RUN AFTER 50ms.
         return end
     W,H = math.ceil(W/4)*4,math.ceil(H/4)*4   --MULTIPLES OF 4 WORK BETTER WITH overlay (FURTHER GRAPHS LIKE automask). MPV MAY SNAP INSIDE SMPLAYER ON ODD NUMBERED SIZES.
     
     is1frame,loop,MEDIA_TITLE = false,0,mp.get_property('media-title'):upper()    --media-title @file-loaded
-    if mp.get_property_bool('current-tracks/video/albumart') and not complex_opt then is1frame,o.auto = true,false end  --albumart IS DIFFERENT TO image. REQUIRE GRAPH REPLACEMENT IF NO complex. NO auto BECAUSE audio GLITCHES.
+    if not complex_opt and mp.get_property_bool('current-tracks/video/albumart') then is1frame,o.auto = true,false end  --albumart IS DIFFERENT TO image. REQUIRE GRAPH REPLACEMENT IF NO complex. NO auto BECAUSE audio GLITCHES.
     
     detector,detect_limit = o.detector,o.detect_limit   --detect_limit MAY VARY, BUT NOT o.detect_limit
     if mp.get_property_bool('current-tracks/video/image') then o.TOLERANCE,detector,detect_limit = 0,'bbox=%s',o.detect_limit_image --JPEG: bbox & 0 TOLERANCE (E.G. on_vid CHANGE). IMAGES MAY BE JPG, PNG, BMP, MP3. GIF IS not image. NO WEBP. TIFF TOP LAYER ONLY. AN MP3 IS LIKE A COLLECTION OF JPEG IMAGES (SEE MP3TAG) WHICH NEED CROPPING (& HAVE RUNNING audio).
@@ -101,7 +102,10 @@ function file_loaded()  --ALSO STREAM.
     mp.set_property_bool('pause',paused) --UNPAUSE.
     timers.auto_delay:resume() --SMALL DELAY FOR INITIAL DETECTION.
 end
-mp.register_event('file-loaded',function() mp.add_timeout(.25,file_loaded) end) --TIMEOUT SHOULD ONLY EXIST FOR DARWIN (ISSUE). BUGFIX FOR EXCESSIVE LAG IN VIRTUALBOX (MACOS/LINUX), EMBEDDED. MACOS SMPLAYER ALSO REQUIRED "Cocoa shared buffer" WHEN TESTING YOUTUBE. autocrop REQUIRED MORE DELAY THAN automask (.25s VS .1s). 
+
+timeout,OS = .25,os.getenv('OS') --MACOS-VIRTUALBOX-SMPLAYER REQUIRES timeout TO PASS INSPECTION. ALSO SET SMPLAYER "Output driver"="Cocoa shared buffer".
+if OS and OS:upper():find('WINDOWS',1,true) then timeout=0 end  --WINDOWS→0  1,true = STARTING-INDEX,EXACT-MATCH
+mp.register_event('file-loaded',function() mp.add_timeout(timeout,file_loaded) end)
 
 function on_vid(_,vid)  --AN MP3 MAY BE A COLLECTION OF JPEG IMAGES (MP3TAG) WITH DIFFERENT DIMENSIONS.
     if m.vid and m.vid~=vid then paused=mp.get_property_bool('pause')
@@ -139,7 +143,7 @@ timers.mute=mp.add_periodic_timer(o.toggle_on_double_mute, function()end)    --d
 timers.mute.oneshot=true 
 
 function detect_crop()
-    if OFF then return end     --TOGGLED OFF. 
+    if OFF then return end  --TOGGLED OFF. 
     timers.auto_delay:resume()
     if not o.auto then timers.auto_delay:kill() end    
     
@@ -216,7 +220,6 @@ end
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (TECH SPECS), & END (MISC.). ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
 ----MPV v0.36.0 (INCL. v3) v0.35.0 (.7z) v0.35.1 (.flatpak)  HAVE BEEN FULLY TESTED.
 ----FFmpeg v5.1.2(MACOS) v4.3.2(LINUX .AppImage) v6.0(LINUX) HAVE BEEN FULLY TESTED.
-----BUG: RAW JPEG ON MACOS → BLACK SCREEN. WORKS WITH autocomplex.
 
 ----ALTERNATIVE FILTERS:
 ----noformat=pix_fmts  FAILS TO BLOCK alpha. cropdetect PERFORMS BADLY WITH TRANSPARENT INPUT (EVEN IF 100% OPAQUE). THERE'S A LONG LIST.  PROOF: REPLACE WITH format=yuva420p & IT CAUSES LAG.

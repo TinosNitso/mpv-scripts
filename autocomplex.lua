@@ -20,7 +20,7 @@ o={ --options  ALL OPTIONAL & MAY BE REMOVED.   TO REMOVE AN INTERNAL COMPONENT 
     
     -- dual_colormix='gb=.4:bb=0', --UNCOMMENT FOR RED/GREEN DUAL. ADDS 5% CPU USAGE. gb IS CUMULATIVE. MAGENTA/GREEN='gb=.3:bb=0:br=.8:rr=.8'
     dual_alpha  =1.43,             --DEFAULT=1.5  alpha MULTIPLIER. MORE EFFICIENT THAN dual_colormix.
-    dual_scale  ={.75,.75},        --RATIOS {WIDTH,HEIGHT}. REMOVE FOR NO DUAL. FULL BI-QUAD CONCEPT COMES FROM HOW RAW MP3 WORKS. IN A SYMPHONY A LITTLE DUAL COULD FLOAT TO VARIOUS INSTRUMENTS, VIOLINS ETC.  IT ALSO EMULATES THE "THIRD EYE", WHICH MIRRORS THE MOUTH.   IT'S ALSO POSSIBLE TO ADD A 3RD LITTLE COMPLEX ON TOP, LIKE PYRAMID. 
+    dual_scale  ={.75,.75},        --RATIOS {WIDTH,HEIGHT}. REMOVE FOR NO DUAL.  FULL BI-QUAD CONCEPT COMES FROM HOW RAW MP3 WORKS. IN A SYMPHONY A LITTLE DUAL COULD FLOAT TO VARIOUS INSTRUMENTS, VIOLINS ETC.  THIS DUAL USES THE SAME aid. IDEAL DESIGN MIGHT NEED A BOSS MIC/aid (SPECIAL DUAL).  IT'S ALSO POSSIBLE TO ADD A 3RD LITTLE COMPLEX ON TOP, LIKE PYRAMID. 
     dual_overlay='(W-w)/2:(H-h)/2',--DEFAULT='(W-w)/2:(H-h)/2' (CENTERED). MAY DEPEND ON t & n, BUT CLEARER IF STATIONARY. IT CAN FLY AROUND, TOO.
     
     highpass  =100, --DEFAULT=100 Hz  DAMPENS SUB-BASS & DC, NEAR volume BAR. 100 Hz FOR BASS HEAVY TRACKS. highpass & dynaudnorm APPLY ONLY TO VISUALS, NOT [ao].  afftfilt COULD ENABLE HUMAN EAR SENSITIVITY MODEL. highpass ISN'T THE RIGHT FILTER.
@@ -55,7 +55,7 @@ o={ --options  ALL OPTIONAL & MAY BE REMOVED.   TO REMOVE AN INTERNAL COMPONENT 
     
     -- osd_on_toggle='Audio filters:\n%s\n\nVideo filters:\n%s\n\nlavfi-complex:\n%s', --DISPLAY ALL ACTIVE FILTERS on_toggle. DOUBLE-CLICKING MUTE ENABLES CODE INSPECTION INSIDE SMPLAYER. %s=string. SET TO '' TO CLEAR osd.
     io_write=' ',--DEFAULT=''  (INPUT/OUTPUT)  io.write THIS @EVERY lavfi-complex OBSERVATION. PREVENTS EMBEDDED MPV FROM SNAPPING. MPV COMMUNICATES WITH ITS PARENT APP.
-    options =''  --set PROPERTIES @load.
+    options =''  --FREE FORM.
         ..' osd-font-size  16  osd-border-size 1  osd-scale-by-window no '  --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
         ..' keepaspect     no  geometry      50% ' --ONLY NEEDED IF MPV HAS ITS OWN WINDOW, OUTSIDE SMPLAYER. FREE aspect & 50% INITIAL DEFAULT SIZE.
         ..' vd-lavc-threads 0 ' --0=AUTO, vd-lavc=VIDEO DECODER - LIBRARY AUDIO VIDEO. OVERRIDE SMPLAYER DEFAULT=1.
@@ -63,9 +63,9 @@ o={ --options  ALL OPTIONAL & MAY BE REMOVED.   TO REMOVE AN INTERNAL COMPONENT 
 for opt,val in pairs({toggle_on_double_mute=0,key_bindings='',period=1,fps=25,rotate='0',zoompan='1:0:0',overlay='(W-w)/2:(H-h)/2',dual_alpha=1.5,dual_overlay='(W-w)/2:(H-h)/2',highpass=100,dynaudnorm=500,gb=.3,width=1,freqs_lead_t=.08,freqs_fps=25/2,freqs_mode='line',freqs_win_size=512,freqs_win_func='parzen',freqs_averaging=2,freqs_magnification=1.1,freqs_clip_h=.3,freqs_alpha=.7,volume_alpha=.5,volume_fade=0,volume_dm=0,volume_width=.04,volume_height=.15,grid_height=.1,grid_thickness=.1,grid_alpha=1,feet_alpha=2,feet_height=.05,feet_activation=.5,shoe_color='BLACK@.4',format='yuv420p',scale={},io_write='',options=''})
 do if not o[opt] then o[opt]=val end end --ESTABLISH DEFAULTS. 
 
-opt,o.options = true,o.options:gmatch('%g+') --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.
-while opt do if val then mp.set_property(opt,val) end  --ITERATE OVER ALL o.options.
-      opt,val = o.options(),o.options() end --nil,nil @END
+opt,val,o.options = '','',o.options:gmatch('%g+') --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.  '',''→NULL-SET
+while   val do mp.set_property(opt,val)
+    opt,val = o.options(),o.options() end --nil @END
 mp.set_property('script-opts','lavfi-complex=yes,'..mp.get_property('script-opts')) --PREPEND NEW SCRIPT-OPT: WARNING albumart & image WILL INFINITE loop, BEFORE start-file.  TRAILING "," IS IGNORED (MEMORY IS native).
 
 if o.period==0 then for key in ('rotate zoompan overlay'):gmatch('%g+')  --NO TIME DEPENDENCE.
@@ -219,14 +219,14 @@ timer:kill()
 ----extractplanes=planes    r+b→[R][L] (RED+BLUE)   REVERSED BECAUSE [L] GETS FLIPPED AROUND.
 ----alphamerge    [y][a]→[ya]  USES lum OF [a] AS alpha OF [ya]. PAIRS WITH split TO CONVERT BLACK TO TRANSPARENCY. ALTERNATIVES INCLUDE colorkey, colorchannelmixer & shuffleplanes.
 
-----o.options DUMP. FOR DEBUGGING TRY TOGGLE ALL THESE SIMULTANEOUSLY. THEN ISOLATE WHICH LINE FIXED THE BUG. SOMETIMES WHOLE LINES OF CODE CAN BE DELETED WITH THE CORRECT OPTION.
+----DUMP o.options: FREE FORM. TO DEBUG TRY TOGGLE ALL THESE SIMULTANEOUSLY. THEN ISOLATE WHICH LINE FIXED THE BUG. BUT THAT CAN HAVE UNINTENDED CONSEQUENCES.
 -- ..' video-timing-offset 1  hr-seek-demuxer-offset 1  cache-pause-wait 0'
 -- ..' video-sync desync  vd-lavc-dropframe nonref  vd-lavc-skipframe nonref'    --none default nonref(SKIPnonref) bidir(SKIPBFRAMES) 
 -- ..' demuxer-lavf-buffersize 1e9  demuxer-max-bytes 1e9  stream-buffer-size 1e9  vd-queue-max-bytes 1e9  ad-queue-max-bytes 1e9  demuxer-max-back-bytes 1e9  audio-reversal-buffer 1e9  video-reversal-buffer 1e9  audio-buffer 1e9'
 -- ..' chapter-seek-threshold 1e9  vd-queue-max-samples 1e9  ad-queue-max-samples 1e9'
 -- ..' demuxer-backward-playback-step 1e9  cache-secs 1e9  demuxer-lavf-analyzeduration 1e9  vd-queue-max-secs 1e9  ad-queue-max-secs 1e9  demuxer-termination-timeout 1e9  demuxer-readahead-secs 1e9' 
 -- ..' video-backward-overlap 1e9  audio-backward-overlap 1e9  audio-backward-batch 1e9  video-backward-batch 1e9'
--- ..' hr-seek always  index recreate  wayland-content-type none  background red  alpha blend'
+-- ..' msg-level ffmpeg/demuxer=error  hr-seek always  index recreate  wayland-content-type none  background red  alpha blend'
 -- ..' hr-seek-framedrop yes  framedrop decoder+vo  access-references yes  ordered-chapters no  stop-playback-on-init-failure yes'
 -- ..' vd-queue-enable yes  ad-queue-enable yes  cache-pause-initial no  cache-pause no  demuxer-seekable-cache yes  cache yes  demuxer-cache-wait no'
 -- ..' force-window yes  keepaspect-window no  initial-audio-sync no  video-latency-hacks yes  demuxer-lavf-hacks yes  gapless-audio no  demuxer-donate-buffer yes  demuxer-thread yes  demuxer-seekable-cache yes  force-seekable yes  demuxer-lavf-linearize-timestamps no'

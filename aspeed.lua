@@ -18,32 +18,32 @@ o={ --options  ALL OPTIONAL & MAY BE REMOVED.
     -- extra_devices_index_list={2},--EXTRA DEVICES. TRY {2,3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. 1=auto WHICH MAY DOUBLE-OVERLAP audio TO PRIMARY DEVICE. 3=VIRTUALBOX USB STEREO. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.     EACH MPV USES APPROX 1% CPU, + 40MB RAM.
     -- mutelr='muter',           --DEFAULT='mutel'  UNCOMMENT TO SWITCH PRIMARY CONTROLLER CHANNEL TO LEFT. PRIMARY device HAS 1 CHANNEL IN PERFECT SYNC TO video. HARDWARE USUALLY HAS A PRIMARY, BUT IT'S 50/50 (HEADPHONES OPPOSITE TO SPEAKERS).
     
-    max_random_percent=10, --DEFAULT=0. MAX random % DEVIATION FROM PROPER speed. speed UPDATES EVERY HALF A SECOND. E.G. 10%*.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER.
-    max_percent       =15, --DEFAULT=15. SPEED NEVER CHANGES BY MORE. E.G. speed BOUNDED WITHIN [.8,1.2].    1.2 SOUNDS OK, BUT MAYBE NOT .8.
+    max_random_percent=10,  --DEFAULT=0     MAX random % DEVIATION FROM PROPER speed. speed UPDATES EVERY HALF A SECOND. E.G. 10%*.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER.
+    max_speed_ratio   =1.15,--DEFAULT=1.25  speed BOUNDED BY [SPEED/max,SPEED*max],  WITH SPEED FROM CONTROLLER.  1.15 SOUNDS OK, BUT MAYBE NOT 1.25.
     
-    start        = .3, --DEFAULT=.3  SECONDS. APPROX:  .3=SSD  2=HDD  INITIAL HEADSTART OF subprocesses, EXCEPT ON YOUTUBE. EACH mpv TAKES TIME TO LOAD, & FOR MP4 THEY AREN'T LAUNCHED UNTIL AFTER INITIAL seeking (WHICH WORKS FINE ON SSD).
-    seek_limit   =  1, --DEFAULT=1   SECONDS. SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit. seek CAUSES AUDIO TO SKIP. (SKIP VS JERK.) IT'S LIKE TRYING TO SING FASTER TO CATCH UP TO THE OTHERS.
-    resync_delay = 30, --DEFAULT=60  SECONDS. os_sync RESYNC WITH THIS DELAY.   mp.get_time() & os.clock() MAY BE BASED ON CPU TIME, WHICH GOES OFF WITH RANDOM LAG.
-    os_sync_delay=.01, --DEFAULT=.01 SECONDS. ACCURACY FOR SYNC TO os.time. A perodic_timer CHECKS SYSTEM clock EVERY 10 MILLISECONDS (FOR THE NEXT TICK).  WIN10 CMD "TIME 0>NUL" GIVES 10ms ACCURATE SYSTEM TIME.
-    time_needed  =  5, --DEFAULT=5   SECONDS. NO RANDOMIZATION WITHIN 5 SECS OF end-file (STRONG FINISH) & GRAPH INSERTION.
-    timeout      = 10, --DEFAULT=10  SECONDS. subprocesses ALL quit IF CONTROLLER HARD BREAKS FOR THIS LONG.
+    start        = .3, --DEFAULT=.3  SECONDS  APPROX:  .3=SSD  2=HDD  INITIAL HEADSTART OF subprocesses, EXCEPT ON YOUTUBE. EACH mpv TAKES TIME TO LOAD, & FOR MP4 THEY AREN'T LAUNCHED UNTIL AFTER INITIAL seeking (WHICH WORKS FINE ON SSD).
+    seek_limit   =  1, --DEFAULT=1   SECONDS  SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit. seek CAUSES AUDIO TO SKIP. (SKIP VS JERK.) IT'S LIKE TRYING TO SING FASTER TO CATCH UP TO THE OTHERS.
+    resync_delay = 30, --DEFAULT=60  SECONDS  os_sync RESYNC WITH THIS DELAY.   mp.get_time() & os.clock() MAY BE BASED ON CPU TIME, WHICH GOES OFF WITH RANDOM LAG.
+    os_sync_delay=.01, --DEFAULT=.01 SECONDS  ACCURACY FOR SYNC TO os.time. A perodic_timer CHECKS SYSTEM clock EVERY 10 MILLISECONDS (FOR THE NEXT TICK).  WIN10 CMD "TIME 0>NUL" GIVES 10ms ACCURATE SYSTEM TIME.
+    time_needed  =  5, --DEFAULT=5   SECONDS  NO RANDOMIZATION WITHIN 5 SECS OF end-file (STRONG FINISH), & GRAPH INSERTION. ALSO TIME TO STABILIZE SAMPLE COUNT.
+    timeout      = 10, --DEFAULT=10  SECONDS  subprocesses ALL quit IF CONTROLLER HARD BREAKS FOR THIS LONG. 
     
     samplerate=44100, --DEFAULT=44100 Hz
     -- meta_osd=true, --DISPLAY astats METADATA (audio STATISTICS). IRONICALLY astats DOESN'T KNOW ANYTHING ABOUT TIME ITSELF, YET IT'S THE BASIS FOR TEN HOUR SYNCHRONY.
     
-    options=''   --set PROPERTIES @load.
-        ..' audio-delay 0 ' --OVERRIDE SMPLAYER (NON-0 COULD BE ACCIDENT).
-        ..' osd-font-size 16  osd-border-size 1  osd-scale-by-window no '  --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
+    options='' --FREE FORM.
+        ..' audio-delay              0 ' --OVERRIDE SMPLAYER (NON-0 COULD BE ACCIDENT).
+        ..' osd-font-size           16  osd-border-size 1  osd-scale-by-window no '  --DEFAULTS 55,3,yes. TO FIT ALL MSG TEXT: 16p FOR ALL WINDOW SIZES.
         ..' image-display-duration inf  vd-lavc-threads 0 ' --inf STOPS JPEG FROM SNAPPING MPV.  0=AUTO, vd-lavc=VIDEO DECODER - LIBRARY AUDIO VIDEO.
-        -- ..' osd-color 1/.5  osd-border-color 0/.5' --DEFAULTS 1/1,0/1. OPTIONAL: FOR clock. y/a = brightness/alpha (a=OPAQUENESS). A TRANSPARENT clock CAN BE TWICE AS BIG.
-        -- ..' audio-pitch-correction no' --UNCOMMENT FOR CHIPMUNK MODE. DEFAULT=yes APPLIES scaletempo2(?) FILTER. SCALING TEMPO IS FUNDAMENTAL TO RANDOMIZATION.
+        -- ..' osd-color 1/.5  osd-border-color 0/.5 ' --DEFAULTS 1/1,0/1. OPTIONAL: FOR clock. y/a = brightness/alpha (a=OPAQUENESS). A TRANSPARENT clock CAN BE TWICE AS BIG.
+        -- ..' audio-pitch-correction no ' --UNCOMMENT FOR CHIPMUNK MODE. DEFAULT=yes APPLIES scaletempo2(?) FILTER. SCALING TEMPO IS FUNDAMENTAL TO RANDOMIZATION.
 }
-for key,val in pairs({key_bindings='',title_duration=5,clock='',filters='anull',extra_devices_index_list={},mutelr='mutel',start=.3,max_random_percent=0,max_percent=15,seek_limit=1,resync_delay=60,os_sync_delay=.01,time_needed=5,timeout=10,toggle_on_double_mute=0,samplerate=44100,options=''})
+for key,val in pairs({key_bindings='',title_duration=5,clock='',filters='anull',extra_devices_index_list={},mutelr='mutel',start=.3,max_random_percent=0,max_speed_ratio=1.25,seek_limit=1,resync_delay=60,os_sync_delay=.01,time_needed=5,timeout=10,toggle_on_double_mute=0,samplerate=44100,options=''})
 do if not o[key] then o[key]=val end end --ESTABLISH DEFAULTS. 
 
-opt,o.options = true,o.options:gmatch('%g+') --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.
-while opt do if val then mp.set_property(opt,val) end   --ITERATE OVER ALL o.options.
-      opt,val = o.options(),o.options() end --nil,nil @END
+opt,val,o.options = '','',o.options:gmatch('%g+') --%g+=LONGEST GLOBAL MATCH TO SPACEBAR. RETURNS ITERATOR.  '',''→NULL-SET
+while   val do mp.set_property(opt,val)
+    opt,val = o.options(),o.options() end --nil @END
 
 mpv,utils,label     = 'mpv',require 'mp.utils',mp.get_script_name() --label=aspeed  mpv MAY BE ADDRESSED AS EITHER "mpv" OR "./mpv" IN EVERY SYSTEM. LINUX snap ALLOWS IT TO RUN ITSELF.  
 devices,device_list = {mp.get_property('audio-device')},mp.get_property_native('audio-device-list') --devices IS LIST OF audio-devices WHICH WILL ACTIVATE (STARTING WITH EXISTING device). device_list IS COMPLETE LIST.
@@ -70,6 +70,8 @@ lavfi=('aformat=s16:%d:stereo,astats=.5:1,%s,asplit[0],stereotools=%s=1[1],[0][1
 ----astreamselect=inputs:map  ENABLES INSTA-TOGGLE. "af-command" NOT "af toggle". ANY ATTEMPT TO DOUBLE CHANGE GRAPHS OR DO A FULL TOGGLE CAUSES CONTROLLER GLITCH (CAN VERIFY BY TOGGLING NORMALIZER IN SMPLAYER). SHOULD BE PLACED LAST BECAUSE SOME FILTERS (dynaudnorm) DON'T INSTANTLY KNOW WHICH STREAM TO FILTER, BECAUSE THAT'S DETERMINED BY REMOTE CONTROL (af-command 0 OR 1). ON=1 BY DEFAULT.
 
 
+if o.title_clock_only then lavfi=o.filters end  --OVERRIDE
+
 function start_file()  --CONTROLLER ONLY. YOUTUBE LAUNCHES INSTANTLY.  AT LEAST 4 STAGES: LOAD-SCRIPT start-file file-loaded playback-restart  ALL audio PLAYERS quit & THEN ALL NEW ONES START IF file CHANGES.
     if o.title then title=mp.create_osd_overlay('ass-events') end   --NEW title FOR NEW file.
     path,osd_level = mp.get_property('path'),mp.get_property_number('osd-level')   --osd_level RETURNS osd-level, AFTER BLOCKING SMPLAYER INTERFERENCE WITH title.
@@ -79,18 +81,17 @@ function start_file()  --CONTROLLER ONLY. YOUTUBE LAUNCHES INSTANTLY.  AT LEAST 
     if not utils.file_info(path) then pause,start = 'yes',mp.get_property('start') --YOUTUBE. LAUNCHES ytdl INSTANTLY TO THE NEAREST SECOND, PAUSED.
         subprocesses() end 
 end 
+
+directory=utils.split_path(mp.get_property('scripts')) --aspeed.lua FOLDER
+directory=mp.command_native({'expand-path',directory}) --command_native EXPANDS ~
+txtpath  =utils.join_path(directory,('%s-PID%d.txt'):format(label,pid))  --SETTING UP A PIPE INSTEAD OF txtfile COULD GIVE INSTANT RESPONSE, BUT COULD ALSO TRIGGER BUGS.  USING .txt INSTEAD OF PIPE IS LIKE PUTTING PLUMBING THROUGH FRONT DOOR.
 if is_controller then mp.register_event('start-file',start_file) end
 
-if o.title_clock_only then lavfi=o.filters end  --OVERRIDE
 function file_loaded()
-    mp.command(('no-osd af append @%s:lavfi=[%s]'):format(label,lavfi)) --INSERTION MUST BE DELAYED TO file-loaded DUE TO EXCESSIVE LAG IN VIRTUALBOX MACOS-CATALINA.
+    mp.command(('no-osd af append @%s:lavfi=[%s]'):format(label,lavfi))
     if is_controller then mp.observe_property('seeking','bool',subprocesses) end    --OBSERVING seeking MAY BE SLIGHTLY BETTER THAN REGISTERING TO playback-restart (EQUIVALENT).
 end 
 mp.register_event('file-loaded',file_loaded)
-
-directory=utils.split_path(mp.get_property('scripts')) --FROM smplayer.exe FOLDER, directory=".". IN LINUX IT COULD BE "/home/user/Desktop/SMPLAYER".   mp.get_script_directory() HAS BUG.
-directory=mp.command_native({'expand-path',directory}) --command_native RETURNS ~ EXPANDED.
-txtpath  =utils.join_path(directory,('%s-PID%d.txt'):format(label,pid))  --SETTING UP A PIPE INSTEAD OF txtfile COULD GIVE INSTANT RESPONSE, BUT COULD ALSO TRIGGER BUGS.  USING .txt INSTEAD OF PIPE IS LIKE PUTTING PLUMBING THROUGH FRONT DOOR.
 mp.register_event('shutdown',function() os.remove(txtpath) end)  --NO RECYCLE BIN. subprocesses ALL quit.
 
 function subprocesses(_,seeking)    --CONTROLLER ONLY. 
@@ -102,25 +103,23 @@ function subprocesses(_,seeking)    --CONTROLLER ONLY.
     if priority then priority='--priority='..priority --WINDOWS
     else             priority='--speed=1' end         --LINUX NULL OP. priority NOT SUPPORTED.  ALTERNATIVE IS BUILDING args table.
     
-    io.open(txtpath,'w+') --w+ ERASES ALL PRIOR DATA. subprocesses ALL quit WITHOUT IT.
     for _,device in pairs(devices) do for mutelr in ('mutel muter'):gmatch('%g+') do if not (device==devices[1] and mutelr==o.mutelr) --DON'T LAUNCH ON PRIMARY device CHANNEL.
             then utils.subprocess({detach=true,playback_only=false,capture_stdout=false,capture_stderr=false,   --FLAGS OPTIONAL BUT MAY BE NEEDED IN SOME LINUX BUILD.  SET CHILD "msg-level=all=no" OR ELSE PARENT LOG FILLS UP. --aid=CAUSES BUG. get_property_number REMOVES TRAILING ZEROS.   run & subprocess_detached ALSO CREATE DETACHED SUBPROCESSES, BUT THEY AREN'T FULLY DETACHED & CAN CAUSE A BUG INSIDE SMPLAYER. command_native DIDN'T WORK.
                     args={mpv,priority,'--no-vid','--msg-level=all=no','--pause='..pause,'--start='..start,'--volume='..mp.get_property_number('volume'),('--script-opts=mutelr=%s,pid=%d,%s'):format(mutelr,pid,mp.get_property('script-opts')),'--audio-device='..device,'--script='..utils.join_path(directory,label..'.lua'),path}}) end end end 
 end
 
 map,timers = 1,{}   --map IS GRAPH SWITCH. 
-function playback_restart() --playback-restart RESETS GRAPH. 
-    initial_time_pos=nil  --RESET SAMPLE COUNT.
-    mp.add_timeout(.1,set_osd_level)  --RETURN osd-level IF NECESSARY. timeout TO OVERRIDE SMPLAYER.
-    
+function playback_restart() --playback-restart RESETS GRAPH. astats RE-INSERTS
     if title then title.data=o.title..mp.get_property_osd('media-title') --LINUX .AppImage (VIRTUALBOX) BUGS OUT IF clock OR title INSERT SOONER.
                   title:update()  --DISPLAY title.
                   mp.add_timeout(o.title_duration,title_remove) end --remove title ON timeout.
     
+    initial_time_pos=nil
     mp.command(('af-command %s map %d'):format(label,map)) --UNLIKE automask, DOESN'T REQUIRE frame-step WHEN PAUSED.
-    timers.auto:resume()       --STARTING timer SOONER CAUSED RARE BUG.
-    os_sync()
-    mp.add_timeout( 2,os_sync) --RESYNC ON TIMEOUTS, DUE TO HDD LAG.
+    
+    mp.add_timeout(.1,set_osd_level) --RETURN osd-level IF NECESSARY. timeout TO OVERRIDE SMPLAYER.
+    mp.add_timeout( 0,os_sync) --RESYNC ON TIMEOUTS, DUE TO HDD LAG.
+    mp.add_timeout( 2,os_sync)
     mp.add_timeout( 4,os_sync)
     mp.add_timeout( 8,os_sync)
     mp.add_timeout(16,os_sync)
@@ -131,6 +130,11 @@ function title_remove() --SENDS title→nil ON timeout.
     if title then title:remove() end
     title=nil 
 end 
+
+function set_osd_level()    --SEND osd_level→nil ON TIMEOUT.
+    if osd_level then mp.set_property('osd-level',osd_level) end
+    osd_level=nil
+end
 
 function on_toggle(mute)   --CONTROLLER ONLY. INSTA-TOGGLE (SWITCH), NOT PROPER FULL toggle. (PERHAPS A DOUBLE-TAP key_bind COULD TRIGGER FULL TOGGLE.)  subprocesses MAINTAIN SYNC WHEN OFF.
     if not start or not is_controller then return end  --NOT STARTED YET.
@@ -158,8 +162,6 @@ timers.osd=mp.add_periodic_timer(1, clock_update)   --THIS 1 MOSTLY DETERMINES T
 
 function os_sync()  --RUN 10ms LOOP UNTIL clock TICKS. os.time() HAS 1s PRECISION WHICH MAY BE IMPROVED TO 10ms, TO SYNC time-pos WITH subprocesses. 
     if not time1 then time1=os.time()  --time1=nil IF NOT ALREADY SYNCING (ACTS AS SWITCH)
-        timers. resync:kill() 
-        timers. resync:resume() 
         timers.os_sync:resume() 
         return end
     
@@ -173,28 +175,24 @@ function os_sync()  --RUN 10ms LOOP UNTIL clock TICKS. os.time() HAS 1s PRECISIO
     clock_update() 
 end
 timers.os_sync=mp.add_periodic_timer(o.os_sync_delay,os_sync)
-timers. resync=mp.add_periodic_timer(o. resync_delay,os_sync) --KEEP RESYNCING EVERY 2s FOR 20s. CPU TIME LOSES TIME IF SIMULTANEOUSLY TOGGLING GRAPHS, & HDD LAG.  RESYNC ON timeout REQUIRED FOR subprocesses TOO.
 for _,timer in pairs(timers) do timer:kill() end    --kill timers. THEY CARRY OVER TO NEXT FILE IN MPV PLAYLIST.
+timers.resync=mp.add_periodic_timer(o.resync_delay,os_sync)
 
-function set_osd_level()
-    if osd_level then mp.set_property('osd-level',osd_level) end
-    osd_level=nil
-end
-
-function set_speed(astats)    --astats='af-metadata/aspeed' OR nil     THIS IS THE MAIN FUNCTION. CONTROLLER WRITES TO txtfile, OR subprocesses READ FROM IT. BY TRIAL & ERROR SHOULD ONLY EVER BE PCALLED IN CASE OF SUDDEN STOP (SIMULTANEOUS io.remove & io.write).   VARIOUS CONDITIONS FIX RARE BUGS (SMOOTH SEEKING ON YOUTUBE, ETC).
+function set_speed(astats)  --astats='af-metadata/aspeed' OR nil     CONTROLLER WRITES TO txtfile, OR subprocesses READ FROM IT. BY TRIAL & ERROR SHOULD ONLY EVER BE PCALLED IN CASE OF SUDDEN STOP (SIMULTANEOUS io.remove & io.write).
     samples_time,os_time = nil,os.time()   --nil WHEN seeking   TIMEFROM1970
     paused,seeking,time_pos,meta = mp.get_property_bool('pause'),mp.get_property_bool('seeking'),mp.get_property_number('time-pos'),mp.get_property_native('af-metadata/'..label)
+    if not time_pos then time_pos=0 end --INITIALIZATION BUGFIX: STOPS VIRTUALBOX-YOUTUBE FROM BUGGING OUT.
     if meta then samples_time=meta['lavfi.astats.Overall.Number_of_samples']/o.samplerate end    --#samples/samplerate          time-pos, playback-time & audio-pts WORK WELL OVER 1 MINUTE, BUT NOT 1 HOUR. autosync WON'T FIX THIS. SO USE astats INSTEAD.  
     
     if sync_time then os_time=sync_time+mp.get_time()  --PRECISE TO 10ms. BEFORE SYNC, pause OVERRIDE STILL APPLIES.
-        if samples_time and samples_time>o.time_needed then if not initial_time_pos and astats and not paused and not seeking   --INITIALIZE, WITH ENOUGH DATA & IF TRIGGERED BY astats.
-            then initial_time_pos=time_pos-samples_time end  -- THIS # STAYS THE SAME FOR THE NEXT 10 HOURS.   LIKE HOW YOGHURT GOES OFF, PERHAPS 20 HRS LATER THE SPEAKERS WILL BE OFF (astats ISSUE). DISJOINT STEREO SEEMS LIKE YOGHURT DISJOINT FROM CREAM.         REPLACE "not initial_time_pos"→"true" TO PROVE MPV CAN'T SYNC WITHOUT astats.
+        if samples_time and samples_time>o.time_needed then if not initial_time_pos and astats and not paused and not seeking   --INITIALIZE, WITH ENOUGH DATA & IF TRIGGERED BY astats.     REPLACE "not initial_time_pos"→"true" TO PROVE MPV CAN'T SYNC WITHOUT astats.
+            then initial_time_pos=time_pos-samples_time end  -- THIS # STAYS THE SAME FOR THE NEXT 10 HOURS.   LIKE HOW YOGHURT GOES OFF, PERHAPS 20 HRS LATER THE SPEAKERS WILL BE OFF (astats ISSUE).    
             if initial_time_pos then time_pos=initial_time_pos+samples_time end end end   --NEW METRIC WHOSE CHANGE IS BASED ON astats. IT'S A TIME METRIC-SWITCH TRICK.
     
-    if is_controller then if not (paused or seeking or astats) then return end --ONLY WRITE DOWN TIMES @astats OBSERVATION, NOT auto timer.
-        txtfile,volume = io.open(txtpath,'w+'),mp.get_property_number('volume')  --volume IN [0,100]
-        if OFF or seeking or mp.get_property_bool('mute') then volume=0  end --OFF & seeking SAME AS mute.
-        if paused then volume=-1 end --NEGATIVE → pause. 
+    if is_controller then if not (paused or astats or seeking) and initial_time_pos then return end --ONLY WRITE DOWN TIMES @astats OBSERVATION, UNLESS paused OR seeking.
+        txtfile,volume = io.open(txtpath,'w+'),mp.get_property_number('volume')  --volume RANGE [0,100]    w+ ERASES ALL PRIOR DATA.
+        if OFF or mp.get_property_bool('mute') then volume=0  end --OFF & mute.
+        if paused or seeking then volume=-1 end --NEGATIVE → pause. 
 
         txtfile:write(('%s\n%d\n%d\n%s\n%s\n%s'):format(mp.get_property('path'),mp.get_property_number('current-tracks/audio/id'),volume,mp.get_property_number('speed'),os_time,time_pos))   --%s,%d = string,DECIMAL-INTEGERS. CONTROLLER REPORT. EITHER flush() OR close().  LINES 1,2,3,4,5,6 = path,aid,volume,speed,time,POSITION   THE LAST 2 lines COULD BE COMBINED (TIMEFROM1970TO0=DIFFERENCE).
         txtfile:close() --write & close CAN USUALLY BE COMBINED ON 1 LINE, BUT NOT ON SLOW DARWIN (MACOS-CATALINA VIRTUALBOX). IT DOESN'T RETURN PROPERLY. 
@@ -202,38 +200,37 @@ function set_speed(astats)    --astats='af-metadata/aspeed' OR nil     THIS IS T
         if o.meta_osd then mp.osd_message(mp.get_property_osd('af-metadata/'..label):gsub('\n','    \t')) end   --TAB EACH STAT (TOO MANY LINES).
         return end   --CONTROLLER ENDS HERE.  IRONICALLY IT DOESN'T SET SPEED, BECAUSE EACH audio INSTANCE HAS A MIND OF ITS OWN.
     
-    if txt_time and os_time-txt_time>o.timeout then mp.command('quit') end --EXIT - CONTROLLER HARD BREAKED LONG AGO.
     pcode,lines = pcall(io.lines,txtpath)    --lines ITERATOR RETURNS ERROR OR 0 OR 5 LINES.     THIS IS A pcall INSIDE ANOTHER pcall.
-    if not pcode then mp.command('quit') end --EXIT & DELETE. NO txtfile MEANS CONTROLLER HAS STOPPED. 'stop' INCOMPATIBLE WITH LINUX .AppImage ('quit' INSTEAD).
+    if not pcode and sync_time then mp.command('quit') end --EXIT & DELETE. NO txtfile MEANS CONTROLLER HAS STOPPED. 'quit' NOT 'stop' DUE TO LINUX .AppImage.   BUGFIX: WAIT FOR initial_time_pos, DUE TO EXCESSIVE LAG IN VIRTUALBOX.
     
     path=lines()  --LINE1=path  
     if not path or path=='' then return end --SOMETIMES txtfile IS BLANK.
-    if path~=mp.get_property('path') then mp.command('quit') end --EXIT. DIFFERENT FILE (E.G. PLAYLIST). 
+    if path~=mp.get_property('path') and sync_time then mp.command('quit') end --EXIT. DIFFERENT FILE (E.G. PLAYLIST).    BUGFIX: WAIT FOR initial_time_pos, DUE TO EXCESSIVE LAG IN VIRTUALBOX.
     mp.set_property_number('aid',lines()) --LINE2=aid   UNTESTED  
     
-    volume,speed,txt_time = 0+lines(),0+lines(),0+lines()    --LINES 3,4,5 = volume,speed,TIME_OF_WRITE    0+ CONVERTS tonumber
+    volume,txt_speed,txt_time = 0+lines(),0+lines(),0+lines()    --LINES 3,4,5 = volume,speed,TIME_OF_WRITE    0+ CONVERTS tonumber
     if volume<0 then mp.set_property_bool('pause',true)
-        return end
-    mp.set_property_bool  ('pause' ,false)
+    else             mp.set_property_bool('pause',false) end
     mp.set_property_number('volume',volume)
-    if not sync_time or not (paused or seeking or astats) then return end --DON'T CHANGE speed BEFORE INITIAL SYNC OR IF PLAYING WITHOUT astats UPDATE. 
+    if not sync_time or not (paused or seeking or astats) then return end --DON'T CHANGE speed BEFORE INITIAL SYNC OR WITHOUT astats UPDATE (UNLESS paused). 
     
     time_gained=time_pos-lines()-(os_time-txt_time)  --LINE6=POS     SUBTRACT TIME_FROM_WRITE FROM DIFFERENCE BTWN POSITIONS.
     if o.seek_limit and math.abs(time_gained)>o.seek_limit then mp.command(('seek %s exact'):format(-time_gained)) --INSTANT SYNC USING seek INSTEAD OF speed (BETTER TO SKIP THE TRACK THAN JERK ITS SPEED - LIKE SCRATCHING A RECORD).
         return end   
+    if os_time-txt_time>o.timeout then mp.command('quit') end --EXIT - CONTROLLER HARD BREAKED LONG AGO.
     
     if not randomseed then randomseed=os_time  --INITIALIZE random # GENERATOR. WITHOUT randomseed THE NUMBERS ARE EASY TO PREDICT.
         math.randomseed(randomseed) end  
-    
-    speed=speed-time_gained/.5    --time_gained→0 OVER NEXT .5 SECONDS (astats UPDATE TIME).
-    if samples_time>o.time_needed and mp.get_property_number('time-remaining')>o.time_needed   --DON'T RANDOMIZE BEFORE samples_time STABILIZES, NOR NEAR end-file. 
-    then speed=speed+math.random(-o.max_random_percent,o.max_random_percent)/100 end 
-    
-    speed=math.max( 1-o.max_percent/100 , math.min(1+o.max_percent/100, speed) )    --speed LIMIT. LUA DOESN'T SUPPORT math.clip
+        
+    speed=txt_speed-time_gained/.5  --time_gained→0 OVER NEXT .5 SECONDS (astats UPDATE TIME).
+    if initial_time_pos and mp.get_property_number('time-remaining')>o.time_needed   --DON'T RANDOMIZE WITHIN time_needed. 
+    then speed=speed*(1+math.random(-o.max_random_percent,o.max_random_percent)/100) end 
+    speed=math.max( txt_speed/o.max_speed_ratio , math.min( txt_speed*o.max_speed_ratio , speed ) )    --speed LIMIT RELATIVE TO CONTROLLER.  LUA DOESN'T SUPPORT math.clip
     mp.set_property_number('speed',speed)
 end
-mp.observe_property('af-metadata/'..label,'native',function(astats) pcall(set_speed,astats) end) --TRIGGERS EVERY HALF A SECOND. pcall SIMPLIFIES set_speed.
-timers.auto=mp.add_periodic_timer(              .5,function()       pcall(set_speed)        end) --timer KEEPS CHECKING txtfile WHEN PAUSED, WITHOUT astats OBSERVATION.
+mp.observe_property('frame-drop-count'   ,'number',function() initial_time_pos=nil end) --TRIGGERS ON LAG. BUGFIX FOR EXCESSIVE LAG RESETS SAMPLE COUNT.
+mp.observe_property('af-metadata/'..label,'native',function(astats) pcall(set_speed,astats) end) --TRIGGERS EVERY HALF A SECOND. pcall NEEDED IN GENERAL.
+timers.auto=mp.add_periodic_timer(              .5,function()       pcall(set_speed)        end) --timer KEEPS CHECKING txtfile WHEN PAUSED, WITHOUT astats UPDATE.
 
 
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (TECH SPECS), & END (MISC.). ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
@@ -241,9 +238,6 @@ timers.auto=mp.add_periodic_timer(              .5,function()       pcall(set_sp
 ----FFmpeg v5.1.2(MACOS) v4.3.2(LINUX .AppImage) v6.0(LINUX) HAVE BEEN FULLY TESTED.
 ----"autospeed.lua" IS A DIFFERENT SCRIPT FOR video speed, NOT audio. 
 ----audio-params/samplerate current-tracks/audio/demux-samplerate PROPERTIES GIVE samplerate, BUT BETTER TO SET IT IN GRAPH.
-
-----MACOS yt-dlp BUG: MUST SET EXTRA SCRIPT-OPT FOR ytdl_hook-ytdl_path.
-----BUG: EXCESSIVE LAG ALONG WITH autocomplex. IN CASE OF DESYNC MUST STOP & PLAY (RESET).  autosync DOESN'T HELP.
 
 ----ALTERNATIVE FILTERS:
 ----apad     (SIMPLER TO USE keep-open=yes)     APPENDS SILENCE TO subprocesses, SO THEY NEVER stop UNLESS THE CONTROLLER DOES. INSERTS BEFORE astats OR ELSE astats FAILS TO UPDATE MAIN FUNCTION. 
