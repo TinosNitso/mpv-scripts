@@ -4,7 +4,7 @@ Video clock, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), anim
 To use on YouTube select Open→URL in SMPlayer. All toggle instantly if you disable the autocomplex `toggle_on_double_mute` option. The mask vanishes or re-appears, along with black-bars, & the audio switches btwn random & normal. MPV has instant zoom, but unfortunately no scroll bar (to pan around with mouse, etc). Keyboard shortcuts only work if MPV has its own window (SMPlayer preference).
 
 ## Installation
-In Windows extract all `.lua` scripts from `.zip` & copy/paste them into `smplayer-portable` folder. Then in SMPlayer Advanced Preferences enter 
+In Windows extract all `.lua` scripts from `.zip` & copy/paste them into `smplayer-portable` (or smplayer) folder. Then in SMPlayer Advanced Preferences enter 
 
 `--script=autoloader.lua`
 
@@ -15,7 +15,7 @@ Then hit OK & play. Overall I consider playback smoother than VLC. [autoloader](
 In Linux try `sudo apt install smplayer` or double-click the `.AppImage`. All scripts also fully compatible with `.snap` & `.flatpak` releases. `~/` means home folder in Linux & MacOS.
 
 ## Safety Inspection
-Before running scripts it's safer to first check them in Notepad++. Search for & highlight `os.execute` (operating system), `io.popen` (input output process) & `mp.command*` (media player). Safe commands include `expand-path` `frame-step` `seek` `stop` `quit` `af*` `vf*`, but `load-script` `run` `subprocess*` may be unsafe. To inspect a script check potentially unsafe commands. Ignore all comments (anything following `--`).
+Before running scripts it's safer to first check them in Notepad++. Search for & highlight `os.execute` (operating system), `io.popen` (input output process) & `mp.command*` (media player). Safe commands include `expand-path` `frame-step` `seek` `playlist-next` `stop` `quit` `af*` `vf*`, but `load-script` `run` `subprocess*` may be unsafe. `set` is safe except for `script-opts` which may hook an unsafe executable. To inspect a script check potentially unsafe commands. Ignore all comments (anything following `--`). 
 
 ## Terminal Commands
 To run in Windows from Command Prompt, create a New Text Document in SMPlayer folder & rename it `TEST.CMD`. Also copy in `TEST.MP4`. Then right-click on `TEST.CMD` & click `Edit`. In Notepad copy/paste:
@@ -34,11 +34,14 @@ That uses the MPV bundled with SMPlayer. Only good builds make it into `SMPlayer
 
 FFmpeg versions successfully used include v4.3.2, v5.1.2, & v6.0. Graphs written for compatibility for v4→v6.
 
-MPV versions successfully used include v0.35.0, v0.35.1 & v0.36.0. SMPlayer v23.6.0
+MPV versions successfully used include v0.35.0, v0.35.1 & v0.36.0. SMPlayer v23.6.0 & v23.12.0. v23.12 has an annoying `no-osd seek 0 relative exact` accompanying every `set pause yes`.
 
 ## Latest Updates
-Scripts now written for YouTube ease-of-use. `autocomplex` double-normalizer & better shoe color, & can switch track. Improved codes in all scripts. `automask` can now loop JPEG directly.
-
-`doc` folder added to GitHub.
+Above code is unreleased properly. 
+- autoloader.lua is replaced by main.lua, in which case `--script=.` (directory). title moved from aspeed to main.
+- automask now has perfect circles using geq. Also has o.format option.
+- autocrop now has true aspect toggle. It returns double-black bars properly when you double-click mute.
+- autocomplex more efficient code juggling 12.5, 25 & 30 fps. 30 fps for film & automask. o.freqs_fps_image, o.freqs_interpolation & o.feet_lutrgb options added.
+- aspeed improved response time. echo to socket isn't allowed on Linux without installing a dependency, so I re-wrote it using only txtfile.
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
