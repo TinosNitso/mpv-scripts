@@ -1,7 +1,6 @@
 ----FOR MPV & SMPLAYER. CROP BLACKBARS OFF JPEG, PNG, BMP, GIF, WEBM, MP3 albumart, MP4 & YOUTUBE. CAN CHANGE vid TRACK (MP3TAG) & crop.  .TIFF 1-LAYER ONLY, NO WEBP OR PDF.
 ----USE DOUBLE-mute TO toggle (FRAME-STEPS WHEN PAUSED). CAN MAINTAIN CENTER IN HORIZONTAL/VERTICAL, WITH INSTANTANEOUS TOLERANCE VALUES. SUPPORTS BOTH cropdetect & bbox FFmpeg-filters. 
 ----THIS VERSION HAS PROPER aspect TOGGLE (EXTRA DOUBLE BLACK BARS TO MATCH stream), BUT NO SMOOTH-crop. BASED ON https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua
-----mpv.app IN MACOS HAS A DIFFERENT LUA VERSION WHICH ISN'T WORKING WITH gmatch. SMPlayer.app DOES WORK, THOUGH.
 
 o={  --options
     auto            =true,--IF false, CROPS OCCUR ONLY on_seek & on_toggle.
@@ -14,14 +13,14 @@ o={  --options
     toggle_on_double_mute=.5,       --SECONDS TIMEOUT FOR DOUBLE-mute-TOGGLE. ONLY WORKS IN SMPLAYER IF THERE'S audio TO mute (CAN'T toggle ON RAW JPEG).
     key_bindings         ='C c J j',--DEFAULT='C'. CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER. C→J IN DVORAK, BUT J IS ALSO next_subtitle (& IN VLC IS dec_audio_delay). m IS mute (IN DVORAK TOO) SO CAN DOUBLE-PRESS m. m&m DOUBLE-TAP MAYBE OUGHT TO BE automask, BUT autocrop IS MORE FUNDAMENTAL.
     
-    command_prefix    ='no-osd', --DEFAULT=''. CAN SUPPRESS osd.
-    detect_limit_image=32, --INTEGER 0→255, FOR JPEG & albumart.
-    detect_limits     ={   --detect_limit OVERRIDES. NOT CASE SENSITIVE. ['media-title']=detect_limit 
+    command_prefix    ='no-osd',--DEFAULT=''. CAN SUPPRESS osd, OR PERFORM COMMANDS AS async.
+    detect_limit_image=32,      --INTEGER 0→255, FOR JPEG & albumart.
+    detect_limits     ={        --detect_limit OVERRIDES. NOT CASE SENSITIVE. ['media-title']=detect_limit 
         ['We are army of people - Red Army Choir']=64,
         ['Eminem - Encore']=100,  --REPLACE WITH media-title SUBSTRING, & ITS LIMIT.
     },
     detector      ='cropdetect=%s:%s:1:0',--DEFAULT='cropdetect=limit=%s:round=%s:reset=1:0'  %s=string SUBSTITUTIONS @file-loaded. reset>0.  CAN ALSO COMBINE MULTIPLE DETECTORS IN LIST (MORE CPU USAGE?).
-    detector_image='bbox=%s',             --DEFAULT='bbox=%s'  %s=detect_limit_image
+    detector_image='bbox=%s',             --DEFAULT='bbox=%s'  %s=detect_limit_image OR OVERRIDE.
     
     MAINTAIN_CENTER_X  =  0, --TOLERANCE. 0 MEANS NEVER MOVE THE CENTER (LIKE CROSSHAIRS). A SINGLE BLACK BAR ON 1 SIDE MAYBE OK (UNLESS 1 FRAME ONLY).
     MAINTAIN_CENTER_Y  =  0, --TOLERANCE. nil FOR albumart. A TRIBAR FLAG WITH BLACK ON TOP OR BOTTOM NEEDS RATIO<1/3. MOVEMENTS IN CENTER TEND TO BE SPURIOUS (DARK FLOOR).
@@ -35,28 +34,28 @@ o={  --options
     
     -- scale={1680,1050},--DEFAULT=display (WINDOWS & MACOS), OR ELSE =video (LINUX). CHANGING vid (MP3 TAGS) CAUSES EMBEDDED MPV TO SNAP UNLESS SOME ABSOLUTE scale IS USED. EMBEDDING MPV CAUSES ANOTHER LAYER OF BLACK BARS (WINDOW SNAP).  
     format ='yuv420p',   --DEFAULT=yuv420p  SHOULD REMOVE alpha DUE TO cropdetect BAD PERFORMANCE BUG.  420p REDUCES COLOR RESOLUTION TO HALF-WIDTH & HALF-HEIGHT.
-    options=''           --'opt1 val1 opt2 val2 ...' FREE FORM.  main.lua HAS io_write & options.
-        -- ..' image-display-duration inf ' --NON-0 delay COULD BE SMPLAYER ACCIDENTAL +- KEYTAP. aspeed IS GIVES RAW JPEG A clock.
+    options=''           --'opt1 val1 opt2 val2 ...' FREE FORM.  main.lua HAS io_write (ESSENTIAL) & MORE options.
+        ..' geometry 50%'--ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.
 }
 (require 'mp.options').read_options(o)    --OPTIONAL?
 
 for opt,val in pairs({toggle_on_double_mute=0,key_bindings='C',command_prefix='',detect_limit_image=o.detect_limit,detect_limits={},detector='cropdetect=limit=%s:round=%s:reset=1:0',detector_image='bbox=%s',TOLERANCE=0,TOLERANCE_TIME=10,scale={},format='yuv420p',options=''})
 do if not o[opt] then o[opt]=val end end --ESTABLISH DEFAULTS. 
 
-opt,val,o.options = '','',o.options:gmatch('%g+') --%g+=GLOBAL MATCH ITERATOR, LONGEST TO SPACEBAR.  '','' → NULL-SET
-while   val do mp.set_property(opt,val)
+opt,val,o.options = '','',o.options:gmatch('[^ ]+') --GLOBAL MATCH ITERATOR. [^ ] MEANS COMPLEMENT SET TO " ". + MEANS LONGEST (FULL WORD MATCHES). '%g+' (GLOBAL) IS INCOMPATIBLE WITH mpv.app WHICH USES AN OLD LUA VERSION. THE SYMBOL FOR EXCLUDING SPACES, TABS & NEWLINES CAME IN A NEWER VERSION.
+while   val do mp.set_property(opt,val)   --('','') → NULL-SET
     opt,val = o.options(),o.options() end --nil @END
 
 timers,m,label = {},{},mp.get_script_name() --m=MEMORY FOR METADATA & VARIABLE OPTIONS WHICH MAY VARY FROM TRACK TO TRACK.  COULD ALSO USE o2 INSTEAD OF m.  timers CARRY OVER TO NEXT FILE IN MPV PLAYLIST.
 function file_loaded()  --ALSO on_vid & ytdl.
     if not mp.get_property_number('current-tracks/video/id') then return end   --RAW MP3 VISUALS MAY NOT NEED CROPPING.
     
-    W,H,par = o.scale[1],o.scale[2],mp.get_property_number('current-tracks/video/demux-par')  --scale OVERRIDE, & PIXEL ASPECT RATIO. property_number RETURNS 1 NOT 1.000...
+    W,H,par = o.scale[1],o.scale[2],mp.get_property_number('current-tracks/video/demux-par')  --scale OVERRIDE. get_property_number REMOVES TRAILING .000...
     if not (W and H) then W,H = mp.get_property_number('display-width'),mp.get_property_number('display-height') end  --WINDOWS & MACOS.
     if not (W and H) then W,H = mp.get_property_number('video-params/w'),mp.get_property_number('video-params/h') end --USE [vo] SIZE (LINUX).  current-tracks/video/demux-w IS RAW TRACK WIDTH.
     if not (W and H) then mp.add_timeout(.05,file_loaded) --BUGFIX FOR EXCESSIVE LAG IN VIRTUALBOX-SMPLAYER-YOUTUBE. RE-RUN AFTER 50ms.
         return end
-    if not par then par=1 end   --JPEG: ASSUME 1.
+    if not par then par=1 end  --PIXEL ASPECT RATIO MUST BE WELL-DEFINED. JPEG ASSUME 1. 
     
     for opt,val in pairs(o) do m[opt]=val end  --COPY ORIGINAL OPTIONS INTO MEMORY.
     complex_opt,media_title = mp.get_opt('lavfi-complex'),mp.get_property('media-title'):lower()  --media-title @file-loaded.
@@ -79,7 +78,7 @@ function file_loaded()  --ALSO on_vid & ytdl.
     ----crop      =w:h:x:y:keep_aspect:exact  IS THE CONTROLLER.  DEFAULT=iw:ih:(iw-ow)/2:(ih-oh)/2:0:0   WON'T CHANGE DIMENSIONS WITH t OR n, NOR eval=frame NOR enable=1 (TIMELINE SWITCH). BUGS OUT IF w OR h IS TOO BIG. SAFER TO AVOID SMOOTH-CROPPING.
     ----scale     =w:h  DEFAULTS iw:ih  USING [vo] scale WOULD CAUSE SNAPPING on_vid, SO CAN USE display INSTEAD. EITHER WINDOW SNAPS IN, OR ELSE video SNAPS OUT.
     ----pad       =w:h:x:y  FOR TOGGLE OFF. RETURN EXTRA BLACK BARS TO CORRECT aspect. MPV HAS A WINDOW SIZE TO COLOR IN.
-    ----setsar    =sar  IS THE FINISH.  SAMPLE/PIXEL ASPECT RATIO.  LINUX & MACOS & YOUTUBE BUGFIXES REQUIRE IT @END. ALSO STOPS EMBEDDED MPV SNAPPING on_vid. 
+    ----setsar    =sar  IS THE FINISH.  SAMPLE/PIXEL ASPECT RATIO. MUST ASSERT SAR. LINUX & MACOS YOUTUBE BUGFIX REQUIRE IT @END. ALSO STOPS EMBEDDED MPV SNAPPING on_vid. 
 
     ----loop      =loop:size  (LOOPS>=-1:MAX_SIZE>0)  IS INDEPENDENT. INFINITE loop SWITCH FOR image (1fps). ALTERNATIVE TO GRAPH REPLACEMENT. COULD INCREASE TO 2fps (SLOW)? MORE RELIABLE WHEN USED WITH FURTHER GRAPHS WHICH WOULD INFINITE loop, LIKE automask. IT'S A RELIABILITY ISSUE: IN THEORY IT SHOULDN'T BE NECESSARY.
     
@@ -90,8 +89,8 @@ function file_loaded()  --ALSO on_vid & ytdl.
                  mp.set_property_bool('pause',false) end  
     timers.auto_delay:resume()  --is1frame REQUIRES SMALL DELAY FOR INITIAL DETECTION (RELIABILITY ISSUE).
 end
-mp.register_event('file-loaded',file_loaded)  --MACOS: CHECK IF DELAY IS NEEDED.
-mp.register_event('end-file',function() m.vid,m.time = nil,nil end)  --FOR MPV PLAYLISTS (EXAMPLE: *.MP4). SAFER TO CLEAR SOME MEMORY.
+mp.register_event('file-loaded',file_loaded)
+mp.register_event('end-file',function() m={}                       end)  --FOR MPV PLAYLISTS (EXAMPLE: *.MP4). CLEAR MEMORY.
 
 function on_vid(_,vid)  --AN MP3 MAY BE A COLLECTION OF JPEG IMAGES (MP3TAG) WITH DIFFERENT DIMENSIONS.
     if m.vid and m.vid~=vid then file_loaded() end
@@ -100,26 +99,26 @@ end
 mp.observe_property('vid','number',on_vid)  --TRIGGERS INSTANTLY & AFTER file-loaded.   ALTERNATIVE: current-tracks/video/id
 
 function on_seek()
-    if time~=m.time then m.w,m.time = nil,nil end  --GRAPH REPLACEMENT MAY CAUSE seek (INFINITE CYCLE). m.w=nil CLEARS MEMORY.
-    timers.auto_delay:resume()  --MANUAL RE-DETECT, ON DELAY.
+    m.w,m.time = nil,nil       --CAUSES GEOMETRIC MEMORY RESET. MUST crop AGAIN DUE TO vf-command RESET.
+    timers.auto_delay:resume() --RE-DETECT, ON DELAY, IN CASE ~m.auto.
 end 
-mp.register_event('seek',on_seek)
+mp.register_event('seek',on_seek)  
 
 function on_toggle(mute)    --NOT PROPER FULL toggle. IT RETURNS BLACK BARS USING pad, WITHOUT EVER CHANGING [vo] scale.
     if not (W and H) then return end --NOT loaded YET.
     if mute and not timers.mute:is_enabled() then timers.mute:resume() --START timer ON SINGLE mute.
         return end
     
-    OFF,m.w,m.time,aspect = not OFF,nil,nil,mp.get_opt('aspect')  --TRUE aspect OVERRIDE, DUE TO lavfi-complex.
+    OFF,m.w,m.time,aspect = not OFF,nil,nil,mp.get_opt('aspect')  --autocomplex MUST REPORT TRUE aspect BECAUSE lavfi-complex ARTIFICIALLY CHANGES video-params/aspect. video-dec-params/aspect FAILED TO WORK THE SAME WAY.
     if not OFF then file_loaded()  --TOGGLE ON.
-    else if not aspect then aspect=mp.get_property_number('video-params/aspect') end  --TOGGLE OFF. aspect MUST BE WELL-DEFINED.
-        aspect_ratio=aspect/(W/H)   --[vo]/display  aspect RATIO. RETURN ORIGINAL aspect.
-        mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,pad=%d:%d:(ow-iw)/2:(oh-ih)/2,setsar=%s]'):format(o.command_prefix,label,W*math.min(1,aspect_ratio),H/math.max(1,aspect_ratio),W,H,par))  --GRAPH REPLACEMENT DOESN'T CHANGE THEIR ORDER (NEVER remove).  ADDS AN EXTRA PAIR OF BLACK BARS TO CORRECT aspect ON FINAL display.
+    else if not aspect then aspect=mp.get_property_number('video-params/aspect') end  --TOGGLE OFF. aspect MUST BE WELL-DEFINED, BUT THE PROPERTY IS DEPRACATED.
+        aspect_ratio=aspect/(W/H)   --RATIO=[vo]/display.  RETURN ORIGINAL aspect BY PADDING EITHER HORIZONTALLY OR VERTICALLY.
+        mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,pad=%d:%d:(ow-iw)/2:(oh-ih)/2,setsar=%s]'):format(o.command_prefix,label,W*math.min(1,aspect_ratio),H/math.max(1,aspect_ratio),W,H,par))  --GRAPH REPLACEMENT DOESN'T CHANGE THEIR ORDER (NEVER remove). ADDS AN EXTRA PAIR OF BLACK BARS. WIDTH MULTIPLIES BUT HEIGHT DIVIDES, WHEN NECESSARY.
         apply_crop({ x=0,y=0, w=m.max_w,h=m.max_h }) end --NULL crop (CAN INSERT max NUMBERS), OR ELSE remove. IS SLOW WITHOUT FRAME-STEPPING (DOUBLE GRAPH REPLACEMENT).
 end
-for key in o.key_bindings:gmatch('%g+') do mp.add_key_binding(key,'toggle_crop_'..key,on_toggle) end
+for key in o.key_bindings:gmatch('[^ ]+') do mp.add_key_binding(key,'toggle_crop_'..key,on_toggle) end
 mp.observe_property('mute', 'bool', on_toggle)
-timers.mute        =mp.add_periodic_timer(o.toggle_on_double_mute, function()end)    --double_mute timer
+timers.mute        =mp.add_periodic_timer(o.toggle_on_double_mute, function()end)  --double_mute timer
 timers.mute.oneshot=true 
 timers.mute:kill()
 
@@ -131,8 +130,8 @@ function detect_crop()     --MAIN function, ON LOOP.
         return end 
     if o.meta_osd then mp.osd_message(mp.get_property_osd('vf-metadata/'..label)) end  --DISPLAY COORDS FOR 1 SEC.
     
-    for key in ('w h x1 y1 x2 y2 x y'):gmatch('%g+') do value=meta['lavfi.cropdetect.'..key]      
-        if not value then                               value=meta['lavfi.bbox.'      ..key] end  --bbox POSSIBLE.
+    for key in ('w h x1 y1 x2 y2 x y'):gmatch('[^ ]+') do value=meta['lavfi.cropdetect.'..key]      
+        if not value then                                 value=meta['lavfi.bbox.'      ..key] end  --bbox POSSIBLE.
         meta[key]=tonumber(value) end   --tonumber(nil)=nil (BUT 0+nil FAILS).
     if not (meta.w and meta.h and meta.x1 and meta.y1 and meta.x2 and meta.y2) then if o.msg_log then mp.msg.error("Got empty crop data.") end  --THIS CAN HAPPEN IF VID IS paused.   
          return end 
@@ -172,9 +171,9 @@ timers.auto_delay=mp.add_periodic_timer(o.auto_delay,detect_crop)
 
 function apply_crop(meta)
     m.time=time  --REMEMBER time OF is_effective crop.
-    for whxy in ('w h x y'):gmatch('%g') do m[whxy]=meta[whxy]  --meta→m  MEMORY TRANSFER. 
+    for whxy in ('w h x y'):gmatch('[^ ]') do m[whxy]=meta[whxy]  --meta→m  MEMORY TRANSFER. 
         mp.command(('%s vf-command %s %s %d'):format(o.command_prefix,label,whxy,meta[whxy])) end  --UNPAUSED USES vf-command (MORE EFFICIENT).
-    if is1frame or mp.get_property_bool('pause')
+    if is1frame or mp.get_property_bool('pause') and not mp.get_property_bool('seeking')  --GRAPH REPLACEMENT MAY INFINITE seek CYCLE, SO CHECK ~seeking.
     then mp.command(('%s vf pre @%s:lavfi=[format=%s,%s,crop=%d:%d:%d:%d:1:1]'):format(o.command_prefix,label,o.format,m.detector,meta.w,meta.h,meta.x,meta.y)) end  --REPLACEMENT GRAPH FOR albumart WITHOUT complex. VERIFY BY TOGGLE "c" REPEATEDLY (WITH &) WITHOUT automask.
     if not m.auto then timers.auto_delay:kill() end --kill auto timer AFTER SUCCESSFUL crop.
 end
