@@ -53,7 +53,8 @@ SMPlayer *v23.6.0* & v23.12.0 successful. v23.12 has an annoying `no-osd seek 0 
 Fmpeg versions *v6.0* & v4.3.2 (.AppImage) successfully tested.
 
 ## Latest Updates
-Above code & `.zip` is unreleased properly, but passes all my tests so far. I just have to do a couple more Linux tests (.snap & .flatpak updates).
+Above .lua scripts & `mpv-scripts.zip` are unreleased properly, but pass almost all my tests so far. I just have to simplify some codes & fix a rare `aspeed.lua` starting glitch (lag on .txt file creation).
+
 - All scripts now work with `mpv.app` on MACOS-11. It uses an older LUA version, back when the `%g` pattern didn't exist.
 - YouTube bugfix `--ytdl-format=[ext!=webm]`. webm is currently incompatible with `lavfi-complex`. It ruined only some videos.
 - `autoloader.lua` is replaced by `main.lua`, in which case `--script=.` (directory). title moved from aspeed to main.
