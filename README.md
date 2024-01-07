@@ -34,16 +34,30 @@ That uses the MPV bundled with SMPlayer. Only good builds make it into `SMPlayer
 
 `mpv --script=~/Desktop/mpv-scripts/autoloader.lua https://youtu.be/5qm8PH4xAss`
 
-FFmpeg versions successfully used include v4.3.2, v5.1.2, & v6.0. Graphs written for compatibility for v4→v6.
+MacOS users can drag & drop mpv.app onto Applications. The following commands assume `main.lua` is present (unreleased, but in above .zip).
 
-MPV versions successfully used include v0.35.0, v0.35.1 & v0.36.0. SMPlayer v23.6.0 & v23.12.0. v23.12 has an annoying `no-osd seek 0 relative exact` accompanying every `set pause yes`.
+`/Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"` 
+
+In Linux to use flatpak & snap versions of MPV the commands are:
+
+`cd /var/lib/flatpak/app/info.smplayer.SMPlayer/current/active/files/bin & mpv --script=~/Desktop/mpv-scripts/ https://youtu.be/5qm8PH4xAss`
+
+`cd /snap/smplayer/current/usr/bin & mpv --script=~/Desktop/mpv-scripts/ https://youtu.be/5qm8PH4xAss`
+
+## Versions
+
+Scripts incompatible with MPV v0.37.0 (all builds). *v0.36* & older only! v0.36.0 & v0.35.1 successful. Maybe 2 or 3 out of 5 scripts work with v0.37. Hopefully the next version is better!
+
+SMPlayer *v23.6.0* & v23.12.0 successful. v23.12 has an annoying `no-osd seek 0 relative exact` accompanying every `set pause yes`. Releases tested include .7z .exe .app .AppImage .flatpak & .snap.
+
+Fmpeg versions *v6.0* & v4.3.2 (.AppImage) successfully tested.
 
 ## Latest Updates
 Above code & `.zip` is unreleased properly, but passes all my tests so far. I just have to do a couple more Linux tests (.snap & .flatpak updates).
-- All scripts now pass `mpv.app` inspection on MACOS-11. It uses an older LUA version, back when `%g` didn't exist.
+- All scripts now work with `mpv.app` on MACOS-11. It uses an older LUA version, back when the `%g` pattern didn't exist.
 - YouTube bugfix `--ytdl-format=[ext!=webm]`. webm is currently incompatible with `lavfi-complex`. It ruined only some videos.
-- autoloader.lua is replaced by main.lua, in which case `--script=.` (directory). title moved from aspeed to main.
-- automask now has perfect circles using `geq`. Also has `o.format` option.
+- `autoloader.lua` is replaced by `main.lua`, in which case `--script=.` (directory). title moved from aspeed to main.
+- automask now has perfect circles using `geq` (any formula). Also has `o.format` option. Also bugfix (by factor of 2) for how `o.RES_SAFETY` works.
 - autocrop now has true aspect toggle. It returns double-black bars properly when you double-click mute.
 - autocomplex more efficient code juggling 12.5, 25 & 30 fps. 30 fps for film & automask. `o.freqs_fps_image`, `o.freqs_interpolation` (like fade for freqs) & `o.feet_lutrgb` options added. Proprietary drivers almost halve CPU usage, but it also works fine with FOSS drivers. Somehow shuffling planes is more efficient than mixing colors.
 - aspeed improved response time (`o.auto_delay`), & `o.mpv` options. echo to socket isn't allowed on Linux without installing a dependency, so I re-wrote it using only txtfile.
