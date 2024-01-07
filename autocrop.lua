@@ -32,17 +32,17 @@ o={  --options
     -- meta_osd=true, --DISPLAY ALL detector METADATA.
     -- msg_log =true, --MESSAGE TO MPV LOG. FILLS THE LOG.
     
-    -- scale={1680,1050},--DEFAULT=display (WINDOWS & MACOS), OR ELSE =video (LINUX). CHANGING vid (MP3 TAGS) CAUSES EMBEDDED MPV TO SNAP UNLESS SOME ABSOLUTE scale IS USED. EMBEDDING MPV CAUSES ANOTHER LAYER OF BLACK BARS (WINDOW SNAP).  
-    format ='yuv420p',   --DEFAULT=yuv420p  SHOULD REMOVE alpha DUE TO cropdetect BAD PERFORMANCE BUG.  420p REDUCES COLOR RESOLUTION TO HALF-WIDTH & HALF-HEIGHT.
-    options=''           --'opt1 val1 opt2 val2 ...' FREE FORM.  main.lua HAS io_write (ESSENTIAL) & MORE options.
-        ..' geometry 50%'--ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.
+    -- scale={1680,1050},  --DEFAULT=display (WINDOWS & MACOS), OR ELSE =video (LINUX). CHANGING vid (MP3 TAGS) CAUSES EMBEDDED MPV TO SNAP UNLESS SOME ABSOLUTE scale IS USED. EMBEDDING MPV CAUSES ANOTHER LAYER OF BLACK BARS (WINDOW SNAP).  
+    format ='yuv420p',     --DEFAULT=yuv420p  SHOULD REMOVE alpha DUE TO cropdetect BAD PERFORMANCE BUG.  420p REDUCES COLOR RESOLUTION TO HALF-WIDTH & HALF-HEIGHT.
+    options=''             --'opt1 val1 opt2 val2 ...' FREE FORM.  main.lua HAS io_write (NECESSARY) & MORE options.
+        ..' geometry 50% ' --ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.
 }
 (require 'mp.options').read_options(o)    --OPTIONAL?
 
 for opt,val in pairs({toggle_on_double_mute=0,key_bindings='C',command_prefix='',detect_limit_image=o.detect_limit,detect_limits={},detector='cropdetect=limit=%s:round=%s:reset=1:0',detector_image='bbox=%s',TOLERANCE=0,TOLERANCE_TIME=10,scale={},format='yuv420p',options=''})
-do if not o[opt] then o[opt]=val end end --ESTABLISH DEFAULTS. 
+do o[opt]=o[opt] or val end  --ESTABLISH DEFAULTS. 
 
-opt,val,o.options = '','',o.options:gmatch('[^ ]+') --GLOBAL MATCH ITERATOR. [^ ] MEANS COMPLEMENT SET TO " ". + MEANS LONGEST (FULL WORD MATCHES). '%g+' (GLOBAL) IS INCOMPATIBLE WITH mpv.app WHICH USES AN OLD LUA VERSION. THE SYMBOL FOR EXCLUDING SPACES, TABS & NEWLINES CAME IN A NEWER VERSION.
+opt,val,o.options = '','',o.options:gmatch('[^ ]+') --GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) DIDN'T EXIST IN AN OLD LUA VERSION, USED BY mpv.app ON MACOS.
 while   val do mp.set_property(opt,val)   --('','') → NULL-SET
     opt,val = o.options(),o.options() end --nil @END
 
@@ -50,13 +50,13 @@ timers,m,label = {},{},mp.get_script_name() --m=MEMORY FOR METADATA & VARIABLE O
 function file_loaded()  --ALSO on_vid & ytdl.
     if not mp.get_property_number('current-tracks/video/id') then return end   --RAW MP3 VISUALS MAY NOT NEED CROPPING.
     
-    W,H,par = o.scale[1],o.scale[2],mp.get_property_number('current-tracks/video/demux-par')  --scale OVERRIDE. get_property_number REMOVES TRAILING .000...
-    if not (W and H) then W,H = mp.get_property_number('display-width'),mp.get_property_number('display-height') end  --WINDOWS & MACOS.
-    if not (W and H) then W,H = mp.get_property_number('video-params/w'),mp.get_property_number('video-params/h') end --USE [vo] SIZE (LINUX).  current-tracks/video/demux-w IS RAW TRACK WIDTH.
-    if not (W and H) then mp.add_timeout(.05,file_loaded) --BUGFIX FOR EXCESSIVE LAG IN VIRTUALBOX-SMPLAYER-YOUTUBE. RE-RUN AFTER 50ms.
+    W,H = o.scale[1],o.scale[2]  --scale OVERRIDE. 
+    if not W then W,H = mp.get_property_number('display-width'),mp.get_property_number('display-height') end  --WINDOWS & MACOS.
+    if not W then W,H = mp.get_property_number('video-params/w'),mp.get_property_number('video-params/h') end --USE [vo] SIZE (LINUX).  current-tracks/video/demux-w IS RAW TRACK WIDTH.
+    if not W then mp.add_timeout(.05,file_loaded) --BUGFIX FOR EXCESSIVE LAG IN VIRTUALBOX-SMPLAYER-YOUTUBE. RE-RUN AFTER 50ms.
         return end
-    if not par then par=1 end  --PIXEL ASPECT RATIO MUST BE WELL-DEFINED. JPEG ASSUME 1. 
     
+    par=mp.get_property_number('current-tracks/video/demux-par') or 1  --PIXEL ASPECT RATIO MUST BE WELL-DEFINED. JPEG ASSUME 1. get_property_number REMOVES TRAILING .000...
     for opt,val in pairs(o) do m[opt]=val end  --COPY ORIGINAL OPTIONS INTO MEMORY.
     complex_opt,media_title = mp.get_opt('lavfi-complex'),mp.get_property('media-title'):lower()  --media-title @file-loaded.
     complex_opt=complex_opt and complex_opt~='' and complex_opt~='no'  --A BLANK complex IS NOTHING. ASSUME OPT MEANS IMAGES ALREADY ON loop WHICH WORKS DIFFERENT WITH albumart.
@@ -68,7 +68,7 @@ function file_loaded()  --ALSO on_vid & ytdl.
     for title,limit in pairs(o.detect_limits) do if media_title:find(title:lower(),1,true) then m.detect_limit=limit  end end   --detect_limit FINAL OVERRIDE.  1,true = STARTING_INDEX,EXACT_MATCH  NOT CASE SENSITIVE.
     m.detector=m.detector:format(m.detect_limit,o.detect_round)
     
-    mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,pad,setsar=%s]'):format(o.command_prefix,label,W,H,par))  --pad REPLACED @TOGGLE.
+    mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,pad,setsar=%s]'):format(o.command_prefix,label,W,H,par))  --pad REPLACED @TOGGLE (BUT IN THEORY IT'S PERMANENT).
     mp.command(('%s vf pre @%s:lavfi=[format=%s,%s,crop=iw:ih:0:0:1:1]'):format(o.command_prefix,label,o.format,m.detector))
     
     ----lavfi     =[graph] [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTERCHAINS. USES 2 GRAPHS BECAUSE OTHERWISE "w" & "h" COMMANDS MAY BE AMBIGUOUS, WITHOUT INTERNAL LABELS. ALSO USES loop FILTER FOR JPEG.
@@ -98,15 +98,15 @@ function on_vid(_,vid)  --AN MP3 MAY BE A COLLECTION OF JPEG IMAGES (MP3TAG) WIT
 end
 mp.observe_property('vid','number',on_vid)  --TRIGGERS INSTANTLY & AFTER file-loaded.   ALTERNATIVE: current-tracks/video/id
 
-function on_seek()
-    m.w,m.time = nil,nil       --CAUSES GEOMETRIC MEMORY RESET. MUST crop AGAIN DUE TO vf-command RESET.
-    timers.auto_delay:resume() --RE-DETECT, ON DELAY, IN CASE ~m.auto.
+function on_seek()  --crop AGAIN DUE TO vf-command RESET, UNLESS is1frame (GEOMETRY ALREADY PERMANENT).
+    if not is1frame then m.w=nil       --CAUSES RE-CROP VIA GEOMETRIC MEMORY RESET. 
+        timers.auto_delay:resume() end --RE-DETECT, ON DELAY, IN CASE ~m.auto.
 end 
 mp.register_event('seek',on_seek)  
 
-function on_toggle(mute)    --NOT PROPER FULL toggle. IT RETURNS BLACK BARS USING pad, WITHOUT EVER CHANGING [vo] scale.
-    if not (W and H) then return end --NOT loaded YET.
-    if mute and not timers.mute:is_enabled() then timers.mute:resume() --START timer ON SINGLE mute.
+function on_toggle(mute)   --IT RETURNS BLACK BARS USING pad, WITHOUT EVER CHANGING [vo] scale.
+    if not W then return --NOT loaded YET.
+    elseif mute and not timers.mute:is_enabled() then timers.mute:resume() --START timer ON SINGLE mute.
         return end
     
     OFF,m.w,m.time,aspect = not OFF,nil,nil,mp.get_opt('aspect')  --autocomplex MUST REPORT TRUE aspect BECAUSE lavfi-complex ARTIFICIALLY CHANGES video-params/aspect. video-dec-params/aspect FAILED TO WORK THE SAME WAY.
@@ -124,19 +124,20 @@ timers.mute:kill()
 
 function detect_crop()     --MAIN function, ON LOOP.
     if OFF then return end --TOGGLED OFF. 
+
     meta,m.max_w,m.max_h = mp.get_property_native('vf-metadata/'..label),mp.get_property_number('video-params/w'),mp.get_property_number('video-params/h')  -- Get the metadata.
     if not meta then if o.msg_log then mp.msg.error("No crop metadata.")    --Verify the existence of metadata. SOMETIMES IT'S {}, WHICH FAILS THE NEXT TEST.
                                        mp.msg.info("Was the cropdetect filter successfully inserted?\nDoes your version of ffmpeg/libav support AVFrame metadata?") end
-        return end 
-    if o.meta_osd then mp.osd_message(mp.get_property_osd('vf-metadata/'..label)) end  --DISPLAY COORDS FOR 1 SEC.
+        return  
+    elseif o.meta_osd then mp.osd_message(mp.get_property_osd('vf-metadata/'..label)) end  --DISPLAY COORDS FOR 1 SEC. THIS BUGS OUT IF ~meta.
     
     for key in ('w h x1 y1 x2 y2 x y'):gmatch('[^ ]+') do value=meta['lavfi.cropdetect.'..key]      
         if not value then                                 value=meta['lavfi.bbox.'      ..key] end  --bbox POSSIBLE.
         meta[key]=tonumber(value) end   --tonumber(nil)=nil (BUT 0+nil FAILS).
     if not (meta.w and meta.h and meta.x1 and meta.y1 and meta.x2 and meta.y2) then if o.msg_log then mp.msg.error("Got empty crop data.") end  --THIS CAN HAPPEN IF VID IS paused.   
-         return end 
+         return  
+    elseif not (meta.x and meta.y) then meta.x,meta.y = (meta.x1+meta.x2-meta.w)/2,(meta.y1+meta.y2-meta.h)/2 end     --bbox GIVES x1 & x2 BUT NOT x. CALCULATE x & y BY TAKING AVERAGE.
     
-    if not (meta.x and meta.y) then meta.x,meta.y = (meta.x1+meta.x2-meta.w)/2,(meta.y1+meta.y2-meta.h)/2 end     --bbox GIVES x1 & x2 BUT NOT x. CALCULATE x & y BY TAKING AVERAGE.
     if o.USE_INNER_RECTANGLE then xNEW,yNEW = math.max(meta.x1,meta.x2-meta.w,meta.x),math.max(meta.y1,meta.y2-meta.h,meta.y)
             meta.x2,meta.y2 = math.min(meta.x2,meta.x1+meta.w,meta.x+meta.w),math.min(meta.y2,meta.y1+meta.h,meta.y+meta.h)
             meta.x ,meta.y  = xNEW,yNEW
@@ -155,8 +156,8 @@ function detect_crop()     --MAIN function, ON LOOP.
     if meta.h<min_h then if not o.USE_MIN_RATIO then meta.h,meta.y = m.max_h,0    --NULL h
         else meta.h,meta.y = min_h,math.max(0,math.min(m.max_h-min_h,meta.y-(min_h-meta.h)/2)) end end --MINIMIZE h
 
-    if meta.w>m.max_w or meta.h>m.max_h or meta.w<=0 or meta.h<=0 or meta.x2<=meta.x1 or meta.y2<=meta.y1 then return end   --IF w<0 IT'S LIKE A JPEG ERROR.
-    if not (m.w and m.h and m.x and m.y) then m.w,m.h,m.x,m.y = m.max_w,m.max_h,0,0 end  --INITIALIZE 0TH crop AT BEGINNING.
+    if meta.w>m.max_w or meta.h>m.max_h or meta.w<=0 or meta.h<=0 or meta.x2<=meta.x1 or meta.y2<=meta.y1 then return  --IF w<0 IT'S LIKE A JPEG ERROR.
+    elseif not (m.w and m.h and m.x and m.y) then m.w,m.h,m.x,m.y = m.max_w,m.max_h,0,0 end  --INITIALIZE 0TH crop AT BEGINNING.
     
     is_effective=(not m.time  --Verify if it is necessary to crop.            PROCEED IF INITIALIZING, OR JPEG.
         or math.abs(m.time-time)>o.TOLERANCE_TIME)            --PROCEED IF TIME CHANGES TOO MUCH,
@@ -170,20 +171,23 @@ end
 timers.auto_delay=mp.add_periodic_timer(o.auto_delay,detect_crop)
 
 function apply_crop(meta)
-    m.time=time  --REMEMBER time OF is_effective crop.
     for whxy in ('w h x y'):gmatch('[^ ]') do m[whxy]=meta[whxy]  --meta→m  MEMORY TRANSFER. 
         mp.command(('%s vf-command %s %s %d'):format(o.command_prefix,label,whxy,meta[whxy])) end  --UNPAUSED USES vf-command (MORE EFFICIENT).
-    if is1frame or mp.get_property_bool('pause') and not mp.get_property_bool('seeking')  --GRAPH REPLACEMENT MAY INFINITE seek CYCLE, SO CHECK ~seeking.
+    if is1frame or mp.get_property_bool('pause') and not m.time  --GRAPH REPLACEMENT. m.time IS A SWITCH USED TO PREVENT INFINITE seek CYCLE.
     then mp.command(('%s vf pre @%s:lavfi=[format=%s,%s,crop=%d:%d:%d:%d:1:1]'):format(o.command_prefix,label,o.format,m.detector,meta.w,meta.h,meta.x,meta.y)) end  --REPLACEMENT GRAPH FOR albumart WITHOUT complex. VERIFY BY TOGGLE "c" REPEATEDLY (WITH &) WITHOUT automask.
+
+    m.time=time  --REMEMBER time OF is_effective crop.
     if not m.auto then timers.auto_delay:kill() end --kill auto timer AFTER SUCCESSFUL crop.
 end
 
 
-----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (TECH SPECS), & END (MISC.). ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
-----MPV v0.36.0 (INCL. v3) v0.35.0 (.7z) v0.35.1 (.flatpak)  TESTED.
-----FFmpeg v5.1.2(MACOS) v4.3.2(LINUX .AppImage) v6.0(LINUX) TESTED.
-----WIN10 MACOS-11 LINUX-DEBIAN-MATE  (ALL 64-BIT)           TESTED. ALL SCRIPTS PASS snap+ytdl INSPECTION.  
-----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. 
+----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END. ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
+----MPV v0.36.0 (.7z .exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED.  v0.37.0 FAILED ON WINDOWS & GAVE UNACCEPTABLE PERFORMANCE ON MACOS-11. (v0.36 & OLDER ONLY.)
+----FFmpeg v6.0(.7z .exe .flatpak .snap)  v5.1.2 v5.1.3(.app)  v4.3.2(.AppImage)  ALL TESTED.
+----WIN10 MACOS-11 LINUX-DEBIAN-MATE  (ALL 64-BIT)  ALL TESTED.
+----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. v23.6 MAYBE PREFERRED.
+
+----A FUTURE VERSION MIGHT BE ABLE TO CROP WITHOUT CHANGING ASPECT. o.MAINTAIN_ASPECT? WITH WIDE-SCREEN A PORTRAIT COULD BE TALLER, BUT NOT ULTRA-FAT.
 ----SMPLAYER v23.12 TRIGGERS GRAPH RESET ON PAUSE. THAT'S ACTUALLY AN ADDED FEATURE WHICH RESETS THE CROP WHEN USER HITS SPACEBAR. v23.6 (JUNE RELEASE) & MPV ALONE DON'T RESET crop ON pause. SMPLAYER NOW COUPLES A seek-0 WITH pause. "no-osd seek 0 relative exact" WITHIN 1ms OF "set pause yes". THEN paused TRIGGERS WITHIN A FEW ms.
 
 ----ALTERNATIVE FILTERS:
