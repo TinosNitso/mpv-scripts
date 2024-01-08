@@ -12,7 +12,7 @@ o={ --options  ALL OPTIONAL & MAY BE REMOVED.
     
     filterchain='anull,'  --CAN REPLACE anull WITH EXTRA FILTERS (highpass aresample vibrato ...).
               ..'dynaudnorm=500:5:1:100', --f:g:p:m DEFAULT=500:31:.95:10:0:1:0  DYNAMIC AUDIO NORMALIZER. ALL subprocesses USE THIS NORMALIZER. GRAPH COMMENTARY HAS MORE DETAILS.
-    mpv       ={'mpv',   --REMOVE THESE 3 LINES FOR clock ONLY OVERRIDE (+filterchain). LIST ALL POSSIBLE mpv COMMANDS, IN ORDER OF PREFERENCE. THE FIRST SUCCESSFUL COMMAND WILL BE USED FOR ALL subprocesses.  INSTEAD OF COPY/PASTING THE clock INTO OTHER SCRIPT/S, THIS SCRIPT SYNCS IT TO SYSTEM TICK.
+    mpv       ={'mpv',   --REMOVE THESE 3 LINES FOR clock ONLY OVERRIDE (+filterchain). LIST ALL POSSIBLE mpv COMMANDS, IN ORDER OF PREFERENCE. USED BY ALL subprocesses.  INSTEAD OF COPY/PASTING THE clock INTO OTHER SCRIPT/S, THIS SCRIPT SYNCS IT TO SYSTEM TICK.
                 './mpv', --SMPLAYER LINUX & MACOS.
                 '/Applications/mpv.app/Contents/MacOS/mpv'},  --MACOS mpv.app
     
@@ -45,10 +45,12 @@ opt,val,o.options = '','',o.options:gmatch('[^ ]+') --GLOBAL MATCH ITERATOR. '[^
 while   val do mp.set_property(opt,val)   --('','') → NULL-SET
     opt,val = o.options(),o.options() end --nil @END
 
-utils,script_opts = require 'mp.utils',mp.get_property_native('script-opts')  --subprocesses GET pid FROM script-opts
-pid,mutelr = utils.getpid(),script_opts.mutel and 'mutel' or script_opts.muter and 'muter'  --mutelr IS A GRAPH INSERT.
+utils=require 'mp.utils'
+pid,script_opts =utils.getpid(),mp.get_property_native('script-opts')
+
+mutelr=script_opts.mutel and 'mutel' or script_opts.muter and 'muter'  --mutelr IS A GRAPH INSERT.
 if mutelr then o.clock=nil --NO clock FOR subprocesses.
-    math.randomseed(pid)   --UNIQUE randomseed FOR ALL subprocesses. OTHERWISE TEMPO IS PREDICTABLE OR SAME.
+    math.randomseed(pid)   --UNIQUE randomseed FOR ALL subprocesses. OTHERWISE TEMPO MAY BE PREDICTABLE OR SAME.
 else is_controller,mutelr,o.auto_delay,script_opts.pid = true,o.mutelr,.5,pid..''  --CONTROLLER. ..'' CONVERTS→string  script_opts MUST BE STRINGS.
     mp.set_property_native('script-opts',script_opts)
 
@@ -135,49 +137,53 @@ for _,timer in pairs(timers) do timer:kill() end    --kill timers. THEY CARRY OV
 timers.resync =mp.add_periodic_timer(o. resync_delay,os_sync)
 
 function subprocesses()    --CONTROLLER ONLY. 
-    priority,time_pos,start = mp.get_property('priority'),mp.get_property_number('time-pos'),mp.get_property('start')  --start=string, ~number. 
-    if not mpv then return --OVERRIDE, OR ALREADY LAUNCHED.
-    elseif  priority then priority='--priority='..priority --WINDOWS.  PROPAGATING CHANGE IN priority VIA TASK MANAGER NOT SUPPORTED. 
-    else                  priority='--no-vid' end    --NULL-OP: LINUX.
-    if  time_pos then start   ='--start='..math.floor((time_pos+o.start)*100)/100  --FILE: LIMIT PRECISION TO 10ms.
-    elseif start then start   ='--start='..start --YOUTUBE.
-    else              start   ='--no-vid' end    --NULL-OP: YOUTUBE & NO --start.
+    if not mpv then return end  --OVERRIDE, OR ALREADY LAUNCHED.
+    
+    priority=mp.get_property('priority')
+    priority=priority and '--priority='..priority or '--no-vid'  --no-vid IS A NULL-OP. MUST BE DEFINED, BUT ONLY EFFECTIVE IN WINDOWS. HOWEVER PROPAGATING CHANGE IN priority VIA TASK MANAGER NOT SUPPORTED. 
+    
+    start,time_pos = mp.get_property('start'),mp.get_property_number('time-pos')  --start=string
+    start=time_pos and '--start='..math.floor((time_pos+o.start)*100)/100 or start and '--start='..start or '--no-vid'  --FILE OR YOUTUBE OR NULL-OP (YOUTUBE WITHOUT --start). LIMIT PRECISION TO 10ms FOR FILE.
     
     script,script_opts = utils.join_path(directory,label..'.lua'),mp.get_property('script-opts')  --script-opts HOOK ytdl. COULD SWITCH .lua TO .js FOR JAVASCRIPT. 
     for N,device in pairs(devices) do for mutelr in ('mutel muter'):gmatch('[^ ]+') do if not (N==1 and mutelr==o.mutelr) --DON'T LAUNCH ON PRIMARY device CHANNEL.
-            then utils.subprocess({detach=true,playback_only=false,capture_stdout=false,capture_stderr=false,  --EXTRA FLAGS FOR LINUX.  COMMAND TOO LONG IN TASK MANAGER. TO SHORTEN IT, TARGETED ECHOES ARE MOST ELEGANT, BUT THAT'S A DIFFERENT DESIGN.    run & subprocess_detached ALSO CREATE DETACHED SUBPROCESSES, BUT THEY AREN'T FULLY DETACHED & CAN CAUSE SOME BUG INSIDE SMPLAYER.     
-                    args={mpv,start,priority,'--no-vid','--keep-open=yes','--msg-level=all=no','--ytdl-format=bestaudio','--script='..script,path,('--script-opts=%s=1,%s'):format(mutelr,script_opts),'--audio-device='..device}}) end end end  --msg-level=all=no OR ELSE PARENT LOG FILLS UP. keep-open FOR seek NEAR end-file. bestaudio TO STOP ytdl RE-DOWNLOADING VIDEO STREAM.  SOME options STAY CONSTANT. AN ALTERNATIVE DESIGN MAY START IN --idle & loadfile IN property_handler.
+            then utils.subprocess({detach=true,playback_only=false,capture_stdout=false,capture_stderr=false,  --EXTRA FLAGS FOR LINUX.  run & subprocess_detached ALSO CREATE DETACHED SUBPROCESSES, BUT THEY AREN'T FULLY DETACHED & CAN CAUSE SOME BUG INSIDE SMPLAYER.     
+                    args={mpv,start,priority,'--no-vid','--keep-open=yes','--msg-level=all=no','--ytdl-format=bestaudio','--script='..script,path,('--script-opts=%s=1,%s'):format(mutelr,script_opts),'--audio-device='..device}}) end end end  --msg-level=all=no OR ELSE PARENT LOG FILLS UP. keep-open FOR seek NEAR end-file. bestaudio TO STOP ytdl RE-DOWNLOADING VIDEO.  SOME OPTIONS STAY CONSTANT. AN ALTERNATIVE DESIGN MAY START IN --idle & loadfile IN property_handler.
     mpv=nil
 end
 
+last_pcode=true  --ASSUME txtfile EXISTS. IF pcode FAILS TWICE IN A ROW THEN subprocess QUITS.
 function property_handler(property,meta)  --CONTROLLER WRITES TO txtpath, & subprocesses READ FROM IT.  THIS FUNCTION SHOULD ONLY EVER BE PCALLED FOR RELIABILITY. BY TRIAL & ERROR SOLVES SIMULTANEOUS write & remove @SUDDEN STOP.
-    samples_time,os_time,time_pos = nil,os.time(),mp.get_property_number('time-pos')  --os_time=TIMEFROM1970 (SECONDS)
-    if     not path     then return      --NOT STARTED YET.
-    elseif not time_pos then time_pos=-1 --NEGATIVE MEANS DON'T quit DURING YOUTUBE LOAD, UNLESS timeout. HENCE MUST write SOMETHING. 
-    elseif meta         then samples_time=meta['lavfi.astats.Overall.Number_of_samples'] end  --OFTEN nil.
-    if samples_time     then samples_time=samples_time/o.samplerate end  --TIME=sample#/samplerate  
+    if not path then return end    --NOT STARTED YET.
+    os_time =sync_time and sync_time+mp.get_time() or os.time() --os_time=TIMEFROM1970  PRECISE TO 10ms AFTER SYNC.
+    time_pos=mp.get_property_number('time-pos') or -1  --MUST BE WELL-DEFINED DURING YOUTUBE LOAD. 
     
-    if sync_time then os_time=sync_time+mp.get_time()      --PRECISE TO 10ms. BEFORE SYNC, pause OVERRIDE STILL APPLIES.
-        if samples_time and samples_time>o.time_needed then initial_time_pos=initial_time_pos or time_pos-samples_time  --initial_time_pos=initial_time_pos_relative_to_samples_time  INITIALIZE AFTER CHECKING samples_time. THIS # STAYS THE SAME FOR THE NEXT 10 HOURS.  LIKE HOW YOGHURT GOES OFF, 20 HRS LATER THE SPEAKERS MAY BE OFF (astats ISSUE).
-            time_pos=initial_time_pos+samples_time end end --NEW METRIC WHOSE CHANGE IS BASED ON astats. IT'S A TIME METRIC-SWITCH TRICK. REMOVE IT TO PROVE MPV CAN'T SYNC WITHOUT astats, EVEN WITH autosync ETC.  time-pos, playback-time & audio-pts WORK WELL OVER 1 MINUTE, BUT NOT 1 HOUR.
+    samples_time=meta and meta['lavfi.astats.Overall.Number_of_samples']
+    samples_time=samples_time and samples_time/o.samplerate  --TIME=sample#/samplerate  nil/# RETURNS ERROR, BUT MUST PROCEED.
+    
+    if sync_time and samples_time and samples_time>o.time_needed
+    then initial_time_pos=initial_time_pos or time_pos-samples_time  --initial_time_pos=initial_time_pos_relative_to_samples_time  INITIALIZE AFTER CHECKING samples_time. THIS # STAYS THE SAME FOR THE NEXT 10 HOURS.  LIKE HOW YOGHURT GOES OFF, 20 HRS LATER THE SPEAKERS MAY BE OFF (astats ISSUE).
+        time_pos=initial_time_pos+samples_time end  --NEW METRIC WHOSE CHANGE IS BASED ON astats. IT'S A TIME METRIC-SWITCH TRICK. REMOVE IT TO PROVE MPV CAN'T SYNC WITHOUT astats, EVEN WITH autosync ETC.  time-pos, playback-time & audio-pts WORK WELL OVER 1 MINUTE, BUT NOT 1 HOUR.
     
     if is_controller then if o.meta_osd then mp.osd_message(mp.get_property_osd('af-metadata/'..label):gsub('\n','    \t')) end   --TAB EACH STAT (TOO MANY LINES), FOR osd.
         if property=='mute' then on_toggle(property) end  --FOR DOUBLE mute TOGGLE.
         
         speed,aid = mp.get_property_number('speed'),mp.get_property_number('current-tracks/audio/id')  --get_property_number REMOVES TRAILING ZEROS. 
-        if not aid or mp.get_property_bool('pause') or mp.get_property_bool('seeking') then speed=0
-             timers.auto:resume()    --IDLER (DON'T timeout).
+        if not aid or mp.get_property_bool('pause') then speed=0 --aid=nil DURING YOUTUBE LOAD. BUT MUST BE WELL-DEFINED.
+             timers.auto:resume()   --IDLER (DON'T timeout).
         else timers.auto:kill() end
-        aid=aid or 1  --id=nil DURING YOUTUBE LOAD. BUT MUST BE WELL-DEFINED.
-        volume=(OFF or mp.get_property_bool('mute')) and 0 or mp.get_property_number('volume')  --OFF & mute. volume RANGE [0,100]. 
+        aid=aid or 1
+        volume=(OFF or mp.get_property_bool('mute') or mp.get_property_bool('seeking')) and 0 or mp.get_property_number('volume')  --OFF & mute. volume RANGE [0,100]. 
         
         txtfile=io.open(txtpath,'w')  --MACOS-11 REQUIRES txtfile BE WELL-DEFINED. IT MAY WORK BETTER THIS WAY.
         txtfile:write(('%s\n%d\n%d\n%s\n%s\n%s'):format(mp.get_property('path'),aid,volume,speed,os_time,time_pos))  --CONTROLLER REPORT. SECURITY PRECAUTION: NO property NAMES, OR ELSE A HACKER CAN DO AN ARBITRARY set (EXAMPLE: YOUTUBE HOOK), SIMILAR TO PIPING TO A SOCKET. MORE LINES MIGHT REQUIRE SECURITY OVERRIDES.  USE id NOT aid. aid WON'T ALWAYS WORK DUE TO lavfi-complex (LOCK BUG). 
         txtfile:flush() --EITHER flush() OR close(). 
         return end      --CONTROLLER ENDS HERE.  subprocesses BELOW.
     
-    pcode,lines = pcall(io.lines,txtpath)    --lines ITERATOR RETURNS ERROR OR nil OR 6 LINES.  THIS IS A pcall INSIDE ANOTHER pcall.
-    if not pcode and time_pos>=0 then mp.command('quit') end --EXIT. NO lines MEANS CONTROLLER HAS STOPPED, AFTER samples_time IS COMPUTABLE. 'quit' NOT 'stop' BECAUSE SOME BUILDS idle. (LINUX .AppImage) 
+    pcode,lines = pcall(io.lines,txtpath)  --lines ITERATOR RETURNS ERROR OR nil OR 6 LINES.  THIS IS A pcall INSIDE ANOTHER pcall.
+    pcode=pcode or time_pos<0  --NEGATIVE MEANS DON'T quit.
+    if not (pcode or last_pcode) then mp.command('quit') end --EXIT. NO lines MEANS CONTROLLER HAS STOPPED. 'quit' NOT 'stop' BECAUSE SOME BUILDS MIGHT idle. (LINUX .AppImage) 
+    last_pcode=pcode  --DOUBLE-TAP PROTECTION ON quit. subprocess BUGS OUT IF io.write TAKES TOO LONG TO CREATE txtfile @STARTUP (RARE BUG).
     
     txt_path,aid,volume,txt_speed,txt_time,txt_pos = lines(),lines()+0,lines()+0,lines()+0,lines()+0,lines()+0  --+0 CONVERTS→number
     if os_time-txt_time>o.timeout then mp.command('quit')  --EXIT - CONTROLLER HARD BREAKED LONG AGO.
@@ -194,7 +200,7 @@ function property_handler(property,meta)  --CONTROLLER WRITES TO txtpath, & subp
         return end   
     
     speed=txt_speed-time_gained/.5  --time_gained→0 OVER NEXT .5 SECONDS (astats UPDATE TIME).
-    if mp.get_property_number('time-remaining')>o.time_needed then speed=speed*(1+math.random(-o.max_random_percent,o.max_random_percent)/100) end  --DON'T RANDOMIZE NEAR end-file. 
+    speed=mp.get_property_number('time-remaining')>o.time_needed and speed*(1+math.random(-o.max_random_percent,o.max_random_percent)/100) or speed  --DON'T RANDOMIZE NEAR end-file. 
     speed=math.max( txt_speed/o.max_speed_ratio , math.min( txt_speed*o.max_speed_ratio , speed ) )  --speed LIMIT RELATIVE TO CONTROLLER.  LUA DOESN'T SUPPORT math.clip
     mp.set_property_number('speed',speed)
 end

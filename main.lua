@@ -16,9 +16,9 @@ o={ --options  ALL OPTIONAL & CAN BE REMOVED.
     title='{\\fs55\\bord3\\shad1}',  --REMOVE TO remove title.  \\,fs,bord,shad = \,FONTSIZE,BORDER,SHADOW (PIXELS)  REMOVE TO REMOVE title. THIS STYLE CODE SETS THE osd.  b1,i1,u1,s1,be1,fn,c = BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME,COLOR  WITHOUT b1, fs MAY BE LARGER.  cFF=RED,cFF0000=BLUE,ETC
     title_duration=5,  --SECONDS. DEFAULT→NO title (0).
     loop_limit    =10, --SECONDS (MAX). INFINITE loop GIF & SHORT MP4 (IN SMPLAYER TOO) IF duration IS LESS. STOPS MPV SNAPPING.  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
-    io_write      =' ',--DEFAULT=''  (INPUT/OUTPUT) io.write THIS @EVERY OBSERVATION OF af vf lavfi-complex. PREVENTS EMBEDDED MPV FROM SNAPPING ON IMAGES, BY COMMUNICATING WITH ITS PARENT APP @POINT OF GRAPH INSERTION. NEEDED BY autocrop & automask, BUT IT'S AN EMBEDDING ISSUE (MPV IN SMPLAYER OR FIREFOX).
     
-    options=''  --'opt1 val1 opt2 val2 '... FREE FORM.
+    io_write=' ',--DEFAULT=''  (INPUT/OUTPUT) io.write THIS @EVERY OBSERVATION OF af vf lavfi-complex. PREVENTS EMBEDDED MPV FROM SNAPPING ON IMAGES, BY COMMUNICATING WITH ITS PARENT APP @POINT OF GRAPH INSERTION. NEEDED BY autocrop & automask, BUT IT'S AN EMBEDDING ISSUE (MPV IN SMPLAYER OR FIREFOX).
+    options =''  --'opt1 val1 opt2 val2 '... FREE FORM.
         ..' osd-border-size 1  osd-scale-by-window no  osd-duration 5000  osd-bar no ' --DEFAULTS 3,yes,1000,yes  (PIXELS,BOOL,MILLISECONDS,BOOL)  1p FOR LITTLE TEXT. SAME font-size WITH LITTLE WINDOW. TAKES A FEW SECS TO READ/SCREENSHOT osd. bar GETS IN THE WAY (SMPLAYER).
         ..' keepaspect no ' --FREE aspect IF MPV HAS ITS OWN WINDOW.
 }
@@ -51,7 +51,7 @@ for _,script in pairs(o.scripts) do is_present=false
 mp.set_property_native('scripts',scripts)   --ANNOUNCE scripts.
 
 function playback_start()   
-    mp.unregister_event(playback_start) --1 start PER file. 
+    mp.unregister_event(playback_start) --1 start PER file (OR STREAM). 
     duration,osd_level = mp.get_property_number('duration'),mp.get_property_number('osd-level') 
     if duration and o.loop_limit>duration then mp.set_property('loop','inf') end   --loop GIF.  
     if not o.title then return end  --title BELOW.

@@ -65,7 +65,7 @@ function file_loaded()  --ALSO on_vid & ytdl.
     if not complex_opt and mp.get_property_bool('current-tracks/video/albumart') then is1frame,m.auto = true,false end  --albumart IS DIFFERENT TO image. REQUIRE GRAPH REPLACEMENT IF NO complex. NO auto BECAUSE audio GLITCHES.
     if mp.get_property_bool('current-tracks/video/image') then m.TOLERANCE,m.detector,m.detect_limit   = 0,o.detector_image,o.detect_limit_image --JPEG: bbox & 0 TOLERANCE.  AN MP3, MP2, OGG OR WAV MAY BE A COLLECTION OF JPEG IMAGES (MP3TAG) WHICH NEED CROPPING (& HAVE RUNNING audio). GIF IS ~image. 
         if not complex_opt then loop,m.detect_min_ratio,m.MAINTAIN_CENTER_X,m.MAINTAIN_CENTER_Y = true,0,nil,nil end end  --RAW JPEG CAN MOVE CENTER. loop NEEDED FOR RELIABILITY (GRAPH REPLACEMENTS CAUSE ERRORS IN MPV LOG).
-    for title,limit in pairs(o.detect_limits) do if media_title:find(title:lower(),1,true) then m.detect_limit=limit  end end   --detect_limit FINAL OVERRIDE.  1,true = STARTING_INDEX,EXACT_MATCH  NOT CASE SENSITIVE.
+    for title,limit in pairs(o.detect_limits) do if media_title:find(title:lower(),1,true) then m.detect_limit=limit end end   --detect_limit FINAL OVERRIDE.  1,true = STARTING_INDEX,EXACT_MATCH  NOT CASE SENSITIVE.
     m.detector=m.detector:format(m.detect_limit,o.detect_round)
     
     mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,pad,setsar=%s]'):format(o.command_prefix,label,W,H,par))  --pad REPLACED @TOGGLE (BUT IN THEORY IT'S PERMANENT).
@@ -131,9 +131,10 @@ function detect_crop()     --MAIN function, ON LOOP.
         return  
     elseif o.meta_osd then mp.osd_message(mp.get_property_osd('vf-metadata/'..label)) end  --DISPLAY COORDS FOR 1 SEC. THIS BUGS OUT IF ~meta.
     
-    for key in ('w h x1 y1 x2 y2 x y'):gmatch('[^ ]+') do value=meta['lavfi.cropdetect.'..key]      
-        if not value then                                 value=meta['lavfi.bbox.'      ..key] end  --bbox POSSIBLE.
-        meta[key]=tonumber(value) end   --tonumber(nil)=nil (BUT 0+nil FAILS).
+    for key in ('w h x1 y1 x2 y2 x y'):gmatch('[^ ]+') 
+    do value=         meta['lavfi.cropdetect.'..key]      
+       value=value or meta['lavfi.bbox.'      ..key]
+       meta[key]=tonumber(value) end   --tonumber(nil)=nil (BUT 0+nil FAILS).
     if not (meta.w and meta.h and meta.x1 and meta.y1 and meta.x2 and meta.y2) then if o.msg_log then mp.msg.error("Got empty crop data.") end  --THIS CAN HAPPEN IF VID IS paused.   
          return  
     elseif not (meta.x and meta.y) then meta.x,meta.y = (meta.x1+meta.x2-meta.w)/2,(meta.y1+meta.y2-meta.h)/2 end     --bbox GIVES x1 & x2 BUT NOT x. CALCULATE x & y BY TAKING AVERAGE.
@@ -151,9 +152,11 @@ function detect_crop()     --MAIN function, ON LOOP.
         if hNEW-meta.h>hNEW*m.MAINTAIN_CENTER_Y then meta.y,meta.h = yNEW,hNEW end end --hNEW ALWAYS BIGGER THAN meta.h. SYMMETRIZE UNLESS DEVIATION FROM CENTER IS SMALL (DEPENDS HOW BIG THE FEET ARE).
    
     min_w,min_h,time = m.max_w*m.detect_min_ratio,m.max_h*m.detect_min_ratio,mp.get_property_number('time-pos')
-    if meta.w<min_w then if not o.USE_MIN_RATIO then meta.w,meta.x = m.max_w,0    --NULL w
+    if meta.w<min_w then if not o.USE_MIN_RATIO 
+        then meta.w,meta.x = m.max_w,0    --NULL w
         else meta.w,meta.x = min_w,math.max(0,math.min(m.max_w-min_w,meta.x-(min_w-meta.w)/2)) end end --MINIMIZE w
-    if meta.h<min_h then if not o.USE_MIN_RATIO then meta.h,meta.y = m.max_h,0    --NULL h
+    if meta.h<min_h then if not o.USE_MIN_RATIO 
+        then meta.h,meta.y = m.max_h,0    --NULL h
         else meta.h,meta.y = min_h,math.max(0,math.min(m.max_h-min_h,meta.y-(min_h-meta.h)/2)) end end --MINIMIZE h
 
     if meta.w>m.max_w or meta.h>m.max_h or meta.w<=0 or meta.h<=0 or meta.x2<=meta.x1 or meta.y2<=meta.y1 then return  --IF w<0 IT'S LIKE A JPEG ERROR.
