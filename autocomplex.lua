@@ -123,7 +123,7 @@ lavfi=('[aid%%d]%sasplit[ao],stereotools,highpass=%s,dynaudnorm=%s,asplit[af],sh
 ----trim             =...:start_frame:end_frame  IS THE FINISH ON [vo]. TRIMS 1 FRAME OFF THE START FOR ITS TIMESTAMP. 
 
 
-function file_loaded() --ALSO on_aid, on_vid, on_toggle & ytdl.
+function file_loaded(event) --ALSO on_aid, on_vid, on_toggle & ytdl.
     image,aid,vid = false,mp.get_property_number('current-tracks/audio/id'),mp.get_property_number('current-tracks/video/id') --image=BOOL  'aid' & 'vid' MAYBE='auto', BUT id=nil OR INTEGER. 
     aid=aid and new_aid or aid  --on_aid OVERRIDE.
     vid=vid and new_vid or vid  --on_vid OVERRIDE. SHOULD CHECK IF vid IN CASE AUDIO-ONLY. 
@@ -160,7 +160,7 @@ function file_loaded() --ALSO on_aid, on_vid, on_toggle & ytdl.
     mp.set_property('lavfi-complex',lavfi:format(aid,freqs_fps,freqs_fps,complex,W*o.width,clip_h))  --CASES 3,4,5.  freqs_fps REPEATS FOR LINUX snap (TO REDUCE showfreqs@25fps). size FOR zoompan.  
     if OFF then OFF=false  --ALREADY OFF, FORCE TOGGLE. EXAMPLE: playlist-next WHEN OFF.
         on_toggle() end  
-    mp.register_event('log-message',on_error)  --BUGFIX FOR VP9 PROFILE 4 (USED BY YOUTUBE). EACH URL RE-REGISTERS.
+    if event then mp.register_event('log-message',on_error) end --BUGFIX FOR VP9 PROFILE 4 (USED BY YOUTUBE). EACH URL RE-REGISTERS.
 end 
 mp.register_event('file-loaded',file_loaded)
 mp.register_event('seek'    ,function() if mp.get_property_number('time-remaining')==0 then mp.command('playlist-next force') end end)  --playlist-next FOR MPV PLAYLIST. force FOR SMPLAYER PLAYLIST.  BUGFIX FOR seek PASSED end-file. A CONVENIENT WAY TO SKIP NEXT TRACK IN SMPLAYER IS TO SKIP 10 MINUTES PASSED end-file.
