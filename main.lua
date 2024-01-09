@@ -13,7 +13,7 @@ o={ --options  ALL OPTIONAL & CAN BE REMOVED.
         "yt-dlp_linux", --CASE SENSITIVE.  sudo apt remove yt-dlp  TO REMOVE OLD VERSION.
         "yt-dlp_macos", --CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto. 
     },
-    title='{\\fs55\\bord3\\shad1}',  --REMOVE TO remove title.  \\,fs,bord,shad = \,FONTSIZE,BORDER,SHADOW (PIXELS)  REMOVE TO REMOVE title. THIS STYLE CODE SETS THE osd.  b1,i1,u1,s1,be1,fn,c = BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME,COLOR  WITHOUT b1, fs MAY BE LARGER.  cFF=RED,cFF0000=BLUE,ETC
+    -- title='{\\fs55\\bord3\\shad1}',  --REMOVE TO remove title.  \\,fs,bord,shad = \,FONTSIZE,BORDER,SHADOW (PIXELS)  REMOVE TO REMOVE title. THIS STYLE CODE SETS THE osd.  b1,i1,u1,s1,be1,fn,c = BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME,COLOR  WITHOUT b1, fs MAY BE LARGER.  cFF=RED,cFF0000=BLUE,ETC
     title_duration=5,  --SECONDS. DEFAULT→NO title (0).
     loop_limit    =10, --SECONDS (MAX). INFINITE loop GIF & SHORT MP4 (IN SMPLAYER TOO) IF duration IS LESS. STOPS MPV SNAPPING.  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
     
@@ -21,6 +21,8 @@ o={ --options  ALL OPTIONAL & CAN BE REMOVED.
     options =''  --'opt1 val1 opt2 val2 '... FREE FORM.
         ..' osd-border-size 1  osd-scale-by-window no  osd-duration 5000  osd-bar no ' --DEFAULTS 3,yes,1000,yes  (PIXELS,BOOL,MILLISECONDS,BOOL)  1p FOR LITTLE TEXT. SAME font-size WITH LITTLE WINDOW. TAKES A FEW SECS TO READ/SCREENSHOT osd. bar GETS IN THE WAY (SMPLAYER).
         ..' keepaspect no ' --FREE aspect IF MPV HAS ITS OWN WINDOW.
+        ..' ytdl-format bestvideo[height<=1080]+bestaudio '  --CAN DROP FROM 4K.
+        
 }
 for opt,val in pairs({scripts={},ytdl={},title_duration=0,loop_limit=0,io_write='',options=''})
 do o[opt]=o[opt] or val end  --ESTABLISH DEFAULTS. 
@@ -34,13 +36,12 @@ utils    =require 'mp.utils'
 directory=utils.split_path(mp.get_property('scripts')) --split FROM WHATEVER THE USER ENTERED.   ALTERNATIVE mp.get_script_directory() HAS BUG.
 directory=mp.command_native({'expand-path',directory}) --yt-dlp REQUIRES ~ EXPANDED. command_native RETURNS.
 
-OS   =os.getenv('OS')  --nil ON MACOS.
-COLON=OS and OS:upper():find('WINDOWS',1,true) and ';' or ':'  --FILE LIST SEPARATOR.  WINDOWS=;  UNIX=:  1,true = STARTING_INDEX,EXACT_MATCH  
+os   =os.getenv('os')  --nil ON MACOS.
+COLON=os and os:lower():find('windows') and ';' or ':'  --FILE LIST SEPARATOR.  WINDOWS=;  UNIX=:
 
 hook,script_opts,scripts = 'ytdl_hook-ytdl_path',mp.get_property_native('script-opts'),mp.get_property_native('scripts')  --hook SCRIPT-OPT SPECIFIES yt-dlp EXECUTABLE. 
-for _,ytdl in pairs(o.ytdl) do ytdl=utils.join_path(directory,ytdl) --join AFTER split.
-    if not script_opts[hook] then script_opts[hook]=ytdl 
-    else   script_opts[hook]=script_opts[hook]..COLON..ytdl end end --APPEND ALL ytdl.
+for _,ytdl in pairs(o.ytdl) do ytdl=utils.join_path(directory,ytdl)  --join AFTER split.
+    script_opts[hook]=script_opts[hook] and script_opts[hook]..COLON..ytdl or ytdl end  --APPEND ALL ytdl.
 mp.set_property_native('script-opts',script_opts) --EMPLACE hook.
 
 for _,script in pairs(o.scripts) do is_present=false   
@@ -75,10 +76,10 @@ mp.register_event('file-loaded',function() mp.register_event('playback-restart',
 ----LINUX flatpak: cd /var/lib/flatpak/app/info.smplayer.SMPlayer/current/active/files/bin & mpv --script=~/Desktop/mpv-scripts/ https://youtu.be/5qm8PH4xAss       (cd RESOLVES THE TRUE LOCATION.) 
 ----LINUX    snap: cd /snap/smplayer/current/usr/bin & mpv --script=~/Desktop/mpv-scripts/ https://youtu.be/5qm8PH4xAss
 
-----SAFETY INSPECTION: LUA SCRIPTS SHOULD BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path frame-step seek playlist-next quit af* vf* ARE ALL SAFE. set IS SAFE EXCEPT FOR script-opts WHICH MAY hook AN UNSAFE EXECUTABLE INTO A DIFFERENT SCRIPT, LIKE youtube-dl.
+----SAFETY INSPECTION: LUA SCRIPTS SHOULD BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path frame-step seek playlist-next playlist-play-index quit af* vf* ARE ALL SAFE. set IS SAFE EXCEPT FOR script-opts WHICH MAY hook AN UNSAFE EXECUTABLE INTO A DIFFERENT SCRIPT, LIKE youtube-dl.
 ----MPV v0.36.0 (.7z .exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED.  v0.37.0 FAILED ON WINDOWS & GAVE UNACCEPTABLE PERFORMANCE ON MACOS-11. (v0.36 & OLDER ONLY.)
 ----FFmpeg v6.0(.7z .exe .flatpak .snap)  v5.1.2 v5.1.3(.app)  v4.3.2(.AppImage)  ALL TESTED.
-----WIN10 MACOS-11 LINUX-DEBIAN-MATE  (ALL 64-BIT)  ALL TESTED.
+----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. v23.6 MAYBE PREFERRED.
 
 ----BUG: SMPLAYER v23.12 PAUSE TRIGGERS GRAPH RESET (LAG). CAN USE v23.6 (JUNE RELEASE) INSTEAD, OR GIVE MPV ITS OWN WINDOW. SMPLAYER NOW COUPLES A seek-0 WITH pause. IDEALLY IT SHOULD BE AN OPT-OUT PREFERENCE BECAUSE SOME GRAPHS WORK BETTER WITH OR WITHOUT RESET ON PAUSE. "no-osd seek 0 relative exact" WITHIN 1ms OF "set pause yes". THEN paused TRIGGERS WITHIN A FEW ms. 
@@ -86,9 +87,10 @@ mp.register_event('file-loaded',function() mp.register_event('playback-restart',
 
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES). MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO zoom. seek WITH GRAPHS IS TOO SLOW, BUT zoom INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. FRAME-DROPS MAY CAUSE AUDIO DESYNC UNDER EXCESSIVE LAG.
 ----A FUTURE VERSION COULD CREATE A RECYCLE BIN FOR STREAMING, UP TO 1GB. CAN STREAM-DUMP ALL YOUTUBE VIDEOS, IN AUTO.
-----INSTEAD OF ALL scripts LAUNCHING EACH OTHER WITH THE SAME CODE, THIS SCRIPT LAUNCHES THEM ALL. DECLARING local VARIABLES HELPS WITH HIGHLIGHTING & COLORS, BUT UNNECESSARY. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFmpeg-filters. THEY'RE ALL ~200 LINES LONG, WITH MANY PARTS COPY/PASTED FROM EACH OTHER.
+----INSTEAD OF ALL scripts LAUNCHING EACH OTHER WITH THE SAME CODE, THIS SCRIPT LAUNCHES THEM ALL. DECLARING local VARIABLES HELPS WITH HIGHLIGHTING & COLORS, BUT UNNECESSARY. 
+----~40%CPU+30%GPU USAGE @FULLSCREEN, WITH PROPRIETARY GRAPHICS DRIVERS. 4%+22% USAGE WITHOUT ANY scripts. @HALF-SCREEN GPU USAGE DROPS TO 20%. WITHOUT DRIVERS TOTAL ~70% CPU USAGE (LITERALLY CPU+GPU→CPU). ARGUABLY SMOOTHER THAN VLC, DEPENDING ON VIDEO (SENSITIVE TO HUMAN FACE SMOOTHNESS). WRITING SCRIPTS WITHOUT DRIVERS MAY HELP OPTIMIZE THE GRAPHS THEMSELVES.  
+----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. ALMOST ALL TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFmpeg-filters. THEY'RE ALL ~200 LINES LONG, WITH MANY PARTS COPY/PASTED FROM EACH OTHER.
 ----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, & MULTI-LINE ALT-EDITING. AIDS RAPID GRAPH TESTING.  MPV HAS LUA, JS & JSON (JAVA SCRIPT OBJECT NOTATION).  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK CAN DO ALMOST ANYTHING WITH A 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
-----~40% CPU USAGE @FULLSCREEN, WITH PROPRIETARY GRAPHICS DRIVERS. WITHOUT DRIVERS UP TO DOUBLE. WRITING SCRIPTS WITHOUT DRIVERS MAY HELP OPTIMIZE THE GRAPHS THEMSELVES.  UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. ALMOST ALL TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. ARGUABLY SMOOTHER THAN VLC, DEPENDING ON VIDEO & CPU/GPU. 
 ----VIRTUALBOX: CAN INCREASE VRAMSize FROM 128→256 MB. MACOS LIMITED TO 3MB VIDEO MEMORY. CAN ALSO SWITCH AROUND Command & Control(^) MODIFIER KEYS.  "C:\Program Files\Oracle\VirtualBox\VBoxManage" setextradata macOS_11 VBoxInternal/Devices/smc/0/Config/DeviceKey ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc
 
 ----sudo apt install smplayer flatpak snapd mpv     FOR RELEVANT LINUX INSTALLS. OFFLINE LINUX ALL-IN-ONE: SMPlayer-23.6.0-x86_64.AppImage
@@ -96,7 +98,8 @@ mp.register_event('file-loaded',function() mp.register_event('playback-restart',
 ----flatpak install *.flatpak  snap install *.snap  FOR INSTALLS, AFTER cd TO RELEASES. MUST BE ON INTERNET, EVEN FOR snap. .AppImage IS OFFLINE.
 ----flatpak run info.smplayer.SMPlayer  snap run smplayer  FOR flatpak & snap TESTING. 
 ----cd /var/lib/flatpak/app/info.smplayer.SMPlayer/current/active/files/bin & mpv --version     FOR flatpak FFmpeg VERSION.
-----cd /snap/smplayer/current/usr/bin & mpv --version        FOR snap FFmpeg VERSION. snap DOESN'T WORK WITH "~/" & BLOCKS SYSTEM COMMANDS.
+----cd /snap/smplayer/current/usr/bin & mpv --version        FOR snap FFmpeg VERSION. 
+----snap DOESN'T WORK WITH "~/", BLOCKS SYSTEM COMMANDS, & WORKS DIFFERENTLY WITH SOME FILTERS LIKE showfreqs (IT MAY BE USING AN OLD FFmpeg COMPONENT). THE autocomplex (& MAYBE automask) CODE IS WRITTEN DIFFERENTLY FOR snap COMPATIBILITY.
 
 ----o.options DUMP (FREE FORM). TO DEBUG TRY TOGGLE ALL THESE SIMULTANEOUSLY. THEN ISOLATE WHICH LINE FIXED THE BUG. BUT THAT CAN HAVE UNINTENDED CONSEQUENCES.
 -- ..' video-timing-offset .5  video-sync display-resample' --MAY FIX STUTTER @vf-command (COMBO LAG WITH OTHER SCRIPTS). CAN ALTER AUDIO samplerate TO MATCH LAG. "display-tempo" GLITCHED.

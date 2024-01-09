@@ -22,12 +22,11 @@ o={  --options
     detector      ='cropdetect=%s:%s:1:0',--DEFAULT='cropdetect=limit=%s:round=%s:reset=1:0'  %s=string SUBSTITUTIONS @file-loaded. reset>0.  CAN ALSO COMBINE MULTIPLE DETECTORS IN LIST (MORE CPU USAGE?).
     detector_image='bbox=%s',             --DEFAULT='bbox=%s'  %s=detect_limit_image OR OVERRIDE.
     
-    MAINTAIN_CENTER_X  =  0, --TOLERANCE. 0 MEANS NEVER MOVE THE CENTER (LIKE CROSSHAIRS). A SINGLE BLACK BAR ON 1 SIDE MAYBE OK (UNLESS 1 FRAME ONLY).
-    MAINTAIN_CENTER_Y  =  0, --TOLERANCE. nil FOR albumart. A TRIBAR FLAG WITH BLACK ON TOP OR BOTTOM NEEDS RATIO<1/3. MOVEMENTS IN CENTER TEND TO BE SPURIOUS (DARK FLOOR).
-    TOLERANCE          =.05, --DEFAULT=0. INSTANTANEOUS TOLERANCE. 0% FOR image. WHAT PERCENTAGE BLACK BARS ARE TOLERATED FOR UP TO 10 SECONDS? A BIG crop IS INSTANT, BUT NOT LITTLE CROPS, OTHERWISE AN IMAGE MAY KEEP FIDGETING BY A PIXEL OR TWO.
-    TOLERANCE_TIME     = 10, --DEFAULT=10 SECONDS. IRRELEVANT IF TOLERANCE=0.
-    USE_INNER_RECTANGLE=true,--BOTH cropdetect & bbox GENERATE UNNECESSARY x1 x2 y1 y2 NUMBERS, WHICH ENABLE THE INNER RECTANGLE (MORE AGGRESSIVE crop). COMPUTE x1,x2 = max(x1,x2-w,x),min(x2,x1+w,x+w) ETC BY SYMMETRY, THEN SHRINK w TO THE NEW x2-x1. 
-    -- USE_MIN_RATIO   =true,--CROP ALL THE WAY DOWN TO detect_min_ratio. CAN BE SPURIOUS. DEFAULT CANCELS EXCESSIVE crop.
+    MAINTAIN_CENTER    ={0,0},--{TOLERANCE_X,TOLERANCE_Y}. APPLIES TO video (NOT image). 0 MEANS NEVER MOVE THE CENTER (LIKE CROSSHAIRS). A SINGLE BLACK BAR ON 1 SIDE MAYBE OK (UNLESS is1frame). A TRIBAR FLAG WITH BLACK ON TOP OR BOTTOM NEEDS RATIO<1/3. MOVEMENTS IN CENTER TEND TO BE SPURIOUS (LIKE A DARK FLOOR).
+    TOLERANCE          =.05,  --DEFAULT=0. INSTANTANEOUS TOLERANCE. 0% FOR image. WHAT PERCENTAGE BLACK BARS ARE TOLERATED FOR UP TO 10 SECONDS? A BIG crop IS INSTANT, BUT NOT LITTLE CROPS, OTHERWISE AN IMAGE MAY KEEP FIDGETING BY A PIXEL OR TWO.
+    TOLERANCE_TIME     = 10,  --DEFAULT=10 SECONDS. IRRELEVANT IF TOLERANCE=0.
+    USE_INNER_RECTANGLE=true, --BOTH cropdetect & bbox GENERATE UNNECESSARY x1 x2 y1 y2 NUMBERS, WHICH ENABLE THE INNER RECTANGLE (MORE AGGRESSIVE crop). COMPUTE x1,x2 = max(x1,x2-w,x),min(x2,x1+w,x+w) ETC BY SYMMETRY, THEN SHRINK w TO THE NEW x2-x1. 
+    -- USE_MIN_RATIO   =true, --CROP ALL THE WAY DOWN TO detect_min_ratio. CAN BE SPURIOUS. DEFAULT CANCELS EXCESSIVE crop.
     
     -- meta_osd=true, --DISPLAY ALL detector METADATA.
     -- msg_log =true, --MESSAGE TO MPV LOG. FILLS THE LOG.
@@ -39,7 +38,7 @@ o={  --options
 }
 (require 'mp.options').read_options(o)    --OPTIONAL?
 
-for opt,val in pairs({toggle_on_double_mute=0,key_bindings='C',command_prefix='',detect_limit_image=o.detect_limit,detect_limits={},detector='cropdetect=limit=%s:round=%s:reset=1:0',detector_image='bbox=%s',TOLERANCE=0,TOLERANCE_TIME=10,scale={},format='yuv420p',options=''})
+for opt,val in pairs({toggle_on_double_mute=0,key_bindings='C',command_prefix='',detect_limit_image=o.detect_limit,detect_limits={},detector='cropdetect=limit=%s:round=%s:reset=1:0',detector_image='bbox=%s',MAINTAIN_CENTER={},TOLERANCE=0,TOLERANCE_TIME=10,scale={},format='yuv420p',options=''})
 do o[opt]=o[opt] or val end  --ESTABLISH DEFAULTS. 
 
 opt,val,o.options = '','',o.options:gmatch('[^ ]+') --GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) DIDN'T EXIST IN AN OLD LUA VERSION, USED BY mpv.app ON MACOS.
@@ -64,7 +63,7 @@ function file_loaded()  --ALSO on_vid & ytdl.
     is1frame,loop = false,false  --loop=is_looper
     if not complex_opt and mp.get_property_bool('current-tracks/video/albumart') then is1frame,m.auto = true,false end  --albumart IS DIFFERENT TO image. REQUIRE GRAPH REPLACEMENT IF NO complex. NO auto BECAUSE audio GLITCHES.
     if mp.get_property_bool('current-tracks/video/image') then m.TOLERANCE,m.detector,m.detect_limit   = 0,o.detector_image,o.detect_limit_image --JPEG: bbox & 0 TOLERANCE.  AN MP3, MP2, OGG OR WAV MAY BE A COLLECTION OF JPEG IMAGES (MP3TAG) WHICH NEED CROPPING (& HAVE RUNNING audio). GIF IS ~image. 
-        if not complex_opt then loop,m.detect_min_ratio,m.MAINTAIN_CENTER_X,m.MAINTAIN_CENTER_Y = true,0,nil,nil end end  --RAW JPEG CAN MOVE CENTER. loop NEEDED FOR RELIABILITY (GRAPH REPLACEMENTS CAUSE ERRORS IN MPV LOG).
+        if not complex_opt then loop,m.detect_min_ratio,m.MAINTAIN_CENTER = true,0,{} end end  --RAW JPEG CAN MOVE CENTER. loop NEEDED FOR RELIABILITY (GRAPH REPLACEMENTS CAUSE ERRORS IN MPV LOG).
     for title,limit in pairs(o.detect_limits) do if media_title:find(title:lower(),1,true) then m.detect_limit=limit end end   --detect_limit FINAL OVERRIDE.  1,true = STARTING_INDEX,EXACT_MATCH  NOT CASE SENSITIVE.
     m.detector=m.detector:format(m.detect_limit,o.detect_round)
     
@@ -144,12 +143,12 @@ function detect_crop()     --MAIN function, ON LOOP.
             meta.x ,meta.y  = xNEW,yNEW
             meta.w ,meta.h  = meta.x2-meta.x,meta.y2-meta.y end
     
-    if m.MAINTAIN_CENTER_X then xNEW=math.min( meta.x , m.max_w-(meta.x+meta.w) )      --KEEP HORIZONTAL CENTER. EXAMPLE: lavfi-complex REMAINS CENTERED.    SYMMETRIZE UNLESS DEVIATION FROM CENTER IS SMALL.
+    if m.MAINTAIN_CENTER[1] then xNEW=math.min( meta.x , m.max_w-(meta.x+meta.w) )      --KEEP HORIZONTAL CENTER. EXAMPLE: lavfi-complex REMAINS CENTERED.  
         wNEW=m.max_w-xNEW*2  --wNEW ALWAYS BIGGER THAN meta.w, & ALWAYS SUBTRACTS AN EVEN AMOUNT.
-        if wNEW-meta.w>wNEW*m.MAINTAIN_CENTER_X then meta.x,meta.w = xNEW,wNEW end end
-    if m.MAINTAIN_CENTER_Y then yNEW=math.min( meta.y , m.max_h-(meta.y+meta.h) )      --KEEP VERTICAL CENTERED. PREVENTS FEET BEING CROPPED OFF PORTRAITS. 
+        if wNEW-meta.w>wNEW*m.MAINTAIN_CENTER[1] then meta.x,meta.w = xNEW,wNEW end end
+    if m.MAINTAIN_CENTER[2] then yNEW=math.min( meta.y , m.max_h-(meta.y+meta.h) )      --KEEP VERTICAL CENTERED. PREVENTS FEET BEING CROPPED OFF PORTRAITS. 
         hNEW=m.max_h-yNEW*2
-        if hNEW-meta.h>hNEW*m.MAINTAIN_CENTER_Y then meta.y,meta.h = yNEW,hNEW end end --hNEW ALWAYS BIGGER THAN meta.h. SYMMETRIZE UNLESS DEVIATION FROM CENTER IS SMALL (DEPENDS HOW BIG THE FEET ARE).
+        if hNEW-meta.h>hNEW*m.MAINTAIN_CENTER[2] then meta.y,meta.h = yNEW,hNEW end end --hNEW ALWAYS BIGGER THAN meta.h. SYMMETRIZE UNLESS DEVIATION FROM CENTER IS SMALL (DEPENDS HOW BIG THE FEET ARE).
    
     min_w,min_h,time = m.max_w*m.detect_min_ratio,m.max_h*m.detect_min_ratio,mp.get_property_number('time-pos')
     if meta.w<min_w then if not o.USE_MIN_RATIO 
@@ -187,7 +186,7 @@ end
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END. ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
 ----MPV v0.36.0 (.7z .exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED.  v0.37.0 FAILED ON WINDOWS & GAVE UNACCEPTABLE PERFORMANCE ON MACOS-11. (v0.36 & OLDER ONLY.)
 ----FFmpeg v6.0(.7z .exe .flatpak .snap)  v5.1.2 v5.1.3(.app)  v4.3.2(.AppImage)  ALL TESTED.
-----WIN10 MACOS-11 LINUX-DEBIAN-MATE  (ALL 64-BIT)  ALL TESTED.
+----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. v23.6 MAYBE PREFERRED.
 
 ----A FUTURE VERSION MIGHT BE ABLE TO CROP WITHOUT CHANGING ASPECT. o.MAINTAIN_ASPECT? WITH WIDE-SCREEN A PORTRAIT COULD BE TALLER, BUT NOT ULTRA-FAT.
