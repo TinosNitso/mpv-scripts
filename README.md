@@ -23,7 +23,7 @@ Then hit OK & play. Overall I consider playback smoother than VLC. [autoloader](
 In Linux try `sudo apt install smplayer` or double-click the `.AppImage`. All scripts also fully compatible with `.snap` & `.flatpak` releases. `~/` means home folder in Linux & MacOS.
 
 ## Safety Inspection
-Before running scripts it's safer to first check them in Notepad++. Search for & highlight `os.execute` (operating system), `io.popen` (input output process) & `mp.command*` (media player). Safe commands include `expand-path` `frame-step` `seek` `playlist-next` `stop` `quit` `af*` `vf*`, but `load-script` `run` `subprocess*` may be unsafe. `set` is safe except for `script-opts` which may hook an unsafe executable. To inspect a script check potentially unsafe commands. Ignore all comments (anything following `--`). 
+Before running scripts it's safer to first check them in Notepad++. Search for & highlight `os.execute` (operating system), `io.popen` (input output process) & `mp.command*` (media player). Safe commands include `expand-path` `frame-step` `seek` `playlist-next` `playlist-play-index` `stop` `quit` `af*` `vf*`, but `load-script` `run` `subprocess*` may be unsafe. `set` is safe except for `script-opts` which may hook an unsafe executable. To inspect a script check potentially unsafe commands. Ignore all comments (anything following `--`). 
 
 ## Terminal Commands
 To run in Windows from Command Prompt, create a New Text Document in SMPlayer folder & rename it `TEST.CMD`. Also copy in `TEST.MP4`. Then right-click on `TEST.CMD` & click `Edit`. In Notepad copy/paste:
@@ -59,15 +59,15 @@ SMPlayer *v23.6.0* & v23.12.0 successful. v23.12 has an annoying `no-osd seek 0 
 Fmpeg versions *v6.0* & v4.3.2 (.AppImage) successfully tested.
 
 ## Latest Updates
-Above .lua scripts & `mpv-scripts.zip` are unreleased properly, but pass all my tests so far. Next release after a few more Linux tests.
+Above .lua scripts & `mpv-scripts.zip` are unreleased properly, but pass all my tests so far. Still some more testing before next release.
 
 - All scripts now work with `mpv.app` on MACOS-11. It uses an older LUA version, back when the `%g` pattern didn't exist.
-- YouTube bugfix `--ytdl-format=[ext!=webm]`. webm is currently incompatible with `lavfi-complex`. It ruined only some videos.
+- YouTube bugfix for VP9 profile 4 being incompatible with `lavfi-complex`. [Example](https://youtu.be/ubvV498pyIM).
 - `autoloader.lua` is replaced by `main.lua`, in which case `--script=.` (directory). title moved from aspeed to main.
-- automask now has perfect circles using `geq` (any formula). `o.RES_SAFETY` bugfix so now fully valid, with precision. Also `o.format` option. 
+- automask now has perfect circles using `geq` (any formula). `o.RES_SAFETY` bugfix now fully valid, with precision. Also `o.format` option. 
 - autocrop now has true aspect toggle. It returns double-black bars properly when you double-click mute.
-- autocomplex more efficient code juggling 12.5, 25 & 30 fps. 30 fps for film & automask. `o.freqs_fps_image`, `o.freqs_framerate` (like fade for freqs) & `o.feet_lutrgb` options added. Proprietary drivers almost halve CPU usage, but it also works fine with FOSS drivers. Somehow shuffling colors is more efficient than mixing them. There are at least 3 different fps values when doing abstract visuals: stream, animation, & hard-animation).
-- aspeed improved response time (`o.auto_delay`), & `o.mpv` (any path) options. echo to socket isn't allowed on Linux without installing a dependency, so I re-wrote it using only txtfile.
+- autocomplex more efficient code juggling 12.5, 25 & 30 fps. 30 fps for film & automask. `o.freqs_fps_image`, `o.freqs_framerate` (like fade for freqs) & `o.feet_lutrgb` options added. Somehow shuffling colors is more efficient than mixing them. There's at least 3 fps values when doing abstract visuals: stream, animation, & hard-animation (like fractals).
+- aspeed improved response time (`o.auto_delay`), & `o.mpv` (any path) options. echo to socket isn't allowed on Linux without installing a dependency, so I re-wrote it using only txtfile. Also improved reliability.
 - Many code improvements, like setsar=par, not 1.
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
