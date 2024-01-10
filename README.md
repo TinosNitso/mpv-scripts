@@ -40,7 +40,7 @@ That uses the MPV bundled with SMPlayer. Only good builds make it into `SMPlayer
 
 `mpv --script=~/Desktop/mpv-scripts/autoloader.lua https://youtu.be/5qm8PH4xAss`
 
-MacOS users can drag & drop mpv.app onto Applications. The following commands assume `main.lua` is present (unreleased, but in above .zip).
+MacOS users can drag & drop mpv.app onto Applications. The following command assume `main.lua` is present (unreleased, but in above .zip).
 
 `/Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"` 
 
