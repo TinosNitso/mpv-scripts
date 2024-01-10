@@ -44,12 +44,6 @@ MacOS users can drag & drop mpv.app onto Applications. The following commands as
 
 `/Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"` 
 
-In Linux to use flatpak & snap the commands are:
-
-`cd /var/lib/flatpak/app/info.smplayer.SMPlayer/current/active/files/bin & mpv --script=~/Desktop/mpv-scripts/ https://youtu.be/5qm8PH4xAss`
-
-`cd /snap/smplayer/current/usr/bin & mpv --script=~/Desktop/mpv-scripts/ https://youtu.be/5qm8PH4xAss`
-
 ## Versions
 
 Scripts incompatible with MPV v0.37.0. *v0.36* & older only! v0.36.0 & v0.35.1 successful. Maybe 2 or 3 out of 5 scripts work with v0.37. Hopefully the next version works better!
@@ -64,9 +58,9 @@ Above .lua scripts & `mpv-scripts.zip` are unreleased properly, but pass all my 
 - All scripts now work with `mpv.app` on MACOS-11. It uses an older LUA version, back when the `%g` pattern didn't exist.
 - YouTube bugfix for VP9 profile 4 being incompatible with `lavfi-complex`. [Example](https://youtu.be/ubvV498pyIM).
 - `autoloader.lua` is replaced by `main.lua`, in which case `--script=.` (directory). title moved from aspeed to main.
-- automask now has perfect circles using `geq` (any formula). `o.RES_SAFETY` bugfix now fully valid, with precision. Also `o.format` option. 
+- automask now has perfect circles using `o.geq` (any formula). `o.RES_SAFETY` bugfix now fully valid, with precision. Also `o.format` option. 
 - autocrop now has true aspect toggle. It returns double-black bars properly when you double-click mute.
-- autocomplex more efficient code juggling 12.5, 25 & 30 fps. 30 fps for film & automask. `o.freqs_fps_image`, `o.freqs_framerate` (like fade for freqs) & `o.feet_lutrgb` options added. Somehow shuffling colors is more efficient than mixing them. There's at least 3 fps values when doing abstract visuals: stream, animation, & hard-animation (like fractals).
+- autocomplex more efficient code juggling 12.5, 25 & 30 fps. 30 fps for film & automask. `o.freqs_fps_image`, `o.freqs_framerate` (like fade for freqs) & `o.feet_lutrgb` options added. Somehow shuffling colors is more efficient than mixing them. There should be at least 3 fps values when doing abstract visuals: stream, animation, & hard-animation (like fractals).
 - aspeed improved response time (`o.auto_delay`), & `o.mpv` (any path) options. echo to socket isn't allowed on Linux without installing a dependency, so I re-wrote it using only txtfile. Also improved reliability.
 - Many code improvements, like setsar=par, not 1.
 
