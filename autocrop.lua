@@ -1,6 +1,6 @@
 ----FOR MPV & SMPLAYER. CROP BLACKBARS OFF JPEG, PNG, BMP, GIF, WEBM, MP3 albumart, MP4 & YOUTUBE. CAN CHANGE vid TRACK (MP3TAG) & crop.  .TIFF 1-LAYER ONLY, NO WEBP OR PDF.
-----USE DOUBLE-mute TO toggle (FRAME-STEPS WHEN PAUSED). CAN MAINTAIN CENTER IN HORIZONTAL/VERTICAL, WITH INSTANTANEOUS TOLERANCE VALUES. SUPPORTS BOTH cropdetect & bbox FFmpeg-filters. 
-----THIS VERSION HAS PROPER aspect TOGGLE (EXTRA DOUBLE BLACK BARS TO MATCH stream), BUT NO SMOOTH-crop. BASED ON https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua
+----USE DOUBLE-mute TO TOGGLE (FRAME-STEPS WHEN PAUSED). CAN MAINTAIN CENTER IN HORIZONTAL/VERTICAL, WITH INSTANTANEOUS TOLERANCE VALUES. SUPPORTS BOTH cropdetect & bbox FFMPEG-FILTERS. 
+----THIS VERSION HAS PROPER aspect TOGGLE (EXTRA DOUBLE BLACK BARS TO MATCH STREAM), BUT NO SMOOTH-crop. BASED ON https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua
 
 o={  --options
     auto            =true,--IF false, CROPS OCCUR ONLY on_seek & on_toggle.
@@ -178,18 +178,18 @@ function apply_crop(meta)
     if is1frame or mp.get_property_bool('pause') and not m.time  --GRAPH REPLACEMENT. m.time IS A SWITCH USED TO PREVENT INFINITE seek CYCLE.
     then mp.command(('%s vf pre @%s:lavfi=[format=%s,%s,crop=%d:%d:%d:%d:1:1]'):format(o.command_prefix,label,o.format,m.detector,meta.w,meta.h,meta.x,meta.y)) end  --REPLACEMENT GRAPH FOR albumart WITHOUT complex. VERIFY BY TOGGLE "c" REPEATEDLY (WITH &) WITHOUT automask.
 
-    m.time=time  --REMEMBER time OF is_effective crop.
+    m.time=time  --REMEMBER time OF crop.
     if not m.auto then timers.auto_delay:kill() end --kill auto timer AFTER SUCCESSFUL crop.
 end
 
 
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END. ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
 ----MPV v0.36.0 (.7z .exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED.  v0.37.0 FAILED ON WINDOWS & GAVE UNACCEPTABLE PERFORMANCE ON MACOS-11. (v0.36 & OLDER ONLY.)
-----FFmpeg v6.0(.7z .exe .flatpak .snap)  v5.1.2 v5.1.3(.app)  v4.3.2(.AppImage)  ALL TESTED.
+----FFmpeg v6.0(.7z .exe .flatpak)  v5.1.2 v5.1.3(.app) v4.4.2(.snap) v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS ACTUALLY BUILT WITH FFmpeg v4 & v6, WHICH CHANGES HOW THE GRAPHS ARE WRITTEN (FOR COMPATIBILITY). A FULL IMAGE HAS v4, NOT v6.
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. v23.6 MAYBE PREFERRED.
 
-----A FUTURE VERSION MIGHT BE ABLE TO CROP WITHOUT CHANGING ASPECT. o.MAINTAIN_ASPECT? WITH WIDE-SCREEN A PORTRAIT COULD BE TALLER, BUT NOT ULTRA-FAT.
+----A FUTURE VERSION MIGHT BE ABLE TO CROP WITHOUT CHANGING ASPECT (EQUIVALENT TO AUTO-zoom). o.MAINTAIN_ASPECT? WITH WIDE-SCREEN A PORTRAIT COULD BE TALLER, BUT NOT ULTRA-FAT.
 ----SMPLAYER v23.12 TRIGGERS GRAPH RESET ON PAUSE. THAT'S ACTUALLY AN ADDED FEATURE WHICH RESETS THE CROP WHEN USER HITS SPACEBAR. v23.6 (JUNE RELEASE) & MPV ALONE DON'T RESET crop ON pause. SMPLAYER NOW COUPLES A seek-0 WITH pause. "no-osd seek 0 relative exact" WITHIN 1ms OF "set pause yes". THEN paused TRIGGERS WITHIN A FEW ms.
 
 ----ALTERNATIVE FILTERS:

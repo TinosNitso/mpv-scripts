@@ -1,11 +1,11 @@
-----lavfi-complex SCRIPT WHICH LIMITS fps & scale; LOOPS albumart & IMAGES; & OVERLAYS STEREO FREQUENCY SPECTRUM + volume BARS (AUDIO VISUALS) ONTO MP4, AVI, MP3 (RAW & albumart), MP2, M4A, WAV, OGG, AC3, OPUS & YOUTUBE.  
-----CAN USE DOUBLE-mute TO toggle. ACCURATE 100Hz GRID (LEFT 1kHz TO RIGHT 1kHz). ARBITRARY sine_mix CAN BE ADDED FOR CALIBRATION & DECORATION. MOVES & ROTATES WITH TIME.  CHANGING TRACKS IN SMPLAYER MAY REQUIRE STOP & PLAY (aid=vid=no LOCK BUG).
+----lavfi-complex SCRIPT WHICH LIMITS fps & scale; LOOPS albumart & IMAGES; & OVERLAYS STEREO FREQUENCY SPECTRUM + VOLUME BARS (AUDIO VISUALS) ONTO MP4, AVI, MP3 (RAW & albumart), MP2, M4A, WAV, OGG, AC3, OPUS & YOUTUBE.  
+----CAN USE DOUBLE-mute TO TOGGLE. ACCURATE 100Hz GRID (LEFT 1kHz TO RIGHT 1kHz). ARBITRARY sine_mix CAN BE ADDED FOR CALIBRATION. COMPLEX MOVES & ROTATES WITH TIME.  CHANGING TRACKS IN SMPLAYER MAY REQUIRE STOP & PLAY (aid=vid=no LOCK BUG).
 ----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS. 
 
 o={ --options  ALL OPTIONAL & MAY BE REMOVED.   TO REMOVE AN INTERNAL COMPONENT SET ITS alpha TO 0 (freqs volume grid feet shoe).
     toggle_on_double_mute=.5,  --SECONDS TIMEOUT FOR DOUBLE-mute TOGGLE. SLOW, SO REMOVE FOR OTHER GRAPHS TO INSTA-TOGGLE. ALL LUA SCRIPTS CAN BE TOGGLED USING DOUBLE mute (m&m DOUBLE-TAP).
-    key_bindings         ='F1',--CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER.  s=SCREENSHOT NOT SPECTRUM. f=FULLSCREEN NOT FREQS, o=OSD NOT OVERLAY, C=autocrop. v FOR VOLUME?  'F1 F2' FOR 2 KEYS.
-    -- osd_on_toggle='Audio filters:\n%s\n\nVideo filters:\n%s\n\nlavfi-complex:\n%s', --DISPLAY ALL ACTIVE FILTERS on_toggle. DOUBLE-CLICK MUTE FOR FINAL CODE INSPECTION INSIDE SMPLAYER. %s=string. SET TO '' TO CLEAR osd.
+    key_bindings         ='F1',--CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER.  s=SCREENSHOT NOT SPECTRUM. f=FULLSCREEN NOT FREQS, o=OSD NOT OVERLAY, C=AUTOCROP NOT COMPLEX. v FOR VOLUME?  'F1 F2' FOR 2 KEYS.
+    osd_on_toggle     =5,   --SECONDS. UNCOMMENT TO INSPECT ALL VERSION #s & FILTERGRAPHS, on_toggle. 0 CLEARS THE osd INSTEAD. DISPLAYS mpv-version ffmpeg-version libass-version af vf lavfi-complex. 
     
     vflip_scale=.5,     --REMOVE FOR NO BOTTOM HALF. WIDTH=1.     SOME FUTURE VERSION MIGHT SUPPORT BL & BR CHANNELS FOR BOTTOM.
     -- vflip_only =true,--REMOVES TOP HALF. TOGGLE THESE 2 LINES FOR NULL OVERRIDE (NO SPECTRAL overlay).
@@ -29,9 +29,9 @@ o={ --options  ALL OPTIONAL & MAY BE REMOVED.   TO REMOVE AN INTERNAL COMPONENT 
     gb        = .3, --DEFAULT=.3  RANGE [-2,2]  GREEN IN BLUE RATIO, BEFORE colormix. PROPER COMPLEMENT OF RED REQUIRES SOME GREEN. BLUE+0*GREEN IS TOO DARK. COLOR-BLINDNESS MIGHT BE AN ISSUE. MOST EFFICIENT CODE SHOULD START WITH CORRECT BLUE/RED SHADES, WITHOUT EXTRA colormix.
     width     =  1, --DEFAULT= 1  OVERALL PRIMARY width RATIO. <1 CAUSES zoompan TO CLIP.
     
-    freqs_lead_t       =  .2, --DEFAULT=.08 SECONDS. TRIAL & ERROR. LEAD TIME FOR SPECTRUM. BACKDATES audio TIMESTAMPS. showfreqs HAS AT LEAST 1 FRAME LAG. DEPENDS ON HUMAN VISION/ACOUSTIC INTERPRETATION TIME, & CONCENTRATION.
-    freqs_fps          =25/2, --DEFAULT=25/2 30fps CAUSES FILM TO OCCASIONALLY STUTTER. freqs_clip_h ALSO IMPROVES PERFORMANCE.  WORKS WELL ENOUGH WITH SLOW AUDIO.   
-    freqs_fps_image    =  25, --DEFAULT=25   FOR RAW MP3 ALSO. CAN EASILY DOUBLE fps.  THIS SCRIPT WAS WRITTEN WITHOUT PROPRIETARY GRAPHICS DRIVERS, HENCE THE LIMITED freqs_fps.
+    freqs_lead_t       =  .2, --DEFAULT=.1 SECONDS. TRIAL & ERROR. LEAD TIME FOR SPECTRUM. BACKDATES audio TIMESTAMPS. showfreqs HAS AT LEAST 1 FRAME LAG. DEPENDS ON HUMAN VISION/ACOUSTIC INTERPRETATION TIME. A CONDUCTOR'S BATON MAY MOVE .1s BEFORE THE ORCHESTRA.
+    freqs_fps          =25/2, --DEFAULT=25/2 25fps MAY CAUSE FILM TO OCCASIONALLY STUTTER. freqs_clip_h ALSO IMPROVES PERFORMANCE.  WORKS WELL ENOUGH WITH SLOW MUSIC. SOME HARD ANIMATIONS LIKE FRACTALS REQUIRE A THIRD fps VALUE (25/2).
+    freqs_fps_image    =  25, --DEFAULT=25   FOR RAW MP3 ALSO. CAN EASILY DOUBLE fps.
     freqs_mode         ='line',--DEFAULT='line'.  line OR bar OR dot. FOR bar SET freqs_alpha=.25. GRAPH OPTIMIZED FOR line.
     freqs_win_size     = 512, --DEFAULT=512  INTEGER RANGE [128,2048]. APPROX # OF DATA POINTS. THINNER CURVE WITH SMALLER #. NEEDS AT LEAST 256 FOR PROPER CALIBRATION. TOO MANY DATA POINTS LOOK BAD. TOO MANY PIANO KEYS?
     freqs_win_func     ='parzen', --DEFAULT='parzen'  poisson cauchy flattop MAYBE OK, BUT THE OTHERS ARE UGLY: rect bartlett hanning hamming blackman welch bharris bnuttal bhann sine nuttall lanczos gauss tukey dolph        PARZEN WAS AN AMERICAN STATISTICIAN.
@@ -59,7 +59,7 @@ o={ --options  ALL OPTIONAL & MAY BE REMOVED.   TO REMOVE AN INTERNAL COMPONENT 
     options=''           --'opt1 val1 opt2 val2 '... FREE FORM.  main.lua HAS io_write & options.           
         ..' vd-lavc-threads 0  osd-font-size 16  geometry 50% ' --DEFAULT size 55p MAY NOT FIT lavfi-complex ON osd. geometry ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.  vd-lavc=VIDEO DECODER - LIBRARY AUDIO VIDEO. 0=AUTO OVERRIDES SMPLAYER, OR ELSE MAY FAIL INSPECTION.
 }
-for opt,val in pairs({toggle_on_double_mute=0,key_bindings='',fps=25,period=1,rotate='0',zoompan='1:0:0',overlay='(W-w)/2:(H-h)/2',dual_alpha=1.5,dual_overlay='(W-w)/2:(H-h)/2',highpass=100,dynaudnorm=500,gb=.3,width=1,freqs_lead_t=.08,freqs_fps=25/2,freqs_fps_image=25,freqs_mode='line',freqs_win_size=512,freqs_win_func='parzen',freqs_averaging=2,freqs_magnification=1.1,freqs_clip_h=.3,freqs_alpha=.7,volume_fps=25,volume_fade=0,volume_dm=0,volume_alpha=.5,volume_width=.04,volume_height=.15,grid_thickness=.1,grid_height=.1,grid_alpha=1,feet_height=.05,feet_activation=.5,feet_lutrgb='128:0:255:val*2',shoe_color='BLACK',format='yuv420p',scale={},options=''})
+for opt,val in pairs({toggle_on_double_mute=0,key_bindings='',fps=25,period=1,rotate='0',zoompan='1:0:0',overlay='(W-w)/2:(H-h)/2',dual_alpha=1.5,dual_overlay='(W-w)/2:(H-h)/2',highpass=100,dynaudnorm=500,gb=.3,width=1,freqs_lead_t=.1,freqs_fps=25/2,freqs_fps_image=25,freqs_mode='line',freqs_win_size=512,freqs_win_func='parzen',freqs_averaging=2,freqs_magnification=1.1,freqs_clip_h=.3,freqs_alpha=.7,volume_fps=25,volume_fade=0,volume_dm=0,volume_alpha=.5,volume_width=.04,volume_height=.15,grid_thickness=.1,grid_height=.1,grid_alpha=1,feet_height=.05,feet_activation=.5,feet_lutrgb='128:0:255:val*2',shoe_color='BLACK',format='yuv420p',scale={},options=''})
 do o[opt]=o[opt] or val end  --ESTABLISH DEFAULTS. 
 
 opt,val,o.options = '','',o.options:gmatch('[^ ]+') --GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) DIDN'T EXIST IN AN OLD LUA VERSION, USED BY mpv.app ON MACOS.
@@ -106,7 +106,7 @@ lavfi=('[aid%%d]%sasplit[ao],stereotools,highpass=%s,dynaudnorm=%s,asplit[af],sh
 ----loop             =loop:size  (loop>=-1 : size>0) PAIRS WITH fps FOR RAW JPEG, WHICH IS ITS OWN CASE-STUDY WITH ITS OWN FILTER (MOST ELEGANT).
 ----stereotools       CONVERTS MONO & SURROUND SOUND TO stereo.     PREFERRED ALTERNATIVE TO aformat.
 ----showvolume[a]→[v]=rate:b:w:h:f:...:t:v:o = rate:CHANNEL_GAP:LENGTH:THICKNESS/2:FADE:...:CHANNELVALUES:VOLUMEVALUES:ORIENTATION    (DEFAULTS 25:1:400:20:0.95:t=1:v=1:o=h)   LENGTH MINIMUM ~100. t & v ARE TEXT & SHOULD BE DISABLED.  THERE'S SOME TINY BLACK LINE DEFECT, WHICH BLUE COVERS UP.
-----showfreqs [a]→[v]=size:RATE:mode:ascale:fscale:win_size:win_func:overlap:averaging:colors  DEFAULTS 1024x512:25:bar:log:lin:2048:hanning:1:1   RATE INCOMPATIBLE WITH LINUX snap, SO ALL OPTIONS AFTER IT NEED TO BE SPELLED OUT IN FULL, FOR COMPATIBILITY. size SHOULD HAVE ASPECT APPROX 300x500 FOR HEALTHY CURVE TO BE EQUALLY THICK IN HORIZONTAL & VERTICAL (300x300 & 300x700 GIVE OFF CURVES). SEPARATING CHANNELS WITHOUT COLORS (cmode=separate) WOULD REQUIRE TWICE AS MANY PIXELS.
+----showfreqs [a]→[v]=size:RATE:mode:ascale:fscale:win_size:win_func:overlap:averaging:colors  DEFAULTS 1024x512:25:bar:log:lin:2048:hanning:1:1   RATE INCOMPATIBLE WITH LINUX AppImage & snap, SO ALL OPTIONS AFTER IT NEED TO BE SPELLED OUT IN FULL. size SHOULD HAVE ASPECT APPROX 300x500 FOR HEALTHY CURVE TO BE EQUALLY THICK IN HORIZONTAL & VERTICAL (300x300 & 300x700 GIVE OFF CURVES). SEPARATING CHANNELS WITHOUT COLORS (cmode=separate) WOULD REQUIRE TWICE AS MANY PIXELS.
 ----aresample         (Hz) DOWNSAMPLES TO 2.1kHz (NYQUIST+5%). AN ALTERNATIVE IS aformat.
 ----crop             =w:h:x:y:keep_aspect:exact  DEFAULT=iw:ih:(iw-ow)/2:(ih-oh)/2:0:0   ZOOMS IN ON ascale & fscale. REMOVES MIDDLE TICK ON GRID. SEPARATES [LOWS]. CROPS 5% OFF DATA.
 ----lutyuv,lutrgb    =y:u:v:a,r:g:b:a  LOOK-UP-TABLE,BRIGHTNESS-UV,RED-GREEN-BLUE  lutyuv IS MORE EFFICIENT THAN lutrgb. lut IS AMBIGUOUS (format CONVERSION?). CREATE TRANSPARENCY, & SELECTS CURVE FROM BLUR BRIGHTNESS. CURVE SMOOTHNESS & THICKNESS DOUBLE-CALIBRATED USING lutrgb>140 & 90.  lutyuv CAN BLANK CANVAS.
@@ -123,7 +123,7 @@ lavfi=('[aid%%d]%sasplit[ao],stereotools,highpass=%s,dynaudnorm=%s,asplit[af],sh
 ----trim             =...:start_frame:end_frame  IS THE FINISH ON [vo]. TRIMS 1 FRAME OFF THE START FOR ITS TIMESTAMP. 
 
 
-function file_loaded(event) --ALSO on_aid, on_vid, on_toggle & ytdl.
+function file_loaded() --ALSO on_aid, on_vid, on_toggle & ytdl.
     image,aid,vid = false,mp.get_property_number('current-tracks/audio/id'),mp.get_property_number('current-tracks/video/id') --image=BOOL  'aid' & 'vid' MAYBE='auto', BUT id=nil OR INTEGER. 
     aid=aid and new_aid or aid  --on_aid OVERRIDE.
     vid=vid and new_vid or vid  --on_vid OVERRIDE. SHOULD CHECK IF vid IN CASE AUDIO-ONLY. 
@@ -157,14 +157,13 @@ function file_loaded(event) --ALSO on_aid, on_vid, on_toggle & ytdl.
         complex=o.dual_colormix and complex:format(',colorchannelmixer='..o.dual_colormix) or complex:format('') end  --ADDS 5% CPU USAGE. 
     freqs_fps=(image or not vid) and o.freqs_fps_image or o.freqs_fps  --freqs_fps MAY VARY on_vid. SOME ANIMATIONS (LIKE FRACTALS) CAN BE DONE SMOOTHER ON albumart.
     
-    mp.set_property('lavfi-complex',lavfi:format(aid,freqs_fps,freqs_fps,complex,W*o.width,clip_h))  --CASES 3,4,5.  freqs_fps REPEATS FOR LINUX snap (TO REDUCE showfreqs@25fps). size FOR zoompan.  
+    mp.set_property('lavfi-complex',lavfi:format(aid,freqs_fps,freqs_fps,complex,W*o.width,clip_h))  --CASES 3,4,5.  freqs_fps INSERT SHOULD DEPEND ON ffmpeg-version. v4 CAN ONLY TAKE IT ONCE. size FOR zoompan.  
     if OFF then OFF=false  --ALREADY OFF, FORCE TOGGLE. EXAMPLE: playlist-next WHEN OFF.
         on_toggle() end  
-    if event then mp.register_event('log-message',on_error) end --BUGFIX FOR VP9 PROFILE 4 (USED BY YOUTUBE). EACH URL RE-REGISTERS.
 end 
 mp.register_event('file-loaded',file_loaded)
 mp.register_event('seek'    ,function() if mp.get_property_number('time-remaining')==0 then mp.command('playlist-next force') end end)  --playlist-next FOR MPV PLAYLIST. force FOR SMPLAYER PLAYLIST.  BUGFIX FOR seek PASSED end-file. A CONVENIENT WAY TO SKIP NEXT TRACK IN SMPLAYER IS TO SKIP 10 MINUTES PASSED end-file.
-mp.register_event('end-file',function() last_brightness,last_aid,last_vid,new_aid,new_vid = nil,nil,nil,nil,nil end)  --CLEAR MEMORY FOR MPV PLAYLISTS (EXAMPLE: path=*.MP4)
+mp.register_event('end-file',function() last_path,last_brightness,last_aid,last_vid,new_aid,new_vid = nil,nil,nil,nil,nil,nil end)  --CLEAR MEMORY FOR MPV PLAYLISTS (EXAMPLE: path=*.MP4)
 
 function on_aid(_,aid)  --UNTESTED. ONLY GOOD FOR 1 SWITCH IN aid: 1→2 XOR N→1.
     if last_aid and last_aid~=aid then new_aid=last_aid==1 and 2 or 1
@@ -173,7 +172,7 @@ function on_aid(_,aid)  --UNTESTED. ONLY GOOD FOR 1 SWITCH IN aid: 1→2 XOR N�
 end
 mp.observe_property('aid','number',on_aid)
 
-function on_vid(_,vid)  --ONLY GOOD FOR 1 SWITCH IN vid: 1→2 XOR N→1.  ALTERNATIVE stop & loadfile DOESN'T WORK.
+function on_vid(_,vid)  --ONLY GOOD FOR 1 SWITCH IN vid: 1→2 XOR N→1.  ALTERNATIVE stop & playlist-play-index DOESN'T WORK (IT WORKS BEFORE PLAYBACK-START).
     if last_vid and last_vid~=vid then new_vid=last_vid==1 and 2 or 1
         file_loaded() end  --CHECKS IF vid. CHECKING HERE DIDN'T WORK.
     last_vid=vid    --REMEMBER vid.
@@ -193,7 +192,9 @@ function on_toggle(mute)
         elseif vid then complex=('%s,[vid%d]fps=%s,%%s[vo]'):format(complex,vid,o.fps) end   --CASE 5. LIMIT [vo], WITH NO SPECTRUM.
         complex=complex:format('scale=%d:%d,setsar=%s,format=%s'):format(W,H,par,o.format)
         mp.set_property('lavfi-complex',complex) end
-    if o.osd_on_toggle then mp.osd_message(o.osd_on_toggle:format(mp.get_property_osd('af'),mp.get_property_osd('vf'),mp.get_property_osd('lavfi-complex')), 5) end  --OPTIONAL osd, 5 SECONDS.
+    if o.osd_on_toggle then mp.osd_message(('mpv-version: %s\nffmpeg-version: %s\nlibass-version: %s\n\nAudio filters:\n%s\n\nVideo filters:\n%s\n\nlavfi-complex:\n%s') 
+                :format(mp.get_property_osd('mpv-version'),mp.get_property_osd('ffmpeg-version'),mp.get_property_osd('libass-version'),mp.get_property_osd('af'),mp.get_property_osd('vf'),mp.get_property_osd('lavfi-complex'))
+            ,o.osd_on_toggle) end --LISTS CAN HAVE MORE LINES.
 end
 for key in o.key_bindings:gmatch('[^ ]+') do mp.add_key_binding(key, 'toggle_complex_'..key, on_toggle) end --MAYBE SHOULD BE 'toggle_spectrum_' BECAUSE THIS TOGGLE ONLY TURNS OFF/ON THE SPECTRUM.
 mp.observe_property('mute', 'bool', on_toggle)
@@ -202,24 +203,24 @@ timer=mp.add_periodic_timer(o.toggle_on_double_mute, function()end)  --timer CAR
 timer.oneshot=true
 timer:kill() 
 
-function on_error()  --lavfi-complex CURRENTLY INCOMPATIBLE WITH A POPULAR 1080p VP9 PROFILE USED BY YOUTUBE.   [ffmpeg/video] vp9: Profile 4 is not yet supported
-    ytdl_format=mp.get_property('ytdl-format')
-    mp.set_property('ytdl-format','bestvideo[height<1080]+bestaudio')  --COULD ALSO gsub. INSTA-SWITCH DOWN→720p, THEN BACK AGAIN. PROFILE 4 IS USED ON 1080p.
-    mp.command('stop keep-playlist')  --RESTART CURRENT URL.
-    mp.command('playlist-play-index current')
-    mp.set_property('ytdl-format',ytdl_format)  --RETURN ytdl-format.
+utils=require 'mp.utils'
+function on_error(event)  --lavfi-complex INCOMPATIBLE WITH A POPULAR 1080p VP9 PROFILE USED BY YOUTUBE.  EXAMPLE: https://youtu.be/ubvV498pyIM  [ffmpeg/video] vp9: Profile 4 is not yet supported
+    path,ytdl_format = mp.get_property('path'),mp.get_property('ytdl-format')
+    if last_path==path or utils.file_info(path) or mp.get_property('ffmpeg-version'):sub(1,1)=='4' then return end  --OVERRIDE. ONLY ONCE UNTIL NEXT YOUTUBE path. HOWEVER ffmpeg V4 SETS OFF A DIFFERENT ERROR.
+    mp.set_property('ytdl-format','bestvideo[height<1080]+bestaudio')  --COULD ALSO gsub. INSTA-SWITCH DOWN→720p, THEN BACK AGAIN. PROFILE 4 IS USED ON 1080p+.
+    mp.command('stop keep-playlist')           --CLEARS last_path.
+    mp.command('playlist-play-index current')  --RESTART CURRENT URL.
+    mp.set_property('ytdl-format',ytdl_format) --RETURN ytdl-format.
+    last_path=path
 end
+mp.register_event('log-message',on_error)  --BUGFIX FOR VP9 PROFILE 4 (USED BY YOUTUBE). HOWEVER A DIFFERENT ERROR COULD SET IT OFF (IN LINUX).
+mp.register_event('playback-restart',function() last_path=last_path or mp.get_property('path') end)  --EQUIVALENT TO UNREGISTERING on_error. VP9 BUG ONLY BEFORE PLAYBACK START.
 mp.enable_messages('error') --VP9 error IS NON-fatal.
-mp.register_event('playback-restart',function() mp.unregister_event(on_error) end)  
-
-
-
-
 
 
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS (& 5 CASES), LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END. ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
 ----MPV v0.36.0 (.7z .exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED.  v0.37.0 FAILED ON WINDOWS & GAVE UNACCEPTABLE PERFORMANCE ON MACOS-11. (v0.36 & OLDER ONLY.)
-----FFmpeg v6.0(.7z .exe .flatpak .snap)  v5.1.2 v5.1.3(.app)  v4.3.2(.AppImage)  ALL TESTED.
+----FFmpeg v6.0(.7z .exe .flatpak)  v5.1.2 v5.1.3(.app) v4.4.2(.snap) v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS ACTUALLY BUILT WITH FFmpeg v4 & v6, WHICH CHANGES HOW THE GRAPHS ARE WRITTEN (FOR COMPATIBILITY). A FULL IMAGE HAS v4, NOT v6.
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. v23.6 MAYBE PREFERRED.
 

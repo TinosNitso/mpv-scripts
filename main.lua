@@ -2,7 +2,7 @@
 ----YOUTUBE: https://github.com/yt-dlp/yt-dlp/releases/tag/2023.11.14  EXTRACTING FROM .zip MAY YIELD FASTER EXECUTABLE.
 
 o={ --options  ALL OPTIONAL & CAN BE REMOVED.
-    scripts={ --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE. TYPOS CAN TOGGLE THEM ON & OFF.
+    scripts={ --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE. TYPOS CAN TOGGLE THEM ON & OFF. automask & autocomplex HAVE osd_on_toggle WHICH DISPLAYS VERSION NUMBERS & FILTERGRAPHS. (OTHERWISE main.lua ALSO NEEDS DOUBLE-MUTE TOGGLE.)
         "aspeed.lua",     --CLOCK, TITLE & AUDIO DEVICES SPEED RANDOMIZATION, FOR UP TO 10 HOURS. INSTA-TOGGLE. CONVERTS MONO TO (RANDOMIZED) SURROUND SOUND.  MY FAVOURITE OVERALL. CONVERTS A SPEAKER INTO A METAPHORICAL MOCKING-BIRD.
         "autocrop.lua",   --CROP OFF BLACK BARS BEFORE mask, BUT AFTER SPECTRAL OVERLAY. INSTA-TOGGLE.  autocrop-smooth.lua FOR SMOOTH VERSION (TOO MUCH CPU WHEN COMBINED → META-LAG).
         "autocomplex.lua",--ANIMATED AUDIO SPECTRUM, VOLUME BARS, FPS LIMITER. DUAL lavfi-complex OVERLAY. SLOW TOGGLE (INTERRUPTS PLAYBACK).   MY FAV FOR RELIGION (A PRIEST'S VOICE IS LIKE WINGS OF BIRD). 
@@ -13,11 +13,11 @@ o={ --options  ALL OPTIONAL & CAN BE REMOVED.
         "yt-dlp_linux", --CASE SENSITIVE.  sudo apt remove yt-dlp  TO REMOVE OLD VERSION.
         "yt-dlp_macos", --CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto. 
     },
-    -- title='{\\fs55\\bord3\\shad1}',  --REMOVE TO remove title.  \\,fs,bord,shad = \,FONTSIZE,BORDER,SHADOW (PIXELS)  REMOVE TO REMOVE title. THIS STYLE CODE SETS THE osd.  b1,i1,u1,s1,be1,fn,c = BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME,COLOR  WITHOUT b1, fs MAY BE LARGER.  cFF=RED,cFF0000=BLUE,ETC
-    title_duration=5,  --SECONDS. DEFAULT→NO title (0).
-    loop_limit    =10, --SECONDS (MAX). INFINITE loop GIF & SHORT MP4 (IN SMPLAYER TOO) IF duration IS LESS. STOPS MPV SNAPPING.  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
+    title='{\\fs55\\bord3\\shad1}',--REMOVE TO REMOVE title.  \\,fs,bord,shad = \,FONTSIZE,BORDER,SHADOW (PIXELS)  THIS STYLE CODE SETS THE osd.  b1,i1,u1,s1,be1,fn,c = BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME,COLOR  WITHOUT BOLD, FONT MAY BE LARGER.  cFF=RED,cFF0000=BLUE,ETC
+    title_duration=5,              --SECONDS. DEFAULT→NO title (0).
+    loop_limit    =10,             --SECONDS (MAX). INFINITE loop GIF & SHORT MP4 (IN SMPLAYER TOO) IF duration IS LESS. STOPS MPV SNAPPING.  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
     
-    io_write=' ',--DEFAULT=''  (INPUT/OUTPUT) io.write THIS @EVERY OBSERVATION OF af vf lavfi-complex. PREVENTS EMBEDDED MPV FROM SNAPPING ON IMAGES, BY COMMUNICATING WITH ITS PARENT APP @POINT OF GRAPH INSERTION. NEEDED BY autocrop & automask, BUT IT'S AN EMBEDDING ISSUE (MPV IN SMPLAYER OR FIREFOX).
+    io_write=' ',--DEFAULT=''  (INPUT/OUTPUT) io.write THIS @EVERY OBSERVATION OF af vf lavfi-complex. PREVENTS EMBEDDED MPV FROM SNAPPING BY COMMUNICATING WITH ITS PARENT APP @GRAPH REPLACEMENT. NEEDED BY autocrop & automask, BUT IT'S AN EMBEDDING ISSUE (MPV IN SMPLAYER OR FIREFOX).
     options =''  --'opt1 val1 opt2 val2 '... FREE FORM.
         ..' osd-border-size 1  osd-scale-by-window no  osd-duration 5000  osd-bar no ' --DEFAULTS 3,yes,1000,yes  (PIXELS,BOOL,MILLISECONDS,BOOL)  1p FOR LITTLE TEXT. SAME font-size WITH LITTLE WINDOW. TAKES A FEW SECS TO READ/SCREENSHOT osd. bar GETS IN THE WAY (SMPLAYER).
         ..' keepaspect no ' --FREE aspect IF MPV HAS ITS OWN WINDOW.
@@ -30,14 +30,14 @@ do o[opt]=o[opt] or val end  --ESTABLISH DEFAULTS.
 opt,val,o.options = '','',o.options:gmatch('[^ ]+') --GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) DIDN'T EXIST IN AN OLD LUA VERSION, USED BY mpv.app ON MACOS.
 while   val do mp.set_property(opt,val)   --('','') → NULL-set
     opt,val = o.options(),o.options() end --nil @END
-for property in ('af vf lavfi-complex'):gmatch('[^ ]+') do mp.observe_property(property,'native',function() io.write(o.io_write) end) end
 
-utils    =require 'mp.utils'
+for property in ('vf lavfi-complex af path'):gmatch('[^ ]+')  --EMBEDDED PLAYLISTS STILL SNAP (CHANGE IN path).
+do mp.observe_property(property,'native',function() io.write(o.io_write) end) end
+
+utils,os =require 'mp.utils',os.getenv('os')           --nil ON MACOS.
 directory=utils.split_path(mp.get_property('scripts')) --split FROM WHATEVER THE USER ENTERED.   ALTERNATIVE mp.get_script_directory() HAS BUG.
-directory=mp.command_native({'expand-path',directory}) --yt-dlp REQUIRES ~ EXPANDED. command_native RETURNS.
-
-os   =os.getenv('os')  --nil ON MACOS.
-COLON=os and os:lower():find('windows') and ';' or ':'  --FILE LIST SEPARATOR.  WINDOWS=;  UNIX=:
+directory=mp.command_native({'expand-path',directory}) --os= yt-dlp REQUIRES ~ EXPANDED. command_native RETURNS.
+COLON=os and os:lower():find('windows') and ';' or ':' --FILE LIST SEPARATOR.  WINDOWS=;  UNIX=:
 
 hook,script_opts,scripts = 'ytdl_hook-ytdl_path',mp.get_property_native('script-opts'),mp.get_property_native('scripts')  --hook SCRIPT-OPT SPECIFIES yt-dlp EXECUTABLE. 
 for _,ytdl in pairs(o.ytdl) do ytdl=utils.join_path(directory,ytdl)  --join AFTER split.
@@ -55,15 +55,14 @@ function playback_start()
     mp.unregister_event(playback_start) --1 start PER file (OR STREAM). 
     duration,osd_level = mp.get_property_number('duration'),mp.get_property_number('osd-level') 
     if duration and o.loop_limit>duration then mp.set_property('loop','inf') end   --loop GIF.  
-    if not o.title then return end  --title BELOW.
+
+    mp.set_property_number('osd-level',0)   --STOP osd INTERFERENCE FROM SMPLAYER, WITH OR WITHOUT title.
+    mp.add_timeout(.1,function() mp.set_property_number('osd-level',osd_level) end) --RETURN osd-level. 
     
-    mp.set_property_number('osd-level',0)   --STOP osd INTERFERENCE FROM SMPLAYER.
-    title     =mp.create_osd_overlay('ass-events')  --ass-events IS THE ONLY VALID OPTION.
-    title.data=o.title..mp.get_property_osd('media-title') 
-    title:update()  --DISPLAY title.
-    
-    mp.add_timeout(.1,function() mp.set_property_number('osd-level',osd_level) end) --RETURN osd-level.
-    mp.add_timeout(o.title_duration,function() title:remove() end)  --remove title ON timeout.
+    if o.title then title=mp.create_osd_overlay('ass-events')  --ass-events IS THE ONLY VALID OPTION.
+         title.data=o.title..mp.get_property_osd('media-title') 
+         title:update()  --DISPLAY title.
+         mp.add_timeout(o.title_duration,function() title:remove() end) end --remove title ON timeout.
 end
 mp.register_event('file-loaded',function() mp.register_event('playback-restart',playback_start) end)
 
@@ -73,12 +72,10 @@ mp.register_event('file-loaded',function() mp.register_event('playback-restart',
 ----LINUX      sh: mpv --script=~/Desktop/mpv-scripts/ https://youtu.be/5qm8PH4xAss
 ----MACOS     zsh: /Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"      
 ----MACOS mpv.app: /Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"        (DRAG & DROP mpv.app ONTO Applications. IT USES AN OLD LUA.)
-----LINUX flatpak: cd /var/lib/flatpak/app/info.smplayer.SMPlayer/current/active/files/bin & mpv --script=~/Desktop/mpv-scripts/ https://youtu.be/5qm8PH4xAss       (cd RESOLVES THE TRUE LOCATION.) 
-----LINUX    snap: cd /snap/smplayer/current/usr/bin & mpv --script=~/Desktop/mpv-scripts/ https://youtu.be/5qm8PH4xAss
 
-----SAFETY INSPECTION: LUA SCRIPTS SHOULD BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path frame-step seek playlist-next playlist-play-index quit af* vf* ARE ALL SAFE. set IS SAFE EXCEPT FOR script-opts WHICH MAY hook AN UNSAFE EXECUTABLE INTO A DIFFERENT SCRIPT, LIKE youtube-dl.
+----SAFETY INSPECTION: LUA SCRIPTS SHOULD BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path frame-step seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE. set IS SAFE EXCEPT FOR script-opts WHICH MAY hook AN UNSAFE EXECUTABLE INTO A DIFFERENT SCRIPT, LIKE youtube-dl.
 ----MPV v0.36.0 (.7z .exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED.  v0.37.0 FAILED ON WINDOWS & GAVE UNACCEPTABLE PERFORMANCE ON MACOS-11. (v0.36 & OLDER ONLY.)
-----FFmpeg v6.0(.7z .exe .flatpak .snap)  v5.1.2 v5.1.3(.app)  v4.3.2(.AppImage)  ALL TESTED.
+----FFmpeg v6.0(.7z .exe .flatpak)  v5.1.2 v5.1.3(.app) v4.4.2(.snap) v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS ACTUALLY BUILT WITH FFmpeg v4 & v6, WHICH CHANGES HOW THE GRAPHS ARE WRITTEN (FOR COMPATIBILITY). A FULL IMAGE HAS v4, NOT v6.
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. v23.6 MAYBE PREFERRED.
 
@@ -97,18 +94,16 @@ mp.register_event('file-loaded',function() mp.register_event('playback-restart',
 ----https://smplayer.info/en/download-linux & https://apt.fruit.je/ubuntu/jammy/mpv/ FOR LINUX SMPLAYER & MPV.
 ----flatpak install *.flatpak  snap install *.snap  FOR INSTALLS, AFTER cd TO RELEASES. MUST BE ON INTERNET, EVEN FOR snap. .AppImage IS OFFLINE.
 ----flatpak run info.smplayer.SMPlayer  snap run smplayer  FOR flatpak & snap TESTING. 
-----cd /var/lib/flatpak/app/info.smplayer.SMPlayer/current/active/files/bin & mpv --version     FOR flatpak FFmpeg VERSION.
-----cd /snap/smplayer/current/usr/bin & mpv --version        FOR snap FFmpeg VERSION. 
-----snap DOESN'T WORK WITH "~/", BLOCKS SYSTEM COMMANDS, & WORKS DIFFERENTLY WITH SOME FILTERS LIKE showfreqs (IT MAY BE USING AN OLD FFmpeg COMPONENT). THE autocomplex (& MAYBE automask) CODE IS WRITTEN DIFFERENTLY FOR snap COMPATIBILITY.
+----snap DOESN'T WORK WITH "~/", BLOCKS SYSTEM COMMANDS, & WORKS DIFFERENTLY WITH SOME FILTERS LIKE showfreqs (FFmpeg-v4.4). THE autocomplex (& MAYBE automask) CODE IS WRITTEN DIFFERENTLY FOR snap COMPATIBILITY.
 
 ----o.options DUMP (FREE FORM). TO DEBUG TRY TOGGLE ALL THESE SIMULTANEOUSLY. THEN ISOLATE WHICH LINE FIXED THE BUG. BUT THAT CAN HAVE UNINTENDED CONSEQUENCES.
 -- ..' video-timing-offset .5  video-sync display-resample' --MAY FIX STUTTER @vf-command (COMBO LAG WITH OTHER SCRIPTS). CAN ALTER AUDIO samplerate TO MATCH LAG. "display-tempo" GLITCHED.
 -- ..' hr-seek-demuxer-offset 1  cache-pause-wait 0  vd-lavc-dropframe nonref  vd-lavc-skipframe nonref'    --BOTH display-resample & display-tempo TRIGGER BUGS.  FRAME TYPES: none default nonref(SKIPnonref) bidir(SKIPBFRAMES) 
 -- ..' msg-level ffmpeg/demuxer=error  hr-seek always  index recreate  wayland-content-type none  background red  alpha blend'
--- ..' stream-buffer-size 1e9  demuxer-lavf-buffersize 1e9  audio-reversal-buffer 1e9  video-reversal-buffer 1e9  audio-buffer 1e9'
--- ..' chapter-seek-threshold 1e9  vd-queue-max-samples 1e9  ad-queue-max-samples 1e9  demuxer-max-bytes 1e9  vd-queue-max-bytes 1e9  ad-queue-max-bytes 1e9  demuxer-max-back-bytes 1e9'
--- ..' demuxer-lavf-analyzeduration 1e9  demuxer-termination-timeout 1e9  cache-secs 1e9  vd-queue-max-secs 1e9  ad-queue-max-secs 1e9  demuxer-readahead-secs 1e9' 
--- ..' demuxer-backward-playback-step 1e9  video-backward-overlap 1e9  audio-backward-overlap 1e9  audio-backward-batch 1e9  video-backward-batch 1e9'
+-- ..' stream-buffer-size 100000000  demuxer-lavf-buffersize 100000000  audio-reversal-buffer 100000000  video-reversal-buffer 100000000  audio-buffer 100000000'
+-- ..' chapter-seek-threshold 100000000  vd-queue-max-samples 100000000  ad-queue-max-samples 100000000  demuxer-max-bytes 100000000  vd-queue-max-bytes 100000000  ad-queue-max-bytes 100000000  demuxer-max-back-bytes 100000000'
+-- ..' demuxer-lavf-analyzeduration 100000000  demuxer-termination-timeout 100000000  cache-secs 100000000  vd-queue-max-secs 100000000  ad-queue-max-secs 100000000  demuxer-readahead-secs 100000000' 
+-- ..' demuxer-backward-playback-step 100000000  video-backward-overlap 100000000  audio-backward-overlap 100000000  audio-backward-batch 100000000  video-backward-batch 100000000'
 -- ..' hr-seek-framedrop yes  access-references yes  ordered-chapters no  stop-playback-on-init-failure yes'
 -- ..' osc no  ytdl yes  vd-queue-enable yes  ad-queue-enable yes  cache-pause-initial no  cache-pause no  demuxer-seekable-cache yes  cache yes  demuxer-cache-wait no'
 -- ..' framedrop no  force-window yes  keepaspect-window no  initial-audio-sync no  video-latency-hacks yes  demuxer-lavf-hacks yes  gapless-audio no  demuxer-donate-buffer yes  demuxer-thread yes  demuxer-seekable-cache yes  force-seekable yes  demuxer-lavf-linearize-timestamps no'

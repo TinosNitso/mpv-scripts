@@ -1,6 +1,6 @@
-----ADD clock TO VIDEO & JPEG, WITH DOUBLE-MUTE TOGGLE, + AUDIO AUTO speed SCRIPT. clock TICKS WITH SYSTEM. RANDOMIZES SIMULTANEOUS STEREOS IN MPV & SMPLAYER. LAUNCHES A NEW MPV FOR EVERY SPEAKER (EXCEPT ON 1 PRIMARY DEVICE CHANNEL). ADDS AMBIENCE WITH RANDOMIZATION. VOLUME, PAUSE, PLAY, SEEK, MUTE, SPEED, LAG, STOP, PRIORITY, PATH, SCRIPT-OPTS & AID APPLY TO ALL DETACHED subprocesses, VIA 1 pipe EACH.
+----ADD clock TO VIDEO & JPEG, WITH DOUBLE-MUTE TOGGLE, + AUDIO AUTO SPEED SCRIPT. clock TICKS WITH SYSTEM, & MAY BE COLORFUL. RANDOMIZES SIMULTANEOUS STEREOS IN MPV & SMPLAYER. LAUNCHES A NEW MPV FOR EVERY SPEAKER (EXCEPT ON 1 PRIMARY DEVICE CHANNEL). ADDS AMBIENCE WITH RANDOMIZATION. VOLUME, PAUSE, PLAY, SEEK, MUTE, SPEED, LAG, STOP, PRIORITY, PATH, SCRIPT-OPTS & AID APPLY TO ALL DETACHED subprocesses, VIA .txt FILE.
 ----A STEREO COULD BE SET LOUDER IF ONE CHANNEL RANDOMLY SPEEDS UP & DOWN. A SECOND STEREO CAN BE DISJOINT FROM THE FIRST (EXTRA VOLUME).     ORIGINAL CONCEPT WAS TO SYNC MULTIPLE VIDEOS, BUT ONE BIG video IS SIMPLER. PRIMARY GOAL IS 10 HOUR SYNC WITH RANDOMIZATION.
-----CURRENT VERSION TREATS ALL DEVICES AS STEREO. UN/PLUGGING USB STEREO REQUIRES RESTARTING SMPLAYER.    USB→3.5mm SOUND CARDS COST AS LITTLE AS $2 ON EBAY & CAN BE TAPED TO A CABLE. EACH NEW USB STEREO CREATES A NEW "wasapi/" DEVICE (WINDOWS AUDIO SESSION APP. PROGRAM. INTERFACE) OR "pulse/alsa" (LINUX), WHICH CAN BE SEEN IN TASK MANAGER. "coreaudio/" IS MACOS. VIRTUALBOX USB SUPPORT ENABLES MANY audio OUTPUTS.
+----CURRENT VERSION TREATS ALL DEVICES AS STEREO. UN/PLUGGING USB STEREO REQUIRES RESTARTING SMPLAYER.    USB→3.5mm SOUND CARDS COST AS LITTLE AS $2 ON EBAY & CAN BE TAPED TO A CABLE. EACH NEW USB STEREO CREATES A NEW mpv IN TASK MANAGER. VIRTUALBOX USB SUPPORT ENABLES MANY AUDIO OUTPUTS.
 ----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS. WORKS WELL WITH WAV, MP3, MP4 & YOUTUBE.
 
 o={ --options  ALL OPTIONAL & MAY BE REMOVED.
@@ -8,10 +8,10 @@ o={ --options  ALL OPTIONAL & MAY BE REMOVED.
     key_bindings         ='F3',--CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER. m IS MUTE SO CAN DOUBLE-PRESS m. 'F3 F4' FOR 2 KEYS. F1 & F2 MIGHT BE autocomplex & automask. s=SCREENSHOT (NOT SPEED NOR SPECTRUM). C IS CROP, NOT CLOCK.
     
     clock='{\\fs71\\bord2\\shad1\\an3}%I{\\fs50}:%M{\\fs35}:%S{\\fs25} %p', --REMOVE TO remove clock.  fs,bord,shad,an,%I,%M,%S,%p = FONT-SIZE,BORDER,SHADOW,ALIGNMENT-NUMPAD,HRS(12),MINS,SECS,P/AM  (DEFAULT an0=an7=TOPLEFT)  BIG:MEDium:Little:tiny, RATIO=SQRT(.5)=.71  FORMATTERS: a A b B c d H I M m p S w x X Y y  b1,i1,u1,s1,be1,fn = BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME  REQUIRES [vo] TO BE SEEN (NOT RAW MP3).
-    -- clock='{\\fs71\\bord2\\shad1\\an3}%I{\\fs50\\cFF4C00}:%M{\\fs35\\cFF}:%S{\\fs25\\c0\\bord0} %p', --UNCOMMENT FOR COLORED clock. "WHITE:BLUE:Red black", LIKE A TRIBAR FLAG.  COLOR=\cFF4C00 IS A BRIGHTER SHADE OF BLUE (HEX ORDERED BGR).  AN UNUSED BIG SCREEN TV CAN BE A BIG clock WITH BACKGROUND VIDEO.
+    -- clock='{\\fs55\\bord2\\shad1\\an3}%I{\\cFF4C00}:%M{\\cFF}:%S{\\fs39\\c0\\bord0} %p', --UNCOMMENT FOR COLORED clock. "WHITE:BLUE:RED black", LIKE A TRIBAR FLAG (TRI-COLOR clock).  COLOR=\cFF4C00 IS A BRIGHTER SHADE OF BLUE (HEX ORDERED BGR).  AN UNUSED BIG SCREEN TV CAN BE A BIG clock WITH BACKGROUND VIDEO.
     
     filterchain='anull,'  --CAN REPLACE anull WITH EXTRA FILTERS (highpass aresample vibrato ...).
-              ..'dynaudnorm=500:5:1:100', --f:g:p:m DEFAULT=500:31:.95:10:0:1:0  DYNAMIC AUDIO NORMALIZER. ALL subprocesses USE THIS NORMALIZER. GRAPH COMMENTARY HAS MORE DETAILS.
+              ..'dynaudnorm=500:5:1:100', --f:g:p:m DEFAULT=500:31:.95:10  DYNAMIC AUDIO NORMALIZER. ALL subprocesses USE THIS NORMALIZER. GRAPH COMMENTARY HAS MORE DETAILS.
     mpv       ={'mpv',   --REMOVE THESE 3 LINES FOR clock ONLY OVERRIDE (+filterchain). LIST ALL POSSIBLE mpv COMMANDS, IN ORDER OF PREFERENCE. USED BY ALL subprocesses.  INSTEAD OF COPY/PASTING THE clock INTO OTHER SCRIPT/S, THIS SCRIPT SYNCS IT TO SYSTEM TICK.
                 './mpv', --SMPLAYER LINUX & MACOS.
                 '/Applications/mpv.app/Contents/MacOS/mpv'},  --MACOS mpv.app
@@ -54,16 +54,16 @@ else is_controller,mutelr,o.auto_delay,script_opts.pid = true,o.mutelr,.5,utils.
 
     for _,command in pairs(o.mpv) do if utils.subprocess({args={command}}).error~='init' then mpv=command  --error=init IF INCORRECT COMMAND. OTHERWISE error USUALLY killed.
             break end end 
-    devices,device_list = {mp.get_property('audio-device')},mp.get_property_native('audio-device-list')  --devices IS LIST OF audio-devices WHICH WILL ACTIVATE (STARTING WITH EXISTING device). device_list IS COMPLETE LIST.  
+    devices,device_list = {mp.get_property('audio-device')},mp.get_property_native('audio-device-list')  --devices IS LIST OF audio-devices WHICH WILL ACTIVATE (STARTING WITH EXISTING device). device_list IS COMPLETE LIST.  "wasapi/" (WINDOWS AUDIO SESSION APP. PROGRAM. INTERFACE) OR "pulse/alsa" (LINUX) OR "coreaudio/" (MACOS). 
     for _,index in pairs(o.extra_devices_index_list) do is_present,device = false,device_list[index].name
         for _,find in pairs(devices) do if device==find then is_present=true    --SEARCH FOR DUPLICATES BEFORE INSERTION. SIMILAR TO main.lua
                 break end end
         if not is_present then table.insert(devices,device) end end end
-    
-lavfi=('aformat=s16:%d:stereo,astats=.5:1,%s,asplit[0],stereotools=%s=1[1],[0][1]astreamselect=2:1')
-    :format(o.samplerate,               o.filterchain,             mutelr)
- 
-----lavfi        =[graph] [ao]→[ao] LIBRARY-AUDIO-VIDEO-FILTERGRAPH.  %s,%d = string,DECIMAL-INTEGERS  EACH LUA SCRIPT MAY CONTROL A GRAPH, LIKE HOW A CELL CONTROLS DNA. aspeed IS LIKE A MASK FOR audio, WHICH DISJOINTS IT.     CHANGING GRAPH NEEDS A FEW HRS FOR TESTING.
+
+lavfi=('aformat=s16:%s:stereo,astats=.5:1,%s,asplit[0],stereotools=%s=1[1],[0][1]astreamselect=2:1')
+          :format(o.samplerate,         o.filterchain,             mutelr)
+
+----lavfi        =[graph] [ao]→[ao] LIBRARY-AUDIO-VIDEO-FILTERGRAPH.  %s=string  EACH LUA SCRIPT MAY CONTROL A GRAPH, LIKE HOW A CELL CONTROLS DNA. aspeed IS LIKE A MASK FOR audio, WHICH DISJOINTS IT.     CHANGING GRAPH NEEDS A FEW HRS FOR TESTING.
 ----aformat      =sample_fmts:sample_rates:channel_layouts  IS THE START.  u8,s16,s64:Hz:stereo,mono  GIVES astats CONSTANT samplerate. CONVERTS MONO & SURROUND SOUND TO stereo FOR astats RELIABILITY. ITS OUTPUT MUST BE DETERMINISTIC OVER 10 HRS (UNLIKE OTHER FILTERS).  s16=SGN+15BIT (-32k→32k), CD. u8 CAUSES HISSING.  
 ----astats       =length:metadata (SECONDS:BOOL)  CONTINUAL SAMPLE COUNT IS BASIS FOR 10 HOUR SYNC. USES APPROX 0% OF CPU. USING THIS AS PRIMARY METRIC AVOIDS MESSING WITH MPV/SMPLAYER SETTINGS TO ACHIEVE 10 HOUR SYNC. 
 ----anull         PLACEHOLDER.
@@ -78,7 +78,8 @@ mp.command(('no-osd af append @%s:lavfi=[%s]'):format(label,lavfi)) --MACOS/LINU
 
 function start_file()  --AT LEAST 4 STAGES: LOAD-SCRIPT start-file file-loaded playback-restart
     path=mp.get_property('path')
-    if is_controller and not utils.file_info(path) then subprocesses() end  --YOUTUBE LAUNCHES INSTANTLY
+    if is_controller and not utils.file_info(path) then pause='yes'  --YOUTUBE subprocesses START PAUSED.
+        subprocesses() end  --YOUTUBE LAUNCHES INSTANTLY
 end 
 mp.register_event('start-file',start_file) 
 
@@ -124,19 +125,19 @@ function os_sync()  --RUN 10ms LOOP UNTIL clock TICKS. os.time() HAS 1s PRECISIO
         timers.os_sync:resume() 
         return end
     
-    time2=os.time()  --INTEGER SECONDS FROM 1970.
-    if time2>time1 then time1,sync_time = nil,time2-mp.get_time()   --time1 ACTS AS A SWITCH. sync_time IS THE CONSTANT TO ADD TO MPVTIME TO GET TIMEFROM1970 TO WITHIN 10ms.  mp.get_time()=os.clock()+CONSTANT (GIVE SAME NET RESULT).
+    sync_time=os.time()  --INTEGER SECONDS FROM 1970, @EXACT TICK OF CLOCK.
+    if sync_time>time1 then time1,mp2os_time = nil,sync_time-mp.get_time()   --time1 ACTS AS A SWITCH. mp2os_time=os_time_relative_to_mp_time IS THE CONSTANT TO ADD TO MPVTIME TO GET TIMEFROM1970 TO WITHIN 10ms.  mp.get_time()=os.clock()+CONSTANT (GIVE SAME NET RESULT).
         timers.os_sync:kill()
         timers.osd    :kill()   --SYNC clock TICK TO SYSTEM. 
         clock_update() end
 end
 timers.os_sync=mp.add_periodic_timer(o.os_sync_delay,os_sync)
 for _,timer in pairs(timers) do timer:kill() end    --kill timers. THEY CARRY OVER IN MPV PLAYLIST.
-timers.resync =mp.add_periodic_timer(o. resync_delay,os_sync)
 
 function subprocesses()    --CONTROLLER ONLY. 
     if not mpv then return end  --OVERRIDE, OR ALREADY LAUNCHED.
     volume=mp.get_property_number('volume')  --subprocess MAY RARELY GLITCH IF volume NOT set, DUE TO txtfile LAG. (volume@100 INSTEAD OF 10.)
+    pause=pause or mp.get_property('pause')
     
     priority=mp.get_property('priority')
     priority=priority and '--priority='..priority or '--no-vid'  --no-vid IS A NULL-OP. MUST BE DEFINED, BUT ONLY EFFECTIVE IN WINDOWS. HOWEVER PROPAGATING CHANGE IN priority VIA TASK MANAGER NOT SUPPORTED. 
@@ -147,42 +148,44 @@ function subprocesses()    --CONTROLLER ONLY.
     script,script_opts = utils.join_path(directory,label..'.lua'),mp.get_property('script-opts')  --script-opts HOOK ytdl. COULD SWITCH .lua TO .js FOR JAVASCRIPT.   
     for N,device in pairs(devices) do for mutelr in ('mutel muter'):gmatch('[^ ]+') do if not (N==1 and mutelr==o.mutelr) --DON'T LAUNCH ON PRIMARY device CHANNEL.
             then utils.subprocess({detach=true,playback_only=false,capture_stdout=false,capture_stderr=false,  --EXTRA FLAGS FOR LINUX.  run & subprocess_detached ALSO CREATE DETACHED SUBPROCESSES, BUT THEY AREN'T FULLY DETACHED & CAN CAUSE SOME BUG INSIDE SMPLAYER.     
-                    args={mpv,start,priority,'--no-vid','--keep-open=yes','--msg-level=all=no','--ytdl-format=bestaudio','--script='..script,path,('--script-opts=%s=1,%s'):format(mutelr,script_opts),'--audio-device='..device,'--volume='..volume}}) end end end  --msg-level=all=no OR ELSE PARENT LOG FILLS UP. keep-open FOR seek NEAR end-file. bestaudio TO STOP ytdl RE-DOWNLOADING VIDEO.  SOME OPTIONS STAY CONSTANT. AN ALTERNATIVE DESIGN MAY START IN --idle & loadfile IN property_handler.     
+                    args={mpv,start,priority,'--no-vid','--keep-open=yes','--msg-level=all=no','--ytdl-format=bestaudio','--script='..script,path,('--script-opts=%s=1,%s'):format(mutelr,script_opts),'--audio-device='..device,'--volume='..volume,'--pause='..pause}}) end end end  --msg-level=all=no OR ELSE PARENT LOG FILLS UP. keep-open FOR seek NEAR end-file. bestaudio TO STOP ytdl RE-DOWNLOADING VIDEO.  SOME OPTIONS STAY CONSTANT. AN ALTERNATIVE DESIGN MAY START IN --idle & loadfile IN property_handler.     
     mpv=nil
 end
 
-function property_handler(property,meta)  --CONTROLLER WRITES TO txtpath, & subprocesses READ FROM IT.  THIS FUNCTION SHOULD ONLY EVER BE PCALLED FOR RELIABILITY. BY TRIAL & ERROR SOLVES SIMULTANEOUS write & remove @SUDDEN STOP.
-    if not path then return end    --NOT STARTED YET.
-    os_time =sync_time and sync_time+mp.get_time() or os.time() --os_time=TIMEFROM1970  PRECISE TO 10ms AFTER SYNC.
-    time_pos=mp.get_property_number('time-pos') or 0  --MUST BE WELL-DEFINED DURING YOUTUBE LOAD. 
+function property_handler(property,meta)  --CONTROLLER WRITES TO txtfile, & subprocesses READ FROM IT.  THIS FUNCTION SHOULD ONLY EVER BE PCALLED FOR RELIABILITY. BY TRIAL & ERROR SOLVES SIMULTANEOUS write & remove @SUDDEN STOP.
+    os_time=mp2os_time and mp2os_time+mp.get_time() or os.time() --os_time=TIMEFROM1970  PRECISE TO 10ms AFTER SYNC.
+    if os_time-sync_time>o.resync_delay then os_sync() end       --RESYNC EVERY 30s.
     
+    time_pos=mp.get_property_number('time-pos') or 0  --MUST BE WELL-DEFINED DURING YOUTUBE LOAD. 
     samples_time=meta and meta['lavfi.astats.Overall.Number_of_samples']
     samples_time=samples_time and samples_time/o.samplerate  --TIME=sample#/samplerate  nil/# RETURNS ERROR, BUT MUST PROCEED.
     
-    if sync_time and samples_time and samples_time>o.time_needed
+    if mp2os_time and samples_time and samples_time>o.time_needed
     then initial_time_pos=initial_time_pos or time_pos-samples_time  --initial_time_pos=initial_time_pos_relative_to_samples_time  INITIALIZE AFTER CHECKING samples_time. THIS # STAYS THE SAME FOR THE NEXT 10 HOURS.  LIKE HOW YOGHURT GOES OFF, 20 HRS LATER THE SPEAKERS MAY BE OFF (astats ISSUE).
         time_pos=initial_time_pos+samples_time end  --NEW METRIC WHOSE CHANGE IS BASED ON astats. IT'S A TIME METRIC-SWITCH TRICK. REMOVE IT TO PROVE MPV CAN'T SYNC WITHOUT astats, EVEN WITH autosync ETC.  time-pos, playback-time & audio-pts WORK WELL OVER 1 MINUTE, BUT NOT 1 HOUR.
     
     if is_controller then if o.meta_osd then mp.osd_message(mp.get_property_osd('af-metadata/'..label):gsub('\n','    \t')) end   --TAB EACH STAT (TOO MANY LINES), FOR osd.
         if property=='mute' then on_toggle(property) end  --FOR DOUBLE mute TOGGLE.
         
-        speed,aid = mp.get_property_number('speed'),mp.get_property_number('current-tracks/audio/id')  --get_property_number REMOVES TRAILING ZEROS. 
-        if not aid or mp.get_property_bool('pause') or mp.get_property_bool('seeking') then speed=0 --aid=nil DURING YOUTUBE LOAD. BUT MUST BE WELL-DEFINED. seeking→pause FIXES A YOUTUBE STARTING GLITCH.
+        speed,aid = mp.get_property_number('speed'),mp.get_property_number('current-tracks/audio/id') --get_property_number REMOVES TRAILING ZEROS. 
+        if not aid or mp.get_property_bool('pause') or mp.get_property_bool('seeking') then speed=0   --seeking→pause FIXES A YOUTUBE STARTING GLITCH.
              timers.auto:resume()   --IDLER (DON'T timeout).
         else timers.auto:kill() end
-        aid=aid or 1
-        volume=(OFF or mp.get_property_bool('mute')) and 0 or mp.get_property_number('volume')  --OFF, mute & seeking MEAN volume=0. volume RANGE [0,100].  PIPES SYSTEM WORKS A BIT DIFFERENT IN THIS CASE (ECHOES "set mute yes" INSTEAD).
+        aid=aid or 1  --aid=nil DURING YOUTUBE LOAD. BUT MUST BE WELL-DEFINED. 
+        volume=(OFF or mp.get_property_bool('mute')) and 0 or mp.get_property_number('volume')  --OFF & mute. volume RANGE [0,100].  PIPES SYSTEM WORKS A BIT DIFFERENT (mute ECHOES "set mute yes" INSTEAD).
         
         txtfile=io.open(txtpath,'w+')  --w+=UPDATE MODE. ERASES PRIOR DATA, BUT MAY ALTER FILE BETTER THAN w MODE. MACOS-11 REQUIRES txtfile BE WELL-DEFINED.
         txtfile:write(('%s\n%d\n%d\n%s\n%s\n%s'):format(mp.get_property('path'),aid,volume,speed,os_time,time_pos))  --CONTROLLER REPORT. SECURITY PRECAUTION: NO property NAMES, OR ELSE A HACKER CAN DO AN ARBITRARY set (EXAMPLE: YOUTUBE HOOK), SIMILAR TO PIPING TO A SOCKET. MORE LINES MIGHT REQUIRE SECURITY OVERRIDES.  USE id NOT aid. aid WON'T ALWAYS WORK DUE TO lavfi-complex (LOCK BUG). 
         txtfile:flush() --EITHER flush() OR close(). 
         return end      --CONTROLLER ENDS HERE.  subprocesses BELOW.
     
-    pcode,lines = pcall(io.lines,txtpath)    --lines ITERATOR RETURNS ERROR OR nil OR 6 LINES.  THIS IS A pcall INSIDE ANOTHER pcall.
-    if not pcode then if samples_time then mp.command('quit') end --EXIT. NO lines MEANS CONTROLLER HAS STOPPED. 'quit' NOT 'stop' BECAUSE SOME BUILDS MIGHT idle. (LINUX .AppImage)  io.write MAY TAKE TOO LONG TO CREATE txtfile @STARTUP, SO DON'T quit BEFORE PROPER meta.
+    pcode,lines = pcall(io.lines,txtpath)  --lines ITERATOR RETURNS ERROR OR nil OR 6 LINES.  THIS IS A pcall INSIDE ANOTHER pcall.
+    if not pcode then if quit then mp.command('quit') end --EXIT. NO lines MEANS CONTROLLER HAS STOPPED. 'quit' NOT 'stop' BECAUSE SOME BUILDS MIGHT idle. (LINUX .AppImage) 
         return end 
+    quit=true  --DON'T quit UNLESS txtfile HAS BEEN OBSERVED AT LEAST ONCE.  io.write MAY TAKE TOO LONG TO CREATE txtfile @STARTUP. 
+    
     txt_path=lines()
-    if not txt_path then return  --32-BIT BUGS OUT IF lines CALLED EXCESSIVELY.
+    if not txt_path then return  --32-BIT BUGS OUT IF lines CALLED EXCESSIVELY. return IMPROVES RELIABILITY OVERALL.
     elseif txt_path~=mp.get_property('path') then mp.commandv('loadfile',txt_path)   --FOR MPV PLAYLISTS. commandv FOR FILENAMES. CAN INSERT FLAGS, TOO (LIKE --start).
         return end
     
@@ -194,7 +197,7 @@ function property_handler(property,meta)  --CONTROLLER WRITES TO txtpath, & subp
     mp.set_property_bool('pause',txt_speed==0)
     
     time_gained=time_pos-txt_pos-(os_time-txt_time) --SUBTRACT TIME_FROM_WRITE FROM DIFFERENCE BTWN POSITIONS.  ALL subprocesses MUST HAVE SAME os_time WITHIN 10ms.
-    if not samples_time then return   --auto TIMER ENDS HERE. IT SETS PROPERTIES OTHER THAN speed.
+    if not samples_time or txt_speed==0 then return --auto TIMER ENDS HERE. IT SETS PROPERTIES OTHER THAN speed.
     elseif o.seek_limit and math.abs(time_gained)>o.seek_limit then mp.command(('seek %s exact'):format(-time_gained)) --INSTANT SYNC USING seek INSTEAD OF speed (BETTER TO SKIP THE TRACK THAN JERK ITS SPEED - LIKE SCRATCHING A RECORD).
         return end   
     
@@ -212,13 +215,14 @@ timers.auto=mp.add_periodic_timer(    o.auto_delay,function()              pcall
 
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END. ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
 ----MPV v0.36.0 (.7z .exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED.  v0.37.0 FAILED ON WINDOWS & GAVE UNACCEPTABLE PERFORMANCE ON MACOS-11. (v0.36 & OLDER ONLY.)
-----FFmpeg v6.0(.7z .exe .flatpak .snap)  v5.1.2 v5.1.3(.app)  v4.3.2(.AppImage)  ALL TESTED.
+----FFmpeg v6.0(.7z .exe .flatpak)  v5.1.2 v5.1.3(.app) v4.4.2(.snap) v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS ACTUALLY BUILT WITH FFmpeg v4 & v6, WHICH CHANGES HOW THE GRAPHS ARE WRITTEN (FOR COMPATIBILITY). A FULL IMAGE HAS v4, NOT v6.
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. v23.6 MAYBE PREFERRED.
 
-----BUG: LEFT CHANNEL CUTTING OUT @START, VERY RARELY. MAY TAKE AN HOUR TO HAPPEN.
+----BUG: LEFT CHANNEL CUTTING OUT @START, RARELY. MAY TAKE AN HOUR TO HAPPEN.
+
 ----"autospeed.lua" IS A DIFFERENT SCRIPT FOR video speed, NOT audio. "autotempo.lua" MIGHT BE A BETTER NAME (I DIDN'T THINK OF IT).
-----REPLACING txtfile WITH PIPES IS EASY ON WINDOWS, BUT REQUIRES A DEPENDENCY ON LINUX. socat (sc) & netcat (nc) ARE POPULAR (socat MEANING "SOCKET AT - ..."). input-ipc-server (INTER-PROCESS-COMMUNICATION) IS FOR PIPES. THE DEPENDENCY MAY BE A SECURITY THREAT. A FUTURE MPV VERSION MAY SUPPORT WRITING TO SOCKET (socat BUILT IN). WINDOWS CMD CAN ALREADY ECHO TO ANY SOCKET. I HAVE A PIPE VERSION OF THIS SCRIPT BUT PREFER txtfile. MAYBE MORE LIKELY TO WORK, & SAFER, ON ANDROID.
+----REPLACING txtfile WITH PIPES IS EASY ON WINDOWS, BUT REQUIRES A DEPENDENCY ON LINUX. socat (sc) & netcat (nc) ARE POPULAR (socat MEANING "SOCKET AT - ..."). input-ipc-server (INTER-PROCESS-COMMUNICATION) IS FOR PIPES. THE DEPENDENCY MAY BE A SECURITY THREAT. A FUTURE MPV VERSION MAY SUPPORT WRITING TO SOCKET (socat BUILT IN). WINDOWS CMD CAN ALREADY ECHO TO ANY SOCKET. I HAVE A PIPE VERSION OF THIS SCRIPT BUT PREFER txtfile. MAYBE MORE LIKELY TO WORK, & SAFER, ON ANDROID. INSTALLING A DEPENDENCY IS LIKE PUTTING NEW WATER PIPES UNDER A HOUSE, JUST TO POWER A LITTLE TOY.
 ----audio-params/samplerate current-tracks/audio/demux-samplerate PROPERTIES GIVE samplerate, BUT BETTER TO SET IT IN GRAPH.
 
 ----ALTERNATIVE FILTERS:
