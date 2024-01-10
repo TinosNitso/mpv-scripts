@@ -36,11 +36,11 @@ In MacOS go to *Launchpad*→*Other*→*Terminal*. Then the exact `zsh` command 
 
 `/Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/autoloader.lua "https://youtu.be/5qm8PH4xAss"`
 
-That uses the MPV bundled with SMPlayer. Only good builds make it into `SMPlayer.app/Contents`. In Linux the exact command to load YouTube from terminal is:
+That uses the MPV bundled with SMPlayer. In Linux the exact command to load YouTube from terminal is:
 
 `mpv --script=~/Desktop/mpv-scripts/autoloader.lua https://youtu.be/5qm8PH4xAss`
 
-MacOS users can drag & drop mpv.app onto Applications. The following command assume `main.lua` is present (unreleased, but in above .zip).
+MacOS users can also drag & drop mpv.app onto Applications. The following command assumes `main.lua` is present (unreleased, but in above .zip).
 
 `/Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"` 
 
@@ -50,7 +50,7 @@ Scripts incompatible with MPV v0.37.0. *v0.36* & older only! v0.36.0 & v0.35.1 s
 
 SMPlayer *v23.6.0* & v23.12.0 successful. v23.12 has an annoying `no-osd seek 0 relative exact` accompanying every `set pause yes`. Releases tested include .7z .exe .app .AppImage .flatpak & .snap.
 
-Fmpeg versions *v6.0* & v4.3.2 (.AppImage) successfully tested.
+Fmpeg versions *v6.0*, v5.1 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) successfully tested.
 
 ## Latest Updates
 Above .lua scripts & `mpv-scripts.zip` are unreleased properly, but pass all my tests so far. Still some more testing before next release.
