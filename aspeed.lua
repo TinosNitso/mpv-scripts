@@ -7,7 +7,7 @@ o={ --options  ALL OPTIONAL & MAY BE REMOVED.
     toggle_on_double_mute=.5,  --SECONDS TIMEOUT FOR DOUBLE-MUTE-TOGGLE. ALL LUA SCRIPTS CAN BE TOGGLED USING DOUBLE mute.  TOGGLE DOESN'T SWITCH OFF dynaudnorm (FRAME-TIMING ISSUE).
     key_bindings         ='F3',--CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER. m IS MUTE SO CAN DOUBLE-PRESS m. 'F3 F4' FOR 2 KEYS. F1 & F2 MIGHT BE autocomplex & automask. s=SCREENSHOT (NOT SPEED NOR SPECTRUM). C IS CROP, NOT CLOCK.
     
-    clock='{\\fs71\\bord2\\shad1\\an3}%I{\\fs50}:%M{\\fs35}:%S{\\fs25} %p', --REMOVE TO remove clock.  fs,bord,shad,an,%I,%M,%S,%p = FONT-SIZE,BORDER,SHADOW,ALIGNMENT-NUMPAD,HRS(12),MINS,SECS,P/AM  (DEFAULT an0=an7=TOPLEFT)  BIG:MEDium:Little:tiny, RATIO=SQRT(.5)=.71  FORMATTERS: a A b B c d H I M m p S w x X Y y  b1,i1,u1,s1,be1,fn = BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME  REQUIRES [vo] TO BE SEEN (NOT RAW MP3).
+    clock='{\\fs71\\bord2\\shad1\\an3}%I{\\fs50}:%M{\\fs35}:%S{\\fs25} %p', --REMOVE TO remove clock.  fs,bord,shad,an,%I,%M,%S,%p = FONT-SIZE,BORDER,SHADOW,ALIGNMENT-NUMPAD,HRS(12),MINS,SECS,P/AM  (DEFAULT an0=an7=TOPLEFT)  BIG:MEDium:Little:tiny, RATIO=SQRT(.5)=.71  FORMATTERS: a A b B c d H I M m p S w x X Y y  b1,i1,u1,s1,be1,fn = BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME  REQUIRES [vo] TO BE SEEN (NOT RAW MP3). main.lua HAS title BUT NOT clock.
     -- clock='{\\fs55\\bord2\\shad1\\an3}%I{\\cFF4C00}:%M{\\cFF}:%S{\\fs39\\c0\\bord0} %p', --UNCOMMENT FOR COLORED clock. "WHITE:BLUE:RED black", LIKE A TRIBAR FLAG (TRI-COLOR clock).  COLOR=\cFF4C00 IS A BRIGHTER SHADE OF BLUE (HEX ORDERED BGR).  AN UNUSED BIG SCREEN TV CAN BE A BIG clock WITH BACKGROUND VIDEO.
     
     filterchain='anull,'  --CAN REPLACE anull WITH EXTRA FILTERS (highpass aresample vibrato ...).
@@ -74,11 +74,10 @@ lavfi=('aformat=s16:%s:stereo,astats=.5:1,%s,asplit[0],stereotools=%s=1[1],[0][1
 
 
 label,lavfi = mp.get_script_name(),not o.mpv[1] and o.filterchain or lavfi  --OVERRIDE (NO subprocesses).
-mp.command(('no-osd af append @%s:lavfi=[%s]'):format(label,lavfi)) --MACOS/LINUX: CHECK IF DELAY IS NEEED.
-
 function start_file()  --AT LEAST 4 STAGES: LOAD-SCRIPT start-file file-loaded playback-restart
+    mp.command(('no-osd af append @%s:lavfi=[%s]'):format(label,lavfi))
     path=mp.get_property('path')
-    if is_controller and not utils.file_info(path) then pause='yes'  --YOUTUBE subprocesses START PAUSED.
+    if is_controller and not utils.file_info(path) then pause='yes'  --YOUTUBE subprocesses START PAUSED, TO AVOID A GLITCH.
         subprocesses() end  --YOUTUBE LAUNCHES INSTANTLY
 end 
 mp.register_event('start-file',start_file) 
@@ -153,16 +152,17 @@ function subprocesses()    --CONTROLLER ONLY.
 end
 
 function property_handler(property,meta)  --CONTROLLER WRITES TO txtfile, & subprocesses READ FROM IT.  THIS FUNCTION SHOULD ONLY EVER BE PCALLED FOR RELIABILITY. BY TRIAL & ERROR SOLVES SIMULTANEOUS write & remove @SUDDEN STOP.
-    os_time=mp2os_time and mp2os_time+mp.get_time() or os.time() --os_time=TIMEFROM1970  PRECISE TO 10ms AFTER SYNC.
+    if not  mp2os_time then return end
+    os_time=mp2os_time+mp.get_time()  --os_time=TIMEFROM1970  PRECISE TO 10ms.
     if os_time-sync_time>o.resync_delay then os_sync() end       --RESYNC EVERY 30s.
     
-    time_pos=mp.get_property_number('time-pos') or 0  --MUST BE WELL-DEFINED DURING YOUTUBE LOAD. 
     samples_time=meta and meta['lavfi.astats.Overall.Number_of_samples']
     samples_time=samples_time and samples_time/o.samplerate  --TIME=sample#/samplerate  nil/# RETURNS ERROR, BUT MUST PROCEED.
+    time_pos=mp.get_property_number('time-pos') or 0  --MUST BE WELL-DEFINED DURING YOUTUBE LOAD. 
     
-    if mp2os_time and samples_time and samples_time>o.time_needed
+    if samples_time and samples_time>o.time_needed
     then initial_time_pos=initial_time_pos or time_pos-samples_time  --initial_time_pos=initial_time_pos_relative_to_samples_time  INITIALIZE AFTER CHECKING samples_time. THIS # STAYS THE SAME FOR THE NEXT 10 HOURS.  LIKE HOW YOGHURT GOES OFF, 20 HRS LATER THE SPEAKERS MAY BE OFF (astats ISSUE).
-        time_pos=initial_time_pos+samples_time end  --NEW METRIC WHOSE CHANGE IS BASED ON astats. IT'S A TIME METRIC-SWITCH TRICK. REMOVE IT TO PROVE MPV CAN'T SYNC WITHOUT astats, EVEN WITH autosync ETC.  time-pos, playback-time & audio-pts WORK WELL OVER 1 MINUTE, BUT NOT 1 HOUR.
+                 time_pos=initial_time_pos+samples_time end  --NEW METRIC WHOSE CHANGE IS BASED ON astats. IT'S A TIME METRIC-SWITCH TRICK. REMOVE IT TO PROVE MPV CAN'T SYNC WITHOUT astats, EVEN WITH autosync ETC.  time-pos, playback-time & audio-pts WORK WELL OVER 1 MINUTE, BUT NOT 1 HOUR.
     
     if is_controller then if o.meta_osd then mp.osd_message(mp.get_property_osd('af-metadata/'..label):gsub('\n','    \t')) end   --TAB EACH STAT (TOO MANY LINES), FOR osd.
         if property=='mute' then on_toggle(property) end  --FOR DOUBLE mute TOGGLE.
@@ -214,8 +214,8 @@ timers.auto=mp.add_periodic_timer(    o.auto_delay,function()              pcall
 
 
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END. ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
-----MPV v0.36.0 (.7z .exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED.  v0.37.0 FAILED ON WINDOWS & GAVE UNACCEPTABLE PERFORMANCE ON MACOS-11. (v0.36 & OLDER ONLY.)
-----FFmpeg v6.0(.7z .exe .flatpak)  v5.1.2 v5.1.3(.app) v4.4.2(.snap) v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS ACTUALLY BUILT WITH FFmpeg v4 & v6, WHICH CHANGES HOW THE GRAPHS ARE WRITTEN (FOR COMPATIBILITY). A FULL IMAGE HAS v4, NOT v6.
+----MPV v0.37.0  v0.36.0 (.7z .exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED.  v0.36 PREFERRED.
+----FFmpeg v6.0(.7z .exe .flatpak)  v5.1.3(mpv.app)  v5.1.2 (SMPlayer.app)  v4.4.2(.snap)  v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS ACTUALLY BUILT WITH FFmpeg v4, v5 & v6 (ALL 3), WHICH CHANGES HOW THE GRAPHS ARE WRITTEN (FOR COMPATIBILITY).
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. v23.6 MAYBE PREFERRED.
 

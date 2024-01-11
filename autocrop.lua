@@ -1,5 +1,5 @@
-----FOR MPV & SMPLAYER. CROP BLACKBARS OFF JPEG, PNG, BMP, GIF, WEBM, MP3 albumart, MP4 & YOUTUBE. CAN CHANGE vid TRACK (MP3TAG) & crop.  .TIFF 1-LAYER ONLY, NO WEBP OR PDF.
-----USE DOUBLE-mute TO TOGGLE (FRAME-STEPS WHEN PAUSED). CAN MAINTAIN CENTER IN HORIZONTAL/VERTICAL, WITH INSTANTANEOUS TOLERANCE VALUES. SUPPORTS BOTH cropdetect & bbox FFMPEG-FILTERS. 
+----FOR MPV & SMPLAYER. CROP BLACKBARS OFF JPEG, PNG, BMP, GIF, MP3 albumart, AVI, WEBM, MP4 & YOUTUBE. CAN CHANGE vid TRACK (MP3TAG) & crop.  .TIFF 1-LAYER ONLY, NO WEBP OR PDF.
+----USE DOUBLE-mute TO TOGGLE. CAN MAINTAIN CENTER IN HORIZONTAL/VERTICAL, WITH INSTANTANEOUS TOLERANCE VALUES. SUPPORTS BOTH cropdetect & bbox FFMPEG-FILTERS. 
 ----THIS VERSION HAS PROPER aspect TOGGLE (EXTRA DOUBLE BLACK BARS TO MATCH STREAM), BUT NO SMOOTH-crop. BASED ON https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua
 
 o={  --options
@@ -17,7 +17,7 @@ o={  --options
     detect_limit_image=32,      --INTEGER 0→255, FOR JPEG & albumart.
     detect_limits     ={        --detect_limit OVERRIDES. NOT CASE SENSITIVE. ['media-title']=detect_limit 
         ['We are army of people - Red Army Choir']=64,
-        ['Eminem - Encore']=100,  --REPLACE WITH media-title SUBSTRING, & ITS LIMIT.
+        ['Eminem - Encore']=100,--REPLACE WITH media-title SUBSTRING, & ITS LIMIT.
     },
     detector      ='cropdetect=%s:%s:1:0',--DEFAULT='cropdetect=limit=%s:round=%s:reset=1:0'  %s=string SUBSTITUTIONS @file-loaded. reset>0.  CAN ALSO COMBINE MULTIPLE DETECTORS IN LIST (MORE CPU USAGE?).
     detector_image='bbox=%s',             --DEFAULT='bbox=%s'  %s=detect_limit_image OR OVERRIDE.
@@ -32,7 +32,7 @@ o={  --options
     -- msg_log =true, --MESSAGE TO MPV LOG. FILLS THE LOG.
     
     -- scale={1680,1050},  --DEFAULT=display (WINDOWS & MACOS), OR ELSE =video (LINUX). CHANGING vid (MP3 TAGS) CAUSES EMBEDDED MPV TO SNAP UNLESS SOME ABSOLUTE scale IS USED. EMBEDDING MPV CAUSES ANOTHER LAYER OF BLACK BARS (WINDOW SNAP).  
-    format ='yuv420p',     --DEFAULT=yuv420p  SHOULD REMOVE alpha DUE TO cropdetect BAD PERFORMANCE BUG.  420p REDUCES COLOR RESOLUTION TO HALF-WIDTH & HALF-HEIGHT.
+    format ='yuv420p',     --DEFAULT=yuv420p  REMOVES alpha DUE TO cropdetect BAD PERFORMANCE BUG.  420p REDUCES COLOR RESOLUTION TO HALF-WIDTH & HALF-HEIGHT.
     options=''             --'opt1 val1 opt2 val2 ...' FREE FORM.  main.lua HAS io_write (NECESSARY) & MORE options.
         ..' geometry 50% ' --ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.
 }
@@ -46,7 +46,7 @@ while   val do mp.set_property(opt,val)   --('','') → NULL-SET
     opt,val = o.options(),o.options() end --nil @END
 
 timers,m,label = {},{},mp.get_script_name() --m=MEMORY FOR METADATA & VARIABLE OPTIONS WHICH MAY VARY FROM TRACK TO TRACK.  COULD ALSO USE o2 INSTEAD OF m.  timers CARRY OVER TO NEXT FILE IN MPV PLAYLIST.
-function file_loaded()  --ALSO on_vid & ytdl.
+function file_loaded(event)  --ALSO on_toggle, on_vid & ytdl.
     if not mp.get_property_number('current-tracks/video/id') then return end   --RAW MP3 VISUALS MAY NOT NEED CROPPING.
     
     W,H = o.scale[1],o.scale[2]  --scale OVERRIDE. 
@@ -63,33 +63,32 @@ function file_loaded()  --ALSO on_vid & ytdl.
     is1frame,loop = false,false  --loop=is_looper
     if not complex_opt and mp.get_property_bool('current-tracks/video/albumart') then is1frame,m.auto = true,false end  --albumart IS DIFFERENT TO image. REQUIRE GRAPH REPLACEMENT IF NO complex. NO auto BECAUSE audio GLITCHES.
     if mp.get_property_bool('current-tracks/video/image') then m.TOLERANCE,m.detector,m.detect_limit   = 0,o.detector_image,o.detect_limit_image --JPEG: bbox & 0 TOLERANCE.  AN MP3, MP2, OGG OR WAV MAY BE A COLLECTION OF JPEG IMAGES (MP3TAG) WHICH NEED CROPPING (& HAVE RUNNING audio). GIF IS ~image. 
-        if not complex_opt then loop,m.detect_min_ratio,m.MAINTAIN_CENTER = true,0,{} end end  --RAW JPEG CAN MOVE CENTER. loop NEEDED FOR RELIABILITY (GRAPH REPLACEMENTS CAUSE ERRORS IN MPV LOG).
+        if not complex_opt then loop,m.detect_min_ratio,m.MAINTAIN_CENTER = true,0,{}  --RAW JPEG CAN MOVE CENTER. loop NEEDED FOR RELIABILITY (GRAPH REPLACEMENTS CAUSE ERRORS IN MPV LOG).
+            mp.command(o.command_prefix..' vf remove @loop') end end  --REMOVE ANY loop FILTER. 
     for title,limit in pairs(o.detect_limits) do if media_title:find(title:lower(),1,true) then m.detect_limit=limit end end   --detect_limit FINAL OVERRIDE.  1,true = STARTING_INDEX,EXACT_MATCH  NOT CASE SENSITIVE.
     m.detector=m.detector:format(m.detect_limit,o.detect_round)
+    if event then mp.set_property_bool('pause',true) end  --INSTA-pause REQUIRED TO PREVENT EMBEDDED MPV FROM SNAPPING, BUT THIS COULD BE AN OPTION (BECAUSE IT ALWAYS UNPAUSES). ALSO REQUIRE io_write (main.lua).  GRAPHS CAN'T NECESSARILY BE INSERTED DURING PLAY, WITHOUT SNAPPING THE [gpu] OUTPUT. HOWEVER REPLACEMENT WORKS.
     
-    mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,pad,setsar=%s]'):format(o.command_prefix,label,W,H,par))  --pad REPLACED @TOGGLE (BUT IN THEORY IT'S PERMANENT).
+    mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,pad,setsar=%s]'):format(o.command_prefix,label,W,H,par))  --pad REPLACED on_toggle. IT SHOULD BE PERMANENT IN THEORY.
     mp.command(('%s vf pre @%s:lavfi=[format=%s,%s,crop=iw:ih:0:0:1:1]'):format(o.command_prefix,label,o.format,m.detector))
+    if loop then mp.command(('%s vf pre @loop:loop=loop=-1:size=1'):format(o.command_prefix)) end  --OTHER SCRIPTS MUST CHECK loop LABEL OR NAME.
     
     ----lavfi     =[graph] [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTERCHAINS. USES 2 GRAPHS BECAUSE OTHERWISE "w" & "h" COMMANDS MAY BE AMBIGUOUS, WITHOUT INTERNAL LABELS. ALSO USES loop FILTER FOR JPEG.
     ----format    =pix_fmts  IS THE START.  BUGFIX FOR alpha CAUSING BAD PERFORMANCE. TO VERIFY BUG SET yuva420p OR rgb32.
     ----cropdetect=limit:round:reset:skip   DEFAULT=24/255:16:0  reset & skip BOTH MEASURED IN FRAMES. reset>0 COUNTS HOW MANY FRAMES PER DETECTION. LINUX .AppImage FAILS IF skip IS NAMED (INCOMPATIBLE).  alpha TRIGGERS BAD PERFORMANCE. 
     ----bbox      =min_val   (BOUNDING BOX) DEFAULT=16  REQUIRED FOR JPEG.  CAN ALSO ALWAYS COMBINE MULTIPLE DETECTORS IN 1 GRAPH FOR IMPROVED RELIABILITY, BUT UNNECESSARY & MAY INCREASE CPU USAGE.
+    ----loop      =loop:size  (LOOPS>=-1:MAX_SIZE>0)  IS INDEPENDENT. INFINITE loop SWITCH FOR image (1fps). ALTERNATIVE TO GRAPH REPLACEMENT. COULD INCREASE TO 2fps (SLOW?). MORE RELIABLE WHEN USED WITH FURTHER GRAPHS WHICH WOULD INFINITE loop, LIKE automask. IT'S A RELIABILITY ISSUE: IN THEORY IT SHOULDN'T BE NECESSARY.
     ----crop      =w:h:x:y:keep_aspect:exact  IS THE CONTROLLER.  DEFAULT=iw:ih:(iw-ow)/2:(ih-oh)/2:0:0   WON'T CHANGE DIMENSIONS WITH t OR n, NOR eval=frame NOR enable=1 (TIMELINE SWITCH). BUGS OUT IF w OR h IS TOO BIG. SAFER TO AVOID SMOOTH-CROPPING.
     ----scale     =w:h  DEFAULTS iw:ih  USING [vo] scale WOULD CAUSE SNAPPING on_vid, SO CAN USE display INSTEAD. EITHER WINDOW SNAPS IN, OR ELSE video SNAPS OUT.
     ----pad       =w:h:x:y  FOR TOGGLE OFF. RETURN EXTRA BLACK BARS TO CORRECT aspect. MPV HAS A WINDOW SIZE TO COLOR IN.
     ----setsar    =sar  IS THE FINISH.  SAMPLE/PIXEL ASPECT RATIO. MUST ASSERT SAR. LINUX & MACOS YOUTUBE BUGFIX REQUIRE IT @END. ALSO STOPS EMBEDDED MPV SNAPPING on_vid. 
 
-    ----loop      =loop:size  (LOOPS>=-1:MAX_SIZE>0)  IS INDEPENDENT. INFINITE loop SWITCH FOR image (1fps). ALTERNATIVE TO GRAPH REPLACEMENT. COULD INCREASE TO 2fps (SLOW)? MORE RELIABLE WHEN USED WITH FURTHER GRAPHS WHICH WOULD INFINITE loop, LIKE automask. IT'S A RELIABILITY ISSUE: IN THEORY IT SHOULDN'T BE NECESSARY.
-    
-    
-    if loop then mp.set_property_bool('pause',true)  --INSTA-pause REQUIRED TO ESTABLISH INFINITE loop, IN SMPLAYER.
-                 mp.command(o.command_prefix..' vf remove @loop') --FIRST REMOVE ANY OTHER loop FILTER. OTHER SCRIPTS MUST CHECK loop label OR name.
-                 mp.command(o.command_prefix..' vf pre @loop:loop=loop=-1:size=1')  
-                 mp.set_property_bool('pause',false) end  
+
+    if event then mp.set_property_bool('pause',false) end
     timers.auto_delay:resume()  --is1frame REQUIRES SMALL DELAY FOR INITIAL DETECTION (RELIABILITY ISSUE).
 end
-mp.register_event('file-loaded',file_loaded)
-mp.register_event('end-file',function() m={}                       end)  --FOR MPV PLAYLISTS (EXAMPLE: *.MP4). CLEAR MEMORY.
+mp.register_event('file-loaded',function() mp.add_timeout(.05,file_loaded) end)  --timeout REQUIRED ON MACOS-VIRTUALBOX-SMPLAYER. OSTYPE=darwin20.0
+mp.register_event('end-file',function() m={} end)  --FOR MPV PLAYLISTS (EXAMPLE: *.MP4). CLEAR MEMORY.
 
 function on_vid(_,vid)  --AN MP3 MAY BE A COLLECTION OF JPEG IMAGES (MP3TAG) WITH DIFFERENT DIMENSIONS.
     if m.vid and m.vid~=vid then file_loaded() end
@@ -112,7 +111,7 @@ function on_toggle(mute)   --IT RETURNS BLACK BARS USING pad, WITHOUT EVER CHANG
     if not OFF then file_loaded()  --TOGGLE ON.
     else if not aspect then aspect=mp.get_property_number('video-params/aspect') end  --TOGGLE OFF. aspect MUST BE WELL-DEFINED, BUT THE PROPERTY IS DEPRACATED.
         aspect_ratio=aspect/(W/H)   --RATIO=[vo]/display.  RETURN ORIGINAL aspect BY PADDING EITHER HORIZONTALLY OR VERTICALLY.
-        mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,pad=%d:%d:(ow-iw)/2:(oh-ih)/2,setsar=%s]'):format(o.command_prefix,label,W*math.min(1,aspect_ratio),H/math.max(1,aspect_ratio),W,H,par))  --GRAPH REPLACEMENT DOESN'T CHANGE THEIR ORDER (NEVER remove). ADDS AN EXTRA PAIR OF BLACK BARS. WIDTH MULTIPLIES BUT HEIGHT DIVIDES, WHEN NECESSARY.
+        mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,pad=%d:%d:(ow-iw)/2:(oh-ih)/2,setsar=%s]'):format(o.command_prefix,label,W*math.min(1,aspect_ratio),H/math.max(1,aspect_ratio),W,H,par))  --GRAPH REPLACEMENT DOESN'T CHANGE THEIR ORDER (NEVER remove). ADDS AN EXTRA PAIR OF BLACK BARS. WIDTH MULTIPLIES BUT HEIGHT DIVIDES, WHEN NECESSARY. vf-command MIGHT REQUIRE BREAKING UP THE GRAPH SO THAT scale & pad ARE SEPARATE.
         apply_crop({ x=0,y=0, w=m.max_w,h=m.max_h }) end --NULL crop (CAN INSERT max NUMBERS), OR ELSE remove. IS SLOW WITHOUT FRAME-STEPPING (DOUBLE GRAPH REPLACEMENT).
 end
 for key in o.key_bindings:gmatch('[^ ]+') do mp.add_key_binding(key,'toggle_crop_'..key,on_toggle) end
@@ -184,8 +183,8 @@ end
 
 
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END. ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
-----MPV v0.36.0 (.7z .exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED.  v0.37.0 FAILED ON WINDOWS & GAVE UNACCEPTABLE PERFORMANCE ON MACOS-11. (v0.36 & OLDER ONLY.)
-----FFmpeg v6.0(.7z .exe .flatpak)  v5.1.2 v5.1.3(.app) v4.4.2(.snap) v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS ACTUALLY BUILT WITH FFmpeg v4 & v6, WHICH CHANGES HOW THE GRAPHS ARE WRITTEN (FOR COMPATIBILITY). A FULL IMAGE HAS v4, NOT v6.
+----MPV v0.37.0  v0.36.0 (.7z .exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED.  v0.36 PREFERRED.
+----FFmpeg v6.0(.7z .exe .flatpak)  v5.1.3(mpv.app)  v5.1.2 (SMPlayer.app)  v4.4.2(.snap)  v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS ACTUALLY BUILT WITH FFmpeg v4, v5 & v6 (ALL 3), WHICH CHANGES HOW THE GRAPHS ARE WRITTEN (FOR COMPATIBILITY).
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. v23.6 MAYBE PREFERRED.
 

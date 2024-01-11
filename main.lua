@@ -22,7 +22,6 @@ o={ --options  ALL OPTIONAL & CAN BE REMOVED.
         ..' osd-border-size 1  osd-scale-by-window no  osd-duration 5000  osd-bar no ' --DEFAULTS 3,yes,1000,yes  (PIXELS,BOOL,MILLISECONDS,BOOL)  1p FOR LITTLE TEXT. SAME font-size WITH LITTLE WINDOW. TAKES A FEW SECS TO READ/SCREENSHOT osd. bar GETS IN THE WAY (SMPLAYER).
         ..' keepaspect no ' --FREE aspect IF MPV HAS ITS OWN WINDOW.
         ..' ytdl-format bestvideo[height<=1080]+bestaudio '  --CAN DROP FROM 4K.
-        
 }
 for opt,val in pairs({scripts={},ytdl={},title_duration=0,loop_limit=0,io_write='',options=''})
 do o[opt]=o[opt] or val end  --ESTABLISH DEFAULTS. 
@@ -30,9 +29,7 @@ do o[opt]=o[opt] or val end  --ESTABLISH DEFAULTS.
 opt,val,o.options = '','',o.options:gmatch('[^ ]+') --GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) DIDN'T EXIST IN AN OLD LUA VERSION, USED BY mpv.app ON MACOS.
 while   val do mp.set_property(opt,val)   --('','') → NULL-set
     opt,val = o.options(),o.options() end --nil @END
-
-for property in ('vf lavfi-complex af path'):gmatch('[^ ]+')  --EMBEDDED PLAYLISTS STILL SNAP (CHANGE IN path).
-do mp.observe_property(property,'native',function() io.write(o.io_write) end) end
+for property in ('vf lavfi-complex af'):gmatch('[^ ]+') do mp.observe_property(property,'native',function() io.write(o.io_write) end) end --EMBEDDED PLAYLISTS STILL SNAP (CHANGE IN path).
 
 utils,os =require 'mp.utils',os.getenv('os')           --nil ON MACOS.
 directory=utils.split_path(mp.get_property('scripts')) --split FROM WHATEVER THE USER ENTERED.   ALTERNATIVE mp.get_script_directory() HAS BUG.
@@ -62,10 +59,14 @@ function playback_start()
     if o.title then title=mp.create_osd_overlay('ass-events')  --ass-events IS THE ONLY VALID OPTION.
          title.data=o.title..mp.get_property_osd('media-title') 
          title:update()  --DISPLAY title.
-         mp.add_timeout(o.title_duration,function() title:remove() end) end --remove title ON timeout.
+         mp.add_timeout(o.title_duration,title_remove) end
 end
 mp.register_event('file-loaded',function() mp.register_event('playback-restart',playback_start) end)
 
+function title_remove()  --remove title ON timeout. BUT ALSO title→nil
+    title:remove()
+    title=nil  --BUGFIX: title MAY NOT remove IF IT ISN'T SENT TO nil.
+end
 
 ----mpv TERMINAL COMMANDS:
 ----WINDOWS   CMD: MPV\MPV --script=. *.MP4      (PLACE scripts & AN MP4 INSIDE smplayer.exe FOLDER)
@@ -74,8 +75,8 @@ mp.register_event('file-loaded',function() mp.register_event('playback-restart',
 ----MACOS mpv.app: /Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"        (DRAG & DROP mpv.app ONTO Applications. IT USES AN OLD LUA.)
 
 ----SAFETY INSPECTION: LUA SCRIPTS SHOULD BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path frame-step seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE. set IS SAFE EXCEPT FOR script-opts WHICH MAY hook AN UNSAFE EXECUTABLE INTO A DIFFERENT SCRIPT, LIKE youtube-dl.
-----MPV v0.36.0 (.7z .exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED.  v0.37.0 FAILED ON WINDOWS & GAVE UNACCEPTABLE PERFORMANCE ON MACOS-11. (v0.36 & OLDER ONLY.)
-----FFmpeg v6.0(.7z .exe .flatpak)  v5.1.2 v5.1.3(.app) v4.4.2(.snap) v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS ACTUALLY BUILT WITH FFmpeg v4 & v6, WHICH CHANGES HOW THE GRAPHS ARE WRITTEN (FOR COMPATIBILITY). A FULL IMAGE HAS v4, NOT v6.
+----MPV v0.36.0 (.7z .exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED.  v0.37.0 WORKS WITH 3 OUT OF 5 SCRIPTS, BUT automask & autocomplex FAILED ON WINDOWS & GAVE UNACCEPTABLE PERFORMANCE ON MACOS-11. (v0.36 & OLDER ONLY.)
+----FFmpeg v6.0(.7z .exe .flatpak)  v5.1.3(mpv.app)  v5.1.2 (SMPlayer.app)  v4.4.2(.snap)  v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS ACTUALLY BUILT WITH FFmpeg v4, v5 & v6 (ALL 3), WHICH CHANGES HOW THE GRAPHS ARE WRITTEN (FOR COMPATIBILITY).
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. v23.6 MAYBE PREFERRED.
 
@@ -97,7 +98,7 @@ mp.register_event('file-loaded',function() mp.register_event('playback-restart',
 ----snap DOESN'T WORK WITH "~/", BLOCKS SYSTEM COMMANDS, & WORKS DIFFERENTLY WITH SOME FILTERS LIKE showfreqs (FFmpeg-v4.4). THE autocomplex (& MAYBE automask) CODE IS WRITTEN DIFFERENTLY FOR snap COMPATIBILITY.
 
 ----o.options DUMP (FREE FORM). TO DEBUG TRY TOGGLE ALL THESE SIMULTANEOUSLY. THEN ISOLATE WHICH LINE FIXED THE BUG. BUT THAT CAN HAVE UNINTENDED CONSEQUENCES.
--- ..' video-timing-offset .5  video-sync display-resample' --MAY FIX STUTTER @vf-command (COMBO LAG WITH OTHER SCRIPTS). CAN ALTER AUDIO samplerate TO MATCH LAG. "display-tempo" GLITCHED.
+-- ..' video-timing-offset 1  video-sync display-resample' --MAY FIX STUTTER @vf-command (COMBO LAG WITH OTHER SCRIPTS). CAN ALTER AUDIO samplerate TO MATCH LAG. "display-tempo" GLITCHED.
 -- ..' hr-seek-demuxer-offset 1  cache-pause-wait 0  vd-lavc-dropframe nonref  vd-lavc-skipframe nonref'    --BOTH display-resample & display-tempo TRIGGER BUGS.  FRAME TYPES: none default nonref(SKIPnonref) bidir(SKIPBFRAMES) 
 -- ..' msg-level ffmpeg/demuxer=error  hr-seek always  index recreate  wayland-content-type none  background red  alpha blend'
 -- ..' stream-buffer-size 100000000  demuxer-lavf-buffersize 100000000  audio-reversal-buffer 100000000  video-reversal-buffer 100000000  audio-buffer 100000000'
@@ -106,7 +107,7 @@ mp.register_event('file-loaded',function() mp.register_event('playback-restart',
 -- ..' demuxer-backward-playback-step 100000000  video-backward-overlap 100000000  audio-backward-overlap 100000000  audio-backward-batch 100000000  video-backward-batch 100000000'
 -- ..' hr-seek-framedrop yes  access-references yes  ordered-chapters no  stop-playback-on-init-failure yes'
 -- ..' osc no  ytdl yes  vd-queue-enable yes  ad-queue-enable yes  cache-pause-initial no  cache-pause no  demuxer-seekable-cache yes  cache yes  demuxer-cache-wait no'
--- ..' framedrop no  force-window yes  keepaspect-window no  initial-audio-sync no  video-latency-hacks yes  demuxer-lavf-hacks yes  gapless-audio no  demuxer-donate-buffer yes  demuxer-thread yes  demuxer-seekable-cache yes  force-seekable yes  demuxer-lavf-linearize-timestamps no'
+-- ..' video-latency-hacks no  demuxer-lavf-hacks yes  framedrop no  force-window yes  keepaspect-window no  initial-audio-sync no  gapless-audio no  demuxer-donate-buffer yes  demuxer-thread yes  demuxer-seekable-cache yes  force-seekable yes  demuxer-lavf-linearize-timestamps no'
 
 
 
