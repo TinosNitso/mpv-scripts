@@ -12,15 +12,13 @@ To use on YouTube select Open→URL in SMPlayer. All toggle instantly if you dis
 ## Installation
 In Windows extract all `.lua` scripts from `.zip` & copy/paste them into `smplayer-portable` (or smplayer) folder. Then in SMPlayer Advanced Preferences enter 
 
-`--script=autoloader.lua`
+`--script=.`
 
-If using `main.lua`, use `--script=.` instead.
+`.` is the directory containing `main.lua`. Then hit OK & play. Overall I consider playback smoother than VLC. [main](main.lua) is like a README (in LUA). In Linux & MacOS create folder `mpv-scripts` on Desktop. Then extract all scripts into it. For YouTube also extract [yt-dlp_linux](https://github.com/yt-dlp/yt-dlp/releases) or *yt-dlp_macos* into the same folder. Then in SMPlayer enter
 
-Then hit OK & play. Overall I consider playback smoother than VLC. [autoloader](autoloader.lua) is itself a README (in LUA). In Linux & MacOS create folder `mpv-scripts` on Desktop. Then extract all scripts into it. For YouTube also extract [yt-dlp_linux](https://github.com/yt-dlp/yt-dlp/releases) and/or *yt-dlp_macos* into the same folder. Then in SMPlayer enter
+`--script=~/Desktop/mpv-scripts/`
 
-`--script=~/Desktop/mpv-scripts/autoloader.lua`
-
-In Linux try `sudo apt install smplayer` or double-click the `.AppImage`. All scripts also fully compatible with `.snap` & `.flatpak` releases. `~/` means home folder in Linux & MacOS.
+In Linux try `sudo apt install smplayer` or double-click the `.AppImage`. All scripts also fully compatible with `.snap` & `.flatpak` releases. `~` means home folder.
 
 ## Safety Inspection
 Before running scripts it's safer to first check them in Notepad++. Search for & highlight `os.execute` (operating system), `io.popen` (input output process) & `mp.command*` (media player). Safe commands include `expand-path` `frame-step` `seek` `playlist-next` `playlist-play-index` `stop` `quit` `af*` `vf*`, but `load-script` `run` `subprocess*` may be unsafe. `set` is safe except for `script-opts` which may hook an unsafe executable. To inspect a script check potentially unsafe commands. Ignore all comments (anything following `--`). 
@@ -28,33 +26,31 @@ Before running scripts it's safer to first check them in Notepad++. Search for &
 ## Terminal Commands
 To run in Windows from Command Prompt, create a New Text Document in SMPlayer folder & rename it `TEST.CMD`. Also copy in `TEST.MP4`. Then right-click on `TEST.CMD` & click `Edit`. In Notepad copy/paste:
 
-`CMD /K MPV\MPV --script=autoloader.lua *.MP4`
+`CMD /K MPV\MPV --script=. *.MP4`
 
-Then Save it & double-click it. The command line shows warnings, etc. MPV pauses when text in CMD is selected. All these scripts can be individually run from CMD, PowerShell, zsh, etc. They only deliver scripted commands to MPV. But most ppl prefer an interface like SMPlayer.
+Then Save it & double-click it. The command line shows warnings, etc. MPV pauses when text in CMD is selected. All these scripts can be individually run via CMD, PowerShell, zsh, sh, etc. They only deliver scripted commands to MPV. But most ppl prefer an interface like SMPlayer.
 
 In MacOS go to *Launchpad*→*Other*→*Terminal*. Then the exact `zsh` command is:
 
-`/Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/autoloader.lua "https://youtu.be/5qm8PH4xAss"`
+`/Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"`
 
 That uses the MPV bundled with SMPlayer. In Linux the exact command to load YouTube from terminal is:
 
-`mpv --script=~/Desktop/mpv-scripts/autoloader.lua https://youtu.be/5qm8PH4xAss`
+`mpv --script=~/Desktop/mpv-scripts/ https://youtu.be/5qm8PH4xAss`
 
-MacOS users can also drag & drop mpv.app onto Applications. The following command assumes `main.lua` is present (unreleased, but in above .zip).
+MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh command is:
 
 `/Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"` 
 
 ## Versions
 
-Scripts incompatible with MPV v0.37.0. *v0.36* & older only! v0.36.0 & v0.35.1 successful. Maybe 2 or 3 out of 5 scripts work with v0.37. Hopefully the next version works better!
+*v0.36* & older only! v0.36.0 & v0.35.1 successful. v0.37.0 works with 3 out of 5: automask & autocomplex don't work in that version, but main, aspeed & autocrop do. Hopefully the next version works better!
 
-SMPlayer *v23.6.0* & v23.12.0 successful. v23.12 has an annoying `no-osd seek 0 relative exact` accompanying every `set pause yes`. Releases tested include .7z .exe .app .AppImage .flatpak & .snap.
+SMPlayer *v23.6.0* & v23.12.0 successful. v23.12 has an annoying `no-osd seek 0 relative exact` accompanying every `set pause yes` (user hits spacebar). Releases tested include .7z .exe .app .AppImage .flatpak & .snap.
 
-Fmpeg versions *v6.0*, v5.1 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) successfully tested.
+Fmpeg versions *v6.0*, v5.1.3 (`mpv.app`), v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) fully compatible.
 
 ## Latest Updates
-Above .lua scripts & `mpv-scripts.zip` are unreleased properly, but pass all my tests so far. Still some more testing before next release.
-
 - All scripts now work with `mpv.app` on MACOS-11. It uses an older LUA version, back when the `%g` pattern didn't exist.
 - YouTube bugfix for VP9 profile 4 being incompatible with `lavfi-complex`. [Example](https://youtu.be/ubvV498pyIM).
 - `autoloader.lua` is replaced by `main.lua`, in which case `--script=.` (directory). title moved from aspeed to main.
