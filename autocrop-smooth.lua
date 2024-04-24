@@ -1,6 +1,4 @@
-----THIS SCRIPT WORKED OK BEFORE THE DUAL autocomplex. IT CAUSES TOO MUCH LAG WITH MY CHEAP CPU. BUT WITHOUT autocomplex IT'S IMPRESSIVE.
-
-----FOR MPV & SMPLAYER. SMOOTHLY CROP BLACKBARS OFF JPEG, PNG, BMP, GIF, MP3 (COVER ART), & MP4. .TIFF ONE-LAYER ONLY. CAN CHANGE vid TRACK (MP3TAG) & crop. FOR RAW JPEG SMOOTH STRETCH NEEDS autocomplex LOOP.
+----FOR MPV & SMPLAYER. TESTED WITH v0.38.0.  SMOOTHLY CROP BLACKBARS OFF JPEG, PNG, BMP, GIF, MP3 (COVER ART), & MP4. .TIFF ONE-LAYER ONLY. CAN CHANGE vid TRACK (MP3TAG) & crop. FOR RAW JPEG SMOOTH STRETCH NEEDS autocomplex LOOP.
 ----USE DOUBLE-mute TO TOGGLE. FRAME-STEPS WHEN PAUSED (ACTS AS A frame-step TOGGLE). CAN MAINTAIN CENTER IN HORIZONTAL/VERTICAL, WITH TOLERANCE VALUES. FULLY SUPPORTS cropdetect & bbox (ffmpeg-filters). 
 ----THIS VERSION USES A MAGNIFIED NEGATIVE overlay FOR SMOOTH crop (BUG WORKAROUND). MAY LAG IF IT MAGNIFIES 4xDISPLAY, BEFORE CROPPING DOWN TO IT. AS SMOOTH AS STRETCHING PARCHMENT. BASED ON https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua
 
@@ -55,7 +53,7 @@ o,label,timers,m = options,mp.get_script_name(),{},{} --ABBREV. options. label=a
 require 'mp.options'
 read_options(o)    --OPTIONAL?
 
-for key,val in pairs({command_prefix='',detect_limits={},TOLERANCE=0,TOLERANCE_TIME=10,time_needed=0,crop_time=.5,detectors='cropdetect=limit=%s:round=%s:reset=1:0',format='yuv420p',scale={},key_bindings='C',toggle_on_double_mute=0,io_write='',config={}})
+for key,val in pairs({command_prefix='',detect_limits={},TOLERANCE=0,TOLERANCE_TIME=10,time_needed=0,crop_time=.5,detectors='cropdetect=limit=%s:round=%s:reset=1',format='yuv420p',scale={},key_bindings='C',toggle_on_double_mute=0,io_write='',config={}})
 do if not o[key] then o[key]=val end end --ESTABLISH DEFAULTS. 
 
 for _,option in pairs(o.config) do mp.command(o.command_prefix..' set '..option) end   --APPLY config BEFORE scripts.
@@ -70,7 +68,7 @@ function file_loaded()
     if not (W and H) then W,H = mp.get_property_number('video-params/w'),mp.get_property_number('video-params/h') end --USE [vo] SIZE (LINUX).  current-tracks/video/demux-w IS RAW TRACK WIDTH.
     if not (W and H) then mp.add_timeout(.05,file_loaded)   --LINUX FALLBACK: RE-RUN & return. DUE TO EXCESSIVE LAG IN VIRTUALBOX.
         return end
-    W,H = math.ceil(W/4)*4,math.ceil(H/4)*4   --MULTIPLES OF 4 WORK BETTER WITH overlay (FURTHER GRAPHS LIKE automask). MPV MAY SNAP INSIDE SMPLAYER ON ODD NUMBERED SIZES.
+    -- W,H = math.ceil(W/4)*4,math.ceil(H/4)*4   --MULTIPLES OF 4 WORK BETTER WITH overlay (FURTHER GRAPHS LIKE automask). MPV MAY SNAP INSIDE SMPLAYER ON ODD NUMBERED SIZES.
     
     l,r , MEDIA_TITLE,is1frame  =  o.detect_limit,o.detect_round , mp.get_property('media-title'):upper(),false --current-tracks PROPERTIES AWAIT file-loaded. 
     for title,detect_limit in pairs(o.detect_limits) do if MEDIA_TITLE:find(title:upper(),1,true)   --1 IS STARTING INDEX. true DISABLES MAGIC SYMBOLS LIKE '%s'.
@@ -84,7 +82,7 @@ function file_loaded()
     o.detectors=o.detectors:format( l,r , l,r , l,r , l,r ) --CAN COMBINE A FEW DETECTORS, IN 1 GRAPH.
     
     mp.command(('%s vf pre @%s-crop:lavfi=[scale=%d:%d:eval=frame,crop=%d:%d:0:0:1:1,setsar=1]'):format(o.command_prefix,label,W,H,W,H))    --INSERT scale @INSERTION TO AVOID STARTING GLITCH ON LOW-RES video.
-    mp.command(('%s vf pre @%s:lavfi=[format=%s,scale=ceil(iw/4)*4:ceil(ih/4)*4,%s,split,overlay]'):format(o.command_prefix,label,o.format,o.detectors))   --CENTRAL GRAPH. BY TRIAL & ERROR NEEDS width & height INSTANTLY TO AVOID RARE STARTING GLITCH.
+    mp.command(('%s vf pre @%s:lavfi=[format=%s,scale=ceil(iw/4)*4:ceil(ih/4)*4,%s,split,overlay]'):format(o.command_prefix,label,o.format,o.detectors))   --CENTRAL GRAPH.
     
     ----lavfi     =[graph]  [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTER LIST. THIS ONE ACHIEVES SMOOTH crop WITH A BUGGY crop FILTER, WHICH REQUIRES A SECOND GRAPH.
     ----cropdetect=limit:round:reset:skip  DEFAULT=24/255:16:0  LINUX .AppImage FAILS IF skip IS NAMED (INCOMPATIBLE).  alpha TRIGGERS BAD PERFORMANCE.
