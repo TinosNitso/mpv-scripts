@@ -14,7 +14,9 @@ In Windows extract all `.lua` scripts from `.zip` & copy/paste them into `smplay
 
 `--script=.`
 
-`.` is the directory containing `main.lua`. Then hit OK & play. Overall I consider playback smoother than VLC. [main](main.lua) is like a README (in LUA). In Linux & MacOS create folder `mpv-scripts` on Desktop. Then extract all scripts into it. For YouTube also extract [yt-dlp_linux](https://github.com/yt-dlp/yt-dlp/releases) or *yt-dlp_macos* into the same folder. Then in SMPlayer enter
+`.` is the directory containing `main.lua`. Then hit OK & play. Overall I consider playback smoother than VLC. [main](main.lua) is like a README (in LUA). 
+
+In Linux & MacOS create folder `mpv-scripts` on Desktop. Then extract all scripts into it. For YouTube also extract [yt-dlp_linux](https://github.com/yt-dlp/yt-dlp/releases) or *yt-dlp_macos* into the same folder. Then in SMPlayer enter
 
 `--script=~/Desktop/mpv-scripts/`
 
@@ -44,20 +46,19 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 
 ## Versions
 
-*v0.36* & older only! v0.36.0 & v0.35.1 successful. v0.37.0 works with 3 out of 5: automask & autocomplex don't work in that version, but main, aspeed & autocrop do. Hopefully the next version works better!
+*v0.36* & older only for latest release! v0.36.0 & v0.35.1 tested. v0.38.0 & v0.37.0 work with the scripts above which aren't in a proper release yet.
 
 SMPlayer *v23.6.0* & v23.12.0 successful. v23.12 has an annoying `no-osd seek 0 relative exact` accompanying every `set pause yes` (user hits spacebar). Releases tested include .7z .exe .app .AppImage .flatpak & .snap.
 
 Fmpeg versions *v6.0*, v5.1.3 (`mpv.app`), v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) fully compatible.
 
 ## Latest Updates
-- All scripts now work with `mpv.app` on MACOS-11. It uses an older LUA version, back when the `%g` pattern didn't exist.
-- YouTube bugfix for VP9 profile 4 being incompatible with `lavfi-complex`. [Example](https://youtu.be/ubvV498pyIM).
-- `autoloader.lua` is replaced by `main.lua`, in which case `--script=.` (directory). title moved from aspeed to main.
-- automask now has perfect circles using `o.geq` (any formula). `o.RES_SAFETY` bugfix now fully valid, with precision. Also `o.format` option. 
-- autocrop now has true aspect toggle. It returns double-black bars properly when you double-click mute.
-- autocomplex more efficient code juggling 12.5, 25 & 30 fps. 30 fps for film & automask. `o.freqs_fps_image`, `o.freqs_framerate` (like fade for freqs) & `o.feet_lutrgb` options added. Somehow shuffling colors is more efficient than mixing them. There should be at least 3 fps values when doing abstract visuals: stream, animation, & hard-animation (like fractals).
-- aspeed improved response time (`o.auto_delay`), & `o.mpv` (any path) options. echo to socket isn't allowed on Linux without installing a dependency, so I re-wrote it using only txtfile. Also improved reliability.
-- Many code improvements, like setsar=par, not 1.
+Latest updates in above scripts haven't been properly released. `autocrop-smooth` needs improvement first.
+- All scripts now work with the latest mpv, versions 0.38.0 & 0.37.0.
+- autocrop is now a spacetime cropper! (Supports track list with start & end crop times, so sub-clips can be deleted.)  Can also crop transparent input.  Added `o.no_vid`. vf-command for padded toggle.
+- automask has smooth toggle.
+- aspeed improved reliability & toggle. Observes samplerate (removed the option). Subprocesses start in `--idle` mode (removed `o.start` but trigger isn't perfect).
+- autocomplex can now repeatedly change vid track. Framerate & 100 buffers queued starting warnings resolved. Figured out the avgblur=planes setting. Added `o.filterchain` & `o.dual_filterchain` options. However the toggle's slow.
+- Code improvements for MacOS (no `o.io_write` nor initial timeout). Removed all use of utilities except for `split_path`. Removed `o.format` from autocrop, automask & autocomplex. Better code alignment. 
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
