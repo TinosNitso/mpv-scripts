@@ -18,7 +18,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
         "/Applications/mpv.app/Contents/MacOS/mpv",  --mpv.app
     },
     
-    extra_devices_index_list={3,4}, --TRY {2,3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. REPETITION IGNORED. 1=auto WHICH MAY DOUBLE-OVERLAP AUDIO TO PRIMARY DEVICE. 3=VIRTUALBOX USB STEREO. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.  EACH MPV USES APPROX 1% CPU, + 40MB RAM.
+    -- extra_devices_index_list={3,4}, --TRY {2,3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. REPETITION IGNORED. 1=auto WHICH MAY DOUBLE-OVERLAP AUDIO TO PRIMARY DEVICE. 3=VIRTUALBOX USB STEREO. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.  EACH MPV USES APPROX 1% CPU, + 40MB RAM.
     max_random_percent      =  10,  --DEFAULT=0   %        MAX random % DEVIATION FROM PROPER speed. UPDATES EVERY HALF A SECOND. EXAMPLE: 10%*.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER.  0% STILL CAUSES L & R TO DRIFT RELATIVELY, DUE TO HALF SECOND RANDOM WALKS BTWN speed UPDATES (CAN VERIFY WITH MONO→STEREO SCREEN RECORDING).
     max_speed_ratio         =1.15,  --DEFAULT=1.2          speed IS BOUNDED BY [SPEED/max,SPEED*max], WITH SPEED FROM CONTROLLER.  1.15 SOUNDS OK, BUT MAYBE NOT 1.25.
     seek_limit              =  .5,  --DEFAULT=.5  SECONDS  SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit. seek CAUSES AUDIO TO SKIP. (SKIP VS JERK.) IT'S LIKE TRYING TO SING FASTER TO CATCH UP TO THE OTHERS.
@@ -27,6 +27,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
     os_sync_delay           = .01,  --DEFAULT=.01 SECONDS  ACCURACY FOR SYNC TO os.time. A perodic_timer CHECKS SYSTEM clock EVERY 10 MILLISECONDS (FOR THE NEXT TICK).  WIN10 CMD "TIME 0>NUL" GIVES 10ms ACCURATE SYSTEM TIME.
     samples_time_min        =  20,  --DEFAULT=10  SECONDS  SAMPLE COUNT STABILIZES WITHIN 10 SECONDS. SOMETIMES IT COUNTS 5.5s OF SAMPLES JUST TO PERFORM A seek, DUE TO lavfi-complex. IT'S ALWAYS A HALF-INTEGER.
     timeout                 =  10,  --DEFAULT=5   SECONDS  subprocesses ALL quit IF CONTROLLER STOPS FOR THIS LONG. 
+    timeout_mute            =   2,  --DEFAULT=2   SECONDS  subprocesses ALL MUTE IF CONTROLLER HARD BREAKS FOR THIS LONG. THEY MUTE INSTANTLY ON STOP.
     -- meta_osd             =   1,  --SECONDS TO DISPLAY astats METADATA, PER OBSERVATION.  IRONICALLY astats (audio STATISTICS) DOESN'T KNOW ANYTHING ABOUT TIME ITSELF, YET IT'S THE BASIS FOR TEN HOUR SYNCHRONY.
     mutelr                  ='mutel', --DEFAULT='mutel'  'muter' SWITCHES PRIMARY CONTROLLER CHANNEL TO LEFT. PRIMARY device HAS 1 CHANNEL IN NORMAL SYNC TO video. HARDWARE USUALLY HAS A PRIMARY, BUT IT'S 50/50 (HEADPHONES OPPOSITE TO SPEAKERS).
     options                 =''       --FREE FORM ' opt1 val1  opt2=val2  --opt3=val3 '...
@@ -36,7 +37,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
     ,
 }
 o        =options  --ABBREV.
-for opt,val in pairs({key_bindings='',toggle_on_double_mute=0,filterchain='anull',mpv={},extra_devices_index_list={},max_random_percent=0,max_speed_ratio=1.2,seek_limit=.5,auto_delay=.5,resync_delay=60,os_sync_delay=.01,samples_time_min=10,timeout=5,mutelr='mutel',options=''})
+for opt,val in pairs({key_bindings='',toggle_on_double_mute=0,filterchain='anull',mpv={},extra_devices_index_list={},max_random_percent=0,max_speed_ratio=1.2,seek_limit=.5,auto_delay=.5,resync_delay=60,os_sync_delay=.01,samples_time_min=10,timeout=5,timeout_mute=2,mutelr='mutel',options=''})
 do o[opt]=o[opt] or val end  --ESTABLISH DEFAULTS. 
 o.options=(o.options):gsub('-%-','  '):gmatch('[^ ]+') --'-%-' MEANS "--".  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN DOESN'T EXIST IN THE LUA VERSION CURRENTLY USED BY mpv.app ON MACOS.  
 while true 
@@ -55,7 +56,8 @@ mutelr   =script_opts.mutel and 'mutel' or script_opts.muter and 'muter' --mutel
 if mutelr then math.randomseed(pid)  --UNIQUE randomseed FOR ALL subprocesses. OTHERWISE TEMPO MAY BE PREDICTABLE OR SAME.
     mp.set_property_bool('vid'      ,false)
     mp.set_property_bool('keep-open',true )  --FOR seek NEAR end-file. STOPS MPV FROM IDLING.
-    mp.set_property('msg-level',  'all=no')  --STOPS CONTROLLER LOG FROM FILLING UP.   
+    mp.set_property('msg-level'  ,'all=no')  --STOPS CONTROLLER LOG FROM FILLING UP.   
+    mp.set_property('ytdl-format','bestaudio/best')  --OPTIONAL?
 else is_controller,o.auto_delay,mutelr,script_opts.pid = true,.5,o.mutelr,pid  --CONTROLLER.  ..'' CONVERTS→string (script-opts ARE STRINGS). auto_delay EXISTS ONLY TO STOP timeout. ALL txtfile WRITES INSTANT.
     audio_device_list,devices = mp.get_property_native('audio-device-list'),{mp.get_property('audio-device')}  --devices IS LIST OF audio-devices WHICH WILL ACTIVATE (STARTING WITH EXISTING device). audio_device_list IS COMPLETE LIST.  "wasapi/" (WINDOWS AUDIO SESSION APP. PROGRAM. INTERFACE) OR "pulse/alsa" (LINUX) OR "coreaudio/" (MACOS).  IT DOESN'T GIVE THE SAMPLERATES NOR CHANNEL-COUNTS. RANDOMIZING EACH CHANNEL WOULD REQUIRE subprocesses TO START THEIR OWN subprocesses (LIKE A BRANCHING TREE).
     clock=o.clock and mp.create_osd_overlay('ass-events')  --ass-events IS THE ONLY VALID OPTION.   
@@ -171,33 +173,35 @@ function property_handler(property,val)     --CONTROLLER WRITES TO txtfile, & su
     if is_controller then if property=='current-tracks/audio' then property='a'  --a←→current-tracks/audio
         elseif property=='mute' then on_toggle(property)     end  --FOR DOUBLE mute TOGGLE.
         if     property         then         p[property]=val end
-        txt.speed  =(not p.a or p.pause or p.seeking) and 0 or p.speed  --seeking→pause FIXES A YOUTUBE STARTING GLITCH.
+        txt.speed  =(not p.a or p.pause or p.seeking) and 0 or p.speed or 0  --seeking→pause FIXES A YOUTUBE STARTING GLITCH.
         
-        if not o.mpv[1] or not path or not property and txt.speed>0 and a.id
-        then return  --return CONDITIONS.  OVERRIDE: NO txtfile. (ONLY clock.)  NOT STARTED YET.  OR ELSE IT'S THE auto IDLER, TO STOP timeout WHEN SPEED=0 (UNLESS JPEG). THE IDLER SHOULD ALWAYS BE RUNNING FOR RELIABILITY.
+        if not o.mpv[1] or not path or not property and txt.speed>0 and p.a.id then return  --return CONDITIONS.  OVERRIDE: NO subprocesses.  OR NOT STARTED YET.  OR ELSE IT'S THE auto IDLER, TO STOP timeout WHEN SPEED=0 (UNLESS JPEG). THE IDLER SHOULD ALWAYS BE RUNNING FOR RELIABILITY.
         elseif o.meta_osd and samples_time then mp.osd_message(mp.get_property_osd('af-metadata/'..label):gsub('\n','    \t'),o.meta_osd) end   --TAB EACH STAT (TOO MANY LINES), FOR osd.  samples_time CORRESPONDS TO NEW OBSERVATION.
         
         txtfile=io.open(txtpath,'w+')  --w+=ERASE+WRITE  w ALSO WORKS.  MACOS-11 (DIFFERENT LUA VERSION) REQUIRES txtfile BE WELL-DEFINED.
         txtfile:write( ('%s\n%d\n%d\n%s\n%s\n%s\n%s\n'):format(  --CONTROLLER REPORT. SECURITY PRECAUTION: NO property NAMES, OR ELSE AN ARBITRARY set COULD HOOK A YOUTUBE EXECUTABLE, SIMILAR TO PIPING TO A SOCKET. DIFFERENT LINES MIGHT REQUIRE SECURITY OVERRIDES.  
             path,
             p.a and p.a.id or 1,  --id=1 BEFORE YOUTUBE LOADS. a.id MORE RELIABLE THAN aid (lavfi-complex BUG). 
-            (txt.mute or p.mute) and 0 or p.volume,  --RANGE [0,100]. OFF-SWITCH & mute.  
+            (txt.mute or p.mute) and 0 or p.volume or 0,  --RANGE [0,100]. OFF-SWITCH & mute.  " or 0" FOR 32-BIT RELIABILITY.
             txt.speed,
             round(os_time ,.001), --MILLISECOND PRECISION LIMITER.
             round(time_pos,.001), 
             p.priority or '' ) )  --'' FOR UNIX.
         txtfile:close()  --EITHER flush() OR close().  txtpath CLOSED @NEARLY ALL TIMES MAY IMPROVE RELIABILITY.
         return end  --CONTROLLER ENDS HERE.  subprocesses BELOW.
+    if     txt.os_time and os_time-txt.os_time>o.timeout+0      then mp.command('quit')   --SOMETIMES txtpath IS INACCESSIBLE, SO AWAIT timeout. 
+    elseif txt.os_time and os_time-txt.os_time>o.timeout_mute+0 then mp.set_property('volume',0) end
     
     txtfile =io.open(txtpath)  --'r' MODE, 'r+' ALSO WORKS.  
-    if not txtfile then mp.set_property('volume',0) end  --EITHER CONTROLLER STOPPED OR FILE INACCESSIBLE.
-    if txt.os_time and os_time-txt.os_time>o.timeout+0 then mp.command('quit') end  --SOMETIMES txtpath IS INACCESSIBLE, SO AWAIT timeout. 
+    if not txtfile then mp.set_property('volume',0)  --EITHER CONTROLLER STOPPED OR FILE INACCESSIBLE.
+        return end  
+    
     lines   =txtfile:lines()  --lines ITERATOR RETURNS 0 OR 7 LINES, AS function. 
     txt.path=lines()  --LINE1=path
     if not txt.path then return  --BLANK txtfile SOMETIMES.
     elseif txt.path~=path then mp.commandv('loadfile',txt.path) end  --commandv FOR FILENAMES. CAN ALSO INSERT FLAGS, LIKE "start="..
     
-    mp.set_property('aid',   lines())  --LINE2=aid  UNTESTED. MAY REQUIRE GRAPH REPLACEMENT, LIKE automask.
+    mp.set_property('aid'   ,lines())  --LINE2=aid  UNTESTED. MAY REQUIRE GRAPH REPLACEMENT, LIKE automask.
     mp.set_property('volume',lines())  --LINE3=volume
     txt.speed,txt.os_time,txt.time_pos = lines()+0,lines()+0,lines()+0  --LINES 4,5,6 = speed,os_time,time_pos
     mp.set_property('priority',lines())  --LINE7=priority  (OR ''=NULL-OP FOR UNIX).  PROPAGATING VIA TASK MANAGER NOT SUPPORTED BECAUSE MPV MAY NOT KNOW ITS OWN priority.

@@ -4,7 +4,7 @@ options={  --ALL OPTIONAL & CAN BE REMOVED.
     scripts={ --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE. TYPOS CAN TOGGLE THEM ON & OFF.  autocomplex & automask HAVE osd_on_toggle WHICH DISPLAYS VERSION NUMBERS & FILTERGRAPHS.
         "aspeed.lua",      --CLOCK & AUDIO DEVICES SPEED RANDOMIZATION, FOR 10 HOURS. INSTA-TOGGLE. CONVERTS MONO TO (RANDOMIZED) SURROUND SOUND.  MY FAVOURITE OVERALL. CONVERTS A SPEAKER INTO A METAPHORICAL MOCKING-BIRD.
         "autocrop.lua",    --CROP OFF BLACK BARS BEFORE automask, BUT AFTER autocomplex. INSTA-TOGGLE.
-        -- "autocrop-smooth.lua",  --SMOOTH VERSION. MAY BE INCOMPATIBLE WITH autocomplex DUE TO EXCESSIVE CPU USAGE.  MAY PERFORM BETTER WITHOUT GPU DRIVERS? CAN ROLL BACK DRIVER IN DEVICE MANAGER → DISPLAY ADAPTERS.
+        -- "autocrop-smooth.lua",  --SMOOTH VERSION. MAY BE INCOMPATIBLE WITH autocomplex DUE TO EXCESSIVE CPU USAGE.  MAY PERFORM BETTER WITHOUT FREE/CHEAP GPU? CAN ROLL BACK DRIVER IN DEVICE MANAGER → DISPLAY ADAPTERS.
         "autocomplex.lua", --ANIMATED AUDIO SPECTRUM, VOLUME BARS, FPS LIMITER. DUAL lavfi-complex OVERLAY. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE IS LIKE WINGS OF BIRD). 
         "automask.lua",    --ANIMATED FILTERS (MOVING LENSES, ETC). INSTA-TOGGLE. LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE VISOR + BUTTERFLY=automask2.lua, 300MB RAM EACH).
     },
@@ -19,8 +19,8 @@ options={  --ALL OPTIONAL & CAN BE REMOVED.
     clear_osd     =.2, --SECONDS, DEFAULT=0. CLEAR osd (BEHIND title) COUNTING FROM PLAYBACK START.
     loop_limit    =10, --SECONDS (MAX). INFINITE loop GIF & SHORT MP4 (IN SMPLAYER TOO) IF duration IS LESS. STOPS MPV SNAPPING.  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
     options       =''  --FREE FORM  ' opt1 val1  opt2=val2  --opt3=val3 '...  main SETS NON-CRITICAL options MORE EASILY.
-        ..'     ytdl-format=bestvideo[height<=1080]+bestaudio/best'  --CAN DROP FROM 4K. "/best" FOR RUMBLE.  720p MAY WORK BETTER SOMETIMES.
-        ..'      keepaspect=no                sid=auto'  --FREE aspect IF MPV HAS ITS OWN WINDOW.  sid=SUBTITLE ID
+        ..'     ytdl-format=bestvideo[height<1080]+bestaudio/best'  --"/best" FOR RUMBLE.  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
+        ..'      keepaspect=no                sid=auto  msg-level=ffmpeg/demuxer=error'  --FREE aspect IF MPV HAS ITS OWN WINDOW.  sid=SUBTITLE ID  error SETTING AVOIDS SPURIOUS WARNINGS.
         ..' osd-border-size=1 osd-scale-by-window=no osd-duration 5000 --osd-bar=no' --DEFAULTS 3,yes,1000,yes  (PIXELS,BOOL,MILLISECONDS,BOOL)  1p FOR LITTLE TEXT. SAME font-size WITH LITTLE WINDOW. TAKES A FEW SECS TO READ/SCREENSHOT osd. bar GETS IN THE WAY (SMPLAYER).
     ,
 }
@@ -78,7 +78,7 @@ end
 
 ----mpv TERMINAL COMMANDS:
 ----WINDOWS   CMD: MPV\MPV --script=. *.MP4      (PLACE scripts & AN MP4 INSIDE smplayer.exe FOLDER)
-----LINUX      sh: mpv --script=~/Desktop/mpv-scripts/ https://youtu.be/5qm8PH4xAss
+----LINUX      sh: mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"
 ----MACOS     zsh: /Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"      
 ----MACOS mpv.app: /Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"        (DRAG & DROP mpv.app ONTO Applications. IT USES AN OLD LUA.)
 
@@ -94,28 +94,28 @@ end
 ----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. ALMOST ALL TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS. THEY'RE ALL <300 LINES LONG, WITH MANY PARTS COPY/PASTED FROM EACH OTHER.  ULTIMATELY TELEVISION FIRMWARE (1GB) SHOULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. IT'S NOT THE CONTENT PROVIDER'S JOB. MPV CAN ACT LIKE TV FIRMWARE.
 ----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, & MULTI-LINE ALT-EDITING. AIDS RAPID GRAPH TESTING.  MPV HAS LUA, JS & JSON (JAVA SCRIPT OBJECT NOTATION).  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK CAN DO ALMOST ANYTHING WITH A 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
 ----VIRTUALBOX: CAN INCREASE VRAMSize FROM 128→256 MB. MACOS LIMITED TO 3MB VIDEO MEMORY. CAN ALSO SWITCH AROUND Command & Control(^) MODIFIER KEYS.  "C:\Program Files\Oracle\VirtualBox\VBoxManage" setextradata macOS_11 VBoxInternal/Devices/smc/0/Config/DeviceKey ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc
-----A FUTURE VERSION COULD CREATE A RECYCLE BIN FOR STREAMING, UP TO 1GB. CAN STREAM-DUMP ALL YOUTUBE VIDEOS, IN AUTO.
 
-----BUG: CAN'T seek WITH TWITTER.    EXAMPLE: https://twitter.com/i/status/1696643892253466712
 ----BUG: RARE YT VIDEOS LOAD no-vid. EXAMPLE: https://youtu.be/y9YhWjhhK-U
+----BUG: CAN'T seek WITH TWITTER.    EXAMPLE: https://twitter.com/i/status/1696643892253466712
 
+----https://sourceforge.net/projects/mpv-player-windows/files/release/ FOR NEW MPV WINDOWS BUILDS.
 ----sudo apt install smplayer flatpak snapd mpv     FOR RELEVANT LINUX INSTALLS. OFFLINE LINUX ALL-IN-ONE: SMPlayer-23.6.0-x86_64.AppImage
 ----https://smplayer.info/en/download-linux & https://apt.fruit.je/ubuntu/jammy/mpv/ FOR LINUX SMPLAYER & MPV.
 ----flatpak install *.flatpak  snap install *.snap  FOR INSTALLS, AFTER cd TO RELEASES. MUST BE ON INTERNET, EVEN FOR snap. .AppImage IS OFFLINE.
 ----flatpak run info.smplayer.SMPlayer  snap run smplayer  FOR flatpak & snap TESTING. 
-----snap DOESN'T WORK WITH "~/", BLOCKS SYSTEM COMMANDS, & WORKS DIFFERENTLY WITH SOME FILTERS LIKE showfreqs (FFmpeg-v4.4). THE autocomplex (& MAYBE automask) CODE IS WRITTEN DIFFERENTLY FOR snap COMPATIBILITY.
+----snap DOESN'T WORK WITH "~/", BLOCKS SYSTEM COMMANDS, & WORKS DIFFERENTLY WITH SOME FILTERS LIKE showfreqs (FFmpeg-v4.4).
 
 ----o.options DUMP (FREE FORM). NICER WITHOUT "=". TO DEBUG TRY TOGGLE ALL THESE SIMULTANEOUSLY, & ISOLATE WHICH LINE FIXED THE BUG. BUT THAT CAN HAVE UNINTENDED CONSEQUENCES.
--- ..' video-timing-offset 1  video-sync desync'  --video-sync=display-resample & display-tempo GLITCHED. 
--- ..' hr-seek-demuxer-offset 1  cache-pause-wait 0  vd-lavc-dropframe nonref  vd-lavc-skipframe nonref'  --frame=none default nonref bidir  CAN SKIP NON-REFERENCE OR B-FRAMES.
--- ..' vo gpu  msg-level ffmpeg/demuxer=error  hr-seek always  index recreate  wayland-content-type none  background red  alpha blend'
--- ..' stream-buffer-size 100000000  demuxer-lavf-buffersize 100000000  audio-reversal-buffer 100000000  video-reversal-buffer 100000000  audio-buffer 100000000'
--- ..' demuxer-max-bytes 100000000  vd-queue-max-bytes 100000000  ad-queue-max-bytes 100000000  demuxer-max-back-bytes 100000000  vd-queue-max-samples 100000000  ad-queue-max-samples 100000000  chapter-seek-threshold 100000000'
--- ..' demuxer-lavf-analyzeduration 100000000  demuxer-termination-timeout 100000000  cache-secs 100000000  vd-queue-max-secs 100000000  ad-queue-max-secs 100000000  demuxer-readahead-secs 100000000'
--- ..' demuxer-backward-playback-step 100000000  video-backward-overlap 100000000  audio-backward-overlap 100000000  audio-backward-batch 100000000  video-backward-batch 100000000'
--- ..' framedrop yes  hr-seek-framedrop yes  access-references yes  ordered-chapters no  stop-playback-on-init-failure yes'
--- ..' osc no  ytdl yes  vd-queue-enable yes  ad-queue-enable yes  cache-pause-initial no  cache-pause no  demuxer-seekable-cache yes  cache yes  demuxer-cache-wait no'
--- ..' video-latency-hacks yes  demuxer-lavf-hacks yes  initial-audio-sync yes  gapless-audio no  keepaspect-window no  demuxer-donate-buffer yes  demuxer-thread yes  demuxer-seekable-cache yes  force-seekable yes  demuxer-lavf-linearize-timestamps no'
-
+        -- ..' framedrop decoder+vo  video-sync desync  vd-lavc-dropframe nonref  vd-lavc-skipframe nonref'  --frame=none default nonref bidir  CAN SKIP NON-REFERENCE OR B-FRAMES.  video-sync=display-resample & display-tempo GLITCHED. 
+        -- ..' vo gpu  hr-seek always  index recreate  wayland-content-type none  background color  alpha blend'
+        -- ..' video-latency-hacks yes  hr-seek-framedrop yes  access-references yes  ordered-chapters no  stop-playback-on-init-failure yes'
+        -- ..' osc no  ytdl yes  cache yes  cache-pause no  cache-pause-initial no  initial-audio-sync yes  gapless-audio no  keepaspect-window no  force-seekable yes  vd-queue-enable yes  ad-queue-enable yes'
+        -- ..' demuxer-lavf-hacks yes  demuxer-lavf-linearize-timestamps no  demuxer-seekable-cache yes  demuxer-cache-wait no  demuxer-donate-buffer yes  demuxer-thread yes'
+        -- ..' cache-pause-wait 0  video-timing-offset 1  hr-seek-demuxer-offset 1  audio-buffer 10'
+        -- ..' demuxer-lavf-analyzeduration 1024  demuxer-termination-timeout 1024  cache-secs 1024  vd-queue-max-secs 1024  ad-queue-max-secs 1024  demuxer-readahead-secs 1024  audio-backward-overlap 1024  video-backward-overlap 1024  audio-backward-batch 1024  video-backward-batch 1024'
+        -- ..' demuxer-lavf-buffersize 1000000  stream-buffer-size 1000000  audio-reversal-buffer 1000000  video-reversal-buffer 1000000'
+        -- ..' vd-queue-max-samples 1000000  ad-queue-max-samples 1000000  chapter-seek-threshold 1000000  demuxer-backward-playback-step 1000000'
+        -- ..' demuxer-max-bytes 1000000000  demuxer-max-back-bytes 1000000000  vd-queue-max-bytes 1000000000  ad-queue-max-bytes 1000000000'
+        
 
 
