@@ -4,55 +4,55 @@
 
 options={  --ALL OPTIONAL & MAY BE REMOVED.  TO REMOVE AN INTERNAL COMPONENT SET ITS alpha TO 0 (freqs volume grid feet shoe).
     key_bindings         ='F1',    --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER.  s=SCREENSHOT NOT SPECTRUM. f=FULLSCREEN NOT FREQS, o=OSD NOT OVERLAY, C=AUTOCROP NOT COMPLEX. v FOR VOLUME?  'F1 F2' FOR 2 KEYS.
-    -- toggle_on_double_mute=.5,      --SECONDS TIMEOUT FOR DOUBLE-mute TOGGLE (m&m DOUBLE-TAP). INTERRUPTS PLAYBACK, SO REMOVE FOR OTHER GRAPHS TO INSTA-TOGGLE.  DOESN'T TOGGLE dynaudnorm!
-    -- osd_on_toggle     =     5 , --SECONDS. UNCOMMENT TO INSPECT VERSIONS, FILTERGRAPHS & PARAMETERS. 0 CLEARS THE osd INSTEAD. DISPLAYS mpv-version ffmpeg-version libass-version lavfi-complex af vf video-out-params
-    -- vflip_only        =   true, --UNCOMMENT TO REMOVE TOP HALF. TOGGLE THESE 2 LINES FOR NULL OVERRIDE (NO SPECTRAL overlay).
-    vflip_scale          =    .5 , --REMOVE FOR NO BOTTOM HALF. width=1.  SOME FUTURE VERSION MIGHT SUPPORT BL & BR CHANNELS FOR BOTTOM.
-    width                =     1 , --DEFAULT= 1  OVERALL PRIMARY width RATIO (scale). <1 CAUSES zoompan TO CLIP.  A FUTURE VERSION COULD FIX THIS.
-    fps                  =    30 , --DEFAULT=30  FRAMES PER SECOND FOR [vo].  30fps (+automask) USES ~15% MORE CPU THAN 25fps. SCRIPT ALSO LIMITS scale. 
-    period               ='20/30', --DEFAULT= 1 SECOND. USE fps RATIO. 20/30=60/90 → 90BPM (BEATS PER MINUTE). SET TO 0 FOR STATIONARY (~20% OFF CENTER DUE TO zoompan EFFECT). UNLIKE A MASK, MOTION MAY NOT BE PERIODIC - SPECTRUM FREE TO RANDOMLY FLOAT AROUND.  (IF 0, "n/%s"→"0" GSUBS OCCUR, ETC). 
-    rotate               =                 'PI/16*sin(2*PI*n/%s)*mod(floor(n/%s)\\,2)',        --%s=(period*volume_fps)  DEFAULT=0 RADIANS CLOCKWISE. MAY DEPEND ON TIME t & FRAME # n. PI/16=.2RADS=11°   MAY CLIP @LARGE angle. mod ACTS AS ON/OFF SWITCH. THIS EXAMPLE MOVES DOWN→UP→RIGHT→LEFT BY MODDING. 
-    zoompan              =        '1+.2*(1-cos(2*PI*(on/%s-.2)))*mod(floor(on/%s-.2)\\,2):0:0',--%s=(period*volume_fps)  zoom:x:y  DEFAULT=1:0:0  on=OUTPUT FRAME NUMBER (OUTPUT MUST SYNC).  BEFORE SCOOTING RIGHT, IT MAY rotate (20% OFFSET).  20% zoom GETS MAGNIFIED BY autocrop, DEPENDING ON BLACK BARS. 
-    overlay              ='(W-w)/2:H*(.75+.05*(1-cos(2*PI*n/%s))*mod(floor(n/%s)+1\\,2))-h/2', --%s=(period*fps)              x:y  DEFAULT=(W-w)/2:(H-h)/2  STREAM fps FOR overlay.   TIME-DEPENDENCE SHOULD MATCH OTHER SCRIPT/S, LIKE automask. A BIG-SCREEN TV HELPS WITH POSITIONING. CONCEIVABLY A GAMEPAD COULD POSITION A complex. POSITIONING ON TOP OF BLACK BARS MAY DRAW ATTENTION TO THEM (PPL COULD END UP SPENDING HRS STARING AT THE BLACK BARS ABOVE OR BELOW THE FILM).
-    -- filterchain       ='shuffleplanes=1:0:2:3,lutrgb=b=0', --DEFAULT='null'  UNCOMMENT FOR RED & GREEN, INSTEAD OF RED & BLUE COMPLEX (DEFAULT). PREFERRED format=gbrap ORDERED LIKE GreatBRitAin Planar. COLOR-CHAIN shuffleplanes & lutrgb MUCH MORE EFFICIENT THAN colorchannelmixer (+10% CPU), BUT CAUSES WARNINGS IN MPV-LOG DUE TO LACK OF ACCELERATED format CONVERSION.  BLUE, DARKBLUE & BLACK ARE COMPATIBLE WITH cropdetect (autocrop).  BLUE & WHITE STRIPES IS A DIFFERENT DESIGN, LIKE GREEK FLAG (NO RED).
-    dual_filterchain     ='lutyuv=a=val/.7', --DEFAULT='null'  APPLIES AFTER PRIMARY filterchain. a=alpha=OPAQUENESS  lutyuv IS OPTIMAL (lutrgb TRIGGERS WARNINGS, BUT STILL FAST).
-    -- dual_filterchain  ='shuffleplanes=1:0:2:3,lutrgb=b=0:a=val/.7',  --UNCOMMENT FOR RED & GREEN DUAL. COLOR-CHAIN EFFICIENT BUT MPV-LOG WARNS LACK OF ACCELERATED format CONVERSION.  USE colorchannelmixer FOR ANY MIX (SHUFFLING & DILUTING PAINT BUCKETS IS MORE EFFICIENT THAN ARBITRARY MIXING).
-    dual_scale           ={.75,.75},   --RATIOS {WIDTH,HEIGHT}. REMOVE FOR NO DUAL.  FULL BI-QUAD CONCEPT COMES FROM HOW RAW MP3 WORKS. IN A SYMPHONY A LITTLE DUAL COULD FLOAT TO VARIOUS INSTRUMENTS, VIOLINS ETC.  THIS DUAL USES THE SAME aid. IDEAL DESIGN MIGHT NEED A BOSS MIC/aid (SPECIAL DUAL).  IT'S ALSO POSSIBLE TO ADD A 3RD LITTLE COMPLEX ON TOP, LIKE PYRAMID. A CIRCULAR REMAP COULD BE LIKE A THIRD-EYE. 
-    dual_overlay         ='(W-w)/2:(H-h)/2',  --DEFAULT='(W-w)/2:(H-h)/2' (CENTERED). MAY DEPEND ON n & t, BUT CLEARER IF STATIONARY. IT CAN FLY AROUND.  %s=(period*fps)
-    dynaudnorm           ='500:3:1:1', --DEFAULT='500:3:1:1'  DYNAMIC AUDIO NORMALIZER FOR OUTPUT AUDIO [ao].  NULL-OP = (MINIMUM g):p=1:m=1  BUFFERS THE AUDIO ITSELF, WHICH IS PROGRAMATICALLY SUPERIOR. FORMAT float. SOLVES WARNING IN MPV-LOG.  A DIFFERENT FILTER COULD JUST AS WELL BUFFER [ao]. THIS NULL-OP IS DETERMINISTIC FOR 10 HOURS (AUDIO UNCHANGED).
-    gb                   =  .3, --DEFAULT=.3  RANGE [-2,2]  GREEN IN BLUE RATIO. PROPER COMPLEMENT OF RED REQUIRES SOME GREEN. BLUE+0*GREEN IS TOO DARK. COLOR-BLINDNESS MIGHT BE AN ISSUE. MOST EFFICIENT CODE SHOULD START WITH CORRECT BLUE/RED SHADES, WITHOUT EXTRA colorchannelmixer.
-    freqs_lead_t         =  .3, --DEFAULT=.1 SECONDS. LEAD TIME FOR SPECTRUM. SUBJECTIVE TRIAL & ERROR (.1 .2 .3 ?). BACKDATES audio TIMESTAMPS. showfreqs HAS AT LEAST 1 FRAME LAG. .1s IN REALITY BUT THAT'S WRONG BECAUSE IT'S SUBJECTIVE. A CONDUCTOR'S BATON MAY MOVE AN EXTRA .1s BEFORE THE ORCHESTRA, OR IT'S LIKE HE'S TRYING TO KEEP UP.
-    freqs_fps            =25/2, --DEFAULT=25/2  DOUBLING MAY CAUSE FILM TO STUTTER, IF TOO MANY GRAPHS ARE ACTIVE. freqs_clip_h ALSO IMPROVES PERFORMANCE.  
-    freqs_fps_albumart   =25  , --DEFAULT= 25   FOR RAW MP3 ALSO. CAN EASILY DOUBLE fps.
-    freqs_win_size       = 512, --DEFAULT=512  INTEGER RANGE [128,2048]. APPROX # OF DATA POINTS. THINNER CURVE WITH SMALLER #. NEEDS AT LEAST 256 FOR PROPER CALIBRATION. TOO MANY DATA POINTS LOOK BAD. TOO MANY PIANO KEYS?
-    freqs_averaging      =   2, --DEFAULT=  2  INTEGER, MIN 1. STEADIES SPECTRUM. SLOWS RESPONSE TO AUDIO. TRY 3 IF MORE freqs_fps. 
-    freqs_magnification  = 1.2, --DEFAULT=1.1  CURVE HEIGHT SCALE FACTOR. REDUCES CPU CONSUMPTION, BUT THE LIPS LOSE TRACTION.    L & R CHANNELS ARE LIKE A DUAL ALIEN MOUTH (LIKE HOW HUMANS ARE BIPEDAL). 
-    freqs_clip_h         =  .3, --DEFAULT= .3  MINIMUM=grid_height (CAN'T CLIP LOWER THAN grid, DUE TO INVERSE CANVAS pad). REDUCES CPU USAGE BY CLIPPING CURVE - CROPS THE TOP OFF SHARP SIGNAL. THE NEED FOR CLIPPING, LOW fps & size PROVE THE CODE MAY BE SLOW.
-    freqs_alpha          =  .7, --DEFAULT= .7  RANGE [-2,2]  OPAQUENESS OF SPECTRAL DATA CURVE.    DUAL-complex MAY LOOK BETTER TRANSPARENT.
-    freqs_mode           =  'line', --DEFAULT='line'.  line OR bar OR dot. FOR bar SET freqs_alpha=.25. GRAPH OPTIMIZED FOR line.
-    freqs_win_func       ='parzen', --DEFAULT='parzen'  poisson cauchy flattop MAYBE OK, BUT THE OTHERS ARE UGLY: rect bartlett hanning hamming blackman welch bharris bnuttal bhann sine nuttall lanczos gauss tukey dolph        PARZEN WAS AN AMERICAN STATISTICIAN.
+    -- toggle_on_double_mute=.5,   --SECONDS TIMEOUT FOR DOUBLE-mute TOGGLE (m&m DOUBLE-TAP). INTERRUPTS PLAYBACK, SO REMOVE FOR OTHER GRAPHS TO INSTA-TOGGLE.  DOESN'T TOGGLE dynaudnorm!
+    -- osd_on_toggle   =     5 , --SECONDS. UNCOMMENT TO INSPECT VERSIONS, FILTERGRAPHS & PARAMETERS. 0 CLEARS THE osd INSTEAD. DISPLAYS mpv-version ffmpeg-version libass-version lavfi-complex af vf video-out-params
+    -- vflip_only      =   true, --UNCOMMENT TO REMOVE TOP HALF. TOGGLE THESE 2 LINES FOR NULL OVERRIDE (NO SPECTRAL overlay).
+    vflip_scale        =    .5 , --REMOVE FOR NO BOTTOM HALF. width=1.  SOME FUTURE VERSION MIGHT SUPPORT BL & BR CHANNELS FOR BOTTOM.
+    width              =     1 , --DEFAULT= 1  OVERALL PRIMARY width RATIO (scale). <1 CAUSES zoompan TO CLIP.  A FUTURE VERSION COULD FIX THIS.
+    fps                =    30 , --DEFAULT=30  FRAMES PER SECOND FOR [vo].  30fps (+automask) USES ~15% MORE CPU THAN 25fps. SCRIPT ALSO LIMITS scale. 
+    period             ='20/30', --DEFAULT= 1 SECOND. USE fps RATIO. 20/30=60/90 → 90BPM (BEATS PER MINUTE). SET TO 0 FOR STATIONARY (~20% OFF CENTER DUE TO zoompan EFFECT). UNLIKE A MASK, MOTION MAY NOT BE PERIODIC - SPECTRUM FREE TO RANDOMLY FLOAT AROUND.  (IF 0, "n/%s"→"0" GSUBS OCCUR, ETC). 
+    rotate             =                 'PI/16*sin(2*PI*n/%s)*mod(floor(n/%s)\\,2)',        --%s=(period*volume_fps)  DEFAULT=0 RADIANS CLOCKWISE. MAY DEPEND ON TIME t & FRAME # n. PI/16=.2RADS=11°   MAY CLIP @LARGE angle. mod ACTS AS ON/OFF SWITCH. THIS EXAMPLE MOVES DOWN→UP→RIGHT→LEFT BY MODDING. 
+    zoompan            =        '1+.2*(1-cos(2*PI*(on/%s-.2)))*mod(floor(on/%s-.2)\\,2):0:0',--%s=(period*volume_fps)  zoom:x:y  DEFAULT=1:0:0  on=OUTPUT FRAME NUMBER (OUTPUT MUST SYNC).  BEFORE SCOOTING RIGHT, IT MAY rotate (20% OFFSET).  20% zoom GETS MAGNIFIED BY autocrop, DEPENDING ON BLACK BARS. 
+    overlay            ='(W-w)/2:H*(.75+.05*(1-cos(2*PI*n/%s))*mod(floor(n/%s)+1\\,2))-h/2', --%s=(period*fps)              x:y  DEFAULT=(W-w)/2:(H-h)/2  STREAM fps FOR overlay.   TIME-DEPENDENCE SHOULD MATCH OTHER SCRIPT/S, LIKE automask. A BIG-SCREEN TV HELPS WITH POSITIONING. CONCEIVABLY A GAMEPAD COULD POSITION A complex. POSITIONING ON TOP OF BLACK BARS MAY DRAW ATTENTION TO THEM (PPL COULD END UP SPENDING HRS STARING AT THE BLACK BARS ABOVE OR BELOW THE FILM).
+    -- filterchain     ='shuffleplanes=1:0:2:3,lutrgb=b=0', --DEFAULT='null'  UNCOMMENT FOR RED & GREEN, INSTEAD OF RED & BLUE COMPLEX (DEFAULT). PREFERRED format=gbrap ORDERED LIKE GreatBRitAin Planar. COLOR-CHAIN shuffleplanes & lutrgb MUCH MORE EFFICIENT THAN colorchannelmixer (+10% CPU), BUT CAUSES WARNINGS IN MPV-LOG DUE TO LACK OF ACCELERATED format CONVERSION.  BLUE, DARKBLUE & BLACK ARE COMPATIBLE WITH cropdetect (autocrop).  BLUE & WHITE STRIPES IS A DIFFERENT DESIGN, LIKE GREEK FLAG (NO RED).
+    dual_filterchain   ='lutyuv=a=val/.7', --DEFAULT='null'  APPLIES AFTER PRIMARY filterchain. a=alpha=OPAQUENESS  lutyuv IS OPTIMAL (lutrgb TRIGGERS WARNINGS, BUT STILL FAST).
+    -- dual_filterchain='shuffleplanes=1:0:2:3,lutrgb=b=0:a=val/.7',  --UNCOMMENT FOR RED & GREEN DUAL. COLOR-CHAIN EFFICIENT BUT MPV-LOG WARNS LACK OF ACCELERATED format CONVERSION.  USE colorchannelmixer FOR ANY MIX (SHUFFLING & DILUTING PAINT BUCKETS IS MORE EFFICIENT THAN ARBITRARY MIXING).
+    dual_scale         ={.75,.75},         --RATIOS {WIDTH,HEIGHT}. REMOVE FOR NO DUAL.  FULL BI-QUAD CONCEPT COMES FROM HOW RAW MP3 WORKS. IN A SYMPHONY A LITTLE DUAL COULD FLOAT TO VARIOUS INSTRUMENTS, VIOLINS ETC.  THIS DUAL USES THE SAME aid. IDEAL DESIGN MIGHT NEED A BOSS MIC/aid (SPECIAL DUAL).  IT'S ALSO POSSIBLE TO ADD A 3RD LITTLE COMPLEX ON TOP, LIKE PYRAMID. A CIRCULAR REMAP COULD BE LIKE A THIRD-EYE. 
+    dual_overlay       ='(W-w)/2:(H-h)/2', --DEFAULT='(W-w)/2:(H-h)/2' (CENTERED). MAY DEPEND ON n & t, BUT CLEARER IF STATIONARY. IT CAN FLY AROUND.  %s=(period*fps)
+    dynaudnorm         ='500:3:1:1',       --DEFAULT='500:3:1:1'  DYNAMIC AUDIO NORMALIZER FOR OUTPUT AUDIO [ao].  NULL-OP = 500ms:(MINIMUM g):p=1:m=1  BUFFERS THE AUDIO ITSELF, WHICH IS PROGRAMATICALLY SUPERIOR. FORMAT float. SOLVES WARNING IN MPV-LOG.  A DIFFERENT FILTER COULD JUST AS WELL BUFFER [ao]. THIS NULL-OP IS DETERMINISTIC FOR 10 HOURS (AUDIO UNCHANGED).
+    gb                 =  .3, --DEFAULT=.3  RANGE [-2,2]  GREEN IN BLUE RATIO. PROPER COMPLEMENT OF RED REQUIRES SOME GREEN. BLUE+0*GREEN IS TOO DARK. COLOR-BLINDNESS MIGHT BE AN ISSUE. MOST EFFICIENT CODE SHOULD START WITH CORRECT BLUE/RED SHADES, WITHOUT EXTRA colorchannelmixer.
+    freqs_lead_t       =  .3, --DEFAULT=.1 SECONDS. LEAD TIME FOR SPECTRUM. SUBJECTIVE TRIAL & ERROR (.1 .2 .3 ?). BACKDATES audio TIMESTAMPS. showfreqs HAS AT LEAST 1 FRAME LAG. .1s IN REALITY BUT THAT'S WRONG BECAUSE IT'S SUBJECTIVE. A CONDUCTOR'S BATON MAY MOVE AN EXTRA .1s BEFORE THE ORCHESTRA, OR IT'S LIKE HE'S TRYING TO KEEP UP.
+    freqs_fps          =25/2, --DEFAULT=25/2  DOUBLING MAY CAUSE FILM TO STUTTER, IF TOO MANY GRAPHS ARE ACTIVE. freqs_clip_h ALSO IMPROVES PERFORMANCE.  
+    freqs_fps_albumart =25  , --DEFAULT= 25   FOR RAW MP3 ALSO. CAN EASILY DOUBLE fps.
+    freqs_win_size     = 512, --DEFAULT=512  INTEGER RANGE [128,2048]. APPROX # OF DATA POINTS. THINNER CURVE WITH SMALLER #. NEEDS AT LEAST 256 FOR PROPER CALIBRATION. TOO MANY DATA POINTS LOOK BAD. TOO MANY PIANO KEYS?
+    freqs_averaging    =   2, --DEFAULT=  2  INTEGER, MIN 1. STEADIES SPECTRUM. SLOWS RESPONSE TO AUDIO. TRY 3 IF MORE freqs_fps. 
+    freqs_magnification= 1.2, --DEFAULT=1.1  CURVE HEIGHT SCALE FACTOR. REDUCES CPU CONSUMPTION, BUT THE LIPS LOSE TRACTION.    L & R CHANNELS ARE LIKE A DUAL ALIEN MOUTH (LIKE HOW HUMANS ARE BIPEDAL). 
+    freqs_clip_h       =  .3, --DEFAULT= .3  MINIMUM=grid_height (CAN'T CLIP LOWER THAN grid, DUE TO INVERSE CANVAS pad). REDUCES CPU USAGE BY CLIPPING CURVE - CROPS THE TOP OFF SHARP SIGNAL. THE NEED FOR CLIPPING, LOW fps & size PROVE THE CODE MAY BE SLOW.
+    freqs_alpha        =  .7, --DEFAULT= .7  RANGE [-2,2]  OPAQUENESS OF SPECTRAL DATA CURVE.    DUAL-complex MAY LOOK BETTER TRANSPARENT.
+    freqs_mode         =  'line', --DEFAULT='line'.  line OR bar OR dot. FOR bar SET freqs_alpha=.25. GRAPH OPTIMIZED FOR line.
+    freqs_win_func     ='parzen', --DEFAULT='parzen'  poisson cauchy flattop MAYBE OK, BUT THE OTHERS ARE UGLY: rect bartlett hanning hamming blackman welch bharris bnuttal bhann sine nuttall lanczos gauss tukey dolph        PARZEN WAS AN AMERICAN STATISTICIAN.
     -- freqs_interpolation= true, --UNCOMMENT TO INTERPOLATE FROM freqs_fps→volume_fps. ADDS ~7% CPU USAGE. HOWEVER REDUCE fps FROM 30→25 TO SUBTRACT 15% CPU USAGE.   CAN REDUCE freqs_fps_albumart, TO INTERPOLATE FROM IT.  NICE LIGHTNING EFFECT BUT LOOKS JITTERY & FILM MAY STUTTER @autocrop.
-    freqs_dynaudnorm     ='500:5:1:100:0:1:0:1', --DEFAULT=500='500:31:.95:10:0:1:0:0'  IDEAL OPTIONS DEPEND ON WHICH PASS OUT OF 3, & FINAL AUDIO IS DIFFERENT (aspeed.lua). THIS PASS APPLIES AFTER RESAMPLING TO 2.1kHz, & freqs_lead_t.
-    volume_dynaudnorm    ='500:5:1:100:0:1:0:1', --DEFAULT=500='f:g:p:m:r:n:c:b'  APPLIES BEFORE freqs_dynaudnorm. SEE GRAPH COMMENTARY FOR DETAILS.  
-    -- volume_dm         =  1,  --DEFAULT=  0  UNCOMMENT FOR DISPLAYMAX LINES (RED). 0 OR 1.
-    volume_highpass      =100,  --DEFAULT=100 Hz  APPLIES ALSO TO freqs. (volume GOES BEFORE freqs, ACTUALLY).  DAMPENS SUB-BASS & DC, NEAR volume BAR. 100 Hz FOR BASS HEAVY TRACKS.  firequalizer IS MORE GENERAL & COULD MULTIPLY BY FREQUENCY. A CHIRP MAY BECOME DEAFENING @DOUBLE FREQUENCY.
-    volume_fps           =25 ,  --DEFAULT= 25  PRIMARY ANIMATION fps. STREAM MAYBE 60fps BUT NOT THE EXTRA VISUALS.
-    volume_fade          =  0,  --DEFAULT=  0  RANGE [0,1]  SLOWS DOWN volume BARS.
-    volume_alpha         =.25,  --DEFAULT= .5  RANGE [0,2]  0 REMOVES BARS (feet REMAIN). OPAQUENESS OF volume BARS.    DUAL volume TAKES CENTER STAGE.
-    volume_width         =.04,  --DEFAULT=.04  RANGE (0,1]  RELATIVE TO width.
-    volume_height        =.15,  --DEFAULT=.15  RANGE (0,1]  RELATIVE TO display, BEFORE STACKING feet. autocrop MAY MAGNIFY ITS SIZE.
-    grid_alpha           =  1,  --DEFAULT=  1  RANGE [0,2]  RELATIVE TO volume_alpha. 0 REMOVES grid & feet. alpha MULTIPLIER.
-    grid_thickness       =1/8,  --DEFAULT= .1  RANGE (0,1]  RELATIVE TO grid SPACING. APPROX AS THICK AS CURVE.
-    grid_height          = .1,  --DEFAULT= .1  RANGE (0,1]  RELATIVE TO display, BEFORE STACKING feet.  grid TICKS ARE LIKE volume BATONS, OR TEETH BRACES FOR THE LIPS.
-    feet_height          =.05,  --DEFAULT=.05  RANGE [.01,1]  RELATIVE TO grid (BARS). 
-    feet_activation      = .5,  --DEFAULT= .5  RANGE [0,1)  RELATIVE TO volume, FROM THE BOTTOM. feet BLINK ON/OFF WHEN volume PASSES THIS THRESHOLD.
-    feet_lutrgb          ='128:0:255:val*4', --DEFAULT='128:0:255:val*2'  val*0 TO REMOVE feet. COLOR OF CENTRAL feet (WHICH CAN HAVE ADDED GREEN).  ALSO NEED grid_feet_lutrgb OPTION.
-    shoe_color           ='BLACK@.4', --DEFAULT='BLACK'  @0 TO REMOVE.  THERE COULD ALSO BE o.grid_colormix (BLUE/RED OR RED/BLUE BARS?) RED OUTER BARS SET OFF cropdetect.  
-    -- sine_mix          ={{100,.5},{'200:1',1},{300,.5},{'400:1',1},{500,.5},{'600:1',1},{700,.5},{'800:1',1},{900,.5},{'1000:1',1}}, --{{frequency(Hz):beep_factor,volume},}  beep_factor OPTIONAL.  sine WAVES FOR CALIBRATION MIX DIRECTLY INTO [ao]. THIS EXAMPLE BEEPS DOUBLE ON EVEN. BEEP ACTIVATES feet, & MAY HELP SET freqs_lead_t.  THE 900Hz PEAK LINES UP, BUT THE SURROUNDING CURVE SPREADS MORE ABOVE 900Hz (MYSTERY).
-    -- scale             ={w=1680,h=1050}, --DEFAULT=display OR [vo]. EVEN NUMBERS ONLY FOR MPV v0.38.0.
-    options              =' '  --' opt1 val1  opt2=val2  --opt3=val3 '... FREE FORM.        
+    freqs_dynaudnorm   ='500:5:1:100:0:1:0:1', --DEFAULT=500='500:31:.95:10:0:1:0:0'  IDEAL OPTIONS DEPEND ON WHICH PASS OUT OF 3, & FINAL AUDIO IS DIFFERENT (aspeed.lua). THIS PASS APPLIES AFTER RESAMPLING TO 2.1kHz, & freqs_lead_t.
+    volume_dynaudnorm  ='500:5:1:100:0:1:0:1', --DEFAULT=500='f:g:p:m:r:n:c:b'  APPLIES BEFORE freqs_dynaudnorm. SEE GRAPH COMMENTARY FOR DETAILS.  
+    -- volume_dm       =  1,  --DEFAULT=  0  {0,1}  UNCOMMENT FOR DISPLAYMAX LINES.
+    volume_highpass    =200,  --DEFAULT=100 Hz  APPLIES ALSO TO freqs.  DAMPENS SUB-BASS & DC, NEAR volume BAR. 100 Hz FOR BASS HEAVY TRACKS, BUT 200 Hz MAYBE BETTER BALANCE?  firequalizer IS MORE GENERAL & COULD MULTIPLY BY FREQUENCY. A CHIRP MAY BECOME DEAFENING @DOUBLE FREQUENCY.
+    volume_fps         =25 ,  --DEFAULT= 25  PRIMARY ANIMATION fps. STREAM MAYBE 60fps BUT NOT THE EXTRA VISUALS.
+    volume_fade        =  0,  --DEFAULT=  0  RANGE [0,1]  SLOWS DOWN volume BARS.
+    volume_alpha       =.25,  --DEFAULT= .5  RANGE [0,2]  0 REMOVES BARS (feet REMAIN). OPAQUENESS OF volume BARS.    DUAL volume TAKES CENTER STAGE.
+    volume_width       =.04,  --DEFAULT=.04  RANGE (0,1]  RELATIVE TO width.
+    volume_height      =.15,  --DEFAULT=.15  RANGE (0,1]  RELATIVE TO display, BEFORE STACKING feet. autocrop MAY MAGNIFY ITS SIZE.
+    grid_alpha         =  1,  --DEFAULT=  1  RANGE [0,2]  RELATIVE TO volume_alpha. 0 REMOVES grid & feet. alpha MULTIPLIER.
+    grid_thickness     =1/8,  --DEFAULT= .1  RANGE (0,1]  RELATIVE TO grid SPACING. APPROX AS THICK AS CURVE.
+    grid_height        = .1,  --DEFAULT= .1  RANGE (0,1]  RELATIVE TO display, BEFORE STACKING feet.  grid TICKS ARE LIKE volume BATONS, OR TEETH BRACES FOR THE LIPS.
+    feet_height        =.05,  --DEFAULT=.05  RANGE [.01,1]  RELATIVE TO grid (BARS). 
+    feet_activation    = .5,  --DEFAULT= .5  RANGE [0,1)  RELATIVE TO volume, FROM THE BOTTOM. feet BLINK ON/OFF WHEN volume PASSES THIS THRESHOLD.
+    feet_lutrgb        ='128:0:255:val*4', --DEFAULT='128:0:255:val*2'  val*0 TO REMOVE feet. COLOR OF CENTRAL feet (WHICH CAN HAVE ADDED GREEN).  ALSO NEED grid_feet_lutrgb OPTION.
+    shoe_color         ='BLACK@.4', --DEFAULT='BLACK'  @0 TO REMOVE.  THERE COULD ALSO BE o.grid_colormix (BLUE/RED OR RED/BLUE BARS?) RED OUTER BARS SET OFF cropdetect.  
+    -- sine_mix        ={{100,.5},{'200:1',1},{300,.5},{'400:1',1},{500,.5},{'600:1',1},{700,.5},{'800:1',1},{900,.5},{'1000:1',1}}, --{{frequency(Hz):beep_factor,volume},}  beep_factor OPTIONAL.  sine WAVES FOR CALIBRATION MIX DIRECTLY INTO [ao]. THIS EXAMPLE BEEPS DOUBLE ON EVEN. BEEP ACTIVATES feet, & MAY HELP SET freqs_lead_t.  THE 900Hz PEAK LINES UP, BUT THE SURROUNDING CURVE SPREADS MORE ABOVE 900Hz (MYSTERY).
+    -- scale           ={w=1680,h=1050}, --DEFAULT=display OR [vo]. EVEN NUMBERS ONLY FOR MPV v0.38.0.
+    options            =' '  --' opt1 val1  opt2=val2  --opt3=val3 '... FREE FORM.        
         ..' vd-lavc-threads=0'    --VIDEO DECODER - LIBRARY AUDIO VIDEO. 0=AUTO OVERRIDES SMPLAYER, OR ELSE MAY FAIL INSPECTION.
-        ..'   osd-font-size=16 geometry=50% force-window=yes'  --DEFAULT size 55p MAY NOT FIT osd_on_toggle. geometry ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW. force-window KEEPS MPV FROM VANISHING DURING TRACK CHANGES.
+        ..'   osd-font-size=16  geometry=50%  force-window=yes'  --DEFAULT size 55p MAY NOT FIT osd_on_toggle. geometry ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.  force-window PREVENTS MPV FROM VANISHING DURING TRACK CHANGES.
     ,
 }
 o         =options  --ABBREV.
@@ -125,55 +125,54 @@ function round(N,D)  --ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1). N
     return N and math.floor(.5+N/D)*D  --LUA DOESN'T SUPPORT math.round(N)=math.floor(.5+N)
 end
 
-function file_loaded()  --ALSO on_av_id & on_toggle{ON}.    THIS COULD BE REPLACED BY on_av_params. BUT THE .1s DELAY TO DETECT alpha CAUSES RANDOM STUTTER @LOAD.
-    a       =mp.get_property_native('current-tracks/audio') or {}
-    v       =mp.get_property_native('current-tracks/video') or {}  --mp.get_property_native TAKES ~13 MICROSECONDS, BUT mp.get_property_number TAKES ONLY ~5us. TABLES CONTAIN MANY NUMBERS SO ARE MORE EFFICIENT.
-    v_params=mp.get_property_native('video-params'        ) or {}
-    if time_pos then mp.command(('no-osd seek %s absolute exact'):format(time_pos)) end  --RELOAD FROM on_av_id.  seek IS MORE RIGOROUS THAN set_property_number('time-pos',time_pos). BUT IT HAS TO WAIT FOR THE PROPER TRIGGER.
-    time_pos=nil
-    W       =o.scale.w or o.scale[1] or mp.get_property_number('display-width' ) or v_params.w or v['demux-w'] or 1920  --(scale OVERRIDE) OR (display) OR ([vo] DIMENSIONS) OR (FALLBACK FOR RAW MP3 IN VIRTUALBOX)
-    H       =o.scale.h or o.scale[2] or mp.get_property_number('display-height') or v_params.h or v['demux-h'] or 1080
-    W,H     =round(W,2),round(H,2)  --MPV v0.37.0+ HAS ODD BUG.
-    format  =(not v.id or v_params.alpha) and 'yuva420p' or 'yuv420p'   --AKA pixelformat. lavfi-complex CAN'T DETECT WHETHER alpha EVER EXISTED WITHOUT A DELAYED TRIGGER.  overlay FORCES yuva420p, BUT SHOULD REMOVE alpha BECAUSE ITS EXISTENCE MAY TRIGGER BUGS IN VARIOUS SCRIPTS. 
-    OFF     =OFF or not (a.id and vstack)  --NO AUDIO NOR vstack → OFF.
+function file_loaded()  --ALSO on_aid_vid & on_toggle{ON}.    THIS COULD BE REPLACED BY on_av_params. BUT THE .1s DELAY TO DETECT alpha CAUSES RANDOM STUTTER @LOAD.
+    if time_pos then mp.command(('no-osd seek %s absolute exact'):format(time_pos)) end  --RELOAD FROM on_aid_vid.  seek IS MORE RIGOROUS THAN set_property_number('time-pos',time_pos). BUT IT HAS TO WAIT FOR THE PROPER TRIGGER.
+    time_pos = nil
+    a        = mp.get_property_native('current-tracks/audio') or {}
+    v        = mp.get_property_native('current-tracks/video') or {}  --mp.get_property_native TAKES ~13 MICROSECONDS, BUT mp.get_property_number TAKES ONLY ~5us. TABLES CONTAIN MANY NUMBERS SO ARE MORE EFFICIENT.
+    v_params = mp.get_property_native('video-params'        ) or {}
+    W        = o.scale.w or o.scale[1] or mp.get_property_number('display-width' ) or v_params.w or v['demux-w'] or 1920  --(scale OVERRIDE) OR (display) OR ([vo] DIMENSIONS) OR (FALLBACK FOR RAW MP3 IN VIRTUALBOX)
+    H        = o.scale.h or o.scale[2] or mp.get_property_number('display-height') or v_params.h or v['demux-h'] or 1080
+    W,H      = round(W,2),round(H,2)  --MPV v0.37.0+ HAS ODD BUG.
+    format   = (not v.id or v_params.alpha) and 'yuva420p' or 'yuv420p'   --AKA pixelformat. lavfi-complex CAN'T DETECT WHETHER alpha EVER EXISTED WITHOUT A DELAYED TRIGGER.  overlay FORCES yuva420p, BUT SHOULD REMOVE alpha BECAUSE ITS EXISTENCE MAY TRIGGER BUGS IN VARIOUS SCRIPTS. 
+    OFF      = OFF or not (a.id and vstack)  --NO AUDIO NOR vstack → OFF.
     if   OFF 
-    then OFF=false  --FORCE TOGGLE OFF, IF OFF.
-        on_toggle() --COVERS OFF CASES. EXAMPLE: image=OFF-albumart.  THE TOGGLE DOESN'T CLEAR lavfi-complex. IT ONLY CLEARS THE SPECTRUM & CPU USAGE. SOMETIMES A FILE-LOAD IS NOTHING BUT A TOGGLE OFF.
-        return end  --ON BELOW.
+    then OFF = false --FORCE TOGGLE OFF, IF OFF.
+        on_toggle()  --COVERS OFF CASES. EXAMPLE: image=OFF-albumart.  THE TOGGLE DOESN'T CLEAR lavfi-complex. IT ONLY CLEARS THE SPECTRUM & CPU USAGE. SOMETIMES A FILE-LOAD IS NOTHING BUT A TOGGLE OFF.
+        return end   --ON BELOW.
     
-    ----3 (ON) CASES:  1) PROPER-VIDEO  2) albumart  3) AUDIO-ONLY    complex=lavfi INSERT WHICH YIELDS [vo].  CAN CHECK MPV LOG TO VERIFY OUTPUT IN EVERY CASE. INSTEAD OF EVERY SCRIPT SETTING ITS OWN lavfi-complex, THEY MAY RELY ON THIS SCRIPT. EXAMPLE: automask albumart ANIMATION.
+    ----3 (ON) CASES:  1) PROPER-VIDEO  2) albumart  3) AUDIO-ONLY    CAN CHECK MPV LOG TO VERIFY OUTPUT IN EVERY CASE. INSTEAD OF EVERY SCRIPT SETTING ITS OWN lavfi-complex, THEY MAY RELY ON THIS SCRIPT. EXAMPLE: automask albumart ANIMATION.
     freqs_fps =(v.albumart or not v.id) and o.freqs_fps_albumart or o.freqs_fps  --freqs_fps MAY VARY on_vid. SOME ANIMATIONS (LIKE FRACTALS) CAN BE DONE SMOOTHER ON albumart.
     freqs_rate=mp.get_property('ffmpeg-version'):sub(0,2)=='4.' and '' or ':'..freqs_fps  --ffmpeg-v4 OPERATES showfreqs @25fps. LATER VERSIONS SUPPORT ANY fps. v4 IS USED BY .AppImage & .snap, & WORKS FINE.  CAN ALSO CHECK FOR v3?
     framerate =o.freqs_interpolation  and o.volume_fps or freqs_fps  --INTERPOLATION: freqs_fps→volume_fps
     duration  =round(mp.get_property_number('duration'),.01)-.2   --SUBTRACT .2s BY TRIAL & ERROR. TESTED MPV-v0.38 ON 10 HOURS albumart.  WITHOUT SUBTRACTION SMPLAYER HANGS NEAR end-file.
-    complex   =(v.id and not v.image) and ('[vid%d]fps=%s,scale=%d:%d'):format(v.id,o.fps,W,H)  --CASE 1: NORMAL video. 
+    complex   =(v.id and not v.image) and ('[vid%d]fps=%s,scale=%d:%d'):format(v.id,o.fps,W,H)  --CASE 1: NORMAL video.  complex=lavfi INSERT WHICH YIELDS [vo].  
                or v.id                and ('[vid%d]scale=%d:%d,loop=-1:1[vo],[vid]split[vid],crop=1:1:0:0:1:1,lutyuv=0:128:128:0[to],[to][vo]scale2ref,overlay,fps=%s'):format(v.id,W,H,o.fps)  --CASE 2 (albumart) IS THE MOST COMPLICATED. IDEAL CODE MAY DEPEND ON MPV VERSION. albumart IS LOOPED & COMBINED WITH TIME-STREAM [to].
                or ('[vid]split[vid],crop=1:1:0:0:1:1,lutyuv=0:128:128:0,scale=%d:%d,fps=%s'):format(W,H,o.fps)  --CASE 3  (RAW AUDIO)  USES [vid] INSTEAD OF [vid#] TO BUILD BLANK [vo] UNDERLAY. [vid] IS THE SPECTRUM. 
     complex   =o.dual_scale[2] and ('%s[vo],[vid]split[vid],%s,scale=%d:%d[dual],[vo][dual]overlay=%s'):format(complex,o.dual_filterchain,round(W*o.dual_scale[1],4),round(H*o.dual_scale[2]*o.freqs_clip_h*2,4),o.dual_overlay)  --[v2]=DUAL  LABELS [vid1][vid2] ETC NOT ALLOWED (RESERVED). 
                or                  complex  --NO dual.
-
     mp.set_property('lavfi-complex',(lavfi):format(a.id,freqs_rate,freqs_fps,framerate,complex,round(W*o.width,4),round(H*o.freqs_clip_h*2,4),duration,format))  --round FOR zoompan. FINAL CLIP HEIGHT FOR (PADDED) TOP & BOTTOM (*2). 
-    mp.set_property_number('sid',1)  --GENERALIZE THIS?  SUBTITLES ON BY DEFAULT.
 end 
 mp.register_event('file-loaded',file_loaded)
 mp.register_event('seek',function() if (mp.get_property_number('time-remaining') or .2)<.2 then mp.command('playlist-next force') end end)  --playlist-next FOR MPV PLAYLIST. force FOR SMPLAYER PLAYLIST. .2 FOR albumart duration CORRECTION.  BUGFIX FOR seek PASSED end-file. A CONVENIENT WAY TO SKIP NEXT TRACK IN SMPLAYER IS TO SKIP 10 MINUTES PASSED end-file.
 
-function on_toggle(mute)   --AN ALTERNATIVE (FULL) TOGGLE COULD stop keep-playlist & playlist-play-index current TO FULLY CLEAR lavfi-complex. BUT THAT SNAPS THE WINDOW & INTERRUPTS PLAYBACK, LIKE on_av_id. THIS TOGGLE JUST REMOVES THE SPECTRUM FROM THE lavfi-complex.
-    if not W then return --STILL LOADING.
+function on_toggle(mute)  --AN ALTERNATIVE (FULL) TOGGLE COULD stop keep-playlist & playlist-play-index current TO FULLY CLEAR lavfi-complex. BUT THAT SNAPS THE WINDOW & INTERRUPTS PLAYBACK, LIKE on_aid_vid. THIS TOGGLE JUST REMOVES THE SPECTRUM FROM THE lavfi-complex.
+    if not W then return  --STILL LOADING.
     elseif mute and not timer:is_enabled() then timer:resume() --START timer OR ELSE TOGGLE.  DOUBLE-MUTE MAY FAIL TO OBSERVE EITHER mute IF seeking. IT CANCELS ITSELF OUT IN SMPLAYER.
         return end
     
-    OFF,osd_properties = not OFF,{} --REMEMBER TOGGLE STATE & CAN INITIALIZE osd_properties.
-    if not OFF then file_loaded()   --TOGGLE ON. 
-    else complex=v.id and not v.image and   ('[vid%d]fps=%s,scale=%d:%d[vo]'):format(v.id,o.fps,W,H) --CASE 1: TOGGLE OFF MP4. LIMIT [vo], WITH NO SPECTRUM.
-                 or v.id  and  ('[vid%d]scale=%d:%d,loop=-1:1,fps=%s:%s[vo]'):format(v.id,W,H,o.fps,mp.get_property_number('time-pos'))  --CASE 2: image. MORE GENERAL THAN albumart. NO pixelformat TO PRESERVE TRANSPARENCY.  CAN USE ~25% CPU @FULLSCREEN.  NEED start_time FOR --start.  FFmpeg-v5 TAKES A STILL FRAME (DIFFERENT, BUT VALID).  UNFORTUNATELY SNAPS EMBEDDED MPV.
+    OFF,p = not OFF,{} --REMEMBER TOGGLE STATE & p IS PROPERTIES FOR osd_on_toggle.
+    if not OFF then file_loaded()  --TOGGLE ON. 
+    else complex=v.id and not v.image and   (',[vid%d]fps=%s,scale=%d:%d[vo]'):format(v.id,o.fps,W,H) --CASE 1: TOGGLE OFF MP4. LIMIT [vo], WITH NO SPECTRUM.
+                 or v.id  and  (',[vid%d]scale=%d:%d,loop=-1:1,fps=%s:%s[vo]'):format(v.id,W,H,o.fps,mp.get_property_number('time-pos'))  --CASE 2: image. MORE GENERAL THAN albumart. NO pixelformat TO PRESERVE TRANSPARENCY.  CAN USE ~25% CPU @FULLSCREEN.  NEED start_time FOR --start.  FFmpeg-v5 TAKES A STILL FRAME (DIFFERENT, BUT VALID).  UNFORTUNATELY SNAPS EMBEDDED MPV.
                  or ''  --CASE 3. RAW audio STATIC SPECTRUM.  CAN CHECK MPV LOG TO VERIFY OUTPUT IN EVERY CASE. 
-         complex=a.id and ('[aid%d]dynaudnorm=%s[ao],%s'):format(a.id,o.dynaudnorm,complex) or complex  --PREPEND NORMALIZED AUDIO. BUT CASES 1 & 2 MAY HAVE NO AUDIO (ALSO CRITICAL). CASE 3 IS NOTHING BUT AUDIO.
+         complex=a.id and ('[aid%d]dynaudnorm=%s[ao]%s'):format(a.id,o.dynaudnorm,complex)  --PREPEND NORMALIZED AUDIO. CASE 3 IS NOTHING BUT AUDIO.
+                 or complex:sub(2)  --REMOVE LEADING "," IF NO AUDIO (POSSIBLY CASES 1 & 2).  FFmpeg-v5 THROWS ERROR ON TRAILING ",".
          mp.set_property('lavfi-complex',complex) end
     if o.osd_on_toggle then for property in ('mpv-version ffmpeg-version libass-version lavfi-complex af vf video-out-params'):gmatch('[^ ]+')
-         do table.insert(osd_properties,mp.get_property_osd(property)) end
-         mp.osd_message( ('mpv-version: %s\nffmpeg-version: %s\nlibass-version: %s\nlavfi-complex: %s\n\nAudio filters: \n%s\n\nVideo filters: \n%s\n\nvideo-out-params: \n%s'):format(table.unpack(osd_properties))  --LISTS CAN HAVE MORE LINES.
-             , o.osd_on_toggle ) end 
+            do table.insert(p,mp.get_property_osd(property)) end
+            mp.osd_message(('mpv-version: %s\nffmpeg-version: %s\nlibass-version: %s\nlavfi-complex: %s\n\nAudio filters: \n%s\n\nVideo filters: \n%s\n\nvideo-out-params: \n%s')  --LISTS CAN HAVE MORE LINES.
+                    :format(p[1],p[2],p[3],p[4],p[5],p[6],p[7]),o.osd_on_toggle) end   --.flatpak LUA VERSION DOESN'T SUPPORT table.unpack(p).
 end
 for key in o.key_bindings:gmatch('[^ ]+') do mp.add_key_binding(key, 'toggle_complex_'..key, on_toggle) end --MAYBE SHOULD BE 'toggle_spectrum_' BECAUSE THIS TOGGLE ONLY TURNS OFF/ON THE SPECTRUM.
 mp.observe_property('mute','bool',on_toggle)
@@ -183,13 +182,13 @@ timer.oneshot=true
 timer:kill() 
 
 function end_file()
-    W=nil  --NILLIFIED FOR on_av_id & on_toggle.
-    mp.set_property('lavfi-complex','')  --UNLOCK aid & vid.  EITHER AT start-file OR end-file.
+    W=nil  --NILLIFIED FOR on_aid_vid & on_toggle.
+    mp.set_property('lavfi-complex','')  --UNLOCK aid & vid.
 end 
 mp.register_event('end-file',end_file)  
 
-function on_av_id(property,id)  --id=nil OR number.  ONLY GOOD FOR SWITCHING BTWN 1 & 2 (aid & vid). UNLOCKS lavfi-complex & RESTARTS @time-pos (LIKE A FULLY SLOW TOGGLE).  UNFORTUNATELY SNAPS EMBEDDED MPV (THE VIDEO DIMENSIONS CHANGE AS lavfi-complex UNLOCKS). AN ANTI-SNAP GRAPH IS MORE CODE.
-    if not W or id then return end --id IMPLIES 1←→2 SWITCH UNNECESSARY. ~id IMPLIES CONTRADICTION.
+function on_aid_vid(property,id)   --id=nil OR number.  ONLY GOOD FOR SWITCHING BTWN 1 & 2 (BOTH aid & vid). UNLOCKS lavfi-complex & RESTARTS @time-pos (LIKE A FULLY SLOW TOGGLE).  UNFORTUNATELY SNAPS EMBEDDED MPV (THE VIDEO DIMENSIONS CHANGE AS lavfi-complex UNLOCKS). AN ANTI-SNAP GRAPH IS MORE CODE.
+    if not W or id then return end --~W IMPLIES STILL LOADING.  id IMPLIES 1←→2 SWITCH UNNECESSARY. ~id IS CONTRADICTION.
     aid     =property=='aid' and (a.id==1 and 2 or 1)
     vid     =property=='vid' and (v.id==1 and 2 or 1)
     time_pos=mp.get_property_number('time-pos')  --seek @file_loaded.
@@ -200,8 +199,8 @@ function on_av_id(property,id)  --id=nil OR number.  ONLY GOOD FOR SWITCHING BTW
     if vid then mp.set_property_number('vid',vid) end
     mp.command('playlist-play-index current') --FLAGS NOT ALLOWED.  →file-loaded
 end 
-mp.observe_property('aid','number',on_av_id)  --UNTESTED
-mp.observe_property('vid','number',on_av_id)  --  TESTED
+mp.observe_property('vid','number',on_aid_vid)  --  TESTED
+mp.observe_property('aid','number',on_aid_vid)  --UNTESTED
 
 
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS (& 5 CASES), LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END. ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.

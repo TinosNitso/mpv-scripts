@@ -27,12 +27,14 @@ options={
     -- crop_no_vid        =true,  --crop ABSTRACT VISUALS TOO. BY DEFAULT NO CROPPING PURE lavfi-complex, EXCEPT FOR TIME limits.
     -- scale              ={w=1680,h=1050}, --DEFAULT=display OR [vo]. EVEN NUMBERS ONLY FOR MPV v0.38.0.  ABSOLUTE scale SIMPLIFIES TRUE aspect TOGGLE (ONLY WORKS @scale).
     options               =' '  --' opt1 val1  opt2=val2  --opt3=val3 '... FREE FORM.  main.lua HAS MORE options.
-        ..'  osd-font-size=16 geometry=50% image-display-duration=inf'  --DEFAULT size 55p MAY NOT FIT GRAPHS ON osd. geometry ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.  duration=inf FOR IMAGES.
+        ..'  osd-font-size=16 geometry=50% image-display-duration=inf'  --DEFAULT size 55p MAY NOT FIT GRAPHS ON osd.  geometry ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.  duration=inf FOR IMAGES.
     ,
     limits={
       --["media-title"]={time_pos,time_remaining,detect_limit,find}={SECONDS,SECONDS,number,boolean}(OR nil).  TIMES ARE BOTH LOWER BOUNDS IN SECONDS. detect_limit IS FINAL OVERRIDE.  SPACETIME CROPPING IS AN ALTERNATIVE TO SUB-CLIP EXTRACTS, WHICH CAN BE DELETED. STARTING & ENDING CREDITS ARE EASIER TO CROP THAN INTERMISSION. INTERMISSION SUB-CLIPS WOULD BE ANOTHER LEVEL OF AUTO-seek. 
-        ["Katyusha"]={4,4,find=false},  --find IMPLIES SUBSTRING SEARCH. NOT CASE SENSITIVE (＂：｜⧸⧹＂=":|/\").  find ASSUMED true UNLESS false. (nil MEANING true.)  AN EXTRA exact FLAG COULD BE CONFUSING BECAUSE ＂＂="" ETC. 
+        ["Katyusha"]={4,4,find=false},  --find IMPLIES SUBSTRING SEARCH. NOT CASE SENSITIVE (＂：⧸⧹｜＂=":/\|").  find ASSUMED true UNLESS false. (nil MEANING true.)  AN EXTRA exact FLAG COULD BE CONFUSING BECAUSE ＂＂="" ETC. 
         ["We are army of people - Red Army Choir"]={detect_limit=64},
+        [  "День Победы"]={4,13},                          --АБЧДЭФГХИЖКЛМНОП РСТУВ  ЙЗЕЁ ЫЮ Я Ц ШЩ ЬЪ
+        ["＂Den' Pobedy!＂ - Soviet Victory Day Song"]={7}, --ABČDEFGHIĴKLMNOP RSTUV  YZЕYoYYuYaTsŠŠčʹʺ
         ["Megadeth Sweating Bullets Official Music Video"]={0,5},
         ["Мы - армия народа ⧸ We are the army of the people (23 февраля 1919 - 2019)"]={13},
         ["＂Soldiers walked＂ - The Alexandrov Red Army Choir (1975)"]={0,27},
@@ -43,8 +45,6 @@ options={
         ["Warszawianka - 1970's Polish People's Army"]={0,2},
         ["Варшавянка ⧸ Warszawianka ⧸ Varshavianka (1905 - 1917)"]={0,6},
         ["Russian Patriotic Song： Farewell of Slavianka"]={12},
-        [  "День Победы"]={4,13},                           --АБЧДЭФГХИЖКЛМНОП РСТУВ  ЙЗЕЁ ЫЮ Я Ц ШЩ ЬЪ
-        ["＂Den' Pobedy!＂ - Soviet Victory Day Song"]={7},  --ABČDEFGHIĴKLMNOP RSTUV  YZЕYoYYuYaTsŠŠčʹʺ
         ["И вновь продолжается бой.Legendary Soviet Song.Z."]={0,6},
         ["＂If You'll be Lucky＂ - Soviet Naval Song - А Если Повезет (English Subtitles)"]={0,3},
         ["＂Polyushko Polye＂ - Soviet Patriotic Song"]={8,12},
@@ -84,20 +84,21 @@ function round(N,D)  --ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1). N
 end
 
 function file_loaded(event) --ALSO @alpha, @par & @vid.  THAT IS TRANSPARENCY, PIXEL ASPECT RATIO & TRACK-ID.  GUESS & CHECK ARE USED ON alpha & par BECAUSE file-loaded IS INSTANT TRIGGER. alpha=nil ASSUMED. MPV REQUIRES .1s TO DETECT ALL video-params. ALWAYS WAITING MAY CAUSE ANNOYING GLITCH.
-    insta_pause     =insta_pause or not pause  --PREVENTS EMBEDDED MPV FROM SNAPPING, & HELPS WITH IMAGES.  →nil@playback-restart.
+    insta_pause = insta_pause or not pause  --PREVENTS EMBEDDED MPV FROM SNAPPING, & HELPS WITH IMAGES.  →nil@playback-restart.
     mp.set_property_bool('pause',true)
-    v               =mp.get_property_native('current-tracks/video') or {}
-    W               =o.scale.w or o.scale[1] or mp.get_property_number('display-width' ) or v_params.w or v['demux-w']  --(scale OVERRIDE) OR (display) OR ([vo] DIMENSIONS)
-    H               =o.scale.h or o.scale[2] or mp.get_property_number('display-height') or v_params.h or v['demux-h']
-    W,H             =round(W,2),round(H,2)  --MPV v0.37.0+ HAS ODD BUG.
-    par             =v_params.par or v['demux-par'] or 1  --ACTS AS LOADED SWITCH. GUESS & CHECK (@video-params).
-    if W then aspect=OFF and (v['demux-w'] and v['demux-w']/v['demux-h'] or v_params.aspect) or W/H --SAME AS @apply_crop, IF NOT RAW AUDIO.
-        mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,pad=%d:%d:(ow-iw)/2:(oh-ih)/2:BLACK:frame,setsar=%s]')
-             :format(command_prefix,label,round(math.min( W,H*aspect)),round(math.min(W/aspect,H)),W,H,      par)) end  --THIS GRAPH GOES IN FIRST TO STOP EMBEDDED MPV SNAPPING.  IF OFF, PADS AN EXTRA PAIR OF BLACK BARS.   .5+ CONVERTS FLOOR TO ROUND.  
-
+    v           = mp.get_property_native('current-tracks/video') or {}
+    W           = o.scale.w or o.scale[1] or mp.get_property_number('display-width' ) or v_params.w or v['demux-w']  --(scale OVERRIDE) OR (display) OR ([vo] DIMENSIONS)
+    H           = o.scale.h or o.scale[2] or mp.get_property_number('display-height') or v_params.h or v['demux-h']
+    par         = v_params.par or v['demux-par'] or 1  --ACTS AS LOADED SWITCH. GUESS & CHECK (@video-params).
+    W,H,par     = round(W,2),round(H,2),round(par,.0001)  --MPV v0.37.0+ HAS ODD BUG.  par OFTEN REPEATING DECIMAL.
+    if W  --NOT RAW AUDIO.
+    then aspect = OFF and (v['demux-w'] and v['demux-w']/v['demux-h'] or v_params.aspect) or W/H  --SAME AS @apply_crop.
+        mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,pad=%d:%d:(ow-iw)/2:(oh-ih)/2:BLACK:frame,setsar=%s]')  --THIS GRAPH GOES IN FIRST TO STOP EMBEDDED MPV SNAPPING.  IF OFF, PADS AN EXTRA PAIR OF BLACK BARS. SEPARATE FROM MAIN GRAPH FOR BACKWARDS COMPATIBILITY WITH OLD MPV (AMBIGUOUS w & h COMMANDS).
+            :format( command_prefix,label,round(math.min( W,H*aspect)),round(math.min(W/aspect,H)),W,H,      par)) end  
+    
     
     if event then limits,media_title = {},mp.get_property('media-title'):lower()  --par & limits TO BE DETERMINED. par MEANS NOT PURE AUDIO (no-vid).
-        for title,params in pairs(o.limits) do title=(title):lower():gsub('＂','"'):gsub('：',':'):gsub('｜','|'):gsub('⧸','/'):gsub('⧹','\\')  --＂：｜⧸⧹＂=":|/\"  SOLVES THE CAPITAL COLON PROBLEM.
+        for title,params in pairs(o.limits) do title=(title):lower():gsub('＂','"'):gsub('：',':'):gsub('⧸','/'):gsub('⧹','\\'):gsub('｜','|')  --＂：｜⧸⧹＂=":|/\"  SOLVES THE CAPITAL COLON PROBLEM.
             if media_title==title or params.find~=false and (media_title):find(title,0,true)  -- 0,true = STARTING_INDEX,EXACT_MATCH  params ASSUMED TO BE table.  path/URL COULD ALSO BE SEARCHED.
             then limits={time_pos      =params.time_pos       or params[1],  
                          time_remaining=params.time_remaining or params[2],
@@ -119,11 +120,7 @@ function file_loaded(event) --ALSO @alpha, @par & @vid.  THAT IS TRANSPARENCY, P
     detector        =((v.image or v_params.alpha) and o.detector_image or o.detector):format(detect_limit,o.detect_round)  --alpha & JPEG USES bbox.
     
     mp.command(('%s vf pre @%s:lavfi=[%s,crop=iw:ih:0:0:1:1]')
-        :format( command_prefix,label,detector))  --SEPARATE FROM scale OR ELSE w & h COMMANDS CAUSE ERROR REPORTS IN MPV-LOG. NO INTERNAL LABELS. 
-    
-    -----(CURRENTLY TRYING TO DISPROVE SOME ALPHA BUG...)
-    -- mp.command(('%s vf pre @%s-crop:lavfi=[crop=iw:ih:0:0:1:1]'):format(command_prefix,label))  --SEPARATE FROM scale OR ELSE w & h COMMANDS CAUSE ERROR REPORTS IN MPV-LOG. NO INTERNAL LABELS. crop INSIDE A GRAPH MAY SUPPORT MORE MATH.
-    -- mp.command(('%s vf pre @%s:%s'):format(command_prefix,label,detector))  --SEPARATE FROM crop DUE TO alpha BUG. 
+        :format( command_prefix,label,detector))  
     
     ----lavfi     =[graph] [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTERGRAPHS.  %d,%s = DECIMAL_INTEGER,string. 
     ----cropdetect=limit:round:reset:skip  DEFAULT=24/255:16:0  reset & skip BOTH MEASURED IN FRAMES, round IN PIXELS. reset>0 COUNTS HOW MANY FRAMES PER COMPUTATION. skip INCOMPATIBLE WITH ffmpeg-v4. alpha TRIGGERS BAD PERFORMANCE BUG.
@@ -135,14 +132,18 @@ function file_loaded(event) --ALSO @alpha, @par & @vid.  THAT IS TRANSPARENCY, P
     
 
     if insta_pause then mp.set_property_bool('pause',false) end  --& AGAIN @playback-restart FOR WHEN MULTIPLE SCRIPTS SIMULTANEOUSLY insta_pause.
+    
 end
 mp.register_event('file-loaded',file_loaded)
 mp.observe_property('vid','number',function(_,vid) if vid and m.vid and m.vid~=vid then file_loaded() end end)  --RELOAD IF vid CHANGES. vid=nil IF LOCKED BY lavfi-complex. m.vid VERIFIES ALREADY LOADED.  AN MP3, MP2, OGG OR WAV MAY BE A COLLECTION OF JPEG IMAGES (MP3TAG) WITH DIFFERENT DIMENSIONS, WHICH NEED CROPPING (& HAVE RUNNING audio). 
 
 function playback_restart() --vf-command RESET, UNLESS is1frame (GEOMETRY PERMANENT). 
     if insta_pause then mp.set_property_bool('pause',false) end
-    insta_pause=nil
-    if is1frame==false then paused,m.time_pos,time_pos = pause,nil,mp.get_property_number('time-pos')  --is1frame=nil FOR RAW AUDIO. nil FORCES is_effective.  time-pos FOR apply_crop.
+    insta_pause                       = nil
+    if not target then _,error_string = mp.command(('%s vf-command %s x 0 crop'):format(command_prefix,label))  --NULL-OP TO ESTABLISH TARGETS.
+                       target         = error_string and '' or 'crop'  --OLD MPV OR NEW. MPV v0.37.0+ SUPPORTS TARGETED COMMANDS.
+                       target_scale   = error_string and '' or 'scale' end
+    if W and not is1frame then paused,m.time_pos,time_pos = pause,nil,mp.get_property_number('time-pos')  --m.time_pos=nil FORCES is_effective.  time-pos FOR apply_crop.
         detect_crop()  --IN CASE ~auto.
         apply_scale()  --FOR TOGGLE OFF WHILST seeking. NEEDS PADDING. SMPLAYER DOUBLE-MUTE MAY FAIL TO OBSERVE EITHER mute.
         if paused then apply_crop(m) end end  --paused REQUIRES FRAME-STEPS TO RE-ESTABLISH PADDING.
@@ -238,14 +239,14 @@ for _,timer in pairs(timers) do timer:kill() end  --SHOULD DELAY INITIAL DETECTI
 function apply_crop(meta)  --ALSO apply_scale (FOR PADDING BLACK BARS USING A SECOND GRAPH).  A crop CAN MAKE A WIDE-SCREEN PORTRAIT TALLER.
     m.time_pos,m.w,m.h,m.x,m.y = time_pos,meta.w,meta.h,meta.x,meta.y   --meta→m  MEMORY TRANSFER. 
     v     =mp.get_property_native('current-tracks/video') or {}
-    aspect=not OFF and W/H or v['demux-h'] and v['demux-w']/v['demux-h'] or v_params.aspect  --FULL-SCREEN(ON) OR OFF&(~image OR image).
+    aspect=OFF and (v['demux-w'] and v['demux-w']/v['demux-h'] or v_params.aspect) or W/H  --FULL-SCREEN(ON) OR OFF&(~image OR image).
     
     if is1frame then paused=pause
         mp.set_property_bool('pause',true) --GRAPH REPLACEMENT. INSTA-pause IMPROVES RELIABILITY DUE TO INTERFERENCE FROM OTHER SCRIPTS.  MAY ALSO CHECK IF paused NEAR end-file (NOT ENOUGH TIME FOR unpause_on_crop). 
         mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d,pad=%d:%d:(ow-iw)/2:(oh-ih)/2:BLACK:frame,setsar=%s]'):format(command_prefix,label,round(math.min(W,H*aspect)),round(math.min(W/aspect,H)),W,H,par))  
         mp.command(('%s vf pre @%s:lavfi=[%s,crop=min(iw\\,%d):min(ih\\,%d):%d:%d:1:1]'):format(command_prefix,label,detector,m.w,m.h,m.x,m.y))  --detector OPTIONAL.
         mp.set_property_bool('pause',paused)
-    else for whxy in ('w h x y'):gmatch('[^ ]') do mp.command(('%s vf-command %s %s %d'):format(command_prefix,label,whxy,m[whxy])) end  --vf-command MAY THROW ERROR IF is1frame. 
+    else for whxy in ('w h x y'):gmatch('[^ ]') do mp.command(('%s vf-command %s %s %d %s'):format(command_prefix,label,whxy,m[whxy],target)) end  --vf-command MAY THROW ERROR IF is1frame. 
          if m.aspect~=aspect then                apply_scale() 
             for N=3,6 do mp.add_timeout(2^N/1000,apply_scale) end end  --8 16 32 64 ms. EXPONENTIAL TIMEOUTS BECAUSE COMMANDS ARE DODGY.
          if insta_unpause then mp.set_property_bool('pause',false)  --unpause_on_toggle, UNLESS is1frame. COULD ALSO BE MADE SILENT.
@@ -254,8 +255,8 @@ function apply_crop(meta)  --ALSO apply_scale (FOR PADDING BLACK BARS USING A SE
 end
 
 function apply_scale()  --vf-command DODGY BUT SHOULD STILL PERFORM SUPERIOR TO GRAPH REPLACEMENT. CAN BE USED TO MAINTAIN TRUE aspect. 
-    mp.command(('%s vf-command %s-scale w %d'):format(command_prefix,label,round(math.min(W,H*aspect))))  --.5+ CONVERTS FLOOR TO ROUND.  PADS EITHER HORIZONTALLY OR VERTICALLY, IN EFFECT - BOUNDED BY W,H
-    mp.command(('%s vf-command %s-scale h %d'):format(command_prefix,label,round(math.min(H,W/aspect))))
+    mp.command(('%s vf-command %s-scale w %d %s'):format(command_prefix,label,round(math.min(W,H*aspect)),target_scale))  --.5+ CONVERTS FLOOR TO ROUND.  PADS EITHER HORIZONTALLY OR VERTICALLY, IN EFFECT - BOUNDED BY W,H
+    mp.command(('%s vf-command %s-scale h %d %s'):format(command_prefix,label,round(math.min(H,W/aspect)),target_scale))
 end 
 
 
