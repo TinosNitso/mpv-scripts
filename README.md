@@ -46,19 +46,19 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 
 ## Versions
 
-*v0.36* & older only for latest release! v0.36.0 & v0.35.1 tested. v0.38.0 & v0.37.0 work with the scripts above which aren't in a proper release yet.
+*v0.36* & older only for latest release! v0.36.0 & v0.35.1 tested. v0.38.0 & v0.37.0 work with all the scripts above which aren't in a proper release yet.
 
 SMPlayer *v23.6.0* & v23.12.0 successful. v23.12 has an annoying `no-osd seek 0 relative exact` accompanying every `set pause yes` (user hits spacebar). Releases tested include .7z .exe .app .AppImage .flatpak & .snap.
 
-FFmpeg versions *v6.0*, v5.1.3 (`mpv.app`), v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) fully compatible.
+FFmpeg versions v6.1, v6.0, v5.1.3 (`mpv.app`), v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) fully compatible.
 
 ## Latest Updates
 Latest updates in above scripts haven't been properly released. Further MacOS testing needed. Try the `mpv-scripts.zip`!
 - All scripts now work with the latest mpv, versions 0.38.0 & 0.37.0.  Rumble & Odyssey also stream, like YouTube.
 - autocrop is now a spacetime cropper! Supports track list with start & end crop times, like sub-clips which remove credits.  Can also crop transparent input.  Added `o.no_vid`. vf-command for padded toggle.
-- automask has smooth toggle.
+- automask has smooth toggle (`o.toggle_time`). vf-command errors resolved in v0.37.0+, by introducing targets for automask, autocrop & aspeed. Removed `o.format` & `o.io_write` from autocrop, automask & autocomplex. Removed `select` filter & `par` from automask & autocomplex. 
 - aspeed improved reliability & toggle. Observes samplerate (removed the option). Subprocesses start in `--idle` mode (removed `o.start` but trigger isn't perfect). Added `o.timeout_mute`.
-- autocomplex can now repeatedly change vid track. Framerate & 100 buffers queued starting warnings resolved. Figured out the avgblur=planes setting. Added `o.filterchain` & `o.dual_filterchain` options. However the toggle's slow.
-- Removed all use of utilities except for `split_path`. Removed `o.format` & `o.io_write` from autocrop, automask & autocomplex. Removed `select` filter & `par` from automask & autocomplex. Better code alignment. v0.38.0 needs even dimensions!
+- autocomplex can now repeatedly change vid track. Framerate & 100 buffers queued warnings resolved. Figured out the avgblur=planes setting. Added `o.filterchain` & `o.dual_filterchain` options. However the toggle's slow.
+- `o.sid` added to main.lua for subtitle override. Removed all use of utilities except for `split_path`. Better code alignment. v0.38.0 needs even dimensions!
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
