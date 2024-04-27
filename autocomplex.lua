@@ -3,14 +3,14 @@
 ----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS. IT MAY PERFORM BETTER WITHOUT GPU DRIVERS BECAUSE CPU IS MORE RELIABLE (ROLL BACK DRIVER IN DEVICE MANAGER). A FREE GPU SHIFTS WORK FROM CPU BUT MAY BE INCOMPETENT COMPARED TO CHEAP GRAPHICS CARD OR EXPENSIVE GPU. 
 
 options={  --ALL OPTIONAL & MAY BE REMOVED.  TO REMOVE AN INTERNAL COMPONENT SET ITS alpha TO 0 (freqs volume grid feet shoe).
-    key_bindings         ='F1',    --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER.  s=SCREENSHOT NOT SPECTRUM. f=FULLSCREEN NOT FREQS, o=OSD NOT OVERLAY, C=AUTOCROP NOT COMPLEX. v FOR VOLUME?  'F1 F2' FOR 2 KEYS.
+    key_bindings       ='F3',    --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER.  s=SCREENSHOT NOT SPECTRUM. f=FULLSCREEN NOT FREQS, o=OSD NOT OVERLAY, C=AUTOCROP NOT COMPLEX. v FOR VOLUME?  'F3 F4' FOR 2 KEYS.
     -- toggle_on_double_mute=.5,   --SECONDS TIMEOUT FOR DOUBLE-mute TOGGLE (m&m DOUBLE-TAP). INTERRUPTS PLAYBACK, SO REMOVE FOR OTHER GRAPHS TO INSTA-TOGGLE.  DOESN'T TOGGLE dynaudnorm!
     -- osd_on_toggle   =     5 , --SECONDS. UNCOMMENT TO INSPECT VERSIONS, FILTERGRAPHS & PARAMETERS. 0 CLEARS THE osd INSTEAD. DISPLAYS mpv-version ffmpeg-version libass-version lavfi-complex af vf video-out-params
     -- vflip_only      =   true, --UNCOMMENT TO REMOVE TOP HALF. TOGGLE THESE 2 LINES FOR NULL OVERRIDE (NO SPECTRAL overlay).
     vflip_scale        =    .5 , --REMOVE FOR NO BOTTOM HALF. width=1.  SOME FUTURE VERSION MIGHT SUPPORT BL & BR CHANNELS FOR BOTTOM.
     width              =     1 , --DEFAULT= 1  OVERALL PRIMARY width RATIO (scale). <1 CAUSES zoompan TO CLIP.  A FUTURE VERSION COULD FIX THIS.
     fps                =    30 , --DEFAULT=30  FRAMES PER SECOND FOR [vo].  30fps (+automask) USES ~15% MORE CPU THAN 25fps. SCRIPT ALSO LIMITS scale. 
-    period             ='20/30', --DEFAULT= 1 SECOND. USE fps RATIO. 20/30=60/90 → 90BPM (BEATS PER MINUTE). SET TO 0 FOR STATIONARY (~20% OFF CENTER DUE TO zoompan EFFECT). UNLIKE A MASK, MOTION MAY NOT BE PERIODIC - SPECTRUM FREE TO RANDOMLY FLOAT AROUND.  (IF 0, "n/%s"→"0" GSUBS OCCUR, ETC). 
+    period             ='22/30', --DEFAULT= 1 SECOND. USE fps RATIO. 20/30→90BPM (BEATS PER MINUTE). SET TO 0 FOR STATIONARY (~20% OFF CENTER DUE TO zoompan EFFECT). UNLIKE A MASK, MOTION MAY NOT BE PERIODIC - SPECTRUM FREE TO RANDOMLY FLOAT AROUND.  (IF 0, "n/%s"→"0" GSUBS OCCUR, ETC). 
     rotate             =                 'PI/16*sin(2*PI*n/%s)*mod(floor(n/%s)\\,2)',        --%s=(period*volume_fps)  DEFAULT=0 RADIANS CLOCKWISE. MAY DEPEND ON TIME t & FRAME # n. PI/16=.2RADS=11°   MAY CLIP @LARGE angle. mod ACTS AS ON/OFF SWITCH. THIS EXAMPLE MOVES DOWN→UP→RIGHT→LEFT BY MODDING. 
     zoompan            =        '1+.2*(1-cos(2*PI*(on/%s-.2)))*mod(floor(on/%s-.2)\\,2):0:0',--%s=(period*volume_fps)  zoom:x:y  DEFAULT=1:0:0  on=OUTPUT FRAME NUMBER (OUTPUT MUST SYNC).  BEFORE SCOOTING RIGHT, IT MAY rotate (20% OFFSET).  20% zoom GETS MAGNIFIED BY autocrop, DEPENDING ON BLACK BARS. 
     overlay            ='(W-w)/2:H*(.75+.05*(1-cos(2*PI*n/%s))*mod(floor(n/%s)+1\\,2))-h/2', --%s=(period*fps)              x:y  DEFAULT=(W-w)/2:(H-h)/2  STREAM fps FOR overlay.   TIME-DEPENDENCE SHOULD MATCH OTHER SCRIPT/S, LIKE automask. A BIG-SCREEN TV HELPS WITH POSITIONING. CONCEIVABLY A GAMEPAD COULD POSITION A complex. POSITIONING ON TOP OF BLACK BARS MAY DRAW ATTENTION TO THEM (PPL COULD END UP SPENDING HRS STARING AT THE BLACK BARS ABOVE OR BELOW THE FILM).
@@ -20,7 +20,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.  TO REMOVE AN INTERNAL COMPONENT SET
     dual_scale         ={.75,.75},         --RATIOS {WIDTH,HEIGHT}. REMOVE FOR NO DUAL.  FULL BI-QUAD CONCEPT COMES FROM HOW RAW MP3 WORKS. IN A SYMPHONY A LITTLE DUAL COULD FLOAT TO VARIOUS INSTRUMENTS, VIOLINS ETC.  THIS DUAL USES THE SAME aid. IDEAL DESIGN MIGHT NEED A BOSS MIC/aid (SPECIAL DUAL).  IT'S ALSO POSSIBLE TO ADD A 3RD LITTLE COMPLEX ON TOP, LIKE PYRAMID. A CIRCULAR REMAP COULD BE LIKE A THIRD-EYE. 
     dual_overlay       ='(W-w)/2:(H-h)/2', --DEFAULT='(W-w)/2:(H-h)/2' (CENTERED). MAY DEPEND ON n & t, BUT CLEARER IF STATIONARY. IT CAN FLY AROUND.  %s=(period*fps)
     dynaudnorm         ='500:3:1:1',       --DEFAULT='500:3:1:1'  DYNAMIC AUDIO NORMALIZER FOR OUTPUT AUDIO [ao].  NULL-OP = 500ms:(MINIMUM g):p=1:m=1  BUFFERS THE AUDIO ITSELF, WHICH IS PROGRAMATICALLY SUPERIOR. FORMAT float. SOLVES WARNING IN MPV-LOG.  A DIFFERENT FILTER COULD JUST AS WELL BUFFER [ao]. THIS NULL-OP IS DETERMINISTIC FOR 10 HOURS (AUDIO UNCHANGED).
-    gb                 =  .3, --DEFAULT=.3  RANGE [-2,2]  GREEN IN BLUE RATIO. PROPER COMPLEMENT OF RED REQUIRES SOME GREEN. BLUE+0*GREEN IS TOO DARK. COLOR-BLINDNESS MIGHT BE AN ISSUE. MOST EFFICIENT CODE SHOULD START WITH CORRECT BLUE/RED SHADES, WITHOUT EXTRA colorchannelmixer.
+    gb                 = .33, --DEFAULT=.3  RANGE [-2,2]  GREEN IN BLUE RATIO. PROPER COMPLEMENT OF RED REQUIRES SOME GREEN. BLUE+0*GREEN IS TOO DARK. COLOR-BLINDNESS MIGHT ALSO BE AN ISSUE. MOST EFFICIENT CODE SHOULD START WITH CORRECT COLOR SHADES, WITHOUT EXTRA colorchannelmixer.
     freqs_lead_t       =  .3, --DEFAULT=.1 SECONDS. LEAD TIME FOR SPECTRUM. SUBJECTIVE TRIAL & ERROR (.1 .2 .3 ?). BACKDATES audio TIMESTAMPS. showfreqs HAS AT LEAST 1 FRAME LAG. .1s IN REALITY BUT THAT'S WRONG BECAUSE IT'S SUBJECTIVE. A CONDUCTOR'S BATON MAY MOVE AN EXTRA .1s BEFORE THE ORCHESTRA, OR IT'S LIKE HE'S TRYING TO KEEP UP.
     freqs_fps          =25/2, --DEFAULT=25/2  DOUBLING MAY CAUSE FILM TO STUTTER, IF TOO MANY GRAPHS ARE ACTIVE. freqs_clip_h ALSO IMPROVES PERFORMANCE.  
     freqs_fps_albumart =25  , --DEFAULT= 25   FOR RAW MP3 ALSO. CAN EASILY DOUBLE fps.
@@ -143,7 +143,7 @@ function file_loaded()  --ALSO on_aid_vid & on_toggle{ON}.    THIS COULD BE REPL
     
     ----3 (ON) CASES:  1) PROPER-VIDEO  2) albumart  3) AUDIO-ONLY    CAN CHECK MPV LOG TO VERIFY OUTPUT IN EVERY CASE. INSTEAD OF EVERY SCRIPT SETTING ITS OWN lavfi-complex, THEY MAY RELY ON THIS SCRIPT. EXAMPLE: automask albumart ANIMATION.
     freqs_fps =(v.albumart or not v.id) and o.freqs_fps_albumart or o.freqs_fps  --freqs_fps MAY VARY on_vid. SOME ANIMATIONS (LIKE FRACTALS) CAN BE DONE SMOOTHER ON albumart.
-    freqs_rate=mp.get_property('ffmpeg-version'):sub(0,2)=='4.' and '' or ':'..freqs_fps  --ffmpeg-v4 OPERATES showfreqs @25fps. LATER VERSIONS SUPPORT ANY fps. v4 IS USED BY .AppImage & .snap, & WORKS FINE.  CAN ALSO CHECK FOR v3?
+    freqs_rate=mp.get_property('ffmpeg-version'):sub(0,2)=='4.' and '' or ':'..freqs_fps  --FFmpeg-v4 OPERATES showfreqs @25fps. LATER VERSIONS SUPPORT ANY fps. v4 IS USED BY .AppImage & .snap.
     framerate =o.freqs_interpolation  and o.volume_fps or freqs_fps  --INTERPOLATION: freqs_fps→volume_fps
     duration  =round(mp.get_property_number('duration'),.01)-.2   --SUBTRACT .2s BY TRIAL & ERROR. TESTED MPV-v0.38 ON 10 HOURS albumart.  WITHOUT SUBTRACTION SMPLAYER HANGS NEAR end-file.
     complex   =(v.id and not v.image) and ('[vid%d]fps=%s,scale=%d:%d'):format(v.id,o.fps,W,H)  --CASE 1: NORMAL video.  complex=lavfi INSERT WHICH YIELDS [vo].  
@@ -156,8 +156,8 @@ end
 mp.register_event('file-loaded',file_loaded)
 mp.register_event('seek',function() if (mp.get_property_number('time-remaining') or .2)<.2 then mp.command('playlist-next force') end end)  --playlist-next FOR MPV PLAYLIST. force FOR SMPLAYER PLAYLIST. .2 FOR albumart duration CORRECTION.  BUGFIX FOR seek PASSED end-file. A CONVENIENT WAY TO SKIP NEXT TRACK IN SMPLAYER IS TO SKIP 10 MINUTES PASSED end-file.
 
-function on_toggle(mute)  --AN ALTERNATIVE (FULL) TOGGLE COULD stop keep-playlist & playlist-play-index current TO FULLY CLEAR lavfi-complex. BUT THAT SNAPS THE WINDOW & INTERRUPTS PLAYBACK, LIKE on_aid_vid. THIS TOGGLE JUST REMOVES THE SPECTRUM FROM THE lavfi-complex.
-    if not W then return  --STILL LOADING.
+function on_toggle(mute)     --AN ALTERNATIVE (FULL) TOGGLE COULD stop keep-playlist & playlist-play-index current TO FULLY CLEAR lavfi-complex. BUT THAT SNAPS THE WINDOW & INTERRUPTS PLAYBACK, LIKE on_aid_vid. THIS TOGGLE JUST REMOVES THE SPECTRUM FROM THE lavfi-complex.
+    if not timer then return --STILL LOADING.
     elseif mute and not timer:is_enabled() then timer:resume() --START timer OR ELSE TOGGLE.  DOUBLE-MUTE MAY FAIL TO OBSERVE EITHER mute IF seeking. IT CANCELS ITSELF OUT IN SMPLAYER.
         return end
     
@@ -182,8 +182,8 @@ timer.oneshot=true
 timer:kill() 
 
 function end_file()
-    W=nil  --NILLIFIED FOR on_aid_vid & on_toggle.
-    mp.set_property('lavfi-complex','')  --UNLOCK aid & vid.
+    W=nil  --NILLIFIED FOR on_aid_vid.
+    mp.set_property('lavfi-complex','')  --UNLOCK aid & vid.  COULD ALSO DO THIS @SCRIPT-LOAD.
 end 
 mp.register_event('end-file',end_file)  
 
@@ -204,12 +204,12 @@ mp.observe_property('aid','number',on_aid_vid)  --UNTESTED
 
 
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS (& 5 CASES), LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END. ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
-----MPV v0.38.0 (.7z .exe v3) v0.37.0 (.app?) v0.36.0 (.exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED. 
-----FFmpeg v6.0(.7z .exe .flatpak)  v5.1.3(mpv.app)  v5.1.2 (SMPlayer.app)  v4.4.2(.snap)  v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS ACTUALLY BUILT WITH FFmpeg v4, v5 & v6 (ALL 3), WHICH CHANGES HOW THE GRAPHS ARE WRITTEN (FOR COMPATIBILITY).
+----MPV v0.38.0 (.7z .exe v3) v0.37.0 (.app) v0.36.0 (.exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED. 
+----FFmpeg v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4 v5.1.3(mpv.app)  v5.1.2 (SMPlayer.app)  v4.4.2(.snap)  v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS OFTEN BUILT WITH FFmpeg v4, v5 & v6, SO ALL GRAPHS COVER 3 VERSIONS.
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. v23.6 MAYBE PREFERRED.
 
-----BUG: SOME YOUTUBE SLIDE-SHOW VIDEOS GLITCH @START (PAUSING). EXAMPLE (MIDNIGHT BROADCAST): https://youtu.be/D22CenDEs40
+----BUG: SOME YT VIDEOS GLITCH @START (PAUSING). EXAMPLE (MIDNIGHT BROADCAST): https://youtu.be/D22CenDEs40
 ----BUG: SMPLAYER v23.12 PAUSE TRIGGERS GRAPH RESET (LAG). FIX: CAN USE v23.6 (JUNE RELEASE) INSTEAD, OR GIVE MPV ITS OWN WINDOW. SMPLAYER NOW COUPLES A seek-0 WITH pause. "no-osd seek 0 relative exact" WITHIN 1ms OF "set pause yes". THEN paused TRIGGERS WITHIN A FEW ms. 
 
 ----ALTERNATIVE FILTERS:
