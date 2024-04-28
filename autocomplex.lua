@@ -20,7 +20,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.  TO REMOVE AN INTERNAL COMPONENT SET
     dual_scale         ={.75,.75},         --RATIOS {WIDTH,HEIGHT}. REMOVE FOR NO DUAL.  FULL BI-QUAD CONCEPT COMES FROM HOW RAW MP3 WORKS. IN A SYMPHONY A LITTLE DUAL COULD FLOAT TO VARIOUS INSTRUMENTS, VIOLINS ETC.  THIS DUAL USES THE SAME aid. IDEAL DESIGN MIGHT NEED A BOSS MIC/aid (SPECIAL DUAL).  IT'S ALSO POSSIBLE TO ADD A 3RD LITTLE COMPLEX ON TOP, LIKE PYRAMID. A CIRCULAR REMAP COULD BE LIKE A THIRD-EYE. 
     dual_overlay       ='(W-w)/2:(H-h)/2', --DEFAULT='(W-w)/2:(H-h)/2' (CENTERED). MAY DEPEND ON n & t, BUT CLEARER IF STATIONARY. IT CAN FLY AROUND.  %s=(period*fps)
     dynaudnorm         ='500:3:1:1',       --DEFAULT='500:3:1:1'  DYNAMIC AUDIO NORMALIZER FOR OUTPUT AUDIO [ao].  NULL-OP = 500ms:(MINIMUM g):p=1:m=1  BUFFERS THE AUDIO ITSELF, WHICH IS PROGRAMATICALLY SUPERIOR. FORMAT float. SOLVES WARNING IN MPV-LOG.  A DIFFERENT FILTER COULD JUST AS WELL BUFFER [ao]. THIS NULL-OP IS DETERMINISTIC FOR 10 HOURS (AUDIO UNCHANGED).
-    gb                 = .33, --DEFAULT=.3  RANGE [-2,2]  GREEN IN BLUE RATIO. PROPER COMPLEMENT OF RED REQUIRES SOME GREEN. BLUE+0*GREEN IS TOO DARK. COLOR-BLINDNESS MIGHT ALSO BE AN ISSUE. MOST EFFICIENT CODE SHOULD START WITH CORRECT COLOR SHADES, WITHOUT EXTRA colorchannelmixer.
+    gb                 =  .3, --DEFAULT=.3  RANGE [-2,2]  GREEN IN BLUE RATIO. PROPER COMPLEMENT OF RED REQUIRES SOME GREEN. BLUE+0*GREEN IS TOO DARK. COLOR-BLINDNESS MIGHT ALSO BE AN ISSUE. MOST EFFICIENT CODE SHOULD START WITH CORRECT COLOR SHADES, WITHOUT EXTRA colorchannelmixer.
     freqs_lead_t       =  .3, --DEFAULT=.1 SECONDS. LEAD TIME FOR SPECTRUM. SUBJECTIVE TRIAL & ERROR (.1 .2 .3 ?). BACKDATES audio TIMESTAMPS. showfreqs HAS AT LEAST 1 FRAME LAG. .1s IN REALITY BUT THAT'S WRONG BECAUSE IT'S SUBJECTIVE. A CONDUCTOR'S BATON MAY MOVE AN EXTRA .1s BEFORE THE ORCHESTRA, OR IT'S LIKE HE'S TRYING TO KEEP UP.
     freqs_fps          =25/2, --DEFAULT=25/2  DOUBLING MAY CAUSE FILM TO STUTTER, IF TOO MANY GRAPHS ARE ACTIVE. freqs_clip_h ALSO IMPROVES PERFORMANCE.  
     freqs_fps_albumart =25  , --DEFAULT= 25   FOR RAW MP3 ALSO. CAN EASILY DOUBLE fps.
@@ -31,7 +31,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.  TO REMOVE AN INTERNAL COMPONENT SET
     freqs_alpha        =  .7, --DEFAULT= .7  RANGE [-2,2]  OPAQUENESS OF SPECTRAL DATA CURVE.    DUAL-complex MAY LOOK BETTER TRANSPARENT.
     freqs_mode         =  'line', --DEFAULT='line'.  line OR bar OR dot. FOR bar SET freqs_alpha=.25. GRAPH OPTIMIZED FOR line.
     freqs_win_func     ='parzen', --DEFAULT='parzen'  poisson cauchy flattop MAYBE OK, BUT THE OTHERS ARE UGLY: rect bartlett hanning hamming blackman welch bharris bnuttal bhann sine nuttall lanczos gauss tukey dolph        PARZEN WAS AN AMERICAN STATISTICIAN.
-    -- freqs_interpolation= true, --UNCOMMENT TO INTERPOLATE FROM freqs_fps→volume_fps. ADDS ~7% CPU USAGE. HOWEVER REDUCE fps FROM 30→25 TO SUBTRACT 15% CPU USAGE.   CAN REDUCE freqs_fps_albumart, TO INTERPOLATE FROM IT.  NICE LIGHTNING EFFECT BUT LOOKS JITTERY & FILM MAY STUTTER @autocrop.
+    -- freqs_interpolation= true, --UNCOMMENT TO INTERPOLATE FROM freqs_fps→volume_fps. ADDS ~7% CPU USAGE. HOWEVER CAN REDUCE fps FROM 30→25 TO SUBTRACT 15% CPU USAGE.   CAN REDUCE freqs_fps_albumart, TO INTERPOLATE FROM IT.  NICE LIGHTNING EFFECT BUT LOOKS JITTERY & FILM MAY STUTTER @autocrop.
     freqs_dynaudnorm   ='500:5:1:100:0:1:0:1', --DEFAULT=500='500:31:.95:10:0:1:0:0'  IDEAL OPTIONS DEPEND ON WHICH PASS OUT OF 3, & FINAL AUDIO IS DIFFERENT (aspeed.lua). THIS PASS APPLIES AFTER RESAMPLING TO 2.1kHz, & freqs_lead_t.
     volume_dynaudnorm  ='500:5:1:100:0:1:0:1', --DEFAULT=500='f:g:p:m:r:n:c:b'  APPLIES BEFORE freqs_dynaudnorm. SEE GRAPH COMMENTARY FOR DETAILS.  
     -- volume_dm       =  1,  --DEFAULT=  0  {0,1}  UNCOMMENT FOR DISPLAYMAX LINES.
@@ -114,6 +114,7 @@ lavfi=('[aid%%d]dynaudnorm=%s%s,asplit[ao],stereotools,highpass=%s,dynaudnorm=%s
 ----scale,scale2ref = w:h  DEFAULT=iw:ih  SCALES TO display FOR CLEARER SPECTRUM ON LOW-RES video. CAN ALSO OBTAIN SMOOTHER CURVE BY SCALING UP A SMALLER ONE.     TO-REFERENCE [1][2]→[1][2] SCALES [1] USING DIMENSIONS OF [2]. ALSO SCALES volume.
 ----overlay         = x:y:eof_action →yuva420p  DEFAULT=0:0:repeat  endall DUE TO apad. FORCES US TO USE yuva420p, WHICH MIGHT BE WHY MULTIPLES OF 4 ARE NEEDED. AN EVEN WIDTH ISN'T GOOD ENOUGH BECAUSE THE COLOR PLANE WIDTH MAY BE ODD & NOT CENTERED PROPERLY (OPTIMIZATION ISSUE). OVERLAYS DATA ON GRID & VOLUME ON-TOP. ALSO: 0Hz RIGHT ON TOP OF 0Hz LEFT (DATA-overlay INSTEAD OF hstack). MAY DEPEND ON TIME t.  UNFORTUNATELY THIS FILTER HAS AN OFF BY 1 BUG IF W OR H ISN'T A MULTIPLE OF 4.  IF COLOR RES IS A PROBLEM, A WORKAROUND IS TO USE A RES_MULTIPLIER=2 THEN HALVE yuv420p→yuv444p.
 ----hstack,vstack   = inputs  DEFAULT=2  COMBINES THE VOLUMES INTO A 20 TICK STEREO RULER. ALSO COMBINES feet.  vstack FOR FEET & TOP/BOTTOM.
+----setsar          = sar  DEFAULT=0  SAMPLE(PIXEL) ASPECT RATIO. FOR SAVE concat OF CASE 2 TIMESTAMP FRAME (albumart).
 ----concat            [t0][vo]→[vo]      FINISHES [t0].  CONCATENATE STARTING TIMESTAMP, ON INSERTION. OCCURS @seek. NEEDED TO SYNC WITH automask. SAFE DUE TO setsar & yuva420p FORCED BY overlay.
 ----split,asplit    = outputs  DEFAULT=2  IS THE FINISH ON [ao].  
 ----trim            = ...:end:...:start_frame:end_frame  TRIMS 1 FRAME OFF THE START FOR ITS TIMESTAMP. ALSO A BUGFIX FOR A CRASH AT end-file.
@@ -147,7 +148,7 @@ function file_loaded()  --ALSO on_aid_vid & on_toggle{ON}.    THIS COULD BE REPL
     framerate =o.freqs_interpolation  and o.volume_fps or freqs_fps  --INTERPOLATION: freqs_fps→volume_fps
     duration  =round(mp.get_property_number('duration'),.01)-.2   --SUBTRACT .2s BY TRIAL & ERROR. TESTED MPV-v0.38 ON 10 HOURS albumart.  WITHOUT SUBTRACTION SMPLAYER HANGS NEAR end-file.
     complex   =(v.id and not v.image) and ('[vid%d]fps=%s,scale=%d:%d'):format(v.id,o.fps,W,H)  --CASE 1: NORMAL video.  complex=lavfi INSERT WHICH YIELDS [vo].  
-               or v.id                and ('[vid%d]scale=%d:%d,loop=-1:1[vo],[vid]split[vid],crop=1:1:0:0:1:1,lutyuv=0:128:128:0[to],[to][vo]scale2ref,overlay,fps=%s'):format(v.id,W,H,o.fps)  --CASE 2 (albumart) IS THE MOST COMPLICATED. IDEAL CODE MAY DEPEND ON MPV VERSION. albumart IS LOOPED & COMBINED WITH TIME-STREAM [to].
+               or v.id                and ('[vid%d]scale=%d:%d,loop=-1:1[vo],[vid]split[vid],trim=end_frame=1,crop=1:1:0:0:1:1,scale=%d:%d,setsar[t0],[t0][vo]concat,trim=start_frame=1,fps=%s'):format(v.id,W,H,W,H,o.fps)  --CASE 2 (albumart) IS THE MOST COMPLICATED. albumart IS LOOPED WITH TIMESTAMP FRAME [t0] PREPENDED.
                or ('[vid]split[vid],crop=1:1:0:0:1:1,lutyuv=0:128:128:0,scale=%d:%d,fps=%s'):format(W,H,o.fps)  --CASE 3  (RAW AUDIO)  USES [vid] INSTEAD OF [vid#] TO BUILD BLANK [vo] UNDERLAY. [vid] IS THE SPECTRUM. 
     complex   =o.dual_scale[2] and ('%s[vo],[vid]split[vid],%s,scale=%d:%d[dual],[vo][dual]overlay=%s'):format(complex,o.dual_filterchain,round(W*o.dual_scale[1],4),round(H*o.dual_scale[2]*o.freqs_clip_h*2,4),o.dual_overlay)  --[v2]=DUAL  LABELS [vid1][vid2] ETC NOT ALLOWED (RESERVED). 
                or                  complex  --NO dual.
@@ -203,9 +204,9 @@ mp.observe_property('vid','number',on_aid_vid)  --  TESTED
 mp.observe_property('aid','number',on_aid_vid)  --UNTESTED
 
 
-----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS (& 5 CASES), LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END. ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
-----MPV v0.38.0 (.7z .exe v3) v0.37.0 (.app) v0.36.0 (.exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED. 
-----FFmpeg v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4 v5.1.3(mpv.app)  v5.1.2 (SMPlayer.app)  v4.4.2(.snap)  v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS OFTEN BUILT WITH FFmpeg v4, v5 & v6, SO ALL GRAPHS COVER 3 VERSIONS.
+----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS (& 3 CASES), LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END. ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
+----MPV v0.38.0(.7z .exe v3) v0.37.0(.app) v0.36.0(.exe .app .flatpak .snap v3) v0.35.1(.AppImage)  ALL TESTED. 
+----FFMPEG v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4(mpv.app)  v5.1.2(SMPlayer.app)  v4.4.2(.snap)  v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS OFTEN BUILT WITH FFMPEG v4, v5 & v6, SO ALL GRAPHS COVER 3 VERSIONS.
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. v23.6 MAYBE PREFERRED.
 
@@ -214,7 +215,6 @@ mp.observe_property('aid','number',on_aid_vid)  --UNTESTED
 
 ----ALTERNATIVE FILTERS:
 ----colorchannelmixer=rr:...:aa   (RANGE -2→2, r g b a PAIRS)  DEFAULT rr=1,rg=0,ETC.  A BIT SLOW LIKE geq SO NOT USED BY DEFAULT.
-----setsar           = sar  DEFAULT=0  SAMPLE(PIXEL) ASPECT RATIO.  OPTIONAL. FINALIZES scale IN MPV-LOG. MACOS REQUIRES sar.
 ----firequalizer      MAY BE NEEDED TO MODEL HUMAN EAR RESPONSE. CAN REPLACE highpass & MULTIPLY BY frequency. (A HIGH PITCHED CHIRP IS DEAFENING TO HUMAN, BUT SAME AMPLITUDE.)
 ----afftfilt         =real:imag:win_size:win_func:overlap  DEFAULT=1|1:1|1:4096:hann:0.75  (AUDIO FAST FOURIER TRANSFORM FILTER) overlap<1 CAUSES BUG. MAY ALSO HELP MODEL HUMAN EAR SENSITIVITY.
 ----geq               GLOBAL EQUALIZER IS TOO SLOW @25fps EXCEPT ON A SINGLE GRID ELEMENT OR LINE. MAYBE POSSIBLE TO USE IT TO REMAP ONTO CIRCLE OR SMILY/FROWNY FACE.

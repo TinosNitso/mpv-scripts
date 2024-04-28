@@ -6,7 +6,7 @@
 options={  --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATIVE).      nil & false → DEFAULT VALUES    (BUT ''→true).
     key_bindings         ='F1', --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER. m IS MUTE SO CAN DOUBLE-PRESS m FOR MASK. 'F1 F2' FOR 2 KEYS.
     toggle_on_double_mute=.5,   --SECONDS TIMEOUT FOR DOUBLE-mute TOGGLE. LUA SCRIPTS CAN BE TOGGLED BY DOUBLE mute.
-    toggle_fade          =.2,   --SECONDS FOR brightness CHANGE. REMOVE FOR INSTA-TOGGLE.  16 INCREMENTS ARE USED.
+    toggle_duration      =.2,   --SECONDS FOR mask FADE. REMOVE FOR INSTA-TOGGLE.  16 INCREMENTS ARE USED.
     unpause_on_toggle    =.1,   --DEFAULT=.1 SECONDS. PERIOD TO UNPAUSE FOR TOGGLE, LIKE FRAME-STEPPING. A FEW FRAMES ARE ALREADY DRAWN IN ADVANCE.
     -- osd_on_toggle     = 5,   --SECONDS. UNCOMMENT TO INSPECT VERSIONS, FILTERGRAPHS & PARAMETERS. 0 CLEARS THE osd INSTEAD. DISPLAYS mpv-version ffmpeg-version libass-version lavfi-complex af vf video-out-params
     
@@ -58,7 +58,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATIVE).      nil & fal
     ,
 }
 o         =options  --ABBREV.
-for opt,val in pairs({key_bindings='',toggle_on_double_mute=0,toggle_fade=0,unpause_on_toggle=.1,filterchain='lutyuv=negval',fps=30,periods=1,lead_t=0,periods_skipped=0,negate_enable='0',lut0_enable='0',geq=255,RES_MULT=1,RES_SAFETY=1,widths='',heights='',x='',y='',crops='',rotations='0',zoompan='1:0:0',scale={},options=''})
+for opt,val in pairs({key_bindings='',toggle_on_double_mute=0,toggle_duration=0,unpause_on_toggle=.1,filterchain='lutyuv=negval',fps=30,periods=1,lead_t=0,periods_skipped=0,negate_enable='0',lut0_enable='0',geq=255,RES_MULT=1,RES_SAFETY=1,widths='',heights='',x='',y='',crops='',rotations='0',zoompan='1:0:0',scale={},options=''})
 do o[opt] =o[opt] or val end  --ESTABLISH DEFAULTS. 
 o.options =(o.options):gsub('-%-','  '):gmatch('[^ ]+') --'-%-' MEANS "--".  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN DOESN'T EXIST IN THE LUA VERSION CURRENTLY USED BY mpv.app ON MACOS.  
 while true 
@@ -157,8 +157,8 @@ function file_loaded() --ALSO @seek, @vid & @on_toggle(is1frame).
     W           = o.scale.w or o.scale[1] or mp.get_property_number('display-width' ) or v_params.w or v['demux-w']  --(scale OVERRIDE) OR (display=WINDOWS & MACOS) OR (LINUX=[vo] DIMENSIONS)  osd-dimensions=WINDOW SIZE, BUT THEN RESIZING THE WINDOW WOULD REPLACE THE WHOLE ANIMATION.
     H           = o.scale.h or o.scale[2] or mp.get_property_number('display-height') or v_params.h or v['demux-h'] 
     W,H         = round(W,2),round(H,2)  --MPV v0.37.0+ HAS ODD BUG.
-    lavfi_complex,duration = mp.get_opt('lavfi-complex'),round(mp.get_property_number('duration'),.001)  --NEAREST MILLISECOND. 0 FOR JPEG @playback-restart BUT nil@file-loaded. nil & 0 INTERCHANGE.
-    trim_end    = duration and duration>0 and ':end='..duration+.1 or ''  --BY TRIAL & ERROR: +.1
+    lavfi_complex,duration = mp.get_opt('lavfi-complex'),round(mp.get_property_number('duration'),.001)  --NEAREST MILLISECOND.  0 FOR JPEG @playback-restart BUT nil@file-loaded. nil & 0 INTERCHANGE.
+    trim_end    = duration and duration>0 and ':end='..duration+.1 or ''  --BY TRIAL & ERROR: +.1   A FUTURE VERSION COULD FADE OUT 1 SECOND NEAR end-file.
     is1frame    = v.albumart and not lavfi_complex or NULL_OVERRIDE  --NULL_OVERRIDE & albumart ARE is1frame RELATIVE TO on_toggle.  MP4TAG & MP3TAG ARE BOTH albumart. SPECIAL & DON'T loop WITHOUT lavfi-complex. CAN COMPARE .JPG TO .MP3. image MAY HAVE VF TIME-STREAM, BUT NOT albumart.
     loop        = v.image    and not lavfi_complex  --GIF IS ~image. 
     start_time  = loop       and ':'..mp.get_property_number('time-pos') or ''     --JPEG WITH --start OPTION. 
@@ -205,7 +205,7 @@ end
 for key in o.key_bindings:gmatch('[^ ]+') do mp.add_key_binding(key, 'toggle_mask_'..key, on_toggle) end
 mp.observe_property('mute','bool',on_toggle)
 
-function smooth_toggle()  --A FUTURE VERSION COULD FADE OUT 1 SECOND NEAR end-file.
+function smooth_toggle() 
     count= count and count<16 and count+1 or 1
     if     count== 1 then timers.smooth_toggle:resume() 
     elseif count==16 then timers.smooth_toggle:kill  () end
@@ -215,7 +215,7 @@ end
 timers={  --CARRY OVER IN MPV PLAYLIST.
     mute         =mp.add_periodic_timer(o.toggle_on_double_mute,function() end), --mute TIMER TIMES. 0s VALID.
     pause        =mp.add_periodic_timer(o.unpause_on_toggle    ,function() mp.set_property_bool('pause',true) end),  --pause TIMER PAUSES.
-    smooth_toggle=mp.add_periodic_timer(o.toggle_fade/16       ,smooth_toggle),  --16-BIT.
+    smooth_toggle=mp.add_periodic_timer(o.toggle_duration/16   ,smooth_toggle),  --16-BIT.
 }
 timers.mute .oneshot=true
 timers.pause.oneshot=true 
@@ -223,8 +223,8 @@ for _,timer in pairs(timers) do timer:kill() end
 
 
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS (& 10 EXAMPLES), LINE TOGGLES (OPTIONS), MIDDLE (GRAPH SPECS), & END. ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
-----MPV v0.38.0 (.7z .exe v3) v0.37.0 (.app) v0.36.0 (.exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED. 
-----FFmpeg v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4 v5.1.3(mpv.app)  v5.1.2 (SMPlayer.app)  v4.4.2(.snap)  v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS OFTEN BUILT WITH FFmpeg v4, v5 & v6, SO ALL GRAPHS COVER 3 VERSIONS.
+----MPV v0.38.0(.7z .exe v3) v0.37.0(.app) v0.36.0(.exe .app .flatpak .snap v3) v0.35.1(.AppImage)  ALL TESTED. 
+----FFMPEG v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4(mpv.app)  v5.1.2(SMPlayer.app)  v4.4.2(.snap)  v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS OFTEN BUILT WITH FFMPEG v4, v5 & v6, SO ALL GRAPHS COVER 3 VERSIONS.
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. v23.6 MAYBE PREFERRED.
 

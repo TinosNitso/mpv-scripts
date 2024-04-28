@@ -3,11 +3,11 @@
 
 options={  --ALL OPTIONAL & CAN BE REMOVED.
     scripts={ --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE. TYPOS CAN TOGGLE THEM ON & OFF.  autocomplex & automask HAVE osd_on_toggle WHICH DISPLAYS VERSION NUMBERS & FILTERGRAPHS.
-        "aspeed.lua",      --CLOCK & AUDIO DEVICES SPEED RANDOMIZATION, FOR 10 HOURS. INSTA-TOGGLE. CONVERTS MONO TO (RANDOMIZED) SURROUND SOUND.  MY FAVOURITE OVERALL. CONVERTS A SPEAKER INTO A METAPHORICAL MOCKING-BIRD.
-        "autocrop.lua",    --CROP OFF BLACK BARS BEFORE automask, BUT AFTER autocomplex. INSTA-TOGGLE.
-        -- "autocrop-smooth.lua",  --SMOOTH VERSION. MAY BE INCOMPATIBLE WITH autocomplex DUE TO EXCESSIVE CPU USAGE. 
+        "aspeed.lua",      --CLOCK & AUDIO DEVICES SPEED RANDOMIZATION, FOR 10 HOURS. INSTA-TOGGLE. CAN CONVERT MONO TO (RANDOMIZED) SURROUND SOUND.  MY FAVOURITE OVERALL. CONVERTS A SPEAKER INTO SOMETHING LIKE A MOCKING-BIRD.
+        "autocrop.lua",    --CROPS OFF BLACK BARS BEFORE automask, BUT AFTER autocomplex. SMOOTH-TOGGLE.
+        -- "autocrop-smooth.lua",  --SMOOTH VERSION. DISABLE autocomplex DUE TO EXCESSIVE CPU USAGE. 
         "autocomplex.lua", --ANIMATED AUDIO SPECTRUM, VOLUME BARS, FPS LIMITER. DUAL lavfi-complex OVERLAY. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE IS LIKE WINGS OF BIRD). 
-        "automask.lua",    --ANIMATED FILTERS (MOVING LENSES, ETC). INSTA-TOGGLE. LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE VISOR + BUTTERFLY=automask2.lua, 300MB RAM EACH).
+        "automask.lua",    --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE. LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE VISOR + BUTTERFLY=automask2.lua, 300MB RAM EACH).
     },
     ytdl={    --YOUTUBE DOWNLOAD. PLACE ALONGSIDE main.lua.  LIST ALL POSSIBLE EXECUTABLE FILENAMES, IN PREFERRED ORDER. NO ";" ALLOWED.  
         "yt-dlp",       --.exe
@@ -92,8 +92,8 @@ end
 ----https://smplayer.info/en/download-linux & https://apt.fruit.je/ubuntu/jammy/mpv/ FOR LINUX SMPLAYER & MPV.  OFFLINE LINUX ALL-IN-ONE: SMPlayer-23.12.0-x86_64.AppImage
 
 ----SAFETY INSPECTION: LUA SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set IS SAFE EXCEPT FOR script-opts WHICH MAY hook AN UNSAFE EXECUTABLE INTO A DIFFERENT SCRIPT, LIKE youtube-dl.
-----MPV v0.38.0 (.7z .exe v3) v0.37.0 (.app) v0.36.0 (.exe .app .flatpak .snap v3) v0.35.1 (.AppImage) ALL TESTED. 
-----FFmpeg v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4 v5.1.3(mpv.app)  v5.1.2 (SMPlayer.app)  v4.4.2(.snap)  v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS OFTEN BUILT WITH FFmpeg v4, v5 & v6, SO ALL GRAPHS COVER 3 VERSIONS.
+----MPV v0.38.0(.7z .exe v3) v0.37.0(.app) v0.36.0(.exe .app .flatpak .snap v3) v0.35.1(.AppImage)  ALL TESTED. 
+----FFMPEG v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4(mpv.app)  v5.1.2(SMPlayer.app)  v4.4.2(.snap)  v4.3.2(.AppImage)  ALL TESTED. MPV-v0.36.0 IS OFTEN BUILT WITH FFMPEG v4, v5 & v6, SO ALL GRAPHS COVER 3 VERSIONS.
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap  ALL TESTED. v23.6 MAYBE PREFERRED.
 
