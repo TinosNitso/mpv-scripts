@@ -5,9 +5,9 @@
 - [Versions](#versions)
 - [Latest Updates](#latest-updates)
 
-Video clock, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), animated mask generator ([automask](automask.lua)), dual animated spectrum ([autocomplex](autocomplex.lua)) & insta-cropping ([autocrop](autocrop.lua)) for [SMPlayer](https://smplayer.info) & [MPV](https://mpv.io)! Newest scripts in `mpv-scripts.zip` on GitHub. Toggle them by double-clicking on mute (m&m). Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. The scripts can be opened & options edited in Notepad (no word wrap). I use [Notepad++](https://notepad-plus-plus.org/downloads/) on Windows, & Brackets on MacOS. All free for Windows, Linux & MacOS. 🙂
+Video clock, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), animated mask generator ([automask](automask.lua)), dual animated spectrum ([autocomplex](autocomplex.lua)) & insta-cropping ([autocrop](autocrop.lua)) for [SMPlayer](https://smplayer.info) & [MPV](https://mpv.io)! Newest scripts in `mpv-scripts.zip` on GitHub. Toggle them by double-clicking on mute (m&m). Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. The scripts can be opened & options edited in Notepad (no word wrap). main.lua has much more information, & decides which scripts are loaded. I use [Notepad++](https://notepad-plus-plus.org/downloads/) on Windows, & Brackets on MacOS. All free for Windows, Linux & MacOS. 🙂
 
-To use on YouTube select Open→URL in SMPlayer. Rumble, Odyssey & RedTube also directly compatible. Double-clicking mute makes the mask vanish or re-appear, along with black-bars, & the audio switches btwn random & normal. MPV has instant zoom, but unfortunately no scroll bar (to pan around with mouse, etc). Keyboard shortcuts only work if MPV has its own window (SMPlayer preference).
+To use on YouTube select Open→URL in SMPlayer. Rumble, Odyssey & RedTube also directly compatible. Double-clicking mute makes the mask vanish or re-appear, along with black-bars, & the audio switches btwn random & normal. aspeed.lua options can activate chipmunk mode on left-channel (in sync), as well as tri-color clock! MPV has instant zoom, but unfortunately no scroll bar (to pan around with mouse, etc). Keyboard shortcuts only work if MPV has its own window (SMPlayer preference).
 
 ## Installation
 In Windows extract all `.lua` scripts from `.zip` & copy/paste them into `smplayer-portable` (or smplayer) folder. Then in SMPlayer Advanced Preferences enter 
@@ -53,14 +53,14 @@ SMPlayer *v23.6.0* & v23.12.0 successful. v23.12 has an annoying `no-osd seek 0 
 FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) successfully tested.
 
 ## Latest Updates
-Latest updates in above scripts haven't been properly released. Further MacOS testing needed, for autocrop-smooth. Try the `mpv-scripts.zip`!
-- All scripts now work with the latest mpv, versions 0.38.0 & 0.37.0.  Rumble & Odyssey also stream, like YouTube.
-- autocrop & autocrop-smooth are now spacetime croppers! Support track list with start & end crop times, like sub-clips which remove credits.  Can also crop transparent input.  Added `o.no_vid`. vf-command for padded toggle. The smooth version is error free with new MPV.
-- `o.toggle_duration` added to autocrop, automask & autocrop-smooth. They now have smooth toggles! autocrop has smooth padding (`on_toggle`).
+Above scripts (`mpv-scripts.zip`) haven't been properly released, but have many new features. Further MacOS testing needed.
+- All scripts now work with the latest mpv, versions 0.38.0 & 0.37.0.  Rumble, Odyssey & RedTube also stream, like YouTube.
+- autocrop & autocrop-smooth are now spacetime croppers! Support track list with start & end crop times, like sub-clips which remove credits.  Can also crop transparent input.  Added `o.pad_color` & `o.no_vid`. 
+- `o.toggle_duration` added to autocrop, automask & autocrop-smooth. They now have smooth toggles using vf-command! autocrop has smooth padding. autocrop & aspeed optimized by only performing commands or sets when needed.
+- `o.sid` added to main.lua for subtitle overrides. 
 - Targeted vf-commands for autocrop, automask & aspeed. Backwards compatible.
-- aspeed improved reliability & toggle. Observes samplerate (removed the option). Subprocesses start in `--idle` mode (removed `o.start` but trigger isn't perfect). Added `o.timeout_mute`.
-- Removed `o.format` & `o.io_write` & par from autocrop, automask & autocomplex. Removed `select` filter from automask & autocomplex. Removed all use of utilities except for `split_path`. 
+- aspeed improved reliability & toggle. Observes samplerate (removed the option). Subprocesses start in `--idle` mode (removed `o.start` but trigger isn't perfect). Added `o.timeout_mute`. 
 - autocomplex can now repeatedly change vid track. "Invalid timestamp" & "100 buffers queued" warnings resolved. Improved avgblur=planes setting. Added `o.filterchain` & `o.dual_filterchain` options. However the toggle's slow. v0.38.0 needs even dimensions! Better code alignment. 
-- `o.sid` added to main.lua for subtitle override. 
+- Removed `o.format` & `o.io_write` & par from autocrop, automask & autocomplex. Removed `select` filter from automask & autocomplex. Removed all use of utilities except for `split_path`. 
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
