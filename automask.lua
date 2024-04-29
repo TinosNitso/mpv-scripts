@@ -5,8 +5,8 @@
 
 options={  --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATIVE).      nil & false → DEFAULT VALUES    (BUT ''→true).
     key_bindings         ='F1', --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER. m IS MUTE SO CAN DOUBLE-PRESS m FOR MASK. 'F1 F2' FOR 2 KEYS.
-    toggle_on_double_mute=.5,   --SECONDS TIMEOUT FOR DOUBLE-mute TOGGLE. LUA SCRIPTS CAN BE TOGGLED BY DOUBLE mute.
-    toggle_duration      =.2,   --SECONDS FOR mask FADE. REMOVE FOR INSTA-TOGGLE.  16 INCREMENTS ARE USED.
+    toggle_on_double_mute=.5,   --SECONDS TIMEOUT FOR DOUBLE-mute TOGGLE. TRIPLE mute DOUBLES BACK. LUA SCRIPTS CAN BE TOGGLED BY DOUBLE mute.  DOESN'T WORK IN SMPLAYER ON JPEG (NO AUDIO TO MUTE).
+    toggle_duration      =.3,   --SECONDS FOR mask FADE. REMOVE FOR INSTA-TOGGLE.  16 INCREMENTS ARE USED.
     unpause_on_toggle    =.1,   --DEFAULT=.1 SECONDS. PERIOD TO UNPAUSE FOR TOGGLE, LIKE FRAME-STEPPING. A FEW FRAMES ARE ALREADY DRAWN IN ADVANCE.
     -- osd_on_toggle     = 5,   --SECONDS. UNCOMMENT TO INSPECT VERSIONS, FILTERGRAPHS & PARAMETERS. 0 CLEARS THE osd INSTEAD. DISPLAYS mpv-version ffmpeg-version libass-version lavfi-complex af vf video-out-params
     
@@ -23,7 +23,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATIVE).      nil & fal
     SECTIONS     =     6 ,  --0 FOR BLINKING FULL SCREEN. DEFAULT COUNTS widths & heights. MAY LIMIT NUMBER OF DISCS (BEFORE FLIP & STACK). AUTO-GENERATES DISCS IF widths & heights ARE MISSING. ELLIPTICITY=0 BY DEFAULT.
     RES_MULT     =     2 ,  --DEFAULT=1. RESOLUTION MULTIPLIER (SAME FOR X & Y), BASED ON display. REDUCE FOR FASTER seeking (LOAD TIME).  DOESN'T APPLY TO zoompan (TO SPEED UP LOAD). RES_MULTIPLIER=RES_MULT/RES_SAFETY   HD*2 FOR SMOOTH EDGE rotations. AT LEAST .6 FOR SIXTH SECTION.
     RES_SAFETY   =  1.15 ,  --DEFAULT=1 (MINIMUM)  DIMINISHES RES_MULT TO ENSURE FINAL rotation NEVER CLIPS. SAME FOR X & Y.  REDUCE TO 1.1 TO SEE CLIPPING.  +10%+2% FOR iw*1.1 & W/64 (PRIMARY width & x). HOWEVER 1.12 ISN'T ENOUGH (1/.88=1.14?).  HALF EXCESS IS LOST IF DUAL. NEEDED FOR ~DUAL TOO.
-    DUAL         =   true,  --REMOVE FOR ONE SERIES OF SECTIONS, ONLY.  true ENABLES hstack WITH LEFT→RIGHT hflip, & HALVES INITIAL iw (display CANVAS).
+    DUAL         =  true ,  --REMOVE FOR ONE SERIES OF SECTIONS, ONLY.  true ENABLES hstack WITH LEFT→RIGHT hflip, & HALVES INITIAL iw (display CANVAS).
     geq          ='255*lt(hypot(X-W/2\\,Y-H/2)\\,W/2)', --DEFAULT=255. REMOVE FOR SQUARES. W=H FOR INITIAL SQUARE CANVAS.  lt,hypot = LESS-THAN,HYPOTENUSE  GRAPHIC EQUALIZER CAN DRAW ANY SECTION SHAPE WITH FORMULA (LIKE ROUNDED RECTANGLES FOR PUPILS). DRAWS [1] FRAME ONLY. SIMPLE SHAPES CAN BE DRAWN USING INTEGERS. DIAMONDS='255*lt(abs(X-W/2)+abs(Y-H/2)\\,W/2)' (SIMPLER THAN ROTATING SQUARES.)  st & ld (W/2) MAY BE MORE EFFICIENT (INTERNAL VARIABLE).  WHAT'S THE FORMULA FOR PENTAGON EYES? 5 GRADIENTS DETERMINED BY atan.
     widths       ='iw*1.1          iw*.6',                 --iw=INPUT-WIDTH  NO (n,t).  AUTO-GENERATES IF ABSENT. BASED ON display CANVAS. DEFAULT ELLIPTICITY=0 (CIRCLE/SQUARE)  NO TIME DEPENDENCE FOR THESE 3 LINES, FOR snap COMPATIBILITY. REMOVE THESE 5 LINES TO AUTO-GENERATE SECTIONS. 
     heights      ='ih/2            ih*.5 ih           ih/2           ih/8', --ih=INPUT-HEIGHT  EXACT POSITIONING IS TRIAL & ERROR. PUPILS SHOULD BE CIRCLE WHEN SEEN THROUGH SPECTACLES. EYELIDS COVERING INNER PUPIL IS SQUINTING, BUT ONLY COVERING OUTER-PUPIL IS LAZY-EYE.  SECTIONS: 1=SPECTACLE,2=EYELID,3=EYE,4=PUPIL,5=NERVE,6=INNER-NERVE.
@@ -107,8 +107,9 @@ do  g.w[N]        = g.w[N]    or g.h[N] and 'oh' or ('iw*%d/%d'):format(1+o.SECT
     crop_rot      = g.rots[N+1] and g.rots[N+1]~='0' and ('%s,rotate=%s:max(iw\\,ih):ow:BLACK@0'):format(crop_rot,g.rots[N+1]) or crop_rot  --PADS SQUARE SO AS TO AVOID CLIPPING.
     mask          = (mask):format('%s%%s%s[%d],[%d][%d]overlay=%s:%s'):format(scale_negate,crop_rot,N,N-1,N,g.x[N],g.y[N]) end   --crop rotate & overlay. 
 mask              = (mask):format('')..',format=y8'..(o.DUAL and (',crop=iw*(1+1/(%s))/2:ow/a:0,split[L],hflip[R],[L][R]hstack'):format(o.RES_SAFETY) or '')  --%s='' TERMINATES FORMATTING. REMOVE alpha AFTER FINAL overlay. MAINTAIN ASPECT RATIO a WHEN CROPPING EXCESS OFF RIGHT. SUBTRACT HALF RES_SAFETY FROM RIGHT, & A QUARTER FROM TOP & A QUARTER FROM BOTTOM: w=iw-(iw-iw/RES_SAFETY)/2  FFMPEG COMPUTES string OR ELSE INFINITE RECURRING IN LUA. MAINTAINS aspect BY EQUAL PERCENTAGE crop IN w & h. SOME EXCESS RESOLUTION IS LOST TO MAINTAIN TRUE CENTER. 
+o.RES_SAFETY      = o.DUAL and 1+(o.RES_SAFETY-1)/2 or o.RES_SAFETY  --RES_SAFETY NOW HALVED IF DUAL crop! (IN BOTH X & Y IT'S HALVED TOWARDS 1.)
 o.DUAL            = o.DUAL and 2 or 1  --DUAL→2 OR 1 (boolean→number).
-o.RES_SAFETY,o.periods_skipped = 1+(o.RES_SAFETY-1)/o.DUAL,math.min(o.periods_skipped,o.periods)  --MAX-SKIP=periods.  RES_SAFETY NOW HALVED IF DUAL crop! (IN BOTH X & Y IT'S HALVED→1.)
+o.periods_skipped = math.min(o.periods_skipped,o.periods)  --OPTIONAL: MAX-SKIP=periods.
 
 
 lavfi=('fps=%s%%s,scale=%%d:%%d,split=3[vo][t0],%s[vf],nullsrc=1x1:%s:0.001,format=y8,lut=0,split[0][1],[0][vo]scale2ref=floor(oh*a/%d/4)*4:floor(ih*(%s)/4)*4[0][vo],[1][0]scale2ref=oh:ih[1][0],[1]geq=%s[1],[1][0]scale2ref=floor((%s)/4)*4:floor((%s)/4)*4[1][0],[0]loop=%s:1[0],[1]format=yuva420p,loop=%s:1%s[m],[m][vo]scale2ref=oh*a:ih*(%s)[m][vo],[m]loop=%s:%s,loop=%s:1,rotate=%s:iw*oh/ih:ih/(%s),lut=val*gt(val\\,16),zoompan=%s:1:%%dx%%d:%s,negate=enable=%s,lut=0:enable=%s,loop=-1:%d,eq=1:%%s,trim=start_frame=%d[m],[t0]trim=end_frame=1,setpts=PTS-(1/FRAME_RATE+%s)/TB,setsar[t0],[t0][m]concat,trim=start_frame=1%%s[m],[vo][vf][m]maskedmerge')
@@ -163,13 +164,12 @@ function file_loaded() --ALSO @seek, @vid & @on_toggle(is1frame).
     loop        = v.image    and not lavfi_complex  --GIF IS ~image. 
     start_time  = loop       and ':'..mp.get_property_number('time-pos') or ''     --JPEG WITH --start OPTION. 
     insta_pause = insta_pause or not pause  --PREVENTS EMBEDDED MPV FROM SNAPPING. →nil @playback-restart.
-    m           = {vid=v.id,brightness=brightness}
+    m           = {vid=v.id,brightness=brightness}  --brightness @INSERTION OF GRAPH.
     
-    if is1frame and brightness==-1 then mp.command(('no-osd vf remove @%s'):format(label))  --SPECIAL CASES.
-        return end
     if insta_pause then mp.set_property_bool('pause',true) end
-    if loop then mp.command( 'no-osd vf pre    @loop:loop=loop=-1:size=1') end  --ALL MASKS CAN REPLACE @loop.
-    mp.command(("no-osd vf append '@%s:lavfi=[%s]'"):format(label,lavfi):format(start_time,W,H,W,H,brightness,trim_end))  --W,H FOR scale & zoompan. "''" NEEDED FOR SPACEBARS IN filterchain.
+    if is1frame and brightness==-1 then mp.command(('no-osd vf remove @%s'):format(label))  --SPECIAL CASES.
+    else if loop then mp.command('no-osd vf pre @loop:loop=loop=-1:size=1') end  --ALL MASKS CAN REPLACE @loop.
+        mp.command(("no-osd vf append '@%s:lavfi=[%s]'"):format(label,lavfi):format(start_time,W,H,W,H,brightness,trim_end)) end  --W,H FOR scale & zoompan. "''" NEEDED FOR SPACEBARS IN filterchain.
     if insta_pause then mp.set_property_bool('pause',false) end  --& AGAIN @playback-restart FOR WHEN MULTIPLE SCRIPTS SIMULTANEOUSLY insta_pause.
 end
 mp.register_event('file-loaded',file_loaded) --RELOAD IF brightness CHANGES. EACH REPLACEMENT TRIGGERS ANOTHER seek. 
@@ -180,9 +180,8 @@ mp.observe_property('pause','bool',function(_,paused) pause=paused end)  --ALTER
 function playback_restart()
     if insta_pause then mp.set_property_bool('pause',false) end
     insta_pause                       = nil
-    if not target then _,error_string = mp.command(('vf-command %s brightness 0 eq'):format(label))  --NULL-OP AWAITS playback-restart.
-                       target         = error_string and '' or                 'eq' end  --OLD MPV OR NEW. v0.37.0+ SUPPORTS TARGETED COMMANDS.
-    if m.brightness~=brightness then mp.command(('vf-command %s brightness %d %s'):format(label,brightness,target)) end  --FOR TOGGLE OFF DURING seeking. SMPLAYER DOUBLE-MUTE MAY FAIL TO OBSERVE EITHER mute.
+    if not target then _,error_string = mp.command(('vf-command %s brightness 0  eq'):format(label))  --NULL-OP.  OLD MPV REPORTS ERROR/S. scale DOESN'T UNDERSTAND brightness.
+                       target         = error_string and '' or                  'eq' end  --OLD MPV OR NEW. v0.37.0+ SUPPORTS TARGETED COMMANDS.
 end 
 mp.register_event('playback-restart',playback_restart)
 
@@ -205,17 +204,19 @@ end
 for key in o.key_bindings:gmatch('[^ ]+') do mp.add_key_binding(key, 'toggle_mask_'..key, on_toggle) end
 mp.observe_property('mute','bool',on_toggle)
 
+MAX_COUNT=round(o.toggle_duration/.03)  --vf-command EVERY 30ms (APPROX).  EXCESSIVE vf-command CAUSES POOR PERFORMANCE.
 function smooth_toggle() 
-    count= count and count<16 and count+1 or 1
-    if     count== 1 then timers.smooth_toggle:resume() 
-    elseif count==16 then timers.smooth_toggle:kill  () end
-    mp.command(('vf-command %s brightness %s %s'):format(label,-1-brightness+(brightness-(-1-brightness))*count/16,target))  --OLD MPV THROWS A BUNCH OF FFMPEG ERRORS IN THE LOG. scale DOESN'T UNDERSTAND brightness.
+    COUNT= COUNT and COUNT<MAX_COUNT and COUNT+1 or 1
+    if     COUNT== 1        then timers.smooth_toggle:resume() 
+    elseif COUNT==MAX_COUNT then timers.smooth_toggle:kill  () end
+    mp.command(('vf-command %s brightness %d+%d*(1-cos(PI*%d/%d))/2 %s')  --SINE WAVE PROGRESSION.  INITIAL BRIGHTNESS + DIFFERENCE.  DOMAIN & RANGE [0,1] FOR (1-cos(PI*...))/2.
+        :format(label,-1-brightness,1+2*brightness,COUNT,MAX_COUNT,target))
 end 
 
 timers={  --CARRY OVER IN MPV PLAYLIST.
     mute         =mp.add_periodic_timer(o.toggle_on_double_mute,function() end), --mute TIMER TIMES. 0s VALID.
     pause        =mp.add_periodic_timer(o.unpause_on_toggle    ,function() mp.set_property_bool('pause',true) end),  --pause TIMER PAUSES.
-    smooth_toggle=mp.add_periodic_timer(o.toggle_duration/16   ,smooth_toggle),  --16-BIT.
+    smooth_toggle=mp.add_periodic_timer(.03,smooth_toggle), 
 }
 timers.mute .oneshot=true
 timers.pause.oneshot=true 

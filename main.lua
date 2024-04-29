@@ -30,7 +30,7 @@ options={  --ALL OPTIONAL & CAN BE REMOVED.
 o        =options  --ABBREV.
 for opt,val in pairs({scripts={},ytdl={},title_duration=0,options=''})
 do o[opt]=o[opt] or val end  --ESTABLISH DEFAULTS. 
-o.options=(o.options):gsub('-%-','  '):gmatch('[^ ]+') --'-%-' MEANS "--".  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN DOESN'T EXIST IN THE LUA VERSION CURRENTLY USED BY mpv.app ON MACOS.  
+o.options=(o.options):gsub('-%-','  '):gmatch('[^ ]+') --'-%-' MEANS "--".  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN DOESN'T EXIST IN THE LUA VERSION USED BY mpv.app-v0.37 ON MACOS.  
 while true 
 do   opt =o.options()  
      find=opt  and (opt):find('=')  --RIGOROUS FREE-FORM.
@@ -40,24 +40,25 @@ do   opt =o.options()
      mp.set_property(opt,val) end  --mp=MEDIA-PLAYER
 
 scripts,script_opts   = mp.get_property_native('scripts'),mp.get_property_native('script-opts')  --get_property_native FOR FILENAMES.
+m                     = {scripts=scripts,script_opts=script_opts}  --MEMORY FOR ORIGINAL STATE.  AN OPTIMIZATION PRINCIPLE IS TO NEVER DO A command OR set UNLESS NEEDED.
 directory             = require 'mp.utils'.split_path(scripts[1])  --split FROM WHATEVER THE USER ENTERED.  UTILITIES SHOULD BE AVOIDED & POTENTIALLY NOT FUTURE COMPATIBLE. HOWEVER CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
 directory,hook        = mp.command_native({'expand-path',directory}),'ytdl_hook-ytdl_path'     --yt-dlp REQUIRES ~/ EXPANDED. command_native RETURNS. hook SPECIFIES yt-dlp EXECUTABLE.
 COLON                 = mp.get_property('platform')=='windows' and ';' or ':' --FILE LIST SEPARATOR.  WINDOWS=;  UNIX=:
 for _,ytdl in pairs(o.ytdl) 
 do  ytdl              = directory..'/'..ytdl  --'/' FOR WINDOWS & UNIX.
     script_opts[hook] = script_opts[hook] and script_opts[hook]..COLON..ytdl or ytdl end  --APPEND ALL ytdl.
-mp.set_property_native('script-opts',script_opts) --EMPLACE hook.  ALTERNATIVE change-list WON'T ALLOW BOTH " " & "'" IN THE FILENAMES.
+if script_opts~=m.script_opts then mp.set_property_native('script-opts',script_opts) end  --EMPLACE hook.  ALTERNATIVE change-list WON'T ALLOW BOTH " " & "'" IN THE FILENAMES.
 
 for _,script in pairs(o.scripts) do is_present=false   
     for _,val in pairs(scripts) do if (script):lower()==(val):lower() then is_present=true --SEARCH NOT CASE SENSITIVE. CHECK IF is_present (ALREADY LOADED).
         break end end    
     if not is_present then table.insert(scripts,script)
         mp.commandv('load-script',directory..'/'..script) end end  --commandv FOR FILENAMES. join_path AFTER split_path FROM WHATEVER THE USER TYPED IN.
-mp.set_property_native('scripts',scripts)   --ANNOUNCE scripts.
+if scripts~=m.scripts then mp.set_property_native('scripts',scripts) end   --ANNOUNCE scripts.
 
 function file_loaded() 
     osd_level,duration = mp.get_property_number('osd-level'),mp.get_property_number('duration') --osd_level ACTS AS SWITCH FOR FIRST playback-restart.  JPEG duration = (nil & 0) @ (file-loaded & playback-restart). nil & 0 MAY INTERCHANGE.  MPV MAY NOT ACTUALLY DEDUCE TRUE duration DUE TO 3RD PARTY FILTERS.
-    if o.clear_osd  and o.clear_osd+0>0 then mp.set_property_number('osd-level',0) end 
+    if o.clear_osd  and o.clear_osd+0>0 and osd_level>0 then mp.set_property_number('osd-level',0) end 
     if o.loop_limit and (duration or 0)<o.loop_limit+0 then mp.set_property('loop','inf') end  --loop GIF. +0 CONVERTS→number & IS EASIER TO READ THAN RE-ARRANGING INEQUALITIES.
 end
 mp.register_event('file-loaded',file_loaded)
@@ -76,7 +77,7 @@ end
 mp.register_event('playback-restart',playback_restart)
     
 function set_osd_level()  --RETURN osd-level, AFTER timeout.
-    if osd_level then mp.set_property_number('osd-level',osd_level) end
+    if osd_level and osd_level>0 then mp.set_property_number('osd-level',osd_level) end
     osd_level=nil 
 end 
 
@@ -99,7 +100,7 @@ end
 
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES). MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
 ----THIS SCRIPT HAS NO TOGGLE. INSTEAD OF ALL scripts LAUNCHING EACH OTHER WITH THE SAME CODE, THIS SCRIPT LAUNCHES THEM ALL. DECLARING local VARIABLES HELPS WITH HIGHLIGHTING & COLORS, BUT UNNECESSARY. IT'S LIKE THE FAT ON MUSCLE.
-----40%CPU+20%GPU USAGE (5%+20% WITHOUT scripts).  ~75%@30FPS (OR 55%@25FPS) CPU USAGE @FULLSCREEN WITHOUT GPU DRIVERS. REDUCING fps FROM 30→25 DROPS IT BY 15%.  ARGUABLY SMOOTHER THAN VLC, DEPENDING ON VIDEO (SENSITIVE TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE?
+----45%CPU+20%GPU USAGE (5%+20% WITHOUT scripts).  ~75%@30FPS (OR 55%@25FPS) WITHOUT GPU DRIVERS, @FULLSCREEN.  ARGUABLY SMOOTHER THAN VLC, DEPENDING ON VIDEO (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE?
 ----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS. THEY'RE ALL <300 LINES LONG, WITH MANY PARTS COPY/PASTED FROM EACH OTHER.  ULTIMATELY TELEVISION FIRMWARE (1GB) SHOULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. IT'S NOT THE CONTENT PROVIDER'S JOB. MPV CAN ACT LIKE TV FIRMWARE.
 ----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, & MULTI-LINE ALT-EDITING. AIDS RAPID GRAPH TESTING.  MPV HAS LUA, JS & JSON (JAVA SCRIPT OBJECT NOTATION).  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK CAN DO ALMOST ANYTHING WITH A 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
 ----VIRTUALBOX: CAN INCREASE VRAMSize FROM 128→256 MB. MACOS LIMITED TO 3MB VIDEO MEMORY. CAN ALSO SWITCH AROUND Command & Control(^) MODIFIER KEYS.  "C:\Program Files\Oracle\VirtualBox\VBoxManage" setextradata macOS_11 VBoxInternal/Devices/smc/0/Config/DeviceKey ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc
