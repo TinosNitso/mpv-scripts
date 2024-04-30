@@ -1,7 +1,6 @@
-----THIS VERSION HAS BOTH SMOOTH-CROP & PROPER aspect TOGGLE. BUT IT USES TOO MUCH CPU WHEN COMBINED WITH OTHER SCRIPTS.  BASED ON https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua  BUT WITHOUT video-crop BECAUSE THAT CROPS automask TOO.
+----THIS VERSION HAS BOTH SMOOTH-CROP & SMOOTH TOGGLE (TRUE ASPECT). AS SMOOTH AS STRETCHING PARCHMENT, USING A MAGNIFIED NEGATIVE overlay. BUT IT USES TOO MUCH CPU WHEN COMBINED WITH autocomplex.lua.  BASED ON https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua  BUT WITHOUT video-crop BECAUSE THAT CROPS automask TOO.
 ----FOR MPV & SMPLAYER. CROPS IN BOTH SPACE & TIME (SUB-CLIPS). CROP BLACKBARS OFF JPEG, PNG, BMP, GIF, MP3 albumart, AVI, 3GP, WEBM, MP4 & YOUTUBE. CAN CHANGE vid TRACK (MP3TAG) & crop. CAN CROP RAW AUDIO TO START & END limits. .TIFF 1-LAYER ONLY, NO WEBP OR PDF.
 ----USE DOUBLE-mute TO SMOOTH-TOGGLE. CAN MAINTAIN CENTER IN HORIZONTAL/VERTICAL, WITH INSTANTANEOUS TOLERANCE VALUES. SUPPORTS BOTH cropdetect & bbox FFMPEG-FILTERS. 
-----SMOOTH-CROPS USING A MAGNIFIED NEGATIVE overlay. AS SMOOTH AS STRETCHING PARCHMENT.  ON LINUX DON'T USE .snap.
 
 options={
     auto                  =true,  --IF false, CROPS OCCUR ONLY on_toggle & @playback-restart. 
@@ -13,7 +12,7 @@ options={
     ----ALL THE FOLLOWING ARE OPTIONAL & MAY BE REMOVED. SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS.    IN SMPLAYER AN ADVANCED PREFERENCE IS TO RUN action=aspect_none (SET KEYBOARD SHORTCUT=Tab) FOR ALL FILES. IT HAS SOME FINAL GPU OVERRIDE.
     key_bindings          ='C c J j', --DEFAULT='C'. CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER. C→J IN DVORAK, BUT J IS ALSO next_subtitle (& IN VLC IS dec_audio_delay). m IS mute (IN DVORAK TOO) SO CAN DOUBLE-PRESS m. m&m DOUBLE-TAP MAYBE OUGHT TO BE automask, BUT autocrop IS MORE FUNDAMENTAL. TOGGLE DISABLES FINAL SUBTRACTION, TOO!
     toggle_on_double_mute = .5,   --SECONDS TIMEOUT FOR DOUBLE-mute TOGGLE. TRIPLE mute DOUBLES BACK.  DOESN'T WORK IN SMPLAYER ON JPEG (NO AUDIO TO MUTE).
-    toggle_duration       = .5,   --DEFAULT=.5 SECONDS.  TIME TO STRETCH OUT EXTRA PAIR OF BLACK BARS, IF PLAYING.  SMOOTH crop ALSO.
+    toggle_duration       = .5,   --DEFAULT=.5 SECONDS.  TIME TO crop & STRETCH OUT EXTRA PAIR OF BLACK BARS, IF PLAYING.  SMOOTH-PADDING IS EASY, BUT NOT SMOOTH-CROPPING.
     unpause_on_toggle     =.11,   --DEFAULT=.1 SECONDS.  SOME FRAMES ARE ALREADY DRAWN IN ADVANCE. DOESN'T APPLY TO albumart. 
     detect_limit_image    = 32,   --INTEGER 0→255, FOR JPEG & albumart.  ONLY INTEGERS FOR bbox. 
     detect_min_ratio_image=  0,   --OVERRIDE FOR image.
@@ -27,116 +26,98 @@ options={
     -- meta_osd           =  1,   --SECONDS. UNCOMMENT TO DISPLAY ALL detector METADATA.
     -- USE_MIN_RATIO      =true,  --UNCOMMENT TO CROP ALL THE WAY DOWN TO detect_min_ratio. CAN BE SPURIOUS. DEFAULT CANCELS EXCESSIVE crop.
     -- msg_log            =true,  --UNCOMMENT TO MESSAGE MPV LOG. FILLS THE LOG.
-    -- crop_no_vid        =true,  --crop ABSTRACT VISUALS TOO. BY DEFAULT NO CROPPING PURE lavfi-complex, EXCEPT FOR TIME limits.
+    -- crop_no_vid        =true,  --SPATIALLY crop ABSTRACT VISUALS TOO. BY DEFAULT NO CROPPING PURE lavfi-complex, EXCEPT FOR TIME limits.
     -- scale              ={w=1680,h=1050}, --DEFAULT=display OR VIDEO. TRUE ASPECT TOGGLE ONLY WORKS @FULLSCREEN.  MACOS SMPLAYER (& SOME LINUX VERSIONS) REQUIRE THIS OPTION BECAUSE EMBEDDED MPV CAN'T DEDUCE FULLSCREEN DIMENSIONS @file-loaded.
     options               =' '  --' opt1 val1  opt2=val2  --opt3=val3 '... FREE FORM.  main.lua HAS MORE options.
         ..'  osd-font-size=16 geometry=50% image-display-duration=inf'  --DEFAULT size 55p MAY NOT FIT GRAPHS ON osd.  geometry ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.  duration=inf FOR IMAGES.
     ,
-    limits={  --NOT CASE SENSITIVE. ＂  ：⧸⧹｜＂=" :/\|"         find IMPLIES SUBSTRING SEARCH. ASSUMED true UNLESS false (nil MEANING true).  
-      --["media-title"]={time_pos,time_remaining,detect_limit,find}={SECONDS,SECONDS,number,boolean}(OR nil).  TIMES ARE BOTH LOWER BOUNDS IN SECONDS. detect_limit IS FINAL OVERRIDE.  SPACETIME CROPPING IS AN ALTERNATIVE TO SUB-CLIP EXTRACTS, WHICH CAN BE DELETED. STARTING & ENDING CREDITS ARE EASIER TO CROP THAN INTERMISSION. INTERMISSION SUB-CLIPS COULD BE INTERMEDIATE AUTO-seek. 
-        ["Katyusha"]={4,4,find=false},
+    limits={  --NOT CASE SENSITIVE.  CAN ALSO USE END OF YOUTUBE URL.  SPACETIME CROPPING IS AN ALTERNATIVE TO SUB-CLIP EXTRACTS. STARTING & ENDING CREDITS ARE EASIER TO CROP THAN INTERMISSION. INTERMISSION SUB-CLIPS COULD USE INTERMEDIATE AUTO-seek. 
+    ----["path-substring"]={time_pos,time_remaining,detect_limit}={SECONDS,SECONDS,number} (OR nil).  TIMES ARE BOTH LOWER BOUNDS IN SECONDS. detect_limit IS FINAL OVERRIDE.  
         ["We are army of people - Red Army Choir"]={detect_limit=64},
         [  "День Победы"]={4,13},                          --АБЧДЭФГХИЖКЛМНОП РСТУВ  ЙЗЕЁ ЫЮ Я Ц ШЩ ЬЪ
         ["＂Den' Pobedy!＂ - Soviet Victory Day Song"]={7}, --ABČDEFGHIĴKLMNOP RSTUV  YZЕYoYYuYaTsŠŠčʹʺ
-        ["Megadeth Sweating Bullets Official Music Video"]={0,5},
-        ["Мы - армия народа ⧸ We are the army of the people (23 февраля 1919 - 2019)"]={13},
-        ["＂Soldiers walked＂ - The Alexandrov Red Army Choir (1975)"]={0,27},
-        ["＂Song of the Volga Boatmen＂ HQ - Leonid Kharitonov & The Red Army Choir (1965)"]={13},
-        ["Red army choir - Echelon's song (Song for Voroshilov)"]={7,3},
-        ["Red army choir - Echelon's song (original)"]={6},
-        ["＂My Armiya Naroda, Sluzhit' Rossii＂ - Ensemble of the Russian West Military District"]   ={5,14},
-        ["Варшавянка ⧸ Warszawianka ⧸ Varshavianka (1905 - 1917)"]={0,6},
-        ["Russian Patriotic Song： Farewell of Slavianka"]={12},
-        ["И вновь продолжается бой.Legendary Soviet Song.Z."]={0,6},
-        ["＂Polyushko Polye＂ - Soviet Patriotic Song"]={8,12},
-        ["опурри на темы армейских песен Soviet Armed Forces Medley"]={17},
-        ["Tri Tankista - Three Tank Crews - With Lyrics"]={10},
-        ["Три Танкиста ｜ Tri Tankista (The Three Tankists)"]={0,17},
-        ["Три танкиста"]={0,15,find=false},
-        ["Песня Будённовской конной кавалерии РККА"]={11},
-        ["Военные парады 1938 - 1940г. Москва. Красная площадь."]={6,5},
-        ["＂Если завтра война, если завтра в поход＂ - Кинохроника"]={5},
-        ["Sacred War ⧸⧸ Священная Война [Vinyl]"]={10,6},
-        ["Экипаж Одна семья"]={0,8}, 
-        ["＂Конармейский марш. По военной дороге шёл в борьбе и тревоге＂ - Кинохроника"]={5},
-        ["Москва Майская"]={27,15},
     },
 }
-require 'mp.options'.read_options(options)  --OPTIONAL?
-o         =options  --ABBREV.
+o=options  --ABBREV.
+require 'mp.options'.read_options(o)  --OPTIONAL?
+
 for opt,val in pairs( {key_bindings='C',toggle_on_double_mute=0,toggle_duration=.5,unpause_on_toggle=.1,detect_limit_image=o.detect_limit,MAINTAIN_CENTER={},TOLERANCE=0,TOLERANCE_TIME=10,pad_color='BLACK',detector='cropdetect=limit=%s:round=%s:reset=1:skip=0',detector_image='bbox=min_val=%s',scale={},options='',limits={},} )
-do o[opt] =o[opt] or val end  --ESTABLISH DEFAULTS. 
-o.options =(o.options):gsub('-%-','  '):gmatch('[^ ]+') --'-%-' MEANS "--".  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN DOESN'T EXIST IN THE LUA VERSION CURRENTLY USED BY mpv.app ON MACOS.  
-while true 
-do    opt =o.options()  
-      find=opt  and (opt):find('=')  --RIGOROUS FREE-FORM. 
-      val =find and (opt):sub(  find+1) or o.options()  --SKIP+2 PASSED "=", OR ELSE NEXT gmatch.
-      opt =find and (opt):sub(0,find-1) or opt
-      if not (opt and val) then break end
-      mp.set_property(opt,val) end  --mp=MEDIA-PLAYER
+do o[opt] = o[opt] or val end  --ESTABLISH DEFAULTS. 
+o.options = (o.options):gsub('-%-','  '):gmatch('[^ ]+') --'-%-' MEANS "--".  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN DOESN'T EXIST IN THE LUA VERSION CURRENTLY USED BY mpv.app ON MACOS.  
+while true  
+do   opt  = o.options()  
+     find = opt  and (opt):find('=')  --RIGOROUS FREE-FORM. 
+     val  = find and (opt):sub(  find+1) or o.options()  --SKIP+2 PASSED "=", OR ELSE NEXT gmatch.
+     opt  = find and (opt):sub(0,find-1) or opt
+     if not (opt and val) then break end
+     mp.set_property(opt,val) end  --mp=MEDIA-PLAYER
 command_prefix = o.suppress_osd and 'no-osd' or ''
 m,label        = {},mp.get_script_name()  --m=METADATA MEMORY.  label=autocrop 
-ffmpeg_v,mpv_v = mp.get_property('ffmpeg-version'):sub(0,2),mp.get_property('mpv-version'):gsub('mpv 0.',''):sub(0,3)  --FFMPEG  "4."  OR  "5."  OR  "6."  OR OTHER.  "mpv 36."  "mpv 37."  "mpv 38."  ETC.  OLD VERSIONS REQUIRE FORCING vf-COMMANDS, WHICH SLOWS DOWN THE ENGINE. 
-o.detector     = ffmpeg_v=='4.' and o.detector:gsub(':skip=%d+','') or o.detector  --v4 INCOMPATIBLE WITH skip.
+ffmpeg_v,mpv_v,platform = mp.get_property('ffmpeg-version'):sub(0,2),mp.get_property('mpv-version'):gsub('mpv 0.',''):sub(0,3),mp.get_property('platform')  --FFMPEG  "4."  OR  "5."  OR  "6."  OR OTHER.  "mpv 36."  "mpv 37."  "mpv 38."  ETC.  OLD VERSIONS REQUIRE FORCING vf-COMMANDS, WHICH SLOWS DOWN THE ENGINE. 
+o.detector     =    ffmpeg_v=='4.' and o.detector:gsub(':skip=%d+','') or o.detector  --v4 INCOMPATIBLE WITH skip.
+repeat_pad     =    ffmpeg_v== '4.'     or ffmpeg_v== '5.'                    --OLD FFMPEG REQUIRES REPEATING apply_pad COMMANDS. BUT THAT CAUSES LAG.
+                 or    mpv_v=='35.'     or platform=='linux' and mpv_v=='36.' --OLD MPV TOO, IN .flatpak.
+                 or platform=='android' or platform=='freebsd'                --OTHER PLATFORMS HAVE A BETTER CHANCE WITH repeat_pad.
+
+function start_file()  --ESTABLISH limits.
+    limits,path = {},        mp.get_property('path'):lower()  --NOT CASE SENSITIVE.
+    for key,val in pairs(o.limits) do   key   =(key):lower()
+        if (path):find(key,1,true) then limits={
+                time_pos      =val.time_pos       or val[1],  -- 1,true = STARTING_INDEX,EXACT_MATCH  val ASSUMED TO BE table. 
+                time_remaining=val.time_remaining or val[2],
+                detect_limit  =val.detect_limit   or val[3],  --FINAL OVERRIDE.
+            } end end  
+end
+mp.register_event('start-file',start_file)
 
 function round(N,D)  --ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1). N & D MAY ALSO BE STRINGS OR nil.
     D=D or 1
     return N and math.floor(.5+N/D)*D  --LUA DOESN'T SUPPORT math.round(N)=math.floor(.5+N)
 end
 
-function file_loaded(event) --ALSO @alpha & @vid.  THAT IS TRANSPARENCY & TRACK-ID.  alpha=nil ASSUMED @file-loaded. MPV REQUIRES EXTRA .1s TO DETECT ALL video-params. 
-    v           = mp.get_property_native('current-tracks/video') or {}
-    v_params    = mp.get_property_native('video-params')         or {}
-    W           = o.scale.w or o.scale[1] or mp.get_property_number('display-width' ) or v_params.w or v['demux-w']  --(scale OVERRIDE) OR (display) OR (VIDEO)  DIMENSIONS. 
-    H           = o.scale.h or o.scale[2] or mp.get_property_number('display-height') or v_params.h or v['demux-h']
-    W,H         = round(W,2),round(H,2)  --MPV v0.37.0+ HAS ODD BUG.
-    aspect      = v['demux-w'] and v['demux-w']/v['demux-h'] or v_params.aspect  --RAW STREAM aspect. DEFAULT GRAPH STATE IS PADDED, LIKE PRE-crop (OFF).
-    insta_pause = v.image and not pause  --HELPS WITH IMAGES, TO INSTA-pause DURING pad GRAPH INSERTION.
+function file_loaded() --ALSO @alpha & @vid.  THAT IS TRANSPARENCY & TRACK-ID.  alpha=nil ASSUMED @file-loaded.  MPV-v0.36 REQUIRES EXTRA .1s TO DETECT ALL video-params. 
+    v       =mp.get_property_native('current-tracks/video') or {}
+    v_params=mp.get_property_native('video-params')         or {}
+    aspect  =v['demux-w'] and v['demux-w']/v['demux-h'] or v_params.aspect  --RAW STREAM aspect. DEFAULT GRAPH STATE IS OFF (PADDED).
     
-    if insta_pause then mp.set_property_bool('pause',true ) end
-    if aspect then mp.command(('%s vf pre @%s-pad:lavfi=[scale=%d:%d:eval=frame,pad=%d:%d:(ow-iw)/2:(oh-ih)/2:%s:frame,setsar=1]')  --pad GRAPH GOES IN FIRST TO STOP EMBEDDED MPV SNAPPING. PADS AN EXTRA PAIR OF BLACK BARS.  SEPARATE FOR BACKWARDS COMPATIBILITY.  REPLACE "BLACK" FOR COLORED BARS (on_toggle).
-                       :format( command_prefix,label,round(math.min(W,H*aspect)),round(math.min(W/aspect,H)),W,H,o.pad_color    )) end  
-    if insta_pause then mp.set_property_bool('pause',false) end 
+    timers.auto_delay:resume()  --is1frame REQUIRES SMALL DELAY FOR INITIAL DETECTION (RELIABILITY ISSUE).
+    if not OFF and limits.time_pos and mp.get_property_number('time-pos')<limits.time_pos+0   --+0 CONVERTS→number & IS EASIER TO READ THAN RE-ARRANGING INEQUALITIES.  JPEG>=0.
+    then mp.command(('%s seek %s absolute exact'):format(command_prefix,limits.time_pos)) end --ONLY seek FORWARDS. MAYBE MORE RIGOROUS THAN SETTING time-pos DIRECTLY.  seeking IS MORE ELEGANT THAN TRIMMING TIMESTAMPS. 
+    if not aspect or not (v.id or o.crop_no_vid) then return end  --RAW AUDIO ENDS HERE (~aspect).  lavfi-complex MAY NOT NEED CROPPING.  
     
-    if event then limits,media_title = {},mp.get_property('media-title'):lower():gsub('[ ]+',' '):gsub('＂','"'):gsub('：',':'):gsub('⧸','/'):gsub('⧹','\\'):gsub('｜','|')  --event IMPLIES NEW FILE.  NOT CASE SENSITIVE: ＂  ：⧸⧹｜＂=" :/\|"  
-        for title,params in pairs(o.limits) do title=(title)            :lower():gsub('[ ]+',' '):gsub('＂','"'):gsub('：',':'):gsub('⧸','/'):gsub('⧹','\\'):gsub('｜','|')
-            if media_title==title or params.find~=false and (media_title):find(title,0,true)  -- 0,true = STARTING_INDEX,EXACT_MATCH  params ASSUMED TO BE table.  path/URL COULD ALSO BE SEARCHED.
-            then limits={time_pos      =params.time_pos       or params[1],  
-                         time_remaining=params.time_remaining or params[2],
-                         detect_limit  =params.detect_limit   or params[3],  --FINAL OVERRIDE.
-                    } end end end 
-    if not OFF and limits.time_pos and mp.get_property_number('time-pos')<limits.time_pos+0   --+0 CONVERTS→number & IS EASIER TO READ THAN RE-ARRANGING INEQUALITIES.
-    then mp.command(('%s seek %s absolute exact'):format(command_prefix,limits.time_pos)) end --ONLY seek FORWARDS. MORE RIGOROUS THAN SETTING time-pos DIRECTLY.  SEEKING IS MORE ELEGANT THAN TRIMMING TIMESTAMPS, FOR SPACETIME CROPPING. CROPS AUDIO TOO.
-    
-    timers.auto_delay:resume()  --FOR RAW AUDIO TOO.  is1frame REQUIRES SMALL DELAY FOR INITIAL DETECTION (RELIABILITY ISSUE).
-    if not aspect or not (v.id or o.crop_no_vid) then return end  --lavfi-complex MAY NOT NEED CROPPING.
-        
-    detect_min_ratio=v.image      and o.detect_min_ratio_image or o.detect_min_ratio
-    is1frame        =v.image      and not mp.get_opt('lavfi-complex')  --REQUIRE GRAPH REPLACEMENT IF image & ~complex. 
-    MAINTAIN_CENTER =is1frame     and {} or o.MAINTAIN_CENTER  --RAW JPEG CAN MOVE CENTER. GIF IS ~image. 
-    auto            =not is1frame and o.auto   --NO auto FOR is1frame, BECAUSE audio GLITCHES ON GRAPH REPLACEMENT.
-    m               ={vid=v.id}  --MEMORY FOR vid SWITCH.
-    detect_limit    =limits.detect_limit or v.image and o.detect_limit_image or o.detect_limit
-    detector        =((v.image or v_params.alpha)   and o.detector_image or o.detector):format(detect_limit,o.detect_round)  --alpha & JPEG USES bbox.
+    W                = o.scale.w or o.scale[1] or mp.get_property_number('display-width' ) or v_params.w or v['demux-w']  --(scale OVERRIDE) OR (display) OR (VIDEO)  DIMENSIONS. 
+    H                = o.scale.h or o.scale[2] or mp.get_property_number('display-height') or v_params.h or v['demux-h']
+    W,H              = round(W,2),round(H,2)  --MPV v0.37.0+ HAS ODD BUG.
+    detect_min_ratio = v.image      and o.detect_min_ratio_image or o.detect_min_ratio
+    is1frame         = v.image      and not mp.get_opt('lavfi-complex')  --REQUIRE GRAPH REPLACEMENT IF image & ~complex. 
+    MAINTAIN_CENTER  = is1frame     and {} or o.MAINTAIN_CENTER  --RAW JPEG CAN MOVE CENTER. GIF IS ~image. 
+    auto             = not is1frame and o.auto   --NO auto FOR is1frame.
+    detect_limit     = limits.detect_limit or v.image and o.detect_limit_image or o.detect_limit
+    detector         = ((v.image or v_params.alpha)   and o.detector_image or o.detector):format(detect_limit,o.detect_round)  --alpha & JPEG USES bbox.
+    m,pad_iw,pad_ih  = {vid=v.id},round(math.min(W,H*aspect)),round(math.min(H,W/aspect))  --MEMORY FOR vid SWITCH, & pad GRAPH INSERTS (pad INPUT_WIDTH,INPUT_HEIGHT).
+    insta_pause      = v.image and not pause  --HELPS WITH GRAPH INSERTION FOR IMAGES.  THERE CAN BE INTERFERENCE FROM OTHER SCRIPT/S.
+    if insta_pause then mp.set_property_bool('pause',true) end
     
     
-    mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d:eval=frame,crop=%d:%d:0:0:1:1]')  --CONSTANT crop, AFTER SCALED NEGATIVE overlay.
-        :format( command_prefix,label,            W ,H,                 W ,H           ))
-    mp.command(('%s vf pre @%s:lavfi=[scale=round(iw/4)*4:round(ih/4)*4,%s,split,overlay]')
-        :format( command_prefix,label,                                  detector          ))
+    mp.command(('%s vf pre @%s-pad:lavfi=[scale=%d:%d:eval=frame,pad=%d:%d:(ow-iw)/2:(oh-ih)/2:%s:frame,setsar=1]'):format(command_prefix,label,pad_iw,pad_ih,W,H,o.pad_color))  --PADS AN EXTRA PAIR OF BLACK BARS.
+    mp.command(('%s vf pre @%s-scale:lavfi=[scale=%d:%d:eval=frame,crop=%d:%d:0:0:1:1]'):format(command_prefix,label,W,H,W,H))  --CONSTANT crop, AFTER SCALED NEGATIVE overlay.
+    mp.command(('%s vf pre @%s:lavfi=[scale=round(iw/4)*4:round(ih/4)*4,%s,split,overlay]'):format(command_prefix,label,detector))
     
-    ----lavfi     =[graph] [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTERGRAPHS.  %d,%s = DECIMAL_INTEGER,string.  3 GRAPHS FOR BACKWARDS COMPATIBILITY. MPV-v0.37.0+ NEEDS ONLY 1 OR 2.
-    ----cropdetect=limit:round:reset:skip  DEFAULT=24/255:16:0  reset & skip BOTH MEASURED IN FRAMES, round IN PIXELS. reset>0 COUNTS HOW MANY FRAMES PER COMPUTATION. skip INCOMPATIBLE WITH FFMPEG-v4. alpha TRIGGERS BAD PERFORMANCE BUG.
-    ----bbox      =min_val  DEFAULT=16  [0,255]  BOUNDING BOX REQUIRED FOR image & alpha.  CAN ALSO COMBINE MULTIPLE DETECTORS IN 1 GRAPH FOR IMPROVED RELIABILITY, BUT UNNECESSARY & MAY INCREASE CPU USAGE.
-    ----crop      =w:h:x:y:keep_aspect:exact  DEFAULT=iw:ih:(iw-ow)/2:(ih-oh)/2:0:0   WON'T CHANGE DIMENSIONS WITH t OR n, NOR eval=frame NOR enable=1 (TIMELINE SWITCH). BUGS OUT IF w OR h IS TOO BIG. SAFER TO AVOID SMOOTH-CROPPING. FFMPEG-v4 REQUIRES ow INSTEAD OF oh.
+    ----lavfi     =[graph] [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTERGRAPHS.  %d,%s = DECIMAL_INTEGER,string.  2 GRAPHS + FILTER FOR BACKWARDS COMPATIBILITY, PLACED IN REVERSE ORDER.
+    ----cropdetect=limit:round:reset:skip  DEFAULT=24/255:16:0  round MEASURED IN IN PIXELS, reset & skip BOTH IN FRAMES. reset>0 COUNTS HOW MANY FRAMES PER COMPUTATION. skip INCOMPATIBLE WITH FFMPEG-v4. alpha TRIGGERS BAD PERFORMANCE BUG.
+    ----bbox      =min_val  DEFAULT=16  [0,255]  BOUNDING BOX REQUIRED FOR image & alpha.  CAN ALSO COMBINE MULTIPLE DETECTORS IN 1 GRAPH, BUT THAT COMBINES DEFICITS.
+    ----crop      =w:h:x:y:keep_aspect:exact  DEFAULT=iw:ih:(iw-ow)/2:(ih-oh)/2:0:0   WON'T CHANGE DIMENSIONS WITH t OR n, NOR eval=frame NOR enable=1 (TIMELINE SWITCH). BUGS OUT IF w OR h IS TOO BIG. SAFER TO AVOID SMOOTH-CROPPING.
     ----scale     =w:h      DEFAULT=iw:ih  USING [vo] scale WOULD CAUSE EMBEDDED MPV TO SNAP @vid, SO USE display INSTEAD. EITHER WINDOW SNAPS IN, OR ELSE video SNAPS OUT.
     ----pad       =w:h:x:y:color:eval  DEFAULT=0:0:0:0:BLACK:init  0 MAY MEAN iw OR ih. FOR TOGGLE OFF. RETURNS EXTRA BLACK BARS TO CORRECT aspect. MPV HAS A WINDOW SIZE TO COLOR IN.
-    ----setsar    =sar      DEFAULT=0  IS THE FINISH.  SAMPLE ASPECT RATIO. PREVENTS EMBEDDED MPV FROM SNAPPING ON albumart. MACOS REQUIRES sar (SEE ERRORS IN LOG). SHOULD BE 1 I THINK.
+    ----setsar    =sar      DEFAULT=0  IS THE FINISH.  SAMPLE ASPECT RATIO. PREVENTS EMBEDDED MPV FROM SNAPPING ON albumart. MACOS REQUIRES sar (SEE ERRORS IN LOG). SHOULD BE 1 FOR OUTPUT I THINK.
     ----split      CLONES video. THIS IS A WORKAROUND FOR crop BECAUSE IT ISN'T SMOOTH. WHAT'S SMOOTH IS A SCALED NEGATIVE overlay, WHICH IS THEN CROPPED FROM x,y = 0,0 CONSTANT COORDS. THERE'S NO WORKAROUND FOR HAVING TO MAGNIFY UP FIRST.
     ----overlay   =x:y DEFAULT=0:0 n=1@INSERTION (OFF)  THIS FILTER CAN BE OFF-BY-1 IF W OR H ISN'T DIVISIBLE BY 4.
+    
+    
+    if insta_pause then mp.set_property_bool('pause',false) end 
 end
 mp.register_event('file-loaded',file_loaded)
-mp.observe_property('vid','number',function(_,vid) if vid and m.vid and m.vid~=vid then file_loaded() end end)  --RELOAD IF vid CHANGES. vid=nil IF LOCKED BY lavfi-complex.  AN MP3 OR WAV MAY BE A COLLECTION OF JPEG IMAGES (MP3TAG) WITH DIFFERENT DIMENSIONS, WHICH NEED CROPPING (& HAVE RUNNING audio). 
+mp.observe_property('vid','number',function(_,vid) if vid and m.vid and m.vid~=vid then file_loaded() end end)  --RELOAD IF vid CHANGES. vid=nil IF LOCKED BY lavfi-complex.  UNFORTUNATELY EMBEDDED MPV SNAP EVERY TIME.  AN MP3 OR WAV MAY BE A COLLECTION OF JPEG IMAGES (MP3TAG) WITH DIFFERENT DIMENSIONS, WHICH NEED CROPPING (& HAVE RUNNING audio). 
 mp.observe_property('pause','bool',function(_,paused) pause=paused end)  --MORE EFFICIENT TO observe.
 
 function playback_restart() --vf-command RESET, UNLESS is1frame (GEOMETRY PERMANENT). 
@@ -155,26 +136,27 @@ mp.observe_property('video-params','native',on_v_params)
 function on_toggle(mute)  --PADS BLACK BARS WITHOUT CHANGING [vo] scale. VALID @FULLSCREEN.  A DIFFERENT VERSION COULD USE osd-dimensions (WINDOW SIZE).
     if not timers.mute then return  --STILL LOADING.
     elseif mute and not timers.mute:is_enabled() then timers.mute:resume() --START timer OR ELSE TOGGLE.  
-    else OFF,m.time_pos,insta_unpause = not OFF,nil,pause  --OFF SWITCH. ~m.time_pos FORCES is_effective. paused FOR unpause_on_crop.
+    else OFF,insta_unpause  = not OFF,pause  --OFF SWITCH. insta_unpause FOR o.unpause_on_toggle.
+        m.time_pos,time_pos = nil,round(mp.get_property_number('time-pos'),.001)  --~m.time_pos FORCES is_effective.  time_pos FOR TOGGLE OFF clip.
         if aspect and OFF then apply_crop({ x=0,y=0, w=max_w,h=max_h }) end --NULL crop, IF VIDEO.
         detect_crop() end  --IN CASE ~auto.
 end
 for key in o.key_bindings:gmatch('[^ ]+') do mp.add_key_binding(key,'toggle_crop_'..key,on_toggle) end
 mp.observe_property('mute','bool',on_toggle)
 
-function detect_crop()  --USUALLY LOOPS EVERY HALF A SECOND.  MUST ALSO DETECT CROP FOR PURE AUDIO @FINAL LIMIT.
+function detect_crop()  --FOR RAW AUDIO TOO.  USUALLY LOOPS EVERY HALF A SECOND.
     if OFF or not auto and m.time_pos then return  --~auto ONLY CROPS ONCE & @on_toggle & @playback-restart.
     elseif limits.time_remaining and (mp.get_property_number('time-remaining') or 0)<limits.time_remaining+0 
     then mp.command(command_prefix..' playlist-next force')   --playlist-next FOR MPV PLAYLIST. force FOR SMPLAYER PLAYLIST.  THIS IS A TIME-CROP (LIKE apply_crop). SAFER THAN RE-APPENDING trim & atrim FILTERS USING main.lua.
          return 
     elseif not max_w then return end  
     
-    meta,time_pos = mp.get_property_native('vf-metadata/'..label),mp.get_property_number('time-pos')  -- Get the metadata.
+    meta,time_pos = mp.get_property_native('vf-metadata/'..label),round(mp.get_property_number('time-pos'),.001)  --Get the metadata.  NEAREST MILLISECOND.  
     if not meta then if o.msg_log then mp.msg.error("No crop metadata.")    --Verify the existence of metadata.  HAPPENS RARELY IF seeking NEAR end-file. SOMETIMES IT'S {} WHEN PAUSED, WHICH FAILS THE NEXT TEST.
             mp.msg.info("Was the cropdetect filter successfully inserted?\nDoes your version of ffmpeg/libav support AVFrame metadata?") end
         return  
     elseif o.meta_osd then mp.osd_message(mp.get_property_osd('vf-metadata/'..label),o.meta_osd) end  --DISPLAY COORDS FOR 1 SEC. THIS BUGS OUT IF ~meta.
-    
+        
     for key in ('w h x1 y1 x2 y2 x y'):gmatch('[^ ]+') 
     do meta[key]=tonumber(meta['lavfi.cropdetect.'..key] or meta['lavfi.bbox.'..key]) end  --tonumber(nil)=nil (BUT 0+nil RAISES ERROR).
     for key in ('w h x1 y1 x2 y2    '):gmatch('[^ ]+') 
@@ -230,39 +212,35 @@ for _,timer in pairs(timers) do timer:kill() end
 function apply_crop(meta) 
     aspect  =OFF    and (v['demux-w'] and v['demux-w']/v['demux-h'] or v_params.aspect) or W/H  --OFF&(~image OR image) OR ON(FULL-SCREEN).
     m.aspect=m.aspect or v['demux-w'] and v['demux-w']/v['demux-h'] or v_params.aspect  --ASSUME OFF IF nil.  GRAPH RESETS AFTER playback-restart.
-    m.w_target,w_target,m.h_target,h_target = round(math.min(W,H*m.aspect)),round(math.min(W,H*aspect)),round(math.min(H,W/m.aspect)),round(math.min(H,W/aspect))  --pad GRAPH WIDTH & HEIGHT TARGETS.
+    m.pad_iw,pad_iw,m.pad_ih,pad_ih = round(math.min(W,H*m.aspect)),round(math.min(W,H*aspect)),round(math.min(W/m.aspect,H)),round(math.min(W/aspect,H))  --pad GRAPH WIDTHS & HEIGHTS: PRIOR→TARGETS.
     
-    if is1frame then paused=pause  --GRAPH REPLACEMENTS. INSTA-pause IMPROVES RELIABILITY DUE TO INTERFERENCE FROM OTHER SCRIPTS. 
-        mp.set_property_bool('pause',true)
-        mp.command(('%s vf pre @%s-pad:lavfi=[scale=%d:%d,pad=%d:%d:(ow-iw)/2:(oh-ih)/2:%s:frame,setsar=1]'):format(command_prefix,label,w_target,h_target,W,H,o.pad_color))  --apply_pad HERE.
-        mp.command(('%s vf pre @%s:lavfi=[scale=round(iw/4)*4:round(ih/4)*4,%s,crop=%d:%d:%d:%d:1:1]'):format(command_prefix,label,detector,meta.w,meta.h,meta.x,meta.y))  --detector OPTIONAL.
-        mp.set_property_bool('pause',paused)  --RETURN STATE.
-    else if not target 
-        then _,error_string = mp.command(('%s vf-command %s x 0 crop'):format(command_prefix,label))  --NULL-OP TO ESTABLISH TARGETS.
-             target         = error_string and '' or 'crop'      --OLD MPV OR NEW. MPV v0.37.0+ SUPPORTS TARGETED COMMANDS.
+    if is1frame then insta_pause=not pause  --GRAPH REPLACEMENTS. insta_pause DUE TO INTERFERENCE FROM OTHER SCRIPT/S.
+        if insta_pause then mp.set_property_bool('pause',true ) end
+        mp.command(('%s vf pre @%s-pad:lavfi=[scale=%d:%d:eval=frame,pad=%d:%d:(ow-iw)/2:(oh-ih)/2:%s:frame,setsar=1]   '):format(command_prefix,label,pad_iw,pad_ih,W,H,o.pad_color))
+        mp.command(('%s vf pre @%s:lavfi=[scale=round(iw/4)*4:round(ih/4)*4,%s,crop=min(iw\\,%d):min(ih\\,%d):%d:%d:1:1]'):format(command_prefix,label,detector,meta.w,meta.h,meta.x,meta.y))  --detector NEEDED FOR TOGGLE. min NEEDED FOR RARE BUG, DUE TO INTERFERENCE FROM OTHER SCRIPT/S (iw<meta.w AT SOME POINT IN TIME).
+        if insta_pause then mp.set_property_bool('pause',false) end       
+    else if not target
+        then _,error_string = mp.command(('%s vf-command %s x 0 overlay'):format(command_prefix,label))  --NULL-OP TO ESTABLISH TARGETS.
+             target         = error_string and '' or 'overlay'      --OLD MPV OR NEW. MPV v0.37.0+ SUPPORTS TARGETED COMMANDS.
              target_scale   = error_string and '' or 'scale' end --FOR pad GRAPH.
-        clip                = ('(1-cos(PI*clip((t-%s)/(%s),0,1)))/2')  --[0,1] DOMAIN & RANGE FOR (1-cos(PI*...))/2.  TIME EXPRESSION FOR SMOOTH-PADDING.  0=INITIAL, 1=FINAL.  A SINE WAVE PROGRESSION.  A FUTURE VERSION COULD ALSO SUPPORT A BOUNCING OPTION (BOUNCING BLACK BARS).
-                       :format(round(mp.get_property_number('time-pos'),.001),insta_unpause and 0 or o.toggle_duration)  --NEAREST MILLISECOND.  duration=0 ALSO VALID (insta_unpause).
+        clip                = ('(1-cos(PI*clip((t-%s)/(%s),0,1)))/2'):format(time_pos,insta_unpause and 0 or o.toggle_duration)  --[0,1] DOMAIN & RANGE FOR (1-cos(PI*...))/2.  TIME EXPRESSION FOR SMOOTH-PADDING.  0=INITIAL, 1=FINAL.  A SINE WAVE PROGRESSION.  duration=0 ALSO VALID (insta_unpause).  A FUTURE VERSION COULD ALSO SUPPORT A BOUNCING OPTION (BOUNCING BLACK BARS).
         
         mp.command(('%s vf-command %s       x            -(%d+%d*%s)        %s'):format(command_prefix,label,m.x,meta.x-m.x,clip,    target      ))  --INITIAL+DIFFERENCE*clip  COORD PAIRS. overlay, scale & pad.
         mp.command(('%s vf-command %s       y            -(%d+%d*%s)        %s'):format(command_prefix,label,m.y,meta.y-m.y,clip,    target      ))
         mp.command(('%s vf-command %s-scale width  max(iw/(%d+%d*%s)*%d,%d) %s'):format(command_prefix,label,m.w,meta.w-m.w,clip,W,W,target_scale))  --w & h ARE AMBIGUOUS IN OLD MPV, BUT NOT width & height.
         mp.command(('%s vf-command %s-scale height max(ih/(%d+%d*%s)*%d,%d) %s'):format(command_prefix,label,m.h,meta.h-m.h,clip,H,H,target_scale))
-        if m.aspect~=aspect or MAX_COUNT>1 then apply_pad() end  --apply_pad ONLY WHEN aspect CHANGES, FOR NEW VERSIONS. MAX_COUNT>1 MEANS OLD FFMPEG/MPV.
+        apply_pad()
+        if repeat_pad then for N=1,8 do mp.add_timeout(2^N/100,apply_pad) end end  --vf-command ON EXPONENTIAL TIMEOUTS (.02 .04 .08 .16 .32 .64 1.28 2.56)s, LIKE A SERIES OF DOUBLE-TAPS.  OLD FFMPEG/MPV BUGFIX FOR LAGGY MACOS-VIRTUALBOX.
         
         if insta_unpause then mp.set_property_bool('pause',false)  --unpause_on_toggle, UNLESS is1frame. COULD ALSO BE MADE SILENT.  COULD ALSO CHECK IF insta_unpause NEAR end-file (NOT ENOUGH TIME). 
             timers.pause:resume() end end
-    m.w,m.h,m.x,m.y          = meta.w,meta.h,meta.x,meta.y   --meta→m  MEMORY TRANSFER. 
+    m.w,m.h,m.x,m.y                   = meta.w,meta.h,meta.x,meta.y   --meta→m  MEMORY TRANSFER. 
     m.time_pos,m.aspect,insta_unpause = time_pos,aspect,nil  --insta_unpause ONLY EVER ACTIVATED BY TOGGLE.
 end
 
-MAX_COUNT=(ffmpeg_v=='4.' or ffmpeg_v=='5.' or mpv_v=='35.') and 16 or 1  --OLD FFMPEG/MPV REQUIRE REPEATING apply_pad COMMANDS. UNFORTUNATELY EXCESSIVE vf-command CAUSES POOR PERFORMANCE. LIKE GRAPH REPLACEMENT, ANY COMMAND SLOWS IT DOWN.
 function apply_pad()  --TARGETED scale COMMANDS.
-    mp.command(('%s vf-command %s-pad width  %d+%d*%s %s'):format(command_prefix,label,m.w_target,w_target-m.w_target,clip,target_scale))  --PADS EITHER HORIZONTALLY OR VERTICALLY.  CLIPS BTWN PRIOR w_target & NEXT w_target.
-    mp.command(('%s vf-command %s-pad height %d+%d*%s %s'):format(command_prefix,label,m.h_target,h_target-m.h_target,clip,target_scale)) 
-    
-    COUNT=COUNT and COUNT<MAX_COUNT and COUNT+1 or 1  --BUGFIX FOR MACOS-VIRTUALBOX. RUN ABOVE 2 vf-COMMANDS EVERY 10ms, LIKE A SERIES OF DOUBLE-TAPS.
-    if COUNT<MAX_COUNT then mp.add_timeout(.01,apply_pad) end  
+    if m.pad_iw~=pad_iw then mp.command(('%s vf-command %s-pad width  %d+%d*%s %s'):format(command_prefix,label,m.pad_iw,pad_iw-m.pad_iw,clip,target_scale)) end  --PADS EITHER HORIZONTALLY OR VERTICALLY.  CLIPS BTWN PRIOR pad_iw & NEXT pad_iw.
+    if m.pad_ih~=pad_ih then mp.command(('%s vf-command %s-pad height %d+%d*%s %s'):format(command_prefix,label,m.pad_ih,pad_ih-m.pad_ih,clip,target_scale)) end
 end 
 
 
@@ -274,7 +252,6 @@ end
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap ALL TESTED. v23.6 MAYBE PREFERRED.
 
 ----SMPLAYER v23.12 TRIGGERS GRAPH RESET ON PAUSE. THAT'S ACTUALLY AN ADDED FEATURE WHICH RESETS THE CROP WHEN USER HITS SPACEBAR. v23.6 (JUNE RELEASE) & MPV ALONE DON'T RESET crop ON pause. SMPLAYER NOW COUPLES A seek-0 WITH pause. "no-osd seek 0 relative exact" WITHIN 1ms OF "set pause yes". THEN paused TRIGGERS WITHIN A FEW ms.
-
 ----ALTERNATIVE FILTERS:
 ----loop   =loop:size  (LOOPS>=-1:MAX_SIZE>0)  UNNECESSARY.  INFINITE loop SWITCH FOR image (1fps). ALTERNATIVE TO GRAPH REPLACEMENT. COULD INCREASE TO 2fps. MORE RELIABLE WHEN USED WITH FURTHER GRAPHS, LIKE automask.
 ----format =pix_fmts          POSSIBLE BUGFIX FOR alpha CAUSING BAD cropdetect PERFORMANCE.

@@ -1,6 +1,6 @@
 ----lavfi-complex SCRIPT WHICH OVERLAYS STEREO FREQUENCY SPECTRUM + VOLUME BARS (AUDIO VISUALS) ONTO MP4, AVI, 3GP, MP3 (RAW & albumart), MP2, M4A, WAV, OGG, AC3, OPUS, WEBM & YOUTUBE. IT ALSO LOOPS albumart. 
-----CAN USE DOUBLE-mute TO TOGGLE. ACCURATE 100Hz GRID (LEFT 1kHz TO RIGHT 1kHz). ARBITRARY sine_mix CAN BE ADDED FOR CALIBRATION. COMPLEX MOVES & ROTATES WITH TIME.  CHANGING TRACKS IN SMPLAYER MAY REQUIRE STOP & PLAY (aid=vid=no LOCK BUG).  A FUTURE VERSION COULD COMPRESS 1→10kHz INTO AN ELEVENTH TICKMARK.
-----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS. IT MAY PERFORM BETTER WITHOUT GPU DRIVERS BECAUSE CPU IS MORE RELIABLE (ROLL BACK DRIVER IN DEVICE MANAGER). A FREE GPU SHIFTS WORK FROM CPU BUT MAY BE INCOMPETENT COMPARED TO CHEAP GRAPHICS CARD OR EXPENSIVE GPU. 
+----CAN USE DOUBLE-mute TO TOGGLE. ACCURATE 100Hz GRID (LEFT 1kHz TO RIGHT 1kHz). ARBITRARY sine_mix CAN BE ADDED FOR CALIBRATION. COMPLEX MOVES & ROTATES WITH TIME.  
+----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS. 
 
 options={  --ALL OPTIONAL & MAY BE REMOVED.  TO REMOVE AN INTERNAL COMPONENT SET ITS alpha TO 0 (freqs volume grid feet shoe).
     key_bindings       ='F3',    --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER.  s=SCREENSHOT NOT SPECTRUM. f=FULLSCREEN NOT FREQS, o=OSD NOT OVERLAY, C=AUTOCROP NOT COMPLEX. v FOR VOLUME?  'F3 F4' FOR 2 KEYS.
@@ -51,7 +51,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.  TO REMOVE AN INTERNAL COMPONENT SET
     -- sine_mix        ={{100,.5},{'200:1',1},{300,.5},{'400:1',1},{500,.5},{'600:1',1},{700,.5},{'800:1',1},{900,.5},{'1000:1',1}}, --{{frequency(Hz):beep_factor,volume},}  beep_factor OPTIONAL.  sine WAVES FOR CALIBRATION MIX DIRECTLY INTO [ao]. THIS EXAMPLE BEEPS DOUBLE ON EVEN. BEEP ACTIVATES feet, & MAY HELP SET freqs_lead_t.  THE 900Hz PEAK LINES UP, BUT THE SURROUNDING CURVE SPREADS MORE ABOVE 900Hz (MYSTERY).
     -- scale           ={w=1680,h=1050}, --DEFAULT=display OR [vo]. EVEN NUMBERS ONLY FOR MPV v0.38.0.
     options            =' '  --' opt1 val1  opt2=val2  --opt3=val3 '... FREE FORM.        
-        ..' vd-lavc-threads=0'    --VIDEO DECODER - LIBRARY AUDIO VIDEO. 0=AUTO OVERRIDES SMPLAYER, OR ELSE MAY FAIL INSPECTION.
+        ..' vd-lavc-threads=0'    --VIDEO DECODER - LIBRARY AUDIO VIDEO. 0=AUTO OVERRIDES SMPLAYER, OR ELSE MAY FAIL TESTING.
         ..'   osd-font-size=16  geometry=50%  force-window=yes'  --DEFAULT size 55p MAY NOT FIT osd_on_toggle. geometry ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.  force-window PREVENTS MPV FROM VANISHING DURING TRACK CHANGES.
     ,
 }
@@ -66,7 +66,7 @@ do    opt =o.options()
       opt =find and (opt):sub(0,find-1) or opt
       if not (opt and val) then break end
       mp.set_property(opt,val) end  --mp=MEDIA-PLAYER
-mp.command('no-osd change-list script-opts append lavfi-complex=yes')  --WARN OTHER SCRIPTS.  MORE RELIABLE. OTHERWISE THEY MAY HAVE TO OBSERVE lavfi-complex. 
+mp.command('no-osd change-list script-opts append lavfi-complex=yes')  --WARN OTHER SCRIPTS IMAGES WILL loop.  OTHERWISE THEY MAY HAVE TO OBSERVE lavfi-complex. 
 
 if o.period..''=='0' then for opt in ('rotate zoompan overlay dual_overlay'):gmatch('[^ ]+') --..'' CONVERTS→string.  DON'T DIVIDE BY 0 BY REMOVING TIME DEPENDENCE.
     do for nt in ('in on n t')     :gmatch('[^ ]+') do o[opt]=o[opt]:gsub(nt..'/%%s',0) end end end     --in & on BEFORE n.  OVERRIDE: THIS CODE ONLY GSUBS "t/%s" ETC (NOT FULLY GENERAL).
@@ -114,8 +114,8 @@ lavfi=('[aid%%d]dynaudnorm=%s%s,asplit[ao],stereotools,highpass=%s,dynaudnorm=%s
 ----scale,scale2ref = w:h  DEFAULT=iw:ih  SCALES TO display FOR CLEARER SPECTRUM ON LOW-RES video. CAN ALSO OBTAIN SMOOTHER CURVE BY SCALING UP A SMALLER ONE.     TO-REFERENCE [1][2]→[1][2] SCALES [1] USING DIMENSIONS OF [2]. ALSO SCALES volume.
 ----overlay         = x:y:eof_action →yuva420p  DEFAULT=0:0:repeat  endall DUE TO apad. FORCES US TO USE yuva420p, WHICH MIGHT BE WHY MULTIPLES OF 4 ARE NEEDED. AN EVEN WIDTH ISN'T GOOD ENOUGH BECAUSE THE COLOR PLANE WIDTH MAY BE ODD & NOT CENTERED PROPERLY (OPTIMIZATION ISSUE). OVERLAYS DATA ON GRID & VOLUME ON-TOP. ALSO: 0Hz RIGHT ON TOP OF 0Hz LEFT (DATA-overlay INSTEAD OF hstack). MAY DEPEND ON TIME t.  UNFORTUNATELY THIS FILTER HAS AN OFF BY 1 BUG IF W OR H ISN'T A MULTIPLE OF 4.  IF COLOR RES IS A PROBLEM, A WORKAROUND IS TO USE A RES_MULTIPLIER=2 THEN HALVE yuv420p→yuv444p.
 ----hstack,vstack   = inputs  DEFAULT=2  COMBINES THE VOLUMES INTO A 20 TICK STEREO RULER. ALSO COMBINES feet.  vstack FOR FEET & TOP/BOTTOM.
-----setsar          = sar  DEFAULT=0  SAMPLE(PIXEL) ASPECT RATIO. FOR SAVE concat OF CASE 2 TIMESTAMP FRAME (albumart).
-----concat            [t0][vo]→[vo]      FINISHES [t0].  CONCATENATE STARTING TIMESTAMP, ON INSERTION. OCCURS @seek. NEEDED TO SYNC WITH automask. SAFE DUE TO setsar & yuva420p FORCED BY overlay.
+----setsar            SAMPLE(PIXEL) ASPECT RATIO. FOR SAFE concat OF CASE 2 TIMESTAMP FRAME (albumart).
+----concat            [t0][vo]→[vo]      FINISHES [t0].  CONCATENATE STARTING TIMESTAMP, ON INSERTION. OCCURS @seek. NEEDED TO SYNC WITH automask.
 ----split,asplit    = outputs  DEFAULT=2  IS THE FINISH ON [ao].  
 ----trim            = ...:end:...:start_frame:end_frame  TRIMS 1 FRAME OFF THE START FOR ITS TIMESTAMP. ALSO A BUGFIX FOR A CRASH AT end-file.
 ----format,aformat  = pix_fmts,sample_fmts:sample_rates  (yuva420p yuv420p gbrap gbrp=rgb24),s16:Hz  IS THE FINISH (TO REMOVE alpha=255).  gbrap (GreatBRitAin Planar) ASSUMED BY shuffleplanes. yuva420p FORCED BY overlay. NO format2ref FILTER.  aformat REMOVES doublep PRECISION AFTER dynaudnorm, & DOWNSAMPLES TO 2100Hz (NYQUIST+5%). 
@@ -148,7 +148,7 @@ function file_loaded()  --ALSO on_aid_vid & on_toggle{ON}.    THIS COULD BE REPL
     framerate =o.freqs_interpolation  and o.volume_fps or freqs_fps  --INTERPOLATION: freqs_fps→volume_fps
     duration  =round(mp.get_property_number('duration'),.01)-.2   --SUBTRACT .2s BY TRIAL & ERROR. TESTED MPV-v0.38 ON 10 HOURS albumart.  WITHOUT SUBTRACTION SMPLAYER HANGS NEAR end-file.
     complex   =(v.id and not v.image) and ('[vid%d]fps=%s,scale=%d:%d'):format(v.id,o.fps,W,H)  --CASE 1: NORMAL video.  complex=lavfi INSERT WHICH YIELDS [vo].  
-               or v.id                and ('[vid%d]scale=%d:%d,loop=-1:1[vo],[vid]split[vid],trim=end_frame=1,crop=1:1:0:0:1:1,scale=%d:%d,setsar[t0],[t0][vo]concat,trim=start_frame=1,fps=%s'):format(v.id,W,H,W,H,o.fps)  --CASE 2 (albumart) IS THE MOST COMPLICATED. albumart IS LOOPED WITH TIMESTAMP FRAME [t0] PREPENDED.
+               or v.id and ('[vid%d]scale=%d:%d,loop=-1:1[vo],[vid]split[vid],trim=end_frame=1,crop=1:1:0:0:1:1,scale=%d:%d,setsar[t0],[t0][vo]concat,trim=start_frame=1,fps=%s'):format(v.id,W,H,W,H,o.fps)  --CASE 2 (albumart) IS THE MOST COMPLICATED. albumart IS LOOPED, WITH ATOMIC TIMESTAMP FRAME [t0] PREPENDED & TRIMMED.
                or ('[vid]split[vid],crop=1:1:0:0:1:1,lutyuv=0:128:128:0,scale=%d:%d,fps=%s'):format(W,H,o.fps)  --CASE 3  (RAW AUDIO)  USES [vid] INSTEAD OF [vid#] TO BUILD BLANK [vo] UNDERLAY. [vid] IS THE SPECTRUM. 
     complex   =o.dual_scale[2] and ('%s[vo],[vid]split[vid],%s,scale=%d:%d[dual],[vo][dual]overlay=%s'):format(complex,o.dual_filterchain,round(W*o.dual_scale[1],4),round(H*o.dual_scale[2]*o.freqs_clip_h*2,4),o.dual_overlay)  --[v2]=DUAL  LABELS [vid1][vid2] ETC NOT ALLOWED (RESERVED). 
                or                  complex  --NO dual.
@@ -198,7 +198,7 @@ function on_aid_vid(property,id)   --id=nil OR number.  ONLY GOOD FOR SWITCHING 
     end_file()  --UNLOCK aid & vid.
     if aid then mp.set_property_number('aid',aid) end  --SET AFTER stop, IF WELL-DEFINED.
     if vid then mp.set_property_number('vid',vid) end
-    mp.command('playlist-play-index current') --FLAGS NOT ALLOWED.  →file-loaded
+    mp.command('playlist-play-index current')  --FLAGS NOT ALLOWED (v0.36).  →file-loaded
 end 
 mp.observe_property('vid','number',on_aid_vid)  --  TESTED
 mp.observe_property('aid','number',on_aid_vid)  --UNTESTED
@@ -212,6 +212,7 @@ mp.observe_property('aid','number',on_aid_vid)  --UNTESTED
 
 ----BUG: SOME YT VIDEOS GLITCH @START (PAUSING). EXAMPLE (MIDNIGHT BROADCAST): https://youtu.be/D22CenDEs40
 ----BUG: SMPLAYER v23.12 PAUSE TRIGGERS GRAPH RESET (LAG). FIX: CAN USE v23.6 (JUNE RELEASE) INSTEAD, OR GIVE MPV ITS OWN WINDOW. SMPLAYER NOW COUPLES A seek-0 WITH pause. "no-osd seek 0 relative exact" WITHIN 1ms OF "set pause yes". THEN paused TRIGGERS WITHIN A FEW ms. 
+----A DIFFERENT VERSION COULD COMPRESS 1→10kHz INTO AN ELEVENTH TICKMARK.
 
 ----ALTERNATIVE FILTERS:
 ----colorchannelmixer=rr:...:aa   (RANGE -2→2, r g b a PAIRS)  DEFAULT rr=1,rg=0,ETC.  A BIT SLOW LIKE geq SO NOT USED BY DEFAULT.

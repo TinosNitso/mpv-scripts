@@ -5,21 +5,21 @@
 
 options={  --ALL OPTIONAL & MAY BE REMOVED.
     key_bindings         ='F2', --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER. m IS MUTE SO CAN DOUBLE-PRESS m. 'F2 F3' FOR 2 KEYS.  s=SCREENSHOT (NOT SPEED NOR SPECTRUM). C IS CROP, NOT CLOCK.
-    toggle_on_double_mute=.5,   --SECONDS TIMEOUT FOR DOUBLE-MUTE-TOGGLE. LUA SCRIPTS CAN BE TOGGLED USING DOUBLE mute.  TOGGLE DOESN'T SWITCH OFF dynaudnorm (FRAME-TIMING ISSUE).
+    toggle_on_double_mute=.5,   --SECONDS TIMEOUT FOR DOUBLE-MUTE-TOGGLE. LUA SCRIPTS CAN BE TOGGLED USING DOUBLE mute.  TOGGLE DOESN'T APPLY TO filterchain.
     
-    clock='{\\fs71\\bord2\\an3}{}%I{\\fs50}:%M{\\fs35}:%S{\\fs25} %p', --REMOVE TO remove clock.  {} REMOVES LEADING 0 FOLLOWING IT.  fs,bord,an,%I,%M,%S,%p = FONT-SIZE,BORDER,ALIGNMENT-NUMPAD,HRS(12),MINS,SECS,P/AM  (DEFAULT an0=an7=TOPLEFT)  BIG:MEDium:Little:tiny, RATIO=SQRT(.5)=.71  FORMATTERS: a A b B c d H I M m p S w x X Y y  shad1,b1,i1,u1,s1,be1,fn = SHADOW,BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME  REQUIRES [vo] TO BE SEEN (NOT RAW MP3).  main.lua HAS title, WITHOUT TOGGLE.
+    clock='{\\fs71\\bord2\\an3}{}%I{\\fs50}:%M{\\fs35}:%S{\\fs25} %p', --REMOVE TO remove clock. {} REMOVES LEADING 0 FOLLOWING IT.  fs,bord,an,%I,%M,%S,%p = FONT-SIZE,BORDER,ALIGNMENT-NUMPAD,HRS(12),MINS,SECS,P/AM  (DEFAULT an0=an7=TOPLEFT)  BIG:MEDium:Little:tiny, RATIO=SQRT(.5)=.71  FORMATTERS: a A b B c d H I M m p S w x X Y y  shad1,b1,i1,u1,s1,be1,fn = SHADOW,BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME  REQUIRES [vo] TO BE SEEN (NOT RAW MP3).  main.lua HAS title, WITHOUT TOGGLE. INSTEAD OF COPYING THE clock INTO OTHER SCRIPT/S, THIS SCRIPT SYNCS IT TO SYSTEM TICK.
     -- clock='{\\fs55\\bord2\\an3\\cFF5000}%I{\\c0}:{\\cFFFFFF}%M{\\c0}:{\\cFF}%S{\\fs39\\c0\\bord0} %p', --UNCOMMENT FOR COLORED clock. "BLUE:WHITE:RED black", LIKE A TRIBAR FLAG (TRI-COLOR clock).  COLOR=\cFF5000 IS A BRIGHTER SHADE OF BLUE (HEX ORDERED BGR).  AN UNUSED BIG SCREEN TV CAN BE A BIG clock WITH BACKGROUND VIDEO.
     
     filterchain='anull,'  --CAN REPLACE anull WITH EXTRA FILTERS (highpass aresample vibrato ...).
               ..'dynaudnorm=500:5:1:100', --DEFAULT=500:31:.95:10='f:g:p:m'  DYNAMIC AUDIO NORMALIZER.  ALL subprocesses USE THIS NORMALIZER. GRAPH COMMENTARY HAS MORE DETAILS.
-    mpv={  --REMOVE FOR clock ONLY OVERRIDE (+filterchain). LIST ALL POSSIBLE mpv COMMANDS, IN ORDER OF PREFERENCE. USED BY ALL subprocesses. A COMMAND MAY NOT BE A PATH.  INSTEAD OF COPY/PASTING THE clock INTO OTHER SCRIPT/S, THIS SCRIPT SYNCS IT TO SYSTEM TICK.
+    mpv={  --REMOVE FOR clock ONLY OVERRIDE (+filterchain). LIST ALL POSSIBLE mpv COMMANDS, IN ORDER OF PREFERENCE. USED BY ALL subprocesses. A COMMAND MAY NOT BE A PATH.  
         "mpv",   --LINUX & SMPLAYER (WINDOWS)
         "./mpv", --        SMPLAYER (LINUX & MACOS)
         "/Applications/mpv.app/Contents/MacOS/mpv",       --     mpv.app
         "/Applications/SMPlayer.app/Contents/MacOS/mpv",  --SMPlayer.app (OPTIONAL).
     },
     
-    extra_devices_index_list=  {},  --TRY {3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. REPETITION IGNORED. 1=auto WHICH MAY DOUBLE-OVERLAP AUDIO TO PRIMARY DEVICE. 2=NORMAL DEVICE. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.  EACH MPV USES APPROX 1% CPU, + 40MB RAM.
+    extra_devices_index_list=  {},  --TRY {3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. REPETITION IGNORED. 1=auto WHICH MAY OVERLAP AUDIO TO PRIMARY DEVICE. 2=NORMAL DEVICE. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.  EACH MPV USES APPROX 1% CPU, + 40MB RAM.
     max_random_percent      =  10,  --DEFAULT=0   %        MAX random % DEVIATION FROM PROPER speed. UPDATES EVERY HALF A SECOND. EXAMPLE: 10%*.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER.  0% STILL CAUSES L & R TO DRIFT RELATIVELY, DUE TO HALF SECOND RANDOM WALKS BTWN speed UPDATES (CAN VERIFY WITH MONO→STEREO SCREEN RECORDING).
     max_speed_ratio         =1.15,  --DEFAULT=1.2          speed IS BOUNDED BY [SPEED/max,SPEED*max], WITH SPEED FROM CONTROLLER.  1.15 SOUNDS OK, BUT MAYBE NOT 1.25.
     seek_limit              =  .5,  --DEFAULT=.5  SECONDS  SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit. seek CAUSES AUDIO TO SKIP. (SKIP VS JERK.) IT'S LIKE TRYING TO SING FASTER TO CATCH UP TO THE OTHERS.
@@ -70,7 +70,6 @@ else is_controller,o.auto_delay,mutelr,script_opts.pid = true,.5,o.mutelr,pid  -
                     break end end
             if not is_present then table.insert(devices,device) end end end end
 txtpath=('%s/%s-PID%d.txt'):format(directory,label,script_opts.pid)  --"/" FOR WINDOWS & UNIX. txtfile INSTEAD OF PIPES. CREATED FOR RAW JPEG ALSO, TO HANDLE playlist-next.
-if mpv then io.open(txtpath,'w+') end  --subprocesses quit IF THIS FILE DOESN'T EXIST. SIMPLER TO open IN ADVANCE. 
 
 
 lavfi=('stereotools,astats=.5:1,%s,asplit[0],stereotools=%s=1[1],[0][1]astreamselect=2:%%d')
@@ -92,38 +91,40 @@ function start_file()  --LAUNCH INSTANTLY, FOR YOUTUBE. AT LEAST 4 STAGES: LOAD-
     if not mpv then return end  --OVERRIDE, ALREADY LAUNCHED, OR ~is_controller. CONTROLLER ONLY BELOW.  ALSO LAUNCH ON JPEG, FOR MPV PLAYLIST.
     script,script_opts = ('%s/%s.lua'):format(directory,label),mp.get_property('script-opts')  --ytdl_hook POTENTIALLY UNSAFE & ONLY EVER DECLARED ONCE (SEE TASK MANAGER).  COULD SWITCH .lua TO .js FOR JAVASCRIPT.   
     for N,device in pairs(devices) do for mutelr in ('mutel muter'):gmatch('[^ ]+') do if not (N==1 and mutelr==o.mutelr) --DON'T LAUNCH ON PRIMARY device CHANNEL.  'mutel muter' FOR SIMPLICITY BECAUSE IF LOOPING OVER ALL CHANNELS THEIR GEOMETRY IS UNKNOWN.
-            then mp.command_native({name='subprocess',playback_only=false,capture_stdout=false,capture_stderr=false,detach=true,  --EXTRA FLAGS FOR UNIX RELIABILITY, & OLD MPV COMPATIBILITY. 
+            then mp.command_native({name='subprocess',playback_only=false,capture_stdout=false,capture_stderr=false,detach=true,  --EXTRA FLAGS FOR UNIX RELIABILITY, & BACKWARDS COMPATIBILITY.  script-opts COULD BE REPLACED BY env (ENVIRONMENTAL VARIABLES FOR EACH MPV).
                         args={mpv,'--idle','--script='..script,('--script-opts=%s=1,pid=%d,%s'):format(mutelr,pid,script_opts),'--audio-device='..device}}) end end end  --mutelr & audio-device VARY.
     mpv=nil
 end
 mp.register_event('start-file',start_file) 
 
-map=1  --GRAPH SWITCH. CHANGES ONLY FOR CONTROLLER. ONLY REPLACE GRAPH IF IT CHANGES.
+map,m = 1,{}  --GRAPH SWITCH & ITS MEMORY. CHANGES ONLY FOR CONTROLLER. ONLY REPLACE GRAPH IF IT CHANGES.
 function file_loaded() 
-    mp.command(("no-osd af pre '@%s:lavfi=[%s]'"):format(label,lavfi):format(map))   --GRAPH INSERTS HERE. astats USES SOURCE samplerate.  "''" FOR SPACEBARS IN filterchain.
+    if m.map~=map then mp.command(("no-osd af pre '@%s:lavfi=[%s]'"):format(label,lavfi):format(map)) end  --GRAPH INSERTS HERE. "''" FOR SPACEBARS IN filterchain.  astats USES SOURCE samplerate.  
+    m   .map =map
 end
 mp.register_event('file-loaded',file_loaded)  --TRIGGERS BEFORE samplerate OBSERVATION. RISKY TO INSERT GRAPH SOONER (DEPENDING ON FFmpeg VERSION).  HARDWARE samplerate UNKNOWN.
 mp.register_event('seek'       ,file_loaded)  --LIKE automask, SAFER TO REPLACE GRAPH @seek IF map CHANGES.
 mp.register_event('shutdown'   ,function() os.remove(txtpath) end)
 
-function playback_restart() --ALSO @frame-drop-count.  
+function playback_restart() 
+    if m.map~=map then mp.command(('af-command %s map %d %s'):format(label,map,target)) end  --FOR TOGGLE DURING seeking, BUT AFTER seek (ALREADY RELOADED).
     on_frame_drop()  --RESET SAMPLE COUNT.
     for N=1,4 do mp.add_timeout(2^N,os_sync) end   --RESYNC ON EXPONENTIAL TIMEOUTS, DUE TO HDD LAG. 0 2 4 8 16 SECONDS.
 end  
 mp.register_event('playback-restart',playback_restart)
 
-function on_frame_drop()  --BUGFIX FOR EXCESSIVE LAG: RESET SAMPLE COUNT.
-    initial_time_pos=nil
+function on_frame_drop()  --ALSO @playback-restart.  
+    initial_time_pos=nil  
     os_sync()  
 end
-mp.observe_property('frame-drop-count','number',on_frame_drop)
+mp.observe_property('frame-drop-count','number',on_frame_drop)  --BUGFIX FOR EXCESSIVE LAG: RESET SAMPLE COUNT.
 
 function on_toggle(property)  --CONTROLLER ONLY. INSTA-TOGGLE (SWITCH), NOT PROPER FULL toggle. (PERHAPS A DOUBLE-TAP key_bind COULD TRIGGER FULL TOGGLE.)  subprocesses MAINTAIN SYNC WHEN OFF.
     if not (path and is_controller) then return  --NOT STARTED YET.
     elseif property and not timers.mute:is_enabled() then timers.mute:resume() --START TIMER OR ELSE TOGGLE.  DOUBLE-MUTE MAY FAIL TO OBSERVE EITHER mute IF seeking.
     else OFF,map = not OFF,1-map --TOGGLE:  1,0 = ON,OFF 
-        if OFF then mp.add_timeout(.3,function() txt.mute=OFF end)  --DELAYED MUTE ON, OR ELSE LEFT CHANNEL CUTS OUT A TINY BIT.  txtfile IS TOO QUICK FOR af-command! THE EXACT timeout COULD BE A NEW option.  GRAPH REPLACEMENT INTERRUPTS PLAYBACK.
-        else txt.mute=OFF end    --INSTANT UNMUTE.
+        if OFF then mp.add_timeout(.4,function() txt.mute=OFF end) --DELAYED MUTE ON, OR ELSE LEFT CHANNEL CUTS OUT A TINY BIT.  txtfile IS TOO QUICK FOR af-command! THE EXACT timeout COULD BE A NEW option.  GRAPH REPLACEMENT INTERRUPTS PLAYBACK.
+        else                                     txt.mute=OFF end  --INSTANT UNMUTE.
         if not target then _,error_string = mp.command(('af-command %s map %d astreamselect'):format(label,map))  --NULL-OP AWAITS playback-restart.
                        target         = error_string and '' or           'astreamselect' end  --OLD MPV OR NEW. v0.37.0+ SUPPORTS TARGETED COMMANDS.
         mp.command(('af-command %s map %d %s'):format(label,map,target))  --NO unpause_on_toggle.
@@ -175,8 +176,9 @@ function property_handler(property,val)     --CONTROLLER WRITES TO txtfile, & su
     time_pos    =mp.get_property_number('time-pos') or 0     --0 DURING YOUTUBE LOAD TO STOP timeout. 
     
     if sync_time and os_time-sync_time>o.resync_delay+0   then os_sync() end  --RESYNC EVERY 30s. +0 CONVERTS→number & IS EASIER TO READ THAN RE-ARRANGING INEQUALITIES.
-    if samples_time and samples_time>o.samples_time_min+0 then initial_time_pos=initial_time_pos or time_pos-samples_time  --initial_time_pos=initial_time_pos_relative_to_samples_time  INITIALIZE AFTER CHECKING samples_time. THIS # STAYS THE SAME FOR THE NEXT 10 HOURS.  LIKE HOW YOGHURT GOES OFF, 20 HRS LATER THE SPEAKERS MAY BE OFF (astats ISSUE).
-         time_pos=initial_time_pos+samples_time end  --NEW METRIC WHOSE CHANGE IS BASED ON astats (METRIC SWITCH). REMOVE THESE 2 LINES TO PROVE MPV (UP TO v0.36) CAN'T SYNC WITHOUT astats. BOTH MP4 & MP3 LAG BEHIND THE subprocesses.  time-pos, playback-time & audio-pts WORKED WELL OVER 1 MINUTE, BUT NOT 1 HOUR. HOWEVER v0.38 SEEMS TO WORK.
+    if samples_time and samples_time>o.samples_time_min+0  --THESE 3 LINES ONLY EXIST FOR BACKWARDS COMPATIBILITY. MPV-v0.36 (& MAYBE v0.37) CAN'T SYNC WITHOUT astats. BOTH MP4 & MP3 LAG BEHIND THE subprocesses.  time-pos, playback-time & audio-pts WORKED WELL OVER 1 MINUTE, BUT NOT 1 HOUR.
+    then initial_time_pos=initial_time_pos or time_pos-samples_time  --initial_time_pos=initial_time_pos_relative_to_samples_time  INITIALIZE AFTER CHECKING samples_time. THIS # STAYS THE SAME FOR THE NEXT 10 HOURS. 
+         time_pos        =initial_time_pos+samples_time end  --NEW METRIC WHOSE CHANGE IS BASED ON astats (METRIC SWITCH). 
     
     if is_controller then if property=='mute' then on_toggle('mute') end  --FOR DOUBLE mute TOGGLE.
         txt.speed=(not p.a or p.pause or p.seeking) and 0 or p.speed or 0 --seeking→pause FIXES A YOUTUBE STARTING GLITCH.
@@ -212,14 +214,14 @@ function property_handler(property,val)     --CONTROLLER WRITES TO txtfile, & su
     if p.a        and p.a.id    ~=txt.aid        then mp.set_property_number('aid'   ,txt.aid   ) end  --UNTESTED. MAY REQUIRE GRAPH REPLACEMENT?
     if                p.volume  ~=txt.volume     then mp.set_property_number('volume',txt.volume) end
     if                p.pause   ~=(txt.speed==0) then mp.set_property_bool('pause' ,txt.speed==0) end
-    if p.priority and p.priority~=txt.priority   then mp.set_property('priority',txt.priority   ) end  --~priority FOR UNIX.  PROPAGATING VIA TASK MANAGER NOT SUPPORTED BECAUSE MPV MAY NOT KNOW ITS OWN priority.
+    if p.priority and p.priority~=txt.priority   then mp.set_property('priority',txt.priority   ) end  --~priority FOR UNIX.  PROPAGATING VIA TASK MANAGER MAY NOT BE SUPPORTED BECAUSE MPV (v0.36) DIDN'T KNOW ITS OWN priority.
     
-    if math.abs(time_gained)>o.seek_limit+0 then mp.command(('seek %s exact'):format(-time_gained))     --SYNC USING seek INSTEAD OF speed (BETTER TO SKIP THE TRACK THAN JERK ITS SPEED).
+    if math.abs(time_gained)>o.seek_limit+0 then mp.command(('seek %s exact'):format(-time_gained))     --SYNC USING seek INSTEAD OF speed (BETTER TO SKIP THE TRACK THAN JERK ITS SPEED).  ANOTHER LINE OF CODE MAY BE NEEDED TO IMPROVE INITIAL DRUM-ROLL (--idle TRIGGER).
         time_gained=0 end
     if txt.speed==0 or not (mp2os_time and samples_time) then return end --BELOW REQUIRES NON-0 TARGET speed, & ACCURATE os_time & time_pos.  auto TIMER ENDS HERE BECAUSE IT DOESN'T KNOW samples_time.
     
-    speed=(txt.speed-time_gained/.5)*(1+math.random(-o.max_random_percent,o.max_random_percent)/100) --time_gained→0 OVER NEXT .5 SECONDS (astats UPDATE TIME), EXCEPT FOR RANDOM EXTRA.  TECHNICALLY RANDOM BOUNDS [.9,1.1] SHOULD BE [1/1.1,1.1]=[.91,1.1]. 1% SKEWED TOWARDS SLOWING IT DOWN.
-    speed=math.min(math.max( speed , txt.speed/o.max_speed_ratio ), txt.speed*o.max_speed_ratio )    --speed LIMIT RELATIVE TO CONTROLLER.  LUA DOESN'T SUPPORT math.clip(#,min,max)=math.min(math.max(#,min),max)
+    speed=txt.speed*(1-time_gained/.5)*(1+math.random(-o.max_random_percent,o.max_random_percent)/100)  --time_gained→0 OVER NEXT .5 SECONDS (astats UPDATE TIME), EXCEPT FOR RANDOM EXTRA.  TECHNICALLY RANDOM BOUNDS [.9,1.1] SHOULD BE [1/1.1,1.1]=[.91,1.1]. 1% SKEWED TOWARDS SLOWING IT DOWN.
+    speed=math.min(math.max( speed , txt.speed/o.max_speed_ratio ), txt.speed*o.max_speed_ratio )  --speed LIMIT RELATIVE TO CONTROLLER.  LUA DOESN'T SUPPORT math.clip(#,min,max)=math.min(math.max(#,min),max)
     mp.set_property_number('speed',speed)
 end
 for property in ('current-tracks/audio mute volume pause seeking speed priority af-metadata/'..label):gmatch('[^ ]+')        --INSTANT write TO txtfile. CASCADE @volume REQUIRES pcall.
@@ -236,16 +238,17 @@ mp.observe_property('audio-params/samplerate','number',function(property,val) sa
 
 ----BUG: subprocesses TOO SLOW TO seek THROUGH LONG YOUTUBE VIDEOS. FEEDBACK COULD BE USED TO TOGGLE OFF (CHILDREN COULD ALSO WRITE TO txtfile). 
 ----"autospeed.lua" IS A DIFFERENT SCRIPT FOR VIDEO speed, NOT AUDIO. "autotempo.lua" MIGHT BE ANOTHER NAME.
-----GRAND-CHILD subprocesses COULD WORK FOR SURROUND SOUND. EACH CHILD LAUNCHES ITS OWN CHILDREN TO COVER ALL CHANNELS. STEREOS ARE CHEAPER!  HOWEVER CODING FOR A SURROUND SOUND SOURCE SIGNAL IS EVEN MORE COMPLICATED. 
+----A FUTURE SMOOTH TOGGLE COULD WORK USING volume & amix INSTEAD OF astreamselect.  BUT astats SHOULDN'T EVEN BE THERE IN MPV-v0.38...
+----GRAND-CHILD subprocesses COULD WORK FOR SURROUND SOUND. EACH CHILD LAUNCHES ITS OWN CHILDREN TO COVER ALL device CHANNELS.  BUT STEREOS ARE CHEAPER!  CODING FOR A SURROUND SOUND SOURCE SIGNAL IS EVEN MORE COMPLICATED. 
 ----REPLACING txtfile WITH PIPES IS EASY ON WINDOWS, BUT REQUIRES A DEPENDENCY ON LINUX. socat (sc) & netcat (nc) ARE POPULAR (socat MAY MEAN "SOCKET AT - ..."). input-ipc-server (INTER-PROCESS-COMMUNICATION) IS FOR PIPES. THE DEPENDENCY MAY BE A SECURITY THREAT. A FUTURE MPV (OR LUA) VERSION MAY SUPPORT WRITING TO SOCKET (socat BUILT IN, OR lua-socket). WINDOWS CMD CAN ALREADY ECHO TO ANY SOCKET. I HAVE A PIPE VERSION OF THIS SCRIPT BUT PREFER txtfile.  INSTALLING A DEPENDENCY IS LIKE PUTTING NEW WATER PIPES UNDER A HOUSE, FOR A TOY WATER FOUNTAIN.
 
 ----ALTERNATIVE FILTERS:
 ----acompressor      SMPLAYER DEFAULT NORMALIZER.
 ----firequalizer OLD SMPLAYER DEFAULT NORMALIZER.
 ----loudnorm=I:LRA:TP   DEFAULT -24:7:-2. INTENSITY TARGET (-70 TO -5) : LOUDNESS RANGE (1 TO 20) : TRUE PEAK (-9 TO 0). LACKS f & g SETTINGS. SOUNDED OFF.  OUTPUTS A BUFFERED STREAM, NOT A RAW AUDIO STREAM.
+----volume  =volume:...:eval  (DEFAULT 1:once)  POSSIBLE TIMELINE SWITCH FOR CONTROLLER. startt=t@INSERTION.  COULD BE USED FOR SMOOTH TOGGLE (ALTERNATIVE TO astreamselect), BECAUSE IT CAN VARY volume WITHIN amix.
 ----aresample     (Hz)  OPTIONAL.  OUTPUTS CONSTANT samplerate → astats.
 ----aformat =sample_fmts:sample_rates  [u8 s16 s64]:Hz  OPTIONAL ALTERNATIVE TO aresample.  OUTPUTS CONSTANT samplerate → astats.  s16=SGN+15BIT (-32k→32k), CD. u8 CAUSES HISSING.  
-----volume  =volume:...:eval  (DEFAULT 1:once)  TIMELINE SWITCH FOR CONTROLLER. startt=t@INSERTION.
 
 
 
