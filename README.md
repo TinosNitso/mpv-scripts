@@ -46,15 +46,15 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 
 ## Versions
 
-MPV-v0.36 & older only for the latest release! v0.36.0 & v0.35.1 tested. v0.38.0 & v0.37.0 work with all the scripts above which aren't in a proper release yet.
+MPV v0.38.0, v0.37.0, v0.36.0 & v0.35.1 fully supported. v0.37+ preferred.
 
-SMPlayer *v23.6.0* & v23.12.0 successful. v23.12 has an annoying `no-osd seek 0 relative exact` accompanying every `set pause yes` (user hits spacebar). Releases tested include .7z .exe .app .AppImage .flatpak & .snap.
+SMPlayer *v23.6.0* & v23.12.0 successful. v23.12 has an annoying `no-osd seek 0 relative exact` accompanying every `set pause yes` (user hits spacebar). Releases supported include .7z .exe .app .AppImage .flatpak & .snap.
 
-FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) successfully tested.
+FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) supported.
 
 ## Latest Updates
-- All scripts now work with the latest mpv, versions 0.38.0 & 0.37.0.  Rumble, Odyssey & RedTube also stream, like YouTube.
-- autocrop & autocrop-smooth are now spacetime croppers! Support track list with start & end crop times, like sub-clips which remove credits.  Can also crop transparent input.  Added `o.pad_color` & `o.crop_no_vid`. 
+- All scripts now support the newest mpv, versions 0.38.0 & 0.37.0.  Rumble, Odyssey & RedTube also stream, like YouTube.
+- autocrop & autocrop-smooth are now spacetime croppers! Support track list with start & end crop times, like sub-clips which remove credits.  Added `o.pad_color` & `o.crop_no_vid`. 
 - `o.toggle_duration` added to autocrop, automask & autocrop-smooth. They now have smooth toggles using vf-command (sine wave progression)! autocrop has smooth padding. Added `o.mask_no_vid`. 
 - `o.sid` added to main.lua for subtitle overrides. 
 - Targeted vf-commands for autocrop, automask & aspeed. Backwards compatible. v0.38.0 needs even dimensions! autocrop & aspeed optimized by only performing commands or sets when needed. 
