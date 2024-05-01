@@ -4,8 +4,8 @@
 ----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS. WORKS WELL WITH MP4, MP3, MP2, M4A, AVI, WAV, OGG, AC3, OPUS, WEBM & YOUTUBE.
 
 options={  --ALL OPTIONAL & MAY BE REMOVED.
-    key_bindings         ='F2', --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER. m IS MUTE SO CAN DOUBLE-PRESS m. 'F2 F3' FOR 2 KEYS.  s=SCREENSHOT (NOT SPEED NOR SPECTRUM). C IS CROP, NOT CLOCK.
-    toggle_on_double_mute=.5,   --SECONDS TIMEOUT FOR DOUBLE-MUTE-TOGGLE. LUA SCRIPTS CAN BE TOGGLED USING DOUBLE mute.  TOGGLE DOESN'T APPLY TO filterchain.
+    key_bindings         ='F2', --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER. 'F2 F4' FOR 2 KEYS.  TOGGLE DOESN'T APPLY TO filterchain.  s=SCREENSHOT (NOT SPEED NOR SPECTRUM). C IS CROP, NOT CLOCK.
+    toggle_on_double_mute=.5,   --SECONDS TIMEOUT FOR DOUBLE-MUTE-TOGGLE (m&m DOUBLE-TAP). TRIPLE MUTE DOUBLES BACK. SCRIPTS CAN BE SIMULTANEOUSLY TOGGLED USING DOUBLE MUTE.  REQUIRES AUDIO IN SMPLAYER.  IN GENERAL COULD BE RENAMED double_mute_timeout.
     
     clock='{\\fs71\\bord2\\an3}{}%I{\\fs50}:%M{\\fs35}:%S{\\fs25} %p', --REMOVE TO remove clock. {} REMOVES LEADING 0 FOLLOWING IT.  fs,bord,an,%I,%M,%S,%p = FONT-SIZE,BORDER,ALIGNMENT-NUMPAD,HRS(12),MINS,SECS,P/AM  (DEFAULT an0=an7=TOPLEFT)  BIG:MEDium:Little:tiny, RATIO=SQRT(.5)=.71  FORMATTERS: a A b B c d H I M m p S w x X Y y  shad1,b1,i1,u1,s1,be1,fn = SHADOW,BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME  REQUIRES [vo] TO BE SEEN (NOT RAW MP3).  main.lua HAS title, WITHOUT TOGGLE. INSTEAD OF COPYING THE clock INTO OTHER SCRIPT/S, THIS SCRIPT SYNCS IT TO SYSTEM TICK.
     -- clock='{\\fs55\\bord2\\an3\\cFF5000}%I{\\c0}:{\\cFFFFFF}%M{\\c0}:{\\cFF}%S{\\fs39\\c0\\bord0} %p', --UNCOMMENT FOR COLORED clock. "BLUE:WHITE:RED black", LIKE A TRIBAR FLAG (TRI-COLOR clock).  COLOR=\cFF5000 IS A BRIGHTER SHADE OF BLUE (HEX ORDERED BGR).  AN UNUSED BIG SCREEN TV CAN BE A BIG clock WITH BACKGROUND VIDEO.
@@ -20,8 +20,8 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
     },
     
     extra_devices_index_list=  {},  --TRY {3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. REPETITION IGNORED. 1=auto WHICH MAY OVERLAP AUDIO TO PRIMARY DEVICE. 2=NORMAL DEVICE. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.  EACH MPV USES APPROX 1% CPU, + 40MB RAM.
-    max_random_percent      =  10,  --DEFAULT=0   %        MAX random % DEVIATION FROM PROPER speed. UPDATES EVERY HALF A SECOND. EXAMPLE: 10%*.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER.  0% STILL CAUSES L & R TO DRIFT RELATIVELY, DUE TO HALF SECOND RANDOM WALKS BTWN speed UPDATES (CAN VERIFY WITH MONO→STEREO SCREEN RECORDING).
     max_speed_ratio         =1.15,  --DEFAULT=1.2          speed IS BOUNDED BY [SPEED/max,SPEED*max], WITH SPEED FROM CONTROLLER.  1.15 SOUNDS OK, BUT MAYBE NOT 1.25.
+    max_random_percent      =  10,  --DEFAULT=0   %        MAX random % DEVIATION FROM PROPER speed. UPDATES EVERY HALF A SECOND. EXAMPLE: 10%*.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER.  0% STILL CAUSES L & R TO DRIFT RELATIVELY, DUE TO HALF SECOND RANDOM WALKS BTWN speed UPDATES (CAN VERIFY WITH MONO→STEREO SCREEN RECORDING).
     seek_limit              =  .5,  --DEFAULT=.5  SECONDS  SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit. seek CAUSES AUDIO TO SKIP. (SKIP VS JERK.) IT'S LIKE TRYING TO SING FASTER TO CATCH UP TO THE OTHERS.
     auto_delay              = .25,  --DEFAULT=.5  SECONDS  subprocess RESPONSE TIME. THEY CHECK txtfile THIS OFTEN.
     resync_delay            =  30,  --DEFAULT=60  SECONDS  os_sync RESYNC WITH THIS DELAY.   mp.get_time() & os.clock() MAY BE BASED ON CPU TIME, WHICH GOES OFF WITH RANDOM LAG.
@@ -31,12 +31,12 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
     timeout_mute            =   2,  --DEFAULT=2   SECONDS  subprocesses ALL MUTE IF CONTROLLER HARD BREAKS FOR THIS LONG. THEY MUTE INSTANTLY ON STOP.
     -- meta_osd             =   1,  --SECONDS TO DISPLAY astats METADATA, PER OBSERVATION. UNCOMMENT FOR STATS.  IRONICALLY astats (audio STATISTICS) DOESN'T KNOW ANYTHING ABOUT TIME ITSELF, YET IT'S THE BASIS FOR TEN HOUR SYNCHRONY.
     -- mutelr               ='muter', --DEFAULT='mutel'    UNCOMMENT TO SWITCH PRIMARY CONTROLLER CHANNEL TO LEFT. PRIMARY device HAS 1 CHANNEL IN NORMAL SYNC TO video. HARDWARE USUALLY HAS A PRIMARY, BUT IT'S 50/50 (HEADPHONES OPPOSITE TO SPEAKERS).
-    options                 =''       --FREE FORM ' opt1 val1  opt2=val2  --opt3=val3 '...
-          ..' audio-delay=0  image-display-duration=inf' --NON-0 delay COULD BE SMPLAYER ACCIDENTAL +- KEYTAP. inf GIVES JPEG A clock.
+    options                 =''       --FREE FORM  ' opt1 val1  opt2=val2  --opt3=val3 '  
+          ..' audio-delay=0  image-display-duration=inf' --NON-0 delay COULD BE SMPLAYER ACCIDENTAL +- KEYTAP.  duration=inf GIVES JPEG A clock.
        -- ..' audio-pitch-correction=no'                 --UNCOMMENT FOR CHIPMUNK MODE (EXCEPT ON PRIMARY CHANNEL). WORKS OK WITH SPEECH & COMICAL MUSIC. DEFAULT=yes APPLIES scaletempo2(?) FILTER.
        -- ..' osd-color=1/.5  osd-border-color=0/.5'     --UNCOMMENT FOR TRANSPARENT clock. DEFAULTS 1/1 & 0/1. y/a = brightness/alpha (OPAQUENESS).  A TRANSPARENT clock CAN BE TWICE AS BIG. RED=1/0/0/1, BLUE=0/0/1/1, ETC
     ,
-}
+} 
 o        =options  --ABBREV.
 for opt,val in pairs({key_bindings='',toggle_on_double_mute=0,filterchain='anull',mpv={},extra_devices_index_list={},max_random_percent=0,max_speed_ratio=1.2,seek_limit=.5,auto_delay=.5,resync_delay=60,os_sync_delay=.01,samples_time_min=10,timeout=5,timeout_mute=2,mutelr='mutel',options=''})
 do o[opt]=o[opt] or val end  --ESTABLISH DEFAULTS. 
@@ -65,10 +65,12 @@ else is_controller,o.auto_delay,mutelr,script_opts.pid = true,.5,o.mutelr,pid  -
     
     for _,command in pairs(o.mpv) do if mp.command_native({'subprocess',command}).error_string~='init' then mpv=command  --error=init IF INCORRECT COMMAND.  subprocess RETURNS, NOT run.
             break end end 
-    for _,index in pairs(o.extra_devices_index_list) do if index<=#audio_device_list then is_present,device = false,audio_device_list[index].name
+    for _,index in pairs(o.extra_devices_index_list) 
+    do is_present=false
+        device   =(audio_device_list[index] or {}).name
             for _,find in pairs(devices) do if device==find then is_present=true  --SEARCH FOR DUPLICATES BEFORE INSERTION. SIMILAR TO main.lua
                     break end end
-            if not is_present then table.insert(devices,device) end end end end
+            if not is_present then table.insert(devices,device) end end end
 txtpath=('%s/%s-PID%d.txt'):format(directory,label,script_opts.pid)  --"/" FOR WINDOWS & UNIX. txtfile INSTEAD OF PIPES. CREATED FOR RAW JPEG ALSO, TO HANDLE playlist-next.
 
 
@@ -102,8 +104,8 @@ function file_loaded()
     if m.map~=map then mp.command(("no-osd af pre '@%s:lavfi=[%s]'"):format(label,lavfi):format(map)) end  --GRAPH INSERTS HERE. "''" FOR SPACEBARS IN filterchain.  astats USES SOURCE samplerate.  
     m   .map =map
 end
-mp.register_event('file-loaded',file_loaded)  --TRIGGERS BEFORE samplerate OBSERVATION. RISKY TO INSERT GRAPH SOONER (DEPENDING ON FFmpeg VERSION).  HARDWARE samplerate UNKNOWN.
-mp.register_event('seek'       ,file_loaded)  --LIKE automask, SAFER TO REPLACE GRAPH @seek IF map CHANGES.
+mp.register_event('file-loaded',file_loaded)  --RISKY TO INSERT GRAPH SOONER (DEPENDING ON FFMPEG VERSION).  HARDWARE samplerate UNKNOWN @file-loaded.
+mp.register_event('seek'       ,file_loaded)  --RELOAD @seek.
 mp.register_event('shutdown'   ,function() os.remove(txtpath) end)
 
 function playback_restart() 
@@ -160,7 +162,7 @@ function os_sync()  --RUN 10ms LOOP UNTIL SYSTEM CLOCK TICKS. os.time() HAS 1s P
 end
 timers.os_sync=mp.add_periodic_timer(o.os_sync_delay,os_sync)
 
-function round(N,D)  --ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1). N & D MAY ALSO BE STRINGS OR nil. PRECISION LIMITER FOR txtfile.
+function round(N,D)  --ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1). N & D MAY ALSO BE STRINGS OR nil.
     D=D or 1
     return N and math.floor(.5+N/D)*D  --LUA DOESN'T SUPPORT math.round(N)=math.floor(.5+N)
 end
@@ -169,7 +171,7 @@ p,txt,key = {},{},'lavfi.astats.Overall.Number_of_samples' --p=PROPERTIES(CONTRO
 function property_handler(property,val)     --CONTROLLER WRITES TO txtfile, & subprocesses READ FROM IT.  ONLY EVER pcall, FOR RELIABLE INSTANT write/SIMULTANEOUS io.remove.
     if property=='current-tracks/audio' then property='a' end  --a=current-tracks/audio  
     if property then p[property]=val 
-        if property~='af-metadata/'..label and not is_controller then return end end  --OBSERVING subprocesses END HERE, EXCEPT FOR ON astats TRIGGER. CONTROLLER PROCEEDS.
+        if property~='af-metadata/'..label and not is_controller then return end end  --OBSERVING subprocesses END HERE, EXCEPT ON astats TRIGGER. CONTROLLER PROCEEDS.
     
     os_time     =mp2os_time and mp2os_time+mp.get_time() or os.time()  --os_time=TIMEFROM1970  PRECISE TO 10ms.
     samples_time=type(val)=='table' and val[key] and samplerate and val[key]/samplerate  --ALWAYS A HALF INTEGER, OR nil.  TIME=sample#/samplerate  string[key] BUGS OUT ON 32-BIT.
@@ -220,7 +222,7 @@ function property_handler(property,val)     --CONTROLLER WRITES TO txtfile, & su
         time_gained=0 end
     if txt.speed==0 or not (mp2os_time and samples_time) then return end --BELOW REQUIRES NON-0 TARGET speed, & ACCURATE os_time & time_pos.  auto TIMER ENDS HERE BECAUSE IT DOESN'T KNOW samples_time.
     
-    speed=txt.speed*(1-time_gained/.5)*(1+math.random(-o.max_random_percent,o.max_random_percent)/100)  --time_gained→0 OVER NEXT .5 SECONDS (astats UPDATE TIME), EXCEPT FOR RANDOM EXTRA.  TECHNICALLY RANDOM BOUNDS [.9,1.1] SHOULD BE [1/1.1,1.1]=[.91,1.1]. 1% SKEWED TOWARDS SLOWING IT DOWN.
+    speed=txt.speed*(1-time_gained/.5)*(1+math.random(-o.max_random_percent,o.max_random_percent)/100)  --time_gained→0 OVER NEXT .5 SECONDS IN time-pos (astats UPDATE TIME). +-RANDOM EXTRA.  RANDOM BOUNDS [.9,1.1] MAYBE SHOULD BE [1/1.1,1.1]=[.91,1.1]. 1% SKEWED TOWARDS SLOWING IT DOWN.
     speed=math.min(math.max( speed , txt.speed/o.max_speed_ratio ), txt.speed*o.max_speed_ratio )  --speed LIMIT RELATIVE TO CONTROLLER.  LUA DOESN'T SUPPORT math.clip(#,min,max)=math.min(math.max(#,min),max)
     mp.set_property_number('speed',speed)
 end

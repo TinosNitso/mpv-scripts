@@ -1,13 +1,13 @@
 ----IN SMPLAYER'S ADVANCED mpv PREFERENCES ENTER OPTION  --script=~/Desktop/mpv-scripts/  OR  --script=.  FROM WINDOWS smplayer.exe FOLDER.  LINUX snap: --script=/home/user/Desktop/mpv-scripts/    ASSUMING mpv-scripts FOLDER IS PLACED ON Desktop.
 ----https://github.com/yt-dlp/yt-dlp/releases/tag/2024.03.10  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY & REDTUBE ALSO.
 
-options={  --ALL OPTIONAL & CAN BE REMOVED.
+options={     --ALL OPTIONAL & CAN BE REMOVED.
     scripts={ --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE. TYPOS CAN TOGGLE THEM ON & OFF.  autocomplex & automask HAVE osd_on_toggle WHICH DISPLAYS VERSION NUMBERS & FILTERGRAPHS.
-        "aspeed.lua",      --CLOCK & AUDIO DEVICES SPEED RANDOMIZATION, FOR 10 HOURS. INSTA-TOGGLE. CAN CONVERT MONO TO (RANDOMIZED) SURROUND SOUND.  MY FAVOURITE OVERALL. CONVERTS A SPEAKER INTO SOMETHING LIKE A MOCKING-BIRD.
-        "automask.lua",    --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE. LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE VISOR + BUTTERFLY=automask2.lua, 300MB RAM EACH).
-        "autocomplex.lua", --ANIMATED AUDIO SPECTRUM, VOLUME BARS, FPS LIMITER. DUAL lavfi-complex OVERLAY. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE IS LIKE WINGS OF BIRD). 
+        "aspeed.lua",      --CLOCK & AUDIO DEVICES SPEED RANDOMIZATION. INSTA-TOGGLE. CAN CONVERT MONO TO (RANDOMIZED) SURROUND SOUND, FOR 10 HOURS.  MY FAVOURITE OVERALL. CONVERTS A SPEAKER INTO SOMETHING LIKE A MOCKING-BIRD.
         "autocrop.lua",    --CROPS OFF BLACK BARS BEFORE automask, BUT AFTER autocomplex. SMOOTH-TOGGLE. ALSO SUPPORTS START & END TIMES (TIME-CROP SUBCLIPS), & CROPS THROUGH TRANSPARENCY.
         -- "autocrop-smooth.lua",  --SMOOTH CROPPING & PADDING. DISABLE autocomplex DUE TO EXCESSIVE CPU USAGE.
+        "autocomplex.lua", --ANIMATED AUDIO SPECTRUM, VOLUME BARS, FPS LIMITER. DUAL lavfi-complex OVERLAY. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE IS LIKE WINGS OF BIRD). 
+        "automask.lua",    --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE. LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE VISOR + BUTTERFLY=automask2.lua, 300MB RAM EACH).
     },
     ytdl={    --YOUTUBE DOWNLOAD. PLACE ALONGSIDE main.lua.  LIST ALL POSSIBLE EXECUTABLE FILENAMES, IN PREFERRED ORDER. NO ";" ALLOWED.  
         "yt-dlp",       --.exe
@@ -17,16 +17,16 @@ options={  --ALL OPTIONAL & CAN BE REMOVED.
     
     title         ='{\\fs55\\bord3}',  --REMOVE TO REMOVE title.  \\,fs,bord = \,FONTSIZE,BORDER (PIXELS)  THIS STYLE CODE SETS THE osd.  shad1,b1,i1,u1,s1,be1,fn,c = SHADOW,BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME,COLOR  WITHOUT BOLD, FONT MAY BE LARGER.  cFF=RED,cFF0000=BLUE,ETC
     title_duration= 5, --SECONDS, DEFAULT=0. COUNTS FROM PLAYBACK-START.  title CAN BE MOVED TO aspeed.lua IF DOUBLE-MUTE TOGGLE IS NEEDED.
-    clear_osd     =.2, --SECONDS. CLEAR osd (BEHIND title), TIME FROM playback-START.
+    clear_osd     =.2, --SECONDS TO CLEAR osd, BEHIND title. TIMED FROM playback-START.
     loop_limit    =10, --SECONDS (MAX). INFINITE loop GIF & SHORT MP4 IF duration IS LESS. STOPS MPV SNAPPING.  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
-    sid           = 1, --SUBTITLE TRACK ID OVERRIDE, @PLAYBACK-START. REMOVE FOR NO SUBS.  BY TRIAL & ERROR, auto & 1 NEEDED BEFORE & AFTER lavfi-complex, ON YOUTUBE. ALSO SECONDARY.
+    sub           = 1, --SUBTITLE TRACK ID OVERRIDE, @PLAYBACK-START. ALSO SECONDARY.  REMOVE FOR NO SUBS.  BY TRIAL & ERROR, auto & 1 NEEDED BEFORE & AFTER lavfi-complex, FOR YOUTUBE. 
     options       =''  --FREE FORM  ' opt1 val1  opt2=val2  --opt3=val3 '...  main SETS NON-CRITICAL options MORE EASILY.
-        ..' ytdl-format=bv[height<1080]+ba/best'  --bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
-        ..'   msg-level=ffmpeg/demuxer=error'  --error SETTING AVOIDS SPURIOUS WARNINGS.
-        ..'         sid=auto         keepaspect=no            profile=fast'  --auto SUBTITLES BEFORE YOUTUBE LOADS.  FREE aspect IF MPV HAS ITS OWN WINDOW.  profile=fast MAY HELP WITH EXCESSIVE LAG (VIRTUALBOX-MACOS).  sub-scale=.5 OR 2 FOR FONT HALVED OR DOUBLED.
-        ..'     osd-bar=no  osd-scale-by-window=no  --osd-border-size=1  osd-duration 5000' --DEFAULTS yes,yes,3,1000  (BOOL,BOOL,PIXELS,MILLISECONDS)  bar GETS IN THE WAY (SMPLAYER). READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd. 
+        ..' ytdl-format=bv[height<1080]+ba/best'  -- bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
+        ..'   msg-level=ffmpeg/demuxer=error  keepaspect=no   profile=fast    '  --error SETTING AVOIDS SPURIOUS WARNINGS.  FREE aspect IF MPV HAS ITS OWN WINDOW.  profile=fast MAY HELP WITH EXCESSIVE LAG (VIRTUALBOX-MACOS). 
+        ..'         sub=auto          sub-scale=.5           sub-font=CONSOLAS'  --DEFAULTS no,1,sans-serif  auto SUBTITLES BEFORE YOUTUBE LOADS.  font & scale ALSO SET BY SMPLAYER.  CONSOLAS DOESN'T SQUISH LETTERS TOGETHER.
+        ..'     osd-bar=no  osd-scale-by-window=no  --osd-border-size=1  osd-duration 5000'  --DEFAULTS yes,yes,3,1000  (BOOL,BOOL,PIXELS,MILLISECONDS)  bar GETS IN THE WAY (SMPLAYER). READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd. 
     ,
-}
+}  
 o        =options  --ABBREV.
 for opt,val in pairs({scripts={},ytdl={},title_duration=0,options=''})
 do o[opt]=o[opt] or val end  --ESTABLISH DEFAULTS. 
@@ -50,7 +50,7 @@ mp.set_property_native('script-opts',script_opts)  --EMPLACE hook.  ALTERNATIVE 
 
 for _,script in pairs(o.scripts) do is_present=false   
     for _,val in pairs(scripts) do if (script):lower()==(val):lower() then is_present=true --SEARCH NOT CASE SENSITIVE. CHECK IF is_present (ALREADY LOADED).
-        break end end    
+            break end end    
     if not is_present then table.insert(scripts,script)
         mp.commandv('load-script',directory..'/'..script) end end  --commandv FOR FILENAMES. join_path AFTER split_path FROM WHATEVER THE USER TYPED IN.
 mp.set_property_native('scripts',scripts)  --ANNOUNCE scripts.
@@ -65,8 +65,8 @@ mp.register_event('file-loaded',file_loaded)
 title=mp.create_osd_overlay('ass-events')  --ass-events IS THE ONLY VALID OPTION.
 function playback_restart()       --title WAITS FOR PLAYBACK START, OR IT'S PREMATURE. clock GOES IN FIRST (TO TIME LOADS).
     if not osd_level then return  --~osd_level EQUIVALENT TO UNREGISTERING playback_restart.
-    elseif o.sid then mp.set_property(          'sid',o.sid)     --OVERRIDE INTERFERENCE (lavfi-complex?).
-                      mp.set_property('secondary-sid',o.sid) end --ALSO NEEDED, SOMETIMES.
+    elseif o.sub then mp.set_property(          'sub',o.sub)     --OVERRIDE INTERFERENCE 
+                      mp.set_property('secondary-sub',o.sub) end --ALSO NEEDED SOMETIMES (lavfi-complex).
     
     title.data=o.title and o.title..mp.get_property_osd('media-title') or ''
     title:update()  --UNDER EXCESSIVE LAG (& WITHOUT profile=fast), INSTANT title DISPLAY CAN CAUSE STREAM TO HANG. timeout MAYBE SAFER IN VIRTUALBOX-MACOS.
@@ -76,7 +76,7 @@ end
 mp.register_event('playback-restart',playback_restart)
     
 function set_osd_level()  --RETURN osd-level, AFTER timeout.
-    if osd_level and osd_level>0 then mp.set_property_number('osd-level',osd_level) end
+    if o.clear_osd and osd_level and osd_level>0 then mp.set_property_number('osd-level',osd_level) end
     osd_level=nil 
 end 
 
@@ -87,7 +87,7 @@ end
 ----MACOS mpv.app: /Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"        (DRAG & DROP mpv.app ONTO Applications.)
 ---- SMPlayer.app: /Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"      
 
-----https://sourceforge.net/projects/mpv-player-windows/files/release/ FOR NEW MPV WINDOWS BUILDS.
+----https://sourceforge.net/projects/mpv-player-windows/files/release/ FOR NEW MPV WINDOWS BUILDS.  CAN REPLACE mpv.exe IN SMPLAYER.
 ----https://laboratory.stolendata.net/~djinn/mpv_osx/ FOR NEW MPV MACOS BUILDS.
 ----https://smplayer.info/en/download-linux & https://apt.fruit.je/ubuntu/jammy/mpv/ FOR LINUX SMPLAYER & MPV.  OFFLINE LINUX ALL-IN-ONE: SMPlayer-23.12.0-x86_64.AppImage
 

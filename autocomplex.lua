@@ -3,10 +3,10 @@
 ----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS. 
 
 options={  --ALL OPTIONAL & MAY BE REMOVED.  TO REMOVE AN INTERNAL COMPONENT SET ITS alpha TO 0 (freqs volume grid feet shoe).
-    key_bindings       ='F3',    --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER.  s=SCREENSHOT NOT SPECTRUM. f=FULLSCREEN NOT FREQS, o=OSD NOT OVERLAY, C=AUTOCROP NOT COMPLEX. v FOR VOLUME?  'F3 F4' FOR 2 KEYS.
-    -- toggle_on_double_mute=.5,   --SECONDS TIMEOUT FOR DOUBLE-mute TOGGLE (m&m DOUBLE-TAP). INTERRUPTS PLAYBACK, SO REMOVE FOR OTHER GRAPHS TO INSTA-TOGGLE.  DOESN'T TOGGLE dynaudnorm!
+    key_bindings       ='F3',    --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER.  'F3 F4' FOR 2 KEYS.  s=SCREENSHOT NOT SPECTRUM. f=FULLSCREEN NOT FREQS, o=OSD NOT OVERLAY, C=AUTOCROP NOT COMPLEX. v FOR VOLUME?  
+    -- toggle_on_double_mute=.5, --SECONDS TIMEOUT FOR DOUBLE-MUTE TOGGLE (m&m DOUBLE-TAP). REQUIRES AUDIO IN SMPLAYER.  INTERRUPTS PLAYBACK. DOESN'T TOGGLE dynaudnorm!
     -- osd_on_toggle   =     5 , --SECONDS. UNCOMMENT TO INSPECT VERSIONS, FILTERGRAPHS & PARAMETERS. 0 CLEARS THE osd INSTEAD. DISPLAYS mpv-version ffmpeg-version libass-version lavfi-complex af vf video-out-params
-    -- vflip_only      =   true, --UNCOMMENT TO REMOVE TOP HALF. ALSO REMOVE vflip_scale FOR NULL OVERRIDE (NO SPECTRAL overlay).
+    -- vflip_only      =   true, --UNCOMMENT TO REMOVE TOP HALF. ALSO REMOVE vflip_scale FOR NULL OVERRIDE (NO overlay).
     vflip_scale        =    .5 , --REMOVE FOR NO BOTTOM HALF. width=1.  SOME FUTURE VERSION MIGHT SUPPORT BL & BR CHANNELS FOR BOTTOM.
     width              =     1 , --DEFAULT= 1  OVERALL PRIMARY width RATIO (scale). <1 CAUSES zoompan TO CLIP.  A FUTURE VERSION COULD FIX THIS.
     fps                =    30 , --DEFAULT=30  FRAMES PER SECOND FOR [vo].  30fps (+automask) USES ~15% MORE CPU THAN 25fps. SCRIPT ALSO LIMITS scale. 
@@ -54,7 +54,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.  TO REMOVE AN INTERNAL COMPONENT SET
         ..' vd-lavc-threads=0'    --VIDEO DECODER - LIBRARY AUDIO VIDEO. 0=AUTO OVERRIDES SMPLAYER, OR ELSE MAY FAIL TESTING.
         ..'   osd-font-size=16  geometry=50%  force-window=yes'  --DEFAULT size 55p MAY NOT FIT osd_on_toggle. geometry ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.  force-window PREVENTS MPV FROM VANISHING DURING TRACK CHANGES.
     ,
-}
+} 
 o         =options  --ABBREV.
 for opt,val in pairs({key_bindings='',toggle_on_double_mute=0,fps=25,period=1,filterchain='null',rotate='0',zoompan='1:0:0',overlay='(W-w)/2:(H-h)/2',dual_filterchain='null',dual_scale={},dual_overlay='(W-w)/2:(H-h)/2',volume_highpass=100,gb=.3,width=1,dynaudnorm='500:3:1:1',freqs_lead_t=.1,freqs_fps=25/2,freqs_fps_albumart=25,freqs_mode='line',freqs_win_size=512,freqs_averaging=2,freqs_magnification=1.1,freqs_clip_h=.3,freqs_alpha=.7,freqs_win_func='parzen',volume_dynaudnorm=500,freqs_dynaudnorm=500,volume_fps=25,volume_fade=0,volume_dm=0,volume_alpha=.5,volume_width=.04,volume_height=.15,grid_alpha=1,grid_thickness=.1,grid_height=.1,feet_height=.05,feet_activation=.5,feet_lutrgb='128:0:255:val*2',shoe_color='BLACK',scale={},options=''})
 do o[opt] =o[opt] or val end  --ESTABLISH DEFAULTS. 
@@ -104,7 +104,7 @@ lavfi=('[aid%%d]dynaudnorm=%s%s,asplit[ao],stereotools,highpass=%s,dynaudnorm=%s
 ----amix            = inputs:duration  DEFAULT=2:longest  MIXES IN SINES. [a1][a2]...→[ao]
 ----setpts,asetpts  = expr  DEFAULT=PTS  PRESENTATION TIMESTAMP, FOR SYNC OF rotate,zoompan,overlay WITH OTHER GRAPHS (automask), BY SENDING STARTPTS→0. SHOULD SUBTRACT 1/FRAME_RATE/TB FROM [t0].  asetpts LEADS THE SPECTRUM BY BACKDATING AUDIO.
 ----pad,apad        = w:h:x:y:color,...  DEFAULT=0:0:0:0:BLACK  BUILDS GRID/RULER & FEET. 0 MAY MEAN iw OR ih.  apad APPENDS SILENCE FOR SPECTRUM TO ANALYZE, OR THERE'S A CRASH @end-file. ALTERNATIVE IS TO %%s INSERT ENDPTS FIX INTO asetpts.
-----loop            = loop:size  (>=-1 : >0) PAIRS WITH fps FOR RAW JPEG, WHICH IS ITS OWN CASE-STUDY WITH ITS OWN FILTER (MOST ELEGANT).
+----loop            = loop:size  ( >=-1 : >0 ) PAIRS WITH fps FOR RAW JPEG, WHICH IS ITS OWN CASE-STUDY WITH ITS OWN FILTER (MOST ELEGANT).
 ----stereotools       CONVERTS MONO & SURROUND SOUND TO stereo.  ALTERNATIVE TO aformat.  softclip INCOMPATIBLE WITH ffmpeg-v4.
 ----showvolume      = r:b:w:h:f:...:t:v:o = rate:CHANNEL_GAP:LENGTH:THICKNESS/2:FADE:...:CHANNELVALUES:VOLUMEVALUES:ORIENTATION →rgba    (DEFAULTS 25:1:400:20:0.95:t=1:v=1:o=h)   LENGTH MINIMUM ~100. t & v ARE TEXT & SHOULD BE DISABLED.  THERE'S SOME TINY BLACK LINE DEFECT, WHICH BLUE COVERS UP.
 ----showfreqs       = size:rate(?):mode:ascale:fscale:win_size:win_func:overlap:averaging:colors →rgba  DEFAULTS 1024x512:25:bar:log:lin:2048:hanning:1:1   RATE INCOMPATIBLE WITH ffmpeg-v4 (v5+ ONLY). size SHOULD HAVE ASPECT APPROX 300x500 FOR HEALTHY CURVE TO BE EQUALLY THICK IN HORIZONTAL & VERTICAL (300x300 & 300x700 GIVE OFF CURVES). SEPARATING CHANNELS WITHOUT COLORS (cmode=separate) WOULD REQUIRE TWICE AS MANY PIXELS.
@@ -114,9 +114,9 @@ lavfi=('[aid%%d]dynaudnorm=%s%s,asplit[ao],stereotools,highpass=%s,dynaudnorm=%s
 ----scale,scale2ref = w:h  DEFAULT=iw:ih  SCALES TO display FOR CLEARER SPECTRUM ON LOW-RES video. CAN ALSO OBTAIN SMOOTHER CURVE BY SCALING UP A SMALLER ONE.     TO-REFERENCE [1][2]→[1][2] SCALES [1] USING DIMENSIONS OF [2]. ALSO SCALES volume.
 ----overlay         = x:y:eof_action →yuva420p  DEFAULT=0:0:repeat  endall DUE TO apad. FORCES US TO USE yuva420p, WHICH MIGHT BE WHY MULTIPLES OF 4 ARE NEEDED. AN EVEN WIDTH ISN'T GOOD ENOUGH BECAUSE THE COLOR PLANE WIDTH MAY BE ODD & NOT CENTERED PROPERLY (OPTIMIZATION ISSUE). OVERLAYS DATA ON GRID & VOLUME ON-TOP. ALSO: 0Hz RIGHT ON TOP OF 0Hz LEFT (DATA-overlay INSTEAD OF hstack). MAY DEPEND ON TIME t.  UNFORTUNATELY THIS FILTER HAS AN OFF BY 1 BUG IF W OR H ISN'T A MULTIPLE OF 4.  IF COLOR RES IS A PROBLEM, A WORKAROUND IS TO USE A RES_MULTIPLIER=2 THEN HALVE yuv420p→yuv444p.
 ----hstack,vstack   = inputs  DEFAULT=2  COMBINES THE VOLUMES INTO A 20 TICK STEREO RULER. ALSO COMBINES feet.  vstack FOR FEET & TOP/BOTTOM.
-----setsar            SAMPLE(PIXEL) ASPECT RATIO. FOR SAFE concat OF CASE 2 TIMESTAMP FRAME (albumart).
-----concat            [t0][vo]→[vo]      FINISHES [t0].  CONCATENATE STARTING TIMESTAMP, ON INSERTION. OCCURS @seek. NEEDED TO SYNC WITH automask.
-----split,asplit    = outputs  DEFAULT=2  IS THE FINISH ON [ao].  
+----setsar            SAMPLE ASPECT RATIO. FOR SAFE concat OF albumart [t0].
+----concat            [t0][vo]→[vo]  FINISHES [t0].  CONCATENATE STARTING TIMESTAMP, ON INSERTION. OCCURS @seek. NEEDED TO SYNC WITH automask.
+----split,asplit    = outputs  DEFAULT=2  CLONES video/audio.
 ----trim            = ...:end:...:start_frame:end_frame  TRIMS 1 FRAME OFF THE START FOR ITS TIMESTAMP. ALSO A BUGFIX FOR A CRASH AT end-file.
 ----format,aformat  = pix_fmts,sample_fmts:sample_rates  (yuva420p yuv420p gbrap gbrp=rgb24),s16:Hz  IS THE FINISH (TO REMOVE alpha=255).  gbrap (GreatBRitAin Planar) ASSUMED BY shuffleplanes. yuva420p FORCED BY overlay. NO format2ref FILTER.  aformat REMOVES doublep PRECISION AFTER dynaudnorm, & DOWNSAMPLES TO 2100Hz (NYQUIST+5%). 
 
@@ -134,12 +134,12 @@ function file_loaded()  --ALSO on_aid_vid & on_toggle{ON}.    THIS COULD BE REPL
     v_params = mp.get_property_native('video-params'        ) or {}
     W        = o.scale.w or o.scale[1] or mp.get_property_number('display-width' ) or v_params.w or v['demux-w'] or 1920  --(scale OVERRIDE) OR (display) OR ([vo] DIMENSIONS) OR (FALLBACK FOR RAW MP3 IN VIRTUALBOX)
     H        = o.scale.h or o.scale[2] or mp.get_property_number('display-height') or v_params.h or v['demux-h'] or 1080
-    W,H      = round(W,2),round(H,2)  --MPV v0.37.0+ HAS ODD BUG.
+    W,H      = round(W,2),round(H,2)  --MPV v0.37.0+ HAS ODD BUG. (CAN +1 TO PROVE IT.)
     format   = (not v.id or v_params.alpha) and 'yuva420p' or 'yuv420p'   --AKA pixelformat. lavfi-complex CAN'T DETECT WHETHER alpha EVER EXISTED WITHOUT A DELAYED TRIGGER.  overlay FORCES yuva420p, BUT SHOULD REMOVE alpha BECAUSE ITS EXISTENCE MAY TRIGGER BUGS IN VARIOUS SCRIPTS. 
     OFF      = OFF or not (a.id and vstack)  --NO AUDIO NOR vstack → OFF.
     if   OFF 
     then OFF = false --FORCE TOGGLE OFF, IF OFF.
-        on_toggle()  --COVERS OFF CASES. EXAMPLE: image=OFF-albumart.  THE TOGGLE DOESN'T CLEAR lavfi-complex. IT ONLY CLEARS THE SPECTRUM & CPU USAGE. SOMETIMES A FILE-LOAD IS NOTHING BUT A TOGGLE OFF.
+        on_toggle()  --COVERS OFF CASES. EXAMPLE: JPEG=OFF-albumart.  THE TOGGLE DOESN'T CLEAR lavfi-complex. IT ONLY CLEARS THE SPECTRUM & CPU USAGE. SOMETIMES A FILE-LOAD IS NOTHING BUT A TOGGLE OFF.
         return end   --ON BELOW.
     
     ----3 (ON) CASES:  1) PROPER-VIDEO  2) albumart  3) AUDIO-ONLY    CAN CHECK MPV LOG TO VERIFY OUTPUT IN EVERY CASE. INSTEAD OF EVERY SCRIPT SETTING ITS OWN lavfi-complex, THEY MAY RELY ON THIS SCRIPT. EXAMPLE: automask albumart ANIMATION.
