@@ -2,7 +2,7 @@
 ----https://github.com/yt-dlp/yt-dlp/releases/tag/2024.03.10  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY & REDTUBE ALSO.
 
 options={     --ALL OPTIONAL & CAN BE REMOVED.
-    scripts={ --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE. TYPOS CAN TOGGLE THEM ON & OFF.  autocomplex & automask HAVE osd_on_toggle WHICH DISPLAYS VERSION NUMBERS & FILTERGRAPHS.
+    scripts={ --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE. TYPOS CAN TOGGLE THEM ON & OFF.  autocomplex & automask HAVE osd_on_toggle WHICH DISPLAYS VERSION NUMBERS & FILTERGRAPHS.  A DIFFERENT VERSION COULD LOAD DIFFERENT SCRIPTS FOR IMAGES/albumart.
         "aspeed.lua",      --CLOCK & AUDIO DEVICES SPEED RANDOMIZATION. INSTA-TOGGLE. CAN CONVERT MONO TO (RANDOMIZED) SURROUND SOUND, FOR 10 HOURS.  MY FAVOURITE OVERALL. CONVERTS A SPEAKER INTO SOMETHING LIKE A MOCKING-BIRD.
         "autocrop.lua",    --CROPS OFF BLACK BARS BEFORE automask, BUT AFTER autocomplex. SMOOTH-TOGGLE. ALSO SUPPORTS START & END TIMES (TIME-CROP SUBCLIPS), & CROPS THROUGH TRANSPARENCY.
         -- "autocrop-smooth.lua",  --SMOOTH CROPPING & PADDING. DISABLE autocomplex DUE TO EXCESSIVE CPU USAGE.
@@ -15,28 +15,28 @@ options={     --ALL OPTIONAL & CAN BE REMOVED.
         "yt-dlp_macos", --CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto. 
     },
     
-    title         ='{\\fs55\\bord3}',  --REMOVE TO REMOVE title.  \\,fs,bord = \,FONTSIZE,BORDER (PIXELS)  THIS STYLE CODE SETS THE osd.  shad1,b1,i1,u1,s1,be1,fn,c = SHADOW,BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME,COLOR  WITHOUT BOLD, FONT MAY BE LARGER.  cFF=RED,cFF0000=BLUE,ETC
-    title_duration= 5, --SECONDS, DEFAULT=0. COUNTS FROM PLAYBACK-START.  title CAN BE MOVED TO aspeed.lua IF DOUBLE-MUTE TOGGLE IS NEEDED.
-    clear_osd     =.2, --SECONDS TO CLEAR osd, BEHIND title. TIMED FROM playback-START.
-    loop_limit    =10, --SECONDS (MAX). INFINITE loop GIF & SHORT MP4 IF duration IS LESS. STOPS MPV SNAPPING.  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
-    sub           = 1, --SUBTITLE TRACK ID OVERRIDE, @PLAYBACK-START. ALSO SECONDARY.  REMOVE FOR NO SUBS.  BY TRIAL & ERROR, auto & 1 NEEDED BEFORE & AFTER lavfi-complex, FOR YOUTUBE. 
-    options       =''  --FREE FORM  ' opt1 val1  opt2=val2  --opt3=val3 '...  main SETS NON-CRITICAL options MORE EASILY.
+    title          = '{\\fs55\\bord3}',  --REMOVE TO REMOVE title.  \\,fs,bord = \,FONTSIZE,BORDER (PIXELS)  THIS STYLE CODE SETS THE osd.  shad1,b1,i1,u1,s1,be1,fn,c = SHADOW,BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME,COLOR  WITHOUT BOLD, FONT MAY BE LARGER.  cFF=RED,cFF0000=BLUE,ETC
+    title_duration =  5, --SECONDS, DEFAULT=0. COUNTS FROM PLAYBACK-START.  title CAN BE MOVED TO aspeed.lua IF DOUBLE-MUTE TOGGLE IS NEEDED.
+    clear_osd      = .2, --SECONDS TO CLEAR osd, BEHIND title. TIMED FROM playback-START.
+    loop_limit     = 10, --SECONDS (MAX). INFINITE loop GIF & SHORT MP4 IF duration IS LESS. STOPS MPV SNAPPING.  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
+    -- sid         =  1, --SUBTITLE TRACK ID OVERRIDE, @PLAYBACK-START. ALSO SECONDARY.  BY TRIAL & ERROR, auto & 1 NEEDED BEFORE & AFTER lavfi-complex, FOR YOUTUBE. (o.sid_ytdl MIGHT BE A BETTER OPTION.)
+    options        = ''  --FREE FORM  ' opt1 val1  opt2=val2  --opt3=val3 '...  main SETS NON-CRITICAL options MORE EASILY.
         ..' ytdl-format=bv[height<1080]+ba/best'  -- bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
-        ..'   msg-level=ffmpeg/demuxer=error  keepaspect=no   profile=fast    '  --error SETTING AVOIDS SPURIOUS WARNINGS.  FREE aspect IF MPV HAS ITS OWN WINDOW.  profile=fast MAY HELP WITH EXCESSIVE LAG (VIRTUALBOX-MACOS). 
-        ..'         sub=auto          sub-scale=.5           sub-font=CONSOLAS'  --DEFAULTS no,1,sans-serif  auto SUBTITLES BEFORE YOUTUBE LOADS.  font & scale ALSO SET BY SMPLAYER.  CONSOLAS DOESN'T SQUISH LETTERS TOGETHER.
-        ..'     osd-bar=no  osd-scale-by-window=no  --osd-border-size=1  osd-duration 5000'  --DEFAULTS yes,yes,3,1000  (BOOL,BOOL,PIXELS,MILLISECONDS)  bar GETS IN THE WAY (SMPLAYER). READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd. 
+        ..'   msg-level=ffmpeg/demuxer=error               keepaspect=no      profile=fast'  --error SETTING AVOIDS SPURIOUS WARNINGS.  FREE aspect IF MPV HAS ITS OWN WINDOW.  profile=fast MAY HELP WITH EXCESSIVE LAG (VIRTUALBOX-MACOS). 
+        ..'         sub=auto      sub-font-size=32    sub-border-size=2      sub-font=CONSOLAS' --DEFAULTS no,55,3,sans-serif  (BOOL,PIXELS,PIXELS,string)  sub=sid=auto BEFORE YOUTUBE LOADS.  size & font (ACCIDENTALLY) OVERRIDE SMPLAYER. SUBS DRAWN @720p. MONOSPACED CONSOLAS WORKS WELL WITH RUSSIAN ITALICS.
+        ..'     osd-bar=no  osd-scale-by-window=no  --osd-border-size=1  osd-duration 5000'     --DEFAULTS yes,yes,3,1000  (BOOL,BOOL,PIXELS,MILLISECONDS)  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd. 
     ,
 }  
-o        =options  --ABBREV.
+o         = options  --ABBREV.
 for opt,val in pairs({scripts={},ytdl={},title_duration=0,options=''})
-do o[opt]=o[opt] or val end  --ESTABLISH DEFAULTS. 
-o.options=(o.options):gsub('-%-','  '):gmatch('[^ ]+') --'-%-' MEANS "--".  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN DOESN'T EXIST IN THE LUA VERSION USED BY mpv.app-v0.37 ON MACOS.  
+do o[opt] = o[opt] or val end  --ESTABLISH DEFAULTS. 
+o.options = (o.options):gsub('-%-','  '):gmatch('[^ ]+') --'-%-' MEANS "--".  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN DOESN'T EXIST IN THE LUA VERSION USED BY mpv.app-v0.37 ON MACOS.  
 while true 
-do   opt =o.options()  
-     find=opt  and (opt):find('=')  --RIGOROUS FREE-FORM.
-     val =find and (opt):sub(  find+1) or o.options()  --SKIP+2 PASSED "=", OR ELSE NEXT gmatch.
-     opt =find and (opt):sub(0,find-1) or opt
-     if not (opt and val) then break end
+do   opt  = o.options()  
+     find = opt  and (opt):find('=')  --RIGOROUS FREE-FORM.
+     val  = find and (opt):sub(  find+1) or o.options()  --SKIP+2 PASSED "=", OR ELSE NEXT gmatch.
+     opt  = find and (opt):sub(0,find-1) or opt
+     if not val then break    end
      mp.set_property(opt,val) end  --mp=MEDIA-PLAYER
 
 scripts,script_opts   = mp.get_property_native('scripts'),mp.get_property_native('script-opts')  --get_property_native FOR FILENAMES.
@@ -65,8 +65,8 @@ mp.register_event('file-loaded',file_loaded)
 title=mp.create_osd_overlay('ass-events')  --ass-events IS THE ONLY VALID OPTION.
 function playback_restart()       --title WAITS FOR PLAYBACK START, OR IT'S PREMATURE. clock GOES IN FIRST (TO TIME LOADS).
     if not osd_level then return  --~osd_level EQUIVALENT TO UNREGISTERING playback_restart.
-    elseif o.sub then mp.set_property(          'sub',o.sub)     --OVERRIDE INTERFERENCE 
-                      mp.set_property('secondary-sub',o.sub) end --ALSO NEEDED SOMETIMES (lavfi-complex).
+    elseif o.sid then mp.set_property(          'sid',o.sid)     --OVERRIDE INTERFERENCE 
+                      mp.set_property('secondary-sid',o.sid) end --ALSO NEEDED SOMETIMES (lavfi-complex).
     
     title.data=o.title and o.title..mp.get_property_osd('media-title') or ''
     title:update()  --UNDER EXCESSIVE LAG (& WITHOUT profile=fast), INSTANT title DISPLAY CAN CAUSE STREAM TO HANG. timeout MAYBE SAFER IN VIRTUALBOX-MACOS.
@@ -74,7 +74,7 @@ function playback_restart()       --title WAITS FOR PLAYBACK START, OR IT'S PREM
     mp.add_timeout(o.clear_osd or 0,set_osd_level)
 end
 mp.register_event('playback-restart',playback_restart)
-    
+
 function set_osd_level()  --RETURN osd-level, AFTER timeout.
     if o.clear_osd and osd_level and osd_level>0 then mp.set_property_number('osd-level',osd_level) end
     osd_level=nil 
@@ -98,7 +98,7 @@ end
 ----SMPLAYER v23.12 v23.6, RELEASES .7z .exe .dmg .AppImage .flatpak .snap  ALL TESTED.  v23.6 MAYBE PREFERRED.
 
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES). MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
-----THIS SCRIPT HAS NO TOGGLE. INSTEAD OF ALL scripts LAUNCHING EACH OTHER WITH THE SAME CODE, THIS SCRIPT LAUNCHES THEM ALL. DECLARING local VARIABLES HELPS WITH HIGHLIGHTING & COLORS, BUT UNNECESSARY.
+----THIS SCRIPT HAS NO TOGGLE. INSTEAD OF ALL scripts LAUNCHING EACH OTHER WITH THE SAME CODE, THIS SCRIPT LAUNCHES THEM ALL. DECLARING local VARIABLES HELPS WITH HIGHLIGHTING & COLORING, BUT UNNECESSARY.
 ----45%CPU+20%GPU USAGE (5%+20% WITHOUT scripts).  ~75%@30FPS (OR 55%@25FPS) WITHOUT GPU DRIVERS, @FULLSCREEN.  ARGUABLY SMOOTHER THAN VLC, DEPENDING ON VIDEO (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER).
 ----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS. THEY'RE ALL <300 LINES LONG, WITH MANY PARTS COPY/PASTED FROM EACH OTHER.  ULTIMATELY TELEVISION FIRMWARE (1GB) SHOULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. IT'S NOT THE CONTENT PROVIDER'S JOB. MPV CAN ACT LIKE TV FIRMWARE.
 ----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, & MULTI-LINE ALT-EDITING. AIDS RAPID GRAPH TESTING.  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK PRODUCES 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
