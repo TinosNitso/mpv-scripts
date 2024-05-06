@@ -7,7 +7,9 @@
 
 Video clock, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), animated mask generator ([automask](automask.lua)), dual animated spectrum ([autocomplex](autocomplex.lua)) & insta-cropping ([autocrop](autocrop.lua)) for [SMPlayer](https://smplayer.info) & [MPV](https://mpv.io)! Newest scripts in `mpv-scripts.zip` on GitHub. Toggle them by double-clicking on mute (m&m). Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. The scripts can be opened & options edited in Notepad (no word wrap). [main](main.lua) has much more info, & options for which scripts & subtitles load, & ytdl. I use [Notepad++](https://notepad-plus-plus.org/downloads/) on Windows, & Brackets on MacOS. All free for Windows, Linux & MacOS. 🙂
 
-To use on YouTube select Open→URL in SMPlayer. Rumble, Odyssey & RedTube also directly compatible. Double-clicking mute makes the mask smoothly vanish or re-appear, along with black-bars (smooth padding), & the audio switches btwn randomized & normal. aspeed.lua options can activate chipmunk mode on left-channel (in sync), as well as tri-color clock! autocrop handles transparent input, too, along with a track-list with start & end times. MPV has instant zoom, but unfortunately no scroll bar (to pan around with mouse, etc). Keyboard shortcuts only work if MPV has its own window (SMPlayer preference).
+To use on YouTube select Open→URL in SMPlayer. Rumble, Odyssey & RedTube also compatible. Double-clicking mute makes the mask smoothly vanish or re-appear, along with black-bars (smooth padding), & the audio switches btwn randomized & normal. aspeed.lua options can activate chipmunk mode on left-channel (in sync), as well as tri-color clock! autocrop handles transparent input, too, along with a track-list with start & end times. MPV has instant zoom, but unfortunately no scroll bar (to pan around with mouse, etc). Keyboard shortcuts only work if MPV has its own window (SMPlayer preference).
+
+See docs folder for pdf manuals.
 
 ## Installation
 In Windows extract all `.lua` scripts from `.zip` & copy/paste them into `smplayer-portable` (or smplayer) folder. Then in SMPlayer Advanced Preferences enter 
@@ -53,9 +55,12 @@ SMPlayer v23.6.0 & v23.12.0 supported. v23.12 has an annoying `no-osd seek 0 rel
 FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) supported.
 
 ## Latest Updates
-- Automask has smoother toggle, using only a single vf-command, with time-dependent `eq`.
-- Autocrop start (>0) & end (<0) time limits implemented better.
+- automask has smoother toggle, using only a single `vf-command`, using time-dependent equalizer.
+- autocrop `start` (>0) & `end` (<0) time limits implemented better. Added `o.keybinds_pad` for padding toggle, `o.format` for transparent bars & `o.scale_flags` for `fast_bilinear` scaling (performs better @toggle). Double & triple pad-toggling now smooth, by pad_time correction.
+- autocomplex: Added `o.freqs_options` `o.volume_options` `o.volume_filterchain`. Removed `o.freqs_mode` `o.freqs_win_size` `o.freqs_win_func` `o.freqs_averaging` `o.volume_fade` `o.volume_highpass` `o.volume_dynaudnorm`.
+- automask & autocrop both have `o.toggle_clip` formula for non-linear toggle transition.
+- aspeed improved reliability (should close txtfile). Named filter options. 
 
-Newest scripts haven't been properly released yet. I want to figure out how to double-back smooth-padding (rapid double toggling of autocrop).
+Newest scripts haven't been properly released yet, nor fully tested on MacOS. I want random numbers for the `o.negate_enable` inverter switch (automask).
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
