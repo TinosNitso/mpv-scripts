@@ -56,8 +56,8 @@ FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2
 
 ## Latest Updates
 - automask has smoother toggle, using only a single `vf-command`, using time-dependent equalizer.
-- autocrop `start` (>0) & `end` (<0) time limits implemented better. Added `o.keybinds_pad` for padding toggle, `o.format` for transparent bars & `o.scale_flags` for `fast_bilinear` scaling (performs better @toggle). Double & triple pad-toggling now smooth, using pad_time correction. Can now handle 
-- autocomplex: Added `o.freqs_options` `o.volume_options` `o.volume_filterchain` options. Removed `o.freqs_mode` `o.freqs_win_size` `o.freqs_win_func` `o.freqs_averaging` `o.freqs_alpha` `o.volume_fade` `o.volume_dm` `o.volume_highpass` `o.volume_dynaudnorm` `o.gb` .
+- autocrop `start` (>0) & `end` (<0) time limits implemented better. Added `o.keybinds_pad` for padding toggle, `o.format` for transparent bars. Double & triple pad-toggling now smooth, using pad_time correction. Can now handle 
+- autocomplex: Added `o.freqs_options` `o.volume_options` `o.volume_filterchain` options. Removed `o.freqs_mode` `o.freqs_win_size` `o.freqs_win_func` `o.freqs_averaging` `o.freqs_alpha` `o.volume_fade` `o.volume_dm` `o.volume_highpass` `o.volume_dynaudnorm` `o.gb`.
 - automask & autocrop both have `o.toggle_clip` formula for non-linear toggle transition.
 - aspeed added clock example with clear list of all `os.date` format directives. improved reliability (should close txtfile). Named filter options. 
 
