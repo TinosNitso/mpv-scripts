@@ -9,7 +9,7 @@ Video clock, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), anim
 
 To use on YouTube select Open→URL in SMPlayer. Rumble, Odyssey & RedTube also compatible. Double-clicking mute makes the mask smoothly vanish or re-appear, along with black-bars (smooth padding), & the audio switches btwn randomized & normal. aspeed.lua options can activate chipmunk mode on left-channel (in sync), as well as tri-color clock! autocrop handles transparent input, too, along with a track-list with start & end times. MPV has instant zoom, but unfortunately no scroll bar (to pan around with mouse, etc). Keyboard shortcuts only work if MPV has its own window (SMPlayer preference).
 
-See docs folder for pdf manuals.
+See GitHub `doc` folder for pdf manuals.
 
 ## Installation
 In Windows extract all `.lua` scripts from `.zip` & copy/paste them into `smplayer-portable` (or smplayer) folder. Then in SMPlayer Advanced Preferences enter 
@@ -56,11 +56,11 @@ FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2
 
 ## Latest Updates
 - automask has smoother toggle, using only a single `vf-command`, using time-dependent equalizer.
-- autocrop `start` (>0) & `end` (<0) time limits implemented better. Added `o.keybinds_pad` for padding toggle, `o.format` for transparent bars & `o.scale_flags` for `fast_bilinear` scaling (performs better @toggle). Double & triple pad-toggling now smooth, by pad_time correction.
-- autocomplex: Added `o.freqs_options` `o.volume_options` `o.volume_filterchain`. Removed `o.freqs_mode` `o.freqs_win_size` `o.freqs_win_func` `o.freqs_averaging` `o.volume_fade` `o.volume_highpass` `o.volume_dynaudnorm`.
+- autocrop `start` (>0) & `end` (<0) time limits implemented better. Added `o.keybinds_pad` for padding toggle, `o.format` for transparent bars & `o.scale_flags` for `fast_bilinear` scaling (performs better @toggle). Double & triple pad-toggling now smooth, using pad_time correction. Can now handle 
+- autocomplex: Added `o.freqs_options` `o.volume_options` `o.volume_filterchain` options. Removed `o.freqs_mode` `o.freqs_win_size` `o.freqs_win_func` `o.freqs_averaging` `o.freqs_alpha` `o.volume_fade` `o.volume_dm` `o.volume_highpass` `o.volume_dynaudnorm` `o.gb` .
 - automask & autocrop both have `o.toggle_clip` formula for non-linear toggle transition.
-- aspeed improved reliability (should close txtfile). Named filter options. 
+- aspeed added clock example with clear list of all `os.date` format directives. improved reliability (should close txtfile). Named filter options. 
 
-Newest scripts haven't been properly released yet, nor fully tested on MacOS. I want random numbers for the `o.negate_enable` inverter switch (automask).
+Newest scripts haven't been properly released yet, nor tested on MacOS. I want random numbers for the `o.negate_enable` inverter switch (automask).
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
