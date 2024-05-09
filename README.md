@@ -56,10 +56,10 @@ FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2
 
 ## Latest Updates
 - automask has smoother toggle, using only a single `vf-command`, using time-dependent equalizer.
-- autocrop `start` (>0) & `end` (<0) time limits implemented better. Added `o.keybinds_pad` for padding toggle, `o.format` for transparent bars. Double & triple pad-toggling now smooth, using pad_time correction. Can now handle odd output dimensions.
-- autocomplex: Added `o.freqs_options` `o.volume_options` `o.volume_filterchain` options. Removed `o.freqs_mode` `o.freqs_win_size` `o.freqs_win_func` `o.freqs_averaging` `o.freqs_alpha` `o.volume_fade` `o.volume_dm` `o.volume_highpass` `o.volume_dynaudnorm` `o.gb`.
+- autocrop `start` (>0) & `end` (<0) time limits implemented better. Added `o.keybinds_pad` for padding toggle, `o.format` for transparent bars. Rapid pad-toggling now smooth, using pad_time corrections. Can now handle odd output dimensions, & smooth padding for raw JPEG.
+- autocomplex: Added `o.freqs_options` `o.volume_options` `o.volume_filterchain` & `o.volume_scale` options. Removed `o.freqs_mode` `o.freqs_win_size` `o.freqs_win_func` `o.freqs_averaging` `o.freqs_alpha` `o.volume_fade` `o.volume_dm` `o.volume_highpass` `o.volume_dynaudnorm` `o.volume_width` `o.volume_height` & `o.gb`. Safe zoompan for shrunk primary (it can zoom little without clipping). Improved codes.
 - automask & autocrop both have `o.toggle_clip` formula for non-linear toggle transition.
-- aspeed added clock example with clear list of all `os.date` format directives. improved reliability (should close txtfile). Named filter options. 
+- aspeed added 10 clock examples. One is override with clear list of all `os.date` format directives. Improved reliability (should close txtfile). Named filter options. 
 
 Newest scripts haven't been properly released yet, nor tested on MacOS. I want random numbers for the `o.negate_enable` inverter switch (automask).
 
