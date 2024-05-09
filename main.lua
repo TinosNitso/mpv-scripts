@@ -3,7 +3,7 @@
 
 options={     --ALL OPTIONAL & CAN BE REMOVED.
     scripts={ --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE. TYPOS CAN TOGGLE THEM ON & OFF.  autocomplex & automask HAVE osd_on_toggle WHICH DISPLAYS VERSION NUMBERS & FILTERGRAPHS.  A DIFFERENT VERSION COULD LOAD DIFFERENT SCRIPTS FOR IMAGES/albumart.
-        "aspeed.lua",      --CLOCK & AUDIO DEVICES SPEED RANDOMIZATION. INSTA-TOGGLE. CAN CONVERT MONO TO (RANDOMIZED) SURROUND SOUND, FOR 10 HOURS.  MY FAVOURITE OVERALL. CONVERTS A SPEAKER INTO SOMETHING LIKE A MOCKING-BIRD.
+        "aspeed.lua",      --EXTRA AUDIO DEVICES SPEED RANDOMIZATION, + SYNCED CLOCKS. INSTA-TOGGLE.  CAN CONVERT MONO TO (RANDOMIZED) SURROUND SOUND, FOR 10 HOURS.  MY FAVOURITE OVERALL. CONVERTS A SPEAKER INTO SOMETHING LIKE A MOCKING-BIRD.
         "autocrop.lua",    --CROPS OFF BLACK BARS BEFORE automask, BUT AFTER autocomplex. SMOOTH-TOGGLE. ALSO SUPPORTS START & END TIMES (TIME-CROP SUBCLIPS), & CROPS THROUGH TRANSPARENCY.
         -- "autocrop-smooth.lua",  --SMOOTH CROPPING & PADDING. DISABLE autocomplex DUE TO EXCESSIVE CPU USAGE.
         "autocomplex.lua", --ANIMATED AUDIO SPECTRUM, VOLUME BARS, FPS LIMITER. DUAL lavfi-complex OVERLAY. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE IS LIKE WINGS OF BIRD). 
@@ -19,12 +19,12 @@ options={     --ALL OPTIONAL & CAN BE REMOVED.
     title_duration =  5, --SECONDS, DEFAULT=0. COUNTS FROM PLAYBACK-START.  title CAN BE MOVED TO aspeed.lua IF DOUBLE-MUTE TOGGLE IS NEEDED.
     clear_osd      = .2, --SECONDS TO CLEAR osd, BEHIND title. TIMED FROM playback-START.
     loop_limit     = 10, --SECONDS (MAX). INFINITE loop GIF & SHORT MP4 IF duration IS LESS. STOPS MPV SNAPPING.  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
-    -- sid         =  1, --UNCOMMENT FOR SUBTITLE TRACK ID OVERRIDE, @PLAYBACK-START. (ALSO SECONDARY.)  BY TRIAL & ERROR, auto & 1 NEEDED BEFORE & AFTER lavfi-complex, FOR YOUTUBE. (sid_ytdl MIGHT BE A BETTER OPTION.)
+    -- sid         =  1, --UNCOMMENT FOR SUBTITLE TRACK ID OVERRIDE, @PLAYBACK-START. (ALSO secondary-sid.)  BY TRIAL & ERROR, auto & 1 NEEDED BEFORE & AFTER lavfi-complex, FOR YOUTUBE.
     options        = ''  --FREE FORM  ' opt1 val1  opt2=val2  --opt3=val3 '...  main SETS NON-CRITICAL options MORE EASILY.
         ..' ytdl-format=bv[height<1080]+ba/best '  -- bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
         ..'   msg-level=ffmpeg/demuxer=error               keepaspect=no      profile=fast '  --error SETTING AVOIDS SPURIOUS WARNINGS.  FREE aspect IF MPV HAS ITS OWN WINDOW.  profile=fast MAY HELP WITH EXCESSIVE LAG (VIRTUALBOX-MACOS). 
-        ..'         sub=auto      sub-font-size=32    sub-border-size=2 '  --DEFAULTS no,55,3  (BOOL,PIXELS,PIXELS)  sub=sid=auto BEFORE YOUTUBE LOADS.  size & font (ACCIDENTALLY) OVERRIDE SMPLAYER. SUBS DRAWN @720p.
-        ..'     osd-bar=no  osd-scale-by-window=no  --osd-border-size=2  osd-duration 5000 osd-font=CONSOLAS'  --DEFAULTS yes,yes,3,1000,sans-serif  (BOOL,BOOL,PIXELS,MILLISECONDS,string)  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd. 
+        ..'         sub=auto      sub-font-size=32  sub-border-size=2 '  --DEFAULTS no,55,3  (BOOL,PIXELS,PIXELS)  sub=sid=auto BEFORE YOUTUBE LOADS.  size & font (ACCIDENTALLY) OVERRIDE SMPLAYER. SUBS DRAWN @720p.
+        ..'     osd-bar=no  osd-scale-by-window=no  osd-border-size=2  --osd-duration=5000  osd-font CONSOLAS'  --DEFAULTS yes,yes,3,1000,sans-serif  (BOOL,BOOL,PIXELS,MILLISECONDS,string)  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd. 
     ,
 }  
 o         = options  --ABBREV.
@@ -58,12 +58,12 @@ mp.set_property_native('scripts',scripts)  --ANNOUNCE scripts.
 function file_loaded() 
     osd_level,duration = mp.get_property_number('osd-level'),mp.get_property_number('duration') --osd_level ACTS AS SWITCH FOR FIRST playback-restart.  JPEG duration = (nil & 0) @ (file-loaded & playback-restart). nil & 0 MAY INTERCHANGE.  MPV MAY NOT ACTUALLY DEDUCE TRUE duration DUE TO 3RD PARTY FILTERS.
     if o.clear_osd  and o.clear_osd+0>0 and osd_level>0 then mp.set_property_number('osd-level',0) end 
-    if o.loop_limit and (duration or 0)<o.loop_limit+0  then mp.set_property('loop','inf') end  --loop GIF. +0 CONVERTS→number & IS EASIER TO READ THAN RE-ARRANGING INEQUALITIES.
+    if o.loop_limit and  (duration or 0)<o.loop_limit+0 then mp.set_property('loop','inf') end  --loop GIF. +0 CONVERTS→number.
 end
 mp.register_event('file-loaded',file_loaded)
 
 title=mp.create_osd_overlay('ass-events')  --ass-events IS THE ONLY VALID OPTION.
-function playback_restart()       --title WAITS FOR PLAYBACK START, OR IT'S PREMATURE. clock GOES IN FIRST (TO TIME LOADS).
+function playback_restart()       --title WAITS FOR PLAYBACK START, OR IT'S PREMATURE.
     if not osd_level then return  --~osd_level EQUIVALENT TO UNREGISTERING playback_restart.
     elseif o.sid then mp.set_property(          'sid',o.sid)     --OVERRIDE INTERFERENCE 
                       mp.set_property('secondary-sid',o.sid) end --ALSO NEEDED SOMETIMES (lavfi-complex).
@@ -99,7 +99,7 @@ end
 
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES). MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
 ----THIS SCRIPT HAS NO TOGGLE. INSTEAD OF ALL scripts LAUNCHING EACH OTHER WITH THE SAME CODE, THIS SCRIPT LAUNCHES THEM ALL. DECLARING local VARIABLES HELPS WITH HIGHLIGHTING & COLORING, BUT UNNECESSARY.
-----55%CPU+20%GPU USAGE (5%+20% WITHOUT scripts).  ~75%@30FPS (OR 55%@25FPS) WITHOUT GPU DRIVERS, @FULLSCREEN.  ARGUABLY SMOOTHER THAN VLC, DEPENDING ON VIDEO (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER).
+----50%CPU+20%GPU USAGE (5%+20% WITHOUT scripts).  ~75%@30FPS (OR 55%@25FPS) WITHOUT GPU DRIVERS, @FULLSCREEN.  ARGUABLY SMOOTHER THAN VLC, DEPENDING ON VIDEO (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER).
 ----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS. THEY'RE ALL <300 LINES LONG, WITH MANY PARTS COPY/PASTED FROM EACH OTHER.  ULTIMATELY TELEVISION FIRMWARE (1GB) SHOULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. IT'S NOT THE CONTENT PROVIDER'S JOB. MPV CAN ACT LIKE TV FIRMWARE.
 ----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, & MULTI-LINE ALT-EDITING. AIDS RAPID GRAPH TESTING.  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK PRODUCES 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
 ----VIRTUALBOX: CAN INCREASE VRAMSize FROM 128→256 MB. MACOS LIMITED TO 3MB VIDEO MEMORY. CAN ALSO SWITCH AROUND Command & Control(^) MODIFIER KEYS.  "C:\Program Files\Oracle\VirtualBox\VBoxManage" setextradata macOS_11 VBoxInternal/Devices/smc/0/Config/DeviceKey ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc

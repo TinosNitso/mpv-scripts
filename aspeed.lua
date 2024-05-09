@@ -4,14 +4,9 @@
 ----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS. WORKS WELL WITH MP4, MP3, MP2, M4A, AVI, WAV, OGG, AC3, OPUS, WEBM & YOUTUBE.
 
 options={  --ALL OPTIONAL & MAY BE REMOVED.
-    key_bindings             = 'F2',  --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER. 'F2 F3' FOR 2 KEYS.  TOGGLE DOESN'T APPLY TO filterchain.  C IS autocrop.lua, NOT CLOCK.
+    key_bindings             = 'F1',  --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER. 'F1 F2' FOR 2 KEYS.  TOGGLE DOESN'T APPLY TO filterchain.  C IS autocrop.lua, NOT CLOCK.
     toggle_on_double_mute    =   .5,  --SECONDS TIMEOUT FOR DOUBLE-MUTE-TOGGLE (m&m DOUBLE-TAP). TRIPLE MUTE DOUBLES BACK. SCRIPTS CAN BE SIMULTANEOUSLY TOGGLED USING DOUBLE MUTE.  REQUIRES AUDIO IN SMPLAYER.  IN GENERAL COULD BE RENAMED double_mute_timeout.
     extra_devices_index_list =   {},  --TRY {3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. REPETITION IGNORED.  1=auto  2=NORMAL DEVICE.  WRONG INDEXES CAN OVERLAP AUDIO TO PRIMARY DEVICE. EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS.  A SMALLER STEREO ADDS MORE TREBLE (BIG CHEAP STEREOS HAVE TOO MUCH BASS). EACH MPV USES APPROX 1% CPU, + 40MB RAM. EVERY SPEAKER BOX GETS ITS OWN YOUTUBE STREAM, ETC. 
-    
-    ----clock EXAMPLES.  UNCOMMENT A LINE TO ACTIVATE IT.  \\,an,fs,bord,c,%I,%M,%S,%p,%a = \,ALIGNMENT-NUMPAD,FONT-SIZE,BORDER,COLOR,HRS(12),MINS,SECS,P/AM,Day  (DEFAULT an0=an7=TOPLEFT)    STYLES:  shad1,b1,i1,u1,s1,be1,fn = SHADOW,BOLD,ITALIC,UNDERLINE,STRIKE,BLUREDGE,FONTNAME  REQUIRES VIDEO, TO BE SEEN.  main.lua HAS title, WITHOUT TOGGLE. INSTEAD OF COPYING THE clock INTO OTHER SCRIPT/S, THIS SCRIPT SYNCS IT TO SYSTEM TICK. 
-    BIG_MEDium_Little_tiny , clock='{\\an3\\fs70\\bord2}{}%I{\\fs42}:%M{\\fs26}:%S{\\fs16} %a',  --REMOVE TO remove clock.  {} REMOVES LEADING 0 FOLLOWING IT.  RATIO=EXP(-.5)=.6065=SQRT(1/EULER)  (AREA OF EACH SEGMENT IS REDUCED BY EULER'S #.)
-    -- BLUE_WHITE_RED_black, clock='{\\an3\\fs55\\bord2\\cFF4000}%I{\\bord0\\c0}:{\\bord2\\cFFFFFF}%M{\\bord0\\c0}:{\\bord2\\cFF}%S{\\bord0\\fs33\\c0} %a', --UNCOMMENT FOR TRI-COLOR clock.  LIKE A TRIBAR FLAG.  COLOR=\cFF4000 IS A LIGHTER SHADE OF BLUE (HEX ORDERED BGR).  
-    -- OS_DATE_FORMAT_LIST , clock=true,  --DISPLAY ALL DIRECTIVES.
     
     filterchain='anull,'  --CAN REPLACE anull WITH EXTRA FILTERS (vibrato highpass aresample ETC).
               ..'dynaudnorm=g=5:p=1:m=100', --DEFAULT=...:31:.95:10  DYNAMIC AUDIO NORMALIZER.  ALL SUBPROCESSES USE THIS. GRAPH COMMENTARY HAS MORE DETAILS.
@@ -19,8 +14,24 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
         "mpv",   --LINUX & SMPLAYER (WINDOWS)
         "./mpv", --        SMPLAYER (LINUX & MACOS)
         "/Applications/mpv.app/Contents/MacOS/mpv",       --     mpv.app
-        "/Applications/SMPlayer.app/Contents/MacOS/mpv",  --SMPlayer.app  ITS MPV CAN BE UPDATED.
+        "/Applications/SMPlayer.app/Contents/MacOS/mpv",  --SMPlayer.app
     },
+    
+    
+    ----CLOCKS (VARIOUS COLORS).  UNCOMMENT A LINE TO ACTIVATE IT.    STYLE CODES: \\,alpha##,an#,fs#,bord#,c######,b1,be1 = \,TRANSPARENCY,ALIGNMENT-NUMPAD,FONT-SIZE,BORDER,COLOR,BOLD,BLUREDGES  (DEFAULT an0=an7=TOPLEFT)    MORE:  shad#,i1,u1,s1,fn,fr,fscx##% = SHADOW,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION,FONTSCALEX  REQUIRES VIDEO TO BE SEEN.  EXAMPLES: USE {\\alpha80} FOR TRANSPARENCY. USE {\\fscx130%} SCALE IN HORIZONTAL.  A TRANSPARENT clock CAN BE TWICE AS BIG. 
+    clock='{\\an3\\fs70\\bord2}{}%I{\\fs42}:%M{\\fs26}:%S{\\fs16} %a',  --REMOVE TO remove clock.  {} REMOVES LEADING 0 FOLLOWING IT.  'BIG:MEDium:Little tiny'  RATIO=EXP(-.5)=.6065  (AREA OF EACH SEGMENT IS REDUCED BY EULER.)
+    -- FRANCE   , clock='{\\an3\\fs55\\bord3\\cA45500}%I{\\bord0\\c0}:{\\bord3\\cFFFFFF}%M{\\bord0\\c0}:{\\bord3\\c3541EF}%S{\\fs33\\bord0\\c0\\b1} %a',  --BLUE :WHITE :RED    Black,  VERTICAL TRICOLORS. HEX ORDERED BGR.  BLUREDGE ACTS LIKE SEMI-BOLD. UNDERLINING ALSO ADDS WEIGHT.
+    -- ROMANIA  , clock='{\\an3\\fs55\\bord3\\c7F2B00}%I{\\bord0\\c0}:{\\bord3\\c16D1FC}%M{\\bord0\\c0}:{\\bord3\\c2611CE}%S{\\fs33\\bord0\\c0\\b1} %a',  --BLUE :YELLOW:RED    Black,  MOLDOVA, ANDORRA & CHAD ARE SIMILAR.
+    -- ITALY    , clock='{\\an3\\fs55\\bord3\\c458C00}%I{\\bord0\\c0}:{\\bord3\\cF0F5F4}%M{\\bord0\\c0}:{\\bord3\\c2A21CD}%S{\\fs33\\bord0\\c0\\b1} %a',  --GREEN:WHITE :RED    Black,  MEXICO & SENEGAL ARE SIMILAR.
+    -- MALI     , clock='{\\an3\\fs55\\bord3\\c3AB514}%I{\\bord0\\c0}:{\\bord3\\c16D1FC}%M{\\bord0\\c0}:{\\bord3\\c2611CE}%S{\\fs33\\bord0\\c0\\b1} %a',  --GREEN:YELLOW:RED    Black,  GUINEA IS SIMILAR.
+    -- IRELAND  , clock='{\\an3\\fs55\\bord3\\c629B16}%I{\\bord0\\c0}:{\\bord3\\cFFFFFF}%M{\\bord0\\c0}:{\\bord3\\c3E88FF}%S{\\fs33\\bord0\\c0\\b1} %a',  --GREEN:WHITE :ORANGE Black
+    -- PERU     , clock='{\\an3\\fs55\\bord3\\c2310D9}%I{\\bord0\\c0}:{\\bord3\\cFFFFFF}%M{\\bord0\\c0}:{\\bord3\\c2310D9}%S{\\fs33\\bord0\\c0\\b1} %a',  --RED  :WHITE :RED    Black,  BICOLOR TRIBARS.  CANADA SIMILAR BUT CAN REMOVE LEADING 0 FROM HOURS & SECONDS (THIN ON LEFT & RIGHT).
+    -- NIGERIA  , clock='{\\an3\\fs55\\bord3\\c008000}%I{\\bord0\\c0}:{\\bord3\\cFFFFFF}%M{\\bord0\\c0}:{\\bord3\\c008000}%S{\\fs33\\bord0\\c0\\b1} %a',  --GREEN:WHITE :GREEN  Black
+    -- BELGIUM  , clock='{\\an3\\fs55\\bord0\\c0}%I{\\bord3\\c24DAFD}%M{\\c4033EF}%S',  --BLACKYELLOWRED,  BLACK PRIMARY (WITH NO OUTLINE).
+    -- GERMANY  , clock='{\\an3\\fs55\\bord0\\c0}%I\\N{\\bord3\\cFF}%M\\N{\\cCCFF}%S',  --BLACK \n RED \n GOLD  
+    -- RUSSIA   , clock='{\\an3\\fs55\\bord3\\cFFFFFF}%I\\N{\\cA73600}%M\\N{\\c1827D6}%S\\N{\\fs33\\bord0\\c0\\b1}%a',  -- WHITE \n BLUE \n RED \n black,  HORIZONTAL TRICOLOR.  NETHERLANDS MIGHT ALSO WORK.
+    -- LIST     , clock=true,  --DISPLAYS ALL os.date DIRECTIVE CODES & THEIR CURRENT VALUES.  EXAMPLES: %I,%M,%S,%a,%p = HRS(12),MINS,SECS,Day,A/PM
+    
     
     max_speed_ratio    = 1.15,  --DEFAULT=1.2          speed IS BOUNDED BY [SPEED/max,SPEED*max], WITH SPEED FROM CONTROLLER.  1.15 SOUNDS OK, BUT MAYBE NOT 1.25.
     max_random_percent =   10,  --DEFAULT=  0 %        MAX random % DEVIATION FROM PROPER speed. UPDATES EVERY HALF A SECOND.  EXAMPLE: 10%*.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER.  0% STILL CAUSES L & R TO DRIFT RELATIVELY, DUE TO HALF SECOND RANDOM WALKS BTWN speed UPDATES (CAN VERIFY WITH MONO→STEREO SCREEN RECORDING).
@@ -28,15 +39,14 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
     auto_delay         =  .25,  --DEFAULT= .5 SECONDS  subprocess RESPONSE TIME. THEY CHECK txtfile THIS OFTEN.
     resync_delay       =   30,  --DEFAULT= 60 SECONDS  os_sync RESYNC WITH THIS DELAY.   mp.get_time() & os.clock() MAY BE BASED ON CPU TIME, WHICH GOES OFF WITH RANDOM LAG.
     os_sync_delay      =  .01,  --DEFAULT=.01 SECONDS  ACCURACY FOR SYNC TO os.time. A perodic_timer CHECKS SYSTEM clock EVERY 10 MILLISECONDS (FOR THE NEXT TICK).  WIN10 CMD "TIME 0>NUL" GIVES 10ms ACCURATE SYSTEM TIME.
-    min_samples_time   =   15,  --DEFAULT= 15 SECONDS  SAMPLE COUNT STABILIZES WITHIN 10 SECONDS (EXCEPT MAYBE ON YOUTUBE+lavfi-complex).  IT'S ALWAYS A HALF-INTEGER @MEASUREMENT.
+    min_samples_time   =   20,  --DEFAULT= 15 SECONDS  SAMPLE COUNT STABILIZES WITHIN 10 SECONDS (EXCEPT MAYBE ON YOUTUBE+lavfi-complex).  IT'S ALWAYS A HALF-INTEGER @MEASUREMENT.
     timeout            =   10,  --DEFAULT=  5 SECONDS  SUBPROCESSES ALL quit  IF CONTROLLER STOPS       FOR THIS LONG. 
-    timeout_pause      =    1,  --DEFAULT=  2 SECONDS  SUBPROCESSES ALL pause IF CONTROLLER HARD BREAKS FOR THIS LONG. THEY pause INSTANTLY ON STOP.
+    timeout_pause      =    5,  --DEFAULT=  2 SECONDS  SUBPROCESSES ALL pause IF CONTROLLER HARD BREAKS FOR THIS LONG. THEY pause INSTANTLY ON STOP.
     -- meta_osd        =    1,  --SECONDS TO DISPLAY astats METADATA, PER OBSERVATION. UNCOMMENT FOR STATS.  IRONICALLY astats (audio STATISTICS) DOESN'T KNOW ANYTHING ABOUT TIME ITSELF, YET IT'S THE BASIS FOR TEN HOUR SYNCHRONY.
     -- mutelr          = 'muter', --DEFAULT='mutel'    UNCOMMENT TO SWITCH PRIMARY CONTROLLER CHANNEL TO LEFT. PRIMARY device HAS 1 CHANNEL IN NORMAL SYNC TO video.  HARDWARE USUALLY HAS A PRIMARY, BUT IT'S 50/50 (HEADPHONES OPPOSITE TO SPEAKERS).
     options            = ''       --FREE FORM  ' opt1 val1  opt2=val2  --opt3=val3 '  
-          ..' image-display-duration=inf '  --clock FOR JPEG.
-       -- ..'   osd-color=1/.5     osd-border-color=0/.5 ' --UNCOMMENT FOR TRANSPARENT clock. DEFAULTS 1/1 & 0/1. y/a = brightness/alpha (OPAQUENESS).  A TRANSPARENT clock CAN BE TWICE AS BIG. RED=1/0/0/1, BLUE=0/0/1/1, ETC
-       -- ..'                audio-pitch-correction=no   ' --UNCOMMENT FOR CHIPMUNK MODE (ON ALL BUT 1 CHANNEL). WORKS OK WITH SPEECH & COMICAL MUSIC. DEFAULT=yes APPLIES scaletempo2(?) FILTER.
+          ..' image-display-duration=inf  '  --JPEG clock.
+       -- ..' audio-pitch-correction=no  osd-border-color=0/.5 '  --UNCOMMENT FOR CHIPMUNK MODE (ON ALL BUT PRIMARY CHANNEL). WORKS OK WITH SPEECH & COMICAL MUSIC. DEFAULT=yes APPLIES scaletempo2(?) FILTER.  ALSO TRANSPARENT clock OUTLINE. DEFAULT=0/1=y/a=BRIGHTNESS/ALPHA (OPAQUENESS).  RED=1/0/0/1, BLUE=0/0/1/1, ETC
     ,
 } 
 o         = options  --ABBREV.
@@ -68,8 +78,8 @@ if mutelr then math.randomseed(pid)  --UNIQUE randomseed FOR ALL SUBPROCESSES. O
 else is_controller,o.auto_delay,mutelr = true,.5,o.mutelr  --CONTROLLER auto_delay EXISTS TO STOP timeout.
     audio_device_list,devices = mp.get_property_native('audio-device-list'),{mp.get_property('audio-device')}  --devices IS LIST OF audio-devices WHICH WILL ACTIVATE (STARTING WITH EXISTING device). audio_device_list IS COMPLETE LIST.  "wasapi/" (WINDOWS AUDIO SESSION APP. PROGRAM. INTERFACE) OR "pulse/alsa" (LINUX) OR "coreaudio/" (MACOS).  IT DOESN'T GIVE THE SAMPLERATES NOR CHANNEL-COUNTS. RANDOMIZING EACH CHANNEL WOULD REQUIRE SUBPROCESSES TO START THEIR OWN SUBPROCESSES (LIKE A BRANCHING TREE).
     clock          = o.clock and mp.create_osd_overlay('ass-events')  --ass-events IS THE ONLY VALID OPTION.   
-    if clock and type(o.clock)~='string'  --ASSUME FLAG FOR ALL FORMAT CODES.
-    then o.  clock = ''
+    if   o  .clock and type(o.clock)~='string'  --ASSUME FLAG FOR ALL FORMAT CODES.
+    then o  .clock = ''
         for key in ('a A b B c d H I j m M p S U w W x X y Y Z'):gmatch('[^ ]') 
         do o.clock = ('%s\n%%%%%s=%%%s'):format(o.clock,key,key) end  --MONOSPACE FONT PREFERRED.
         o   .clock = (o.clock):sub(2) end  --REMOVE LEADING \n.
@@ -130,7 +140,7 @@ function on_frame_drop()  --ALSO @playback-restart.
     initial_time_pos=nil  
     os_sync()  
 end
-mp.observe_property('frame-drop-count','number',on_frame_drop)  --BUGFIX FOR EXCESSIVE LAG: RESET SAMPLE COUNT.
+mp.observe_property('frame-drop-count','number',on_frame_drop)  --BUGFIX FOR EXCESSIVE LAG: RESET SAMPLE COUNT & RESYNC clock.
 
 function on_toggle(property)  --CONTROLLER ONLY. INSTA-TOGGLE (SWITCH). SUBPROCESSES MAINTAIN SYNC WHEN OFF.
     if not (path and is_controller) then return  --NOT STARTED YET.
@@ -148,9 +158,9 @@ end
 for key in (o.key_bindings):gmatch('[^ ]+') do mp.add_key_binding(key, 'toggle_aspeed_'..key, on_toggle)  end 
 
 function clock_update()                        
-    if clock then if OFF then clock:remove() --OFF SWITCH.
+    if clock then if OFF then clock:remove() --OFF SWITCH.  COULD ALSO BE MADE SMOOTH BY VARYING ALPHA ON osd-color & osd-border-color.
         else timers.osd:resume() 
-             clock.data=os.date(o.clock):gsub('{}0','{} ') --REMOVE LEADING 0 AFTER "{}" NULL-OP STYLE CODE.
+             clock.data=os.date(o.clock):gsub('{}0','{}') --REMOVE LEADING 0 AFTER "{}" NULL-OP STYLE CODE.
              clock:update() end end
 end
 
@@ -168,7 +178,7 @@ function os_sync()  --RUN 10ms LOOP UNTIL SYSTEM CLOCK TICKS. os.time() HAS 1s P
         return end
     
     sync_time=os.time()  --INTEGER SECONDS FROM 1970, @EXACT TICK OF CLOCK.
-    if sync_time>time1 then time1,mp2os_time = nil,sync_time-mp.get_time()   --time1 ACTS AS A SWITCH. mp2os_time=os_time_relative_to_mp_time IS THE CONSTANT TO ADD TO MPVTIME TO GET TIMEFROM1970 TO WITHIN 10ms.  mp.get_time()=os.clock()+CONSTANT (GIVE SAME NET RESULT).
+    if sync_time>time1 then time1,mp2os_time = nil,sync_time-mp.get_time()   --time1 ACTS AS A SWITCH. mp2os_time=os_time_relative_to_mp_time IS THE CONSTANT TO ADD TO MPVTIME TO GET TIMEFROM1970 TO WITHIN 10ms.  mp.get_time()=os.clock()+CONSTANT (GIVES SAME NET RESULT).
         timers.os_sync:kill()
         timers.osd    :kill()  --SYNC clock TICK TO SYSTEM. 
         clock_update() end
@@ -228,7 +238,7 @@ function property_handler(property,val)     --CONTROLLER WRITES TO txtfile, & SU
     time_from_write,txt.priority = os_time-txt.os_time,lines()  --RECOMPUTE time_from_write.  LINE7=priority
     txt.speed   = (txt.path~=path or    time_from_write>o.timeout_pause) and 0 or txt.speed  --loadfile PAUSED. 0 MEANS PAUSE.
     time_gained = time_pos-txt.time_pos-time_from_write*txt.speed  --Δtime_pos=Δos_time*speed
-    txtfile:close()  --RARELY NEEDED, IF NORMAL CLEANUP FAILS.
+    txtfile:close()  --close NEEDED, BUT RARELY (SUDDEN LAG MAY CAUSE FAILURE).
     
     if p.a        and p.a.id     ~= txt.aid        then mp.set_property_number('aid'   ,txt.aid   ) end  --UNTESTED. MAY REQUIRE GRAPH REPLACEMENT?
     if                p.volume   ~= txt.volume     then mp.set_property_number('volume',txt.volume) end
@@ -268,4 +278,10 @@ mp.observe_property('audio-params/samplerate','number',function(property,val) p.
 ----volume  =volume:...:eval  (DEFAULT 1:once)  POSSIBLE TIMELINE SWITCH FOR CONTROLLER. startt=t@INSERTION.  COULD BE USED FOR SMOOTH TOGGLE (ALTERNATIVE TO astreamselect), BECAUSE IT CAN VARY volume WITHIN amix.
 ----aresample     (Hz)  OPTIONAL.  OUTPUTS CONSTANT samplerate → astats.
 ----aformat =sample_fmts:sample_rates  [u8 s16 s64]:Hz  OPTIONAL ALTERNATIVE TO aresample.  OUTPUTS CONSTANT samplerate → astats.  s16=SGN+15BIT (-32k→32k), CD. u8 CAUSES HISSING.  
+
+----MORE CLOCKS. FLAGS WITH EMBLEMS TAKE TOO MUCH SPACE (NOT PURE TRICOLOR, ETC). AN ITALIAN TRICOLOR IS CLOSE TO MEXICAN (LATINO CATHOLIC).  MISSISSIPPI STATE FLAG LOOKS GOOD, TOO (1 MISSISSIPPI, 2 MISSISSIPPI, 3 MISSISSIPPI).
+    -- BARBADOS , clock='{\\an3\\fs55\\bord3\\c7F2600}%I{\\bord0\\c0}:{\\bord3\\c26C7FF}{}%M{\\bord0\\c0}:{\\bord3\\c7F2600}%S{\\fs33\\bord0\\c0\\b1} %a',--BLUE :YEL   :BLUE   Black,  SINGLE DIGIT MINUTES.
+    -- ALGERIA  , clock='{\\an3\\fs55\\bord3\\c336600}%I{\\bord0\\c0}:{\\bord3\\cFFFFFF}%M{\\fs33\\bord0\\c0\\b1} %p',  --GREEN:WHITE BLACK,  BIBAR.
+    -- ANDORRA  , clock='{\\an3\\fs55\\bord2\\c9F0610}%I{\\bord0\\c0}:{\\bord2\\c00DDFE}%M{\\bord0\\c0}:{\\bord2\\c3200D5}%S{\\fs33\\bord0\\c0\\be1} %a',  --BLUE :YELLOW:RED    black
+    -- MEXICO   , clock='{\\an3\\fs55\\bord2\\c476800}%I{\\bord0\\c0}:{\\bord2\\cFFFFFF}%M{\\bord0\\c0}:{\\bord2\\c2511CE}%S{\\fs33\\bord0\\c0\\be1} %a',  --GREEN:WHITE :RED    black
 
