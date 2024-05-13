@@ -16,31 +16,33 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
         "/Applications/mpv.app/Contents/MacOS/mpv",       --     mpv.app
         "/Applications/SMPlayer.app/Contents/MacOS/mpv",  --SMPlayer.app
     },
-    clocks       = {     --TOGGLE LINES TO INCLUDE/EXCLUDE VARIOUS STYLES FROM THE LIST. {} REMOVES LEADING 0 FOLLOWING IT.  STYLE CODES: \\,alpha##,an#,fs#,bord#,c######,b1 = \,TRANSPARENCY,ALIGNMENT-NUMPAD,FONT-SIZE(p),BORDER(p),COLOR,BOLD  (DEFAULT an0=an7=TOPLEFT)    MORE:  shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  REQUIRES VIDEO TO BE SEEN.  EXAMPLES: USE {\\alpha80} FOR TRANSPARENCY. USE {\\fscx130} FOR +30% IN HORIZONTAL.  A TRANSPARENT clock CAN BE TWICE AS BIG. be ACTS LIKE SEMI-BOLD.  SMOOTH TRANSITIONS (& SMOOTH TOGGLE) SEEM TOO DIFFICULT. 
+    clocks       = {     --TOGGLE LINES TO INCLUDE/EXCLUDE VARIOUS STYLES FROM THE LIST. {} REMOVES LEADING 0 FOLLOWING IT.  COMMAS PRESERVE THE CLOCK ORDER (FRANCE, NOT FRANCE=).  REPETITION ALLOWED (CAN REPEAT FRANCE IN BTWN).  CLOCKS REQUIRE VIDEO TO BE SEEN.  
         duration = 2   , --SECONDS,  INTEGER. TIME PER CLOCK STYLE.  A DOUBLE-TICK PER FLAG, EVERY SECOND SECOND.  
         offset   = 1   , --SECONDS.  CHANGE STYLE ON EVENS OR ODDS?
         -- DIRECTIVES_OVERRIDE = true,  --UNCOMMENT TO DISPLAY ALL os.date DIRECTIVE CODES & THEIR CURRENT VALUES (SPECIAL CLOCK).  EXAMPLES: %I,%M,%S,%a,%p = HRS(12),MINS,SECS,Day,A/PM
         ----UPPERCASE FLAG NEEDED IN FUTURE VERSION (DAY INSTEAD OF Day).
         
-        FRANCE         = '{\\an3\\fs55\\bord3\\cA45500}%I{\\bord0\\c0}:{\\bord3\\cFFFFFF}%M{\\bord0\\c0}:{\\bord3\\c3541EF}%S{\\fs33\\bord0\\c0\\b1} %a',  --BLUE :WHITE :RED    Black,  POP  68M  VERTICAL TRICOLOR (HORIZONTAL TAB). HEX ORDERED BGR.  BLACK BOLD MAY LOOK BETTER THAN BLACK ON BLACK BORDER.  ORDER AIMS FOR WHITE IN THE MIDDLE, & RED ON RIGHT. EACH COUNTRY STYLE MIGHT BE BETTER WITH ITS OWN FONT. CAN RECITE COUNTRIES.
-        ROMANIA        = '{\\an3\\fs55\\bord3\\c7F2B00}%I{\\bord0\\c0}:{\\bord3\\c16D1FC}%M{\\bord0\\c0}:{\\bord3\\c2611CE}%S{\\fs33\\bord0\\c0\\b1} %a',  --BLUE :YELLOW:RED    Black,  POP  19M  CHAD, MOLDOVA & ANDORRA ARE SIMILAR.
-        MALI           = '{\\an3\\fs55\\bord3\\c3AB514}%I{\\bord0\\c0}:{\\bord3\\c16D1FC}%M{\\bord0\\c0}:{\\bord3\\c2611CE}%S{\\fs33\\bord0\\c0\\b1} %a',  --GREEN:YELLOW:RED    Black,  POP  21M  IDEAL COLOR LIST MIXES AFRO & EURO FLAGS. 
-        GUINEA         = '{\\an3\\fs55\\bord3\\c2611CE}%I{\\bord0\\c0}:{\\bord3\\c16D1FC}%M{\\bord0\\c0}:{\\bord3\\c609400}%S{\\fs33\\bord0\\c0\\b1} %a',  --RED  :YELLOW:GREEN  Black,  POP  14M  REVERSE OF MALI, SIMILAR TO ROMANIA.
-        NIGERIA        = '{\\an3\\fs55\\bord3\\c008000}%I{\\bord0\\c0}:{\\bord3\\cFFFFFF}%M{\\bord0\\c0}:{\\bord3\\c008000}%S{\\fs33\\bord0\\c0\\b1} %a',  --GREEN:WHITE :GREEN  Black,  POP 231M  BICOLOR TRIBAND.  
-        IRELAND        = '{\\an3\\fs55\\bord3\\c629B16}%I{\\bord0\\c0}:{\\bord3\\cFFFFFF}%M{\\bord0\\c0}:{\\bord3\\c3E88FF}%S{\\fs33\\bord0\\c0\\b1} %a',  --GREEN:WHITE :ORANGE Black,  POP   7M
-        ITALY          = '{\\an3\\fs55\\bord3\\c458C00}%I{\\bord0\\c0}:{\\bord3\\cF0F5F4}%M{\\bord0\\c0}:{\\bord3\\c2A21CD}%S{\\fs33\\bord0\\c0\\b1} %a',  --GREEN:WHITE :RED    Black,  POP  59M  MEXICO & SENEGAL ARE SIMILAR.
-        PERU           = '{\\an3\\fs55\\bord3\\c2310D9}%I{\\bord0\\c0}:{\\bord3\\cFFFFFF}%M{\\bord0\\c0}:{\\bord3\\c2310D9}%S{\\fs33\\bord0\\c0\\b1} %a',  --RED  :WHITE :RED    Black,  POP  34M  BICOLOR.  CANADA MIGHT BE SIMILAR BUT WITH REDUCED HRS & SECS fs.
+        FRANCE         , '{\\an3\\fs55\\bord3\\cA45500}%I{\\bord0\\c0}:{\\bord3\\cFFFFFF}%M{\\bord0\\c0}:{\\bord3\\c3541EF}%S{\\fs33\\bord0\\c0\\b1} %a',  --BLUE :WHITE :RED    Black,  POP  68M  VERTICAL TRICOLOR (HORIZONTAL TAB). HEX ORDERED BGR.  BLACK BOLD MAY LOOK BETTER THAN BLACK ON BLACK BORDER.  ORDER AIMS FOR WHITE IN THE MIDDLE, & RED ON RIGHT. EACH COUNTRY STYLE MIGHT BE BETTER WITH ITS OWN FONT. CAN RECITE COUNTRIES.
+        ROMANIA        , '{\\an3\\fs55\\bord3\\c7F2B00}%I{\\bord0\\c0}:{\\bord3\\c16D1FC}%M{\\bord0\\c0}:{\\bord3\\c2611CE}%S{\\fs33\\bord0\\c0\\b1} %a',  --BLUE :YELLOW:RED    Black,  POP  19M  CHAD, MOLDOVA & ANDORRA ARE SIMILAR.
+        MALI           , '{\\an3\\fs55\\bord3\\c3AB514}%I{\\bord0\\c0}:{\\bord3\\c16D1FC}%M{\\bord0\\c0}:{\\bord3\\c2611CE}%S{\\fs33\\bord0\\c0\\b1} %a',  --GREEN:YELLOW:RED    Black,  POP  21M  IDEAL COLOR LIST MIXES AFRO & EURO FLAGS. 
+        GUINEA         , '{\\an3\\fs55\\bord3\\c2611CE}%I{\\bord0\\c0}:{\\bord3\\c16D1FC}%M{\\bord0\\c0}:{\\bord3\\c609400}%S{\\fs33\\bord0\\c0\\b1} %a',  --RED  :YELLOW:GREEN  Black,  POP  14M  REVERSE OF MALI, SIMILAR TO ROMANIA.
+        NIGERIA        , '{\\an3\\fs55\\bord3\\c008000}%I{\\bord0\\c0}:{\\bord3\\cFFFFFF}%M{\\bord0\\c0}:{\\bord3\\c008000}%S{\\fs33\\bord0\\c0\\b1} %a',  --GREEN:WHITE :GREEN  Black,  POP 231M  BICOLOR TRIBAND.  
+        IRELAND        , '{\\an3\\fs55\\bord3\\c629B16}%I{\\bord0\\c0}:{\\bord3\\cFFFFFF}%M{\\bord0\\c0}:{\\bord3\\c3E88FF}%S{\\fs33\\bord0\\c0\\b1} %a',  --GREEN:WHITE :ORANGE Black,  POP   7M
+        ITALY          , '{\\an3\\fs55\\bord3\\c458C00}%I{\\bord0\\c0}:{\\bord3\\cF0F5F4}%M{\\bord0\\c0}:{\\bord3\\c2A21CD}%S{\\fs33\\bord0\\c0\\b1} %a',  --GREEN:WHITE :RED    Black,  POP  59M  MEXICO & SENEGAL ARE SIMILAR.
+        PERU           , '{\\an3\\fs55\\bord3\\c2310D9}%I{\\bord0\\c0}:{\\bord3\\cFFFFFF}%M{\\bord0\\c0}:{\\bord3\\c2310D9}%S{\\fs33\\bord0\\c0\\b1} %a',  --RED  :WHITE :RED    Black,  POP  34M  BICOLOR.  CANADA MIGHT BE SIMILAR BUT WITH REDUCED HRS & SECS fs.
         
-        -- RUSSIA      = '{\\an3\\fs55\\bord3\\cFFFFFF}%I{\\cA73600}\\N%M{\\c1827D6}\\N%S{\\fs35\\bord0\\c0\\b1}\\N%a',  -- WHITE \N BLUE  \N RED    \N Black,  POP 147M  HORIZONTAL TRICOLOR (VERTICAL TAB).  LIKE A TAB FROM THE FLAG.  Day LINES UP @1080p.  
-        -- BULGARIA    = '{\\an3\\fs55\\bord3\\cFFFFFF}%I{\\c009900}\\N%M{\\c0000CC}\\N%S{\\fs35\\bord0\\c0\\b1}\\N%a',  -- WHITE \N GREEN \N RED    \N Black,  POP   6M
-        -- ARMENIA     = '{\\an3\\fs55\\bord3\\c1200D9}%I{\\cA03300}\\N%M{\\c00A8F2}\\N%S{\\fs35\\bord0\\c0\\b1}\\N%a',  -- RED   \N BLUE  \N ORANGE \N Black,  POP   3M  POPULATION SMALLEST.
-        -- HUNGARY     = '{\\an3\\fs55\\bord3\\c3929CE}%I{\\cFFFFFF}\\N%M{\\c507047}\\N%S{\\fs35\\bord0\\c0\\b1}\\N%a',  -- RED   \N WHITE \N GREEN  \N Black,  POP  10M
-        -- NETHERLANDS = '{\\an3\\fs55\\bord3\\c251DAD}%I{\\cFFFFFF}\\N%M{\\c85471E}\\N%S{\\fs35\\bord0\\c0\\b1}\\N%a',  -- RED   \N WHITE \N BLUE   \N Black,  POP  18M  CROATIA IS SIMILAR.
-        -- AUSTRIA     = '{\\an3\\fs55\\bord3\\c2E10C8}%I{\\cFFFFFF}\\N%M{\\c2E10C8}\\N%S{\\fs35\\bord0\\c0\\b1}\\N%a',  -- RED   \N WHITE \N RED    \N Black,  POP   9M  BICOLOR TRIBAND.
+        -- RUSSIA      , '{\\an3\\fs55\\bord3\\cFFFFFF}%I{\\cA73600}\\N%M{\\c1827D6}\\N%S{\\fs35\\bord0\\c0\\b1}\\N%a',  -- WHITE \N BLUE  \N RED    \N Black,  POP 147M  HORIZONTAL TRICOLOR (VERTICAL TAB).  LIKE A TAB FROM THE FLAG.  Day LINES UP @1080p.  
+        -- BULGARIA    , '{\\an3\\fs55\\bord3\\cFFFFFF}%I{\\c009900}\\N%M{\\c0000CC}\\N%S{\\fs35\\bord0\\c0\\b1}\\N%a',  -- WHITE \N GREEN \N RED    \N Black,  POP   6M
+        -- ARMENIA     , '{\\an3\\fs55\\bord3\\c1200D9}%I{\\cA03300}\\N%M{\\c00A8F2}\\N%S{\\fs35\\bord0\\c0\\b1}\\N%a',  -- RED   \N BLUE  \N ORANGE \N Black,  POP   3M  POPULATION SMALLEST.
+        -- HUNGARY     , '{\\an3\\fs55\\bord3\\c3929CE}%I{\\cFFFFFF}\\N%M{\\c507047}\\N%S{\\fs35\\bord0\\c0\\b1}\\N%a',  -- RED   \N WHITE \N GREEN  \N Black,  POP  10M
+        -- NETHERLANDS , '{\\an3\\fs55\\bord3\\c251DAD}%I{\\cFFFFFF}\\N%M{\\c85471E}\\N%S{\\fs35\\bord0\\c0\\b1}\\N%a',  -- RED   \N WHITE \N BLUE   \N Black,  POP  18M  CROATIA IS SIMILAR.
+        -- AUSTRIA     , '{\\an3\\fs55\\bord3\\c2E10C8}%I{\\cFFFFFF}\\N%M{\\c2E10C8}\\N%S{\\fs35\\bord0\\c0\\b1}\\N%a',  -- RED   \N WHITE \N RED    \N Black,  POP   9M  BICOLOR TRIBAND.
     
-        -- BELGIUM     = '{\\an3\\fs55\\bord1\\c0}%I{\\bord3\\c24DAFD}%M{\\c4033EF}%S', -- BLACKYELLOWRED        POP 12M  BLACK PRIMARY (THIN BORDER).  SMALL COUNTRY, SMALL CLOCK?
-        -- GERMANY     = '{\\an3\\fs55\\bord1\\c0}%I{\\bord3\\cFF}\\N%M{\\cCCFF}\\N%S', -- BLACK \N RED \N GOLD  POP 85M  WITHOUT Day, OUT OF CURIOSITY.  {\\fr-90} IS ANOTHER OPTION.
-        -- Wedge       = '{\\an3\\fs70\\bord2}{}%I{\\fs42}:%M{\\fs25}:%S{\\fs15} %a',   --'BIG:MEDium:Little tiny'  RATIO=.6  MY FAV.
+        -- BELGIUM     , '{\\an3\\fs55\\bord1\\c0}%I{\\bord3\\c24DAFD}%M{\\c4033EF}%S', -- BLACKYELLOWRED        POP 12M  BLACK PRIMARY (THIN BORDER).  SMALL COUNTRY, SMALL CLOCK?
+        -- GERMANY     , '{\\an3\\fs55\\bord1\\c0}%I{\\bord3\\cFF}\\N%M{\\cCCFF}\\N%S', -- BLACK \N RED \N GOLD  POP 85M  WITHOUT Day, OUT OF CURIOSITY.  {\\fr-90} IS ANOTHER OPTION.
+        
+        -- Wedge       , '{\\an3\\fs70\\bord2}{}%I{\\fs42}:%M{\\fs25}:%S{\\fs15} %a',   --'BIG:MEDium:Little tiny'  RATIO=.6  MY FAV.
+        ----STYLE CODES: \\,alpha##,an#,fs#,bord#,c######,b1 = \,TRANSPARENCY,ALIGNMENT-NUMPAD,FONT-SIZE(p),BORDER(p),COLOR,BOLD  (DEFAULT an0=an7=TOPLEFT)    MORE:  shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  EXAMPLES: USE {\\alpha80} FOR TRANSPARENCY. USE {\\fscx130} FOR +30% IN HORIZONTAL.  A TRANSPARENT clock CAN BE TWICE AS BIG. be ACTS LIKE SEMI-BOLD.  SMOOTH TRANSITIONS (& SMOOTH TOGGLE) SEEM TOO DIFFICULT. 
     },
     timeouts           = {quit=10,pause=5},  --DEFAULT={10,5}  SUBPROCESSES ALL quit OR pause IF CONTROLLER BREAKS FOR THIS LONG.  THEY pause INSTANTLY ON STOP.
     max_speed_ratio    = 1.15,  --DEFAULT=1.2          speed IS BOUNDED BY [SPEED/max,SPEED*max], WITH SPEED FROM CONTROLLER.  1.15 SOUNDS OK, BUT MAYBE NOT 1.25.
