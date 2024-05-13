@@ -50,17 +50,17 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 
 MPV v0.38.0, v0.37.0, v0.36.0 & v0.35.1 fully supported. v0.37+ preferred. mpv.exe can be [replaced](https://sourceforge.net/projects/mpv-player-windows/files/release/), within smplayer-portable. New MacOS builds are [here](https://laboratory.stolendata.net/~djinn/mpv_osx/).
 
-SMPlayer v23.6.0 & v23.12.0 supported. v23.12 has an annoying `no-osd seek 0 relative exact` accompanying every `set pause yes` (user hits spacebar). Releases supported include .7z .exe .app .AppImage .flatpak & .snap.
+SMPlayer v24.5.0 supported. v23.12 has an annoying pause issue: `no-osd seek 0 relative exact` accompanying every `set pause yes`. Releases tested include .7z .exe .app .AppImage .flatpak & .snap.
 
 FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) supported.
 
 ## Latest Updates
-- automask has smoother toggle, using only a single `vf-command`. It uses a time-dependent equalizer.
+- aspeed: Combined `o.timeout` & `o.timeout_pause` with `o.timeouts`. Replaced `o.clock` with `o.clocks`, which includes `duration`, `offset` & `DIRECTIVES_OVERRIDE` sub-options. Added 16 clock examples which can cycle btwn each other, including French & Russian (horizontal & vertical tricolors). The OVERRIDE is a clear list of all `os.date` format directives. Improved reliability (should close txtfile). Named filter options. 
+- automask has smoother toggle, using only a single `vf-command`. It uses a time-dependent equalizer. Also added a few more examples: PENTAGON_HOUSE, SQUARE_SPIN, TRIANGLE_SPIN & DIAMOND_EYES.
 - autocrop `start` (>0) & `end` (<0) time limits implemented better. Added `o.keybinds_pad` for padding toggle, `o.format` for transparent bars. Rapid pad-toggling now smooth, using pad_time corrections. Can now handle odd output dimensions, & smooth padding for raw JPEG. Replaced `o.detector_image`, `o.detect_limit_image` & `o.detect_min_ratio_image` with `o.options_image`. Combined `o.TOLERANCE` options, too.
 - autocomplex: Combined `o.freqs_mode`, `o.freqs_win_size`, `o.freqs_win_func` & `o.freqs_averaging` into `o.freqs_options`. Combined `o.volume_fade` & `o.volume_dm` into `o.volume_options`. Combined `o.volume_highpass` & `o.volume_dynaudnorm` into `o.volume_filterchain`. Combined `o.volume_width` & `o.volume_height` into `o.volume_scale` options. Removed `o.freqs_alpha` & `o.gb`. Safe zoompan for shrunk primary (it can zoom little without clipping). Improved codes.
-- automask & autocrop both have `o.toggle_clip` formula for non-linear toggle transition. They also must have `osd-par` corrections (or par override), for displays with non-square pixels. autocrop also takes the source par into account.
-- aspeed added 16 clock examples, including French & Russian (horizontal & vertical tricolors). One is override with clear list of all `os.date` format directives. Improved reliability (should close txtfile). Named filter options. 
+- automask & autocrop both have `o.toggle_clip` formula for non-linear toggle transition. They also have `osd-par` observations (or par override in `o.dimensions`), for displays with non-square pixels. autocrop also takes the source par into account.
 
-Newest scripts haven't been properly released yet, nor tested on MacOS. Autocomplex shouldn't be changing `aspect` (it should maintain aspect, but not the other scripts).
+Newest scripts haven't been properly released yet, nor tested on MacOS & SMPlayer-v24.5. An issue or 2 to resolve before next release.
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
