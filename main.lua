@@ -20,16 +20,16 @@ options={     --ALL OPTIONAL & CAN BE REMOVED.
     loop_limit     = 10, --SECONDS (MAX). INFINITE loop GIF & SHORT MP4 IF duration IS LESS. STOPS MPV SNAPPING.  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
     -- sid         =  1, --UNCOMMENT FOR SUBTITLE TRACK ID OVERRIDE, @PLAYBACK-START. (ALSO secondary-sid.)  BY TRIAL & ERROR, auto & 1 NEEDED BEFORE & AFTER lavfi-complex, FOR YOUTUBE.
     options        = ''  --FREE FORM  ' opt1 val1  opt2=val2  --opt3=val3 '...  main SETS NON-CRITICAL options MORE EASILY.
-        ..' ytdl-format=bv[height<1080]+ba/best '  -- bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
-        ..'   msg-level=ffmpeg/demuxer=error       --keepaspect=no  profile fast '  --error SETTING AVOIDS SPURIOUS WARNINGS.  FREE aspect IF MPV HAS ITS OWN WINDOW.  profile=fast MAY HELP WITH EXCESSIVE LAG (VIRTUALBOX-MACOS). 
-        ..'         sub=auto  sub-border-size=2   sub-font-size=32   '  --DEFAULTS no ,3,55    (BOOL,PIXELS,PIXELS)  sub=sid=auto BEFORE YOUTUBE LOADS.  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
-        ..'     osd-bar=no    osd-border-size=2    osd-duration=5000 '  --DEFAULTS yes,3,1000  (BOOL,PIXELS,ms    )  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd. 
+        ..'  ytdl-format=bv[height<1080]+ba/best '  -- bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
+        ..' --keepaspect=no  profile fast '  --FREE aspect IF MPV HAS ITS OWN WINDOW.  profile=fast MAY HELP WITH EXCESSIVE LAG (VIRTUALBOX-MACOS). 
+        ..'          sub=auto  sub-border-size=2   sub-font-size=32   '  --DEFAULTS no ,3,55    (BOOL,PIXELS,PIXELS)  sub=sid=auto BEFORE YOUTUBE LOADS.  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
+        ..'      osd-bar=no    osd-border-size=2    osd-duration=5000 '  --DEFAULTS yes,3,1000  (BOOL,PIXELS,ms    )  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd. 
     ,
 }  
 o         = options  --ABBREV.
 for opt,val in pairs({scripts={},ytdl={},title_duration=0,options=''})
 do o[opt] = o[opt] or val end  --ESTABLISH DEFAULTS. 
-o.options = (o.options):gsub('-%-','  '):gmatch('[^ ]+') --'-%-' MEANS "--".  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN DOESN'T EXIST IN THE LUA USED BY mpv.app.  
+o.options = (o.options):gsub('-%-','  '):gmatch('[^ ]+') --'-%-' MEANS "--".  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN DOESN'T EXIST IN THE LUA USED BY THE NEWEST mpv.app (SAME VERSION, BUILT DIFFERENT).
 while 1 
 do   opt  = o.options()  
      find = opt  and (opt):find('=')  --RIGOROUS FREE-FORM.
@@ -80,7 +80,7 @@ end
 
 
 ----mpv TERMINAL COMMANDS:
-----WINDOWS   CMD: MPV\MPV --script=. TEST.MP4      (PLACE scripts & TEST.MP4 INSIDE smplayer.exe FOLDER)
+----WINDOWS   CMD: MPV\MPV --script=. TEST.MP4      (PLACE scripts & TEST.MP4 INSIDE smplayer.exe FOLDER. THEN COPY/PASTE COMMAND INTO NOTEPAD & SAVE AS TEST.CMD, & DOUBLE-CLICK IT.)
 ----LINUX      sh: mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"
 ----MACOS mpv.app: /Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"        (DRAG & DROP mpv.app ONTO Applications.)
 ---- SMPlayer.app: /Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"      
@@ -112,7 +112,7 @@ end
 
 ----o.options DUMP (FREE FORM). NICER WITHOUT "=". FOR DEBUG CAN TRY TOGGLE ALL THESE SIMULTANEOUSLY.
         -- ..' framedrop decoder+vo  video-sync desync  vd-lavc-dropframe nonref  vd-lavc-skipframe nonref'  --frame=none default nonref bidir  CAN SKIP NON-REFERENCE OR B-FRAMES.  video-sync=display-resample & display-tempo GLITCHED. 
-        -- ..' vo gpu  hr-seek always  index recreate  wayland-content-type none  background color  alpha blend'
+        -- ..' vo gpu  msg-level=ffmpeg/demuxer=error  hr-seek always  index recreate  wayland-content-type none  background color  alpha blend'
         -- ..' video-latency-hacks yes  hr-seek-framedrop yes  access-references yes  ordered-chapters no  stop-playback-on-init-failure yes'
         -- ..' osc no  ytdl yes  cache yes  cache-pause no  cache-pause-initial no  initial-audio-sync yes  gapless-audio no  keepaspect-window no  force-seekable yes  vd-queue-enable yes  ad-queue-enable yes'
         -- ..' demuxer-lavf-hacks yes  demuxer-lavf-linearize-timestamps no  demuxer-seekable-cache yes  demuxer-cache-wait no  demuxer-donate-buffer yes  demuxer-thread yes'

@@ -52,7 +52,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATIVE).      nil & fal
     
     
     -- n = 5,      t = 5/30,  --UNCOMMENT FOR STATIONARY SPECTACLES (FREEZE FRAME). SUBSTITUTIONS FOR (t) & (n)=(on)=(in).  BRACKETS ARE CLEARER.
-    -- osd_on_toggle =    5,  --SECONDS. UNCOMMENT TO INSPECT VERSIONS, FILTERGRAPHS & PARAMETERS. 0 CLEARS THE osd INSTEAD. DISPLAYS mpv-version ffmpeg-version libass-version lavfi-complex af vf video-out-params
+    -- osd_on_toggle =    5,  --SECONDS. UNCOMMENT TO INSPECT VERSIONS, FILTERGRAPHS & PARAMETERS. 0 CLEARS THE osd INSTEAD. DISPLAYS mpv-version ffmpeg-version libass-version _VERSION lavfi-complex af vf video-out-params
     -- mask_no_vid   = true,  --mask ONTOP OF no-vid (PURE lavfi-complex). ABSTRACT VISUALS MAY BE OPTIMAL WITHOUT mask.
     -- toggle_clip   = 'sin(PI/2*%s)',  --DEFAULT='%s'=LINEAR_IN_TIME  UNCOMMENT FOR NON-LINEAR SINUSOIDAL TRANSITION (QUARTER-WAVE). DOMAIN & RANGE BOTH [0,1].  LINEAR MAY BE SUPERIOR BECAUSE A SINE WAVE IS 57% FASTER @MAX GRADIENT (PI/2=1.57).
     -- dimensions    = {w=1680,h=1050,par=1},  --DEFAULT={w=display-width,h=display-height,par=osd-par=ON-SCREEN-DISPLAY-PIXEL-ASPECT-RATIO}  THESE ARE OUTPUT PARAMETERS.  MPV EMBEDDED IN VIRTUALBOX OR SMPLAYER MAY NOT KNOW DISPLAY w,h,par @file-loaded, SO OVERRIDE IS REQUIRED.  CAN MEASURE display TO DETERMINE par.
@@ -86,8 +86,8 @@ for opt in (g_opts):gmatch('[^ ]+')
 do         o[opt] = o[opt]..'' end  --string CONVERSION.  
 for csm,SUB in pairs({c='cos(2*PI*(n)/%%s)',s='sin(2*PI*(n)/%%s)',m='mod(floor((n)/%%s)\\,2)',p=o.period}) do for opt in (g_opts):gmatch('[^ ]+')  --(c),(s),(m),(p) SUBSTITUTIONS.  zoompan WOULD NEED A SEPARATE LINE OF ITS OWN, TO BE RIGOROUS.  widths heights OPTIONAL (FOR eval=frame→DILATING PUPILS).  
     do o[opt]     = (o[opt]):gsub('%('..csm..'%)',SUB) end end  --%s=FRAMES/PERIOD  () ARE SPECIAL TO gsub.
-o.fps_mask        = o.fps_mask or 1/o.period  --DEFAULT 1 FRAME/PERIOD (FP=1).  THIS CAUSES INFINITE RECURRING DECIMALS - NEEDS IMPROVEMENT.
-FP                = round(o.fps_mask*o.period)  --ABBREV. FRAMES PER PERIOD. USES n INSTEAD OF t TO AVOID INFINITE RECURRING DECIMALS.
+FP                = o.fps_mask and round(o.fps_mask*o.period) or 1  --ABBREV. FRAMES PER PERIOD. USES n INSTEAD OF t TO AVOID INFINITE RECURRING DECIMALS.
+o.fps_mask        = FP/o.period   --DEFAULT 1 FRAME/PERIOD (FP=1).  THIS CAUSES INFINITE RECURRING DECIMALS - NEEDS IMPROVEMENT.
 for opt in (g_opts):gmatch('[^ ]+') 
 do         o[opt] = (o[opt]):gsub('%%s',FP) end  --%s=FRAMES/PERIOD  BLINKER SWITCH, INVISIBILITY, OVERLAYS, rotations & zoompan.
 for nt in ('n t'):gmatch('[^ ]') do if o[nt] then for opt in (g_opts):gmatch('[^ ]+')  --SUB IN SPECIFIC TIME OR FRAME#.
@@ -122,8 +122,8 @@ o.DUAL            = o.DUAL and 2 or 1  --DUAL→2 OR 1 (boolean→number).
 periods_loop      = math.max(0,o.periods-o.periods_skipped-1) --loop PRIMARY period THIS MUCH.  periods_skipped=periods VALID (DISCARDS PRIMARY loop, EXCEPT FOR LEAD FRAME).
 skip_loop,periods_size = FP*o.periods_skipped,FP*o.periods    --# OF EXTRA LEAD FRAMES, TOTAL # OF FRAMES.
 
-lavfi=('fps=%s,scale=%%d:%%d,setsar=1,split=3[vo][t0],%s[vf],nullsrc=1x1:%s:0.001,format=y8,lut=0,split[0][1],[0][vo]scale2ref=floor(oh*a*(%%s)/%d/4)*4:floor(ih*(%s)/4)*4[0][vo],[1][0]scale2ref=oh:ih[1][0],[1]geq=%s[1],[1][0]scale2ref=floor((%s)/4)*4:floor((%s)/4)*4[1][0],[0]loop=%s:1[0],[1]format=yuva420p,loop=%s:1%s[m],[m][vo]scale2ref=oh*a:ih*(%s)[m][vo],[m]loop=%s:%s,loop=%s:1,rotate=%s:iw*oh/ih:ih/(%s),lut=val*gt(val\\,16),zoompan=%s:d=1:s=%%dx%%d:fps=%s,negate=enable=%s,lut=0:enable=%s,loop=-1:%d,trim=start_frame=%d[m],[t0]trim=end_frame=1,setpts=PTS-(1/FRAME_RATE+%s)/TB,setsar[t0],[t0][m]concat,trim=start_frame=1,fps=%s,eq=brightness=%%s:eval=frame[m],[vo][vf][m]maskedmerge')
-      :format(o.fps,o.filterchain,o.fps_mask,o.DUAL,o.RES_MULT,o.geq,g.w[1],g.h[1],FP-1,FP-1,mask,o.RES_SAFETY,periods_loop,FP,skip_loop,g.rots[1],o.RES_SAFETY,o.zoompan,o.fps_mask,o.negate_enable,o.lut0_enable,periods_size,periods_size,o.lead_time,o.fps)  --fps REPEATS FOR STREAM & eq.  fps_mask REPEATS FOR nullsrc & zoompan.  RES_SAFETY REPEATS FOR mask EXCESS & THEN rotate CROPS IT OFF.  FP REPEATS FOR [0],[1] INITIALIZATION, periods_skipped & FINAL SELECTOR.  
+lavfi=('fps=%s,scale=%%d:%%d,setsar=1,split=3[vo][t0],%s[vf],nullsrc=1x1:%s:0.001,format=y8,lut=0,split[0][1],[0][vo]scale2ref=floor(oh*a*(%%s)/%d/4)*4:floor(ih*(%s)/4)*4[0][vo],[1][0]scale2ref=oh:ih[1][0],[1]geq=%s[1],[1][0]scale2ref=floor((%s)/4)*4:floor((%s)/4)*4[1][0],[0]loop=%s:1[0],[1]format=yuva420p,loop=%s:1%s[m],[m][vo]scale2ref=oh*a:ih*(%s)[m][vo],[m]loop=%s:%s,loop=%s:1,rotate=%s:iw*oh/ih:ih/(%s),lut=val*gt(val\\,16),zoompan=%s:d=1:s=%%dx%%d:fps=%s,negate=enable=%s,lut=0:enable=%s,loop=-1:%d,trim=start_frame=%d[m],[t0]trim=end_frame=1,setpts=PTS-(1/FRAME_RATE+%s)/TB,setsar[t0],[t0][m]concat,trim=start_frame=1,fps=%s,eq=brightness=%%s:eval=frame[m],[vo][vf][m]maskedmerge'
+):format(o.fps,o.filterchain,o.fps_mask,o.DUAL,o.RES_MULT,o.geq,g.w[1],g.h[1],FP-1,FP-1,mask,o.RES_SAFETY,periods_loop,FP,skip_loop,g.rots[1],o.RES_SAFETY,o.zoompan,o.fps_mask,o.negate_enable,o.lut0_enable,periods_size,periods_size,o.lead_time,o.fps)  --fps REPEATS FOR STREAM & eq.  fps_mask REPEATS FOR nullsrc & zoompan.  RES_SAFETY REPEATS FOR mask EXCESS & THEN rotate CROPS IT OFF.  FP REPEATS FOR [0],[1] INITIALIZATION & periods_loop.  periods_size REPEATS FOR INFINITE loop & FINAL SELECTOR.
 
 ----lavfi           = [graph] [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTERGRAPH  [vo]=VIDEO-OUT [vf]=VIDEO-FILTERED [m]=MASK [t0]=STARTPTS-FRAME [0]=SEMI-CANVAS  [1][2]...[N] ARE SECTIONS.  SELECT FILTER NAME TO HIGHLIGHT IT. NO WORD-WRAP → SIDE-SCROLL PROGRAMMING, WITH HIGHLIGHTING ETC. %% SUBSTITUTIONS OCCUR @file-loaded. (%s) NEEDS BRACKETS FOR MATH. NO audio ALLOWED. RE-USING LABELS IS SIMPLER.  [t0] SIMPLIFIES MATH BTWN VARIOUS GRAPHS, SO THEY ALL SCOOT AROUND TOGETHER.  THIS EXACT CODE PROPERLY IMPLEMENTS RES_SAFETY, WITH PRECISION. 
 ----fps             = fps:start_time (SECONDS)  DEFAULT=25  IS THE START.  start_time FOR image --start (FREE TIMESTAMP).  CAN LIMIT [vo] TO 30fps.
@@ -163,21 +163,17 @@ function file_loaded() --ALSO @seek, @vid, @on_toggle(is1frame) & @osd-par.
     loop     = v.image    and not lavfi_complex and not no_mask
     is1frame = v.albumart and not lavfi_complex or      no_mask --albumart & NULL OVERRIDE ARE is1frame RELATIVE TO on_toggle.  MP4TAG & MP3TAG ARE BOTH albumart. SPECIAL & DON'T loop WITHOUT lavfi-complex. CAN COMPARE .JPG TO .MP3. image MAY HAVE VF TIME-STREAM, BUT NOT albumart.
     time_pos = loop and round(mp.get_property_number('time-pos'),.001)  --NEAREST MILLISECOND.
+    
     if insta_pause then mp.set_property_bool('pause',1) end  --PREVENTS EMBEDDED MPV FROM SNAPPING, & is1frame INTERFERENCE.  MAYBE SHOULD USE A terminal GAP, TOO.
-    
-    if          is1frame and brightness==-1 and m.brightness==0
-    then mp.command( 'no-osd vf remove  @'..label) --SPECIAL CASE: is1frame TOGGLE.
-    elseif not (is1frame and brightness==-1)       --CHECK NOT ALREADY DISABLED is1frame (OCCURS DURING PLAYLIST: OFF→OFF).
-    then mp.command(("no-osd vf append '@%s:lavfi=[%s]'"):format(label,lavfi):format(W,H,par,W,H,brightness)) end  --"''" FOR SPACEBARS IN filterchain. W,H REPEAT FOR scale & zoompan. 
-    m={vid=v.id,brightness=brightness,par=par}  --MEMORY @INSERTION.
-    
+    mp             .command(("no-osd vf append '@%s:lavfi=[%s]'"):format(label,lavfi):format(W,H,par,W,H,brightness))   --"''" FOR SPACEBARS IN filterchain (OR ELSE CAN USE NATIVE FORM). W,H REPEAT FOR scale & zoompan. 
     for _,filter in pairs(mp.get_property_native('vf')) do if filter.label=='loop' 
-        then mp    .command( 'no-osd vf remove @loop')  --remove @loop, AT CHANGE IN vid. COULD ALSO BE THERE DUE TO OTHER SCRIPTS.
-            break end end
-    if loop then mp.command(('no-osd vf pre    @loop:lavfi=[loop=-1:1,fps=%s:%s]'):format(o.fps,time_pos)) end  --ALL MASKS CAN REPLACE @loop.
+        then mp    .command( 'no-osd vf remove  @loop')  --remove @loop, AT CHANGE IN vid. COULD ALSO BE THERE DUE TO OTHER SCRIPTS.
+            break end end                       
+    if loop then mp.command(('no-osd vf pre     @loop:lavfi=[loop=-1:1,fps=%s:%s]'):format(o.fps,time_pos)) end  --ALL MASKS CAN REPLACE @loop.
     
     if (not v.image or v.albumart) and mp.get_property('end')=='none' then mp.set_property('end','100%') end  --ENDS mask. SIMPLER THAN TRIMMING ITS TIMESTAMPS, OR eof_action=endall. BUT NOT FOR JPEG (100%=0).  SAFE FOR MPV PLAYLIST: 100%→100%.
     if insta_pause then mp.set_property_bool('pause',false) end
+    m={vid=v.id,brightness=brightness,par=par}  --MEMORY @INSERTION.
 end
 mp.register_event('file-loaded'     ,file_loaded) --RELOAD IF brightness CHANGES. EACH REPLACEMENT TRIGGERS ANOTHER seek. 
 mp.register_event('seek'            ,function() if m.brightness~=brightness           then file_loaded() end end) --RELOAD IF brightness CHANGES. EACH REPLACEMENT TRIGGERS ANOTHER seek, & IS SLOW. 
@@ -185,9 +181,9 @@ mp.observe_property('vid'  ,'number',function(_,vid) if m.vid and vid and m.vid~
 mp.register_event('playback-restart',function() if m.brightness~=brightness then mp.command(('vf-command %s brightness %d %s'):format(label,brightness,target)) end end)  --FOR TOGGLE DURING seeking, BUT AFTER seek (ALREADY RELOADED). NO SMOOTH-TOGGLE (POSSIBLE GLITCH).
 mp.observe_property('pause','bool'  ,function(_,paused) pause=paused end)  --ALTERNATIVE TO get_property_bool.
 
-function on_osd_par(_,osd_par)  --ASSUME osd-par=DISPLAY PIXEL ASPECT RATIO (THE REAL ASPECT OF EACH PIXEL).  IF THE DISPLAY PIXELS ARE WIDE THEN THE mask CIRCLES ARE ACTUALLY VERTICAL ELLIPSES, WHICH ARE THEN VIEWED AS PERFECT CIRCLES.
+function on_osd_par(_,osd_par)  --UNLESS OVERRIDE, ASSUME osd-par=SCREEN PIXEL ASPECT RATIO (THE REAL ASPECT OF EACH PIXEL).  IF THE DISPLAY PIXELS ARE WIDE THEN THE mask CIRCLES ARE VIRTUALLY VERTICAL ELLIPSES, WHICH ARE THEN VIEWED AS PERFECT CIRCLES.
     par=o.dimensions.par or o.dimensions[3] or osd_par>0 and osd_par or 1
-    if m.par and m.par~=par then file_loaded() end  --RELOAD @osd-par.  UNTESTED!  (AN EXPENSIVE SYSTEM MAY HAVE osd-par~=1.)
+    if m.par and m.par~=par then file_loaded() end  --RELOAD @osd-par.  UNTESTED!  AN EXPENSIVE SYSTEM MAY HAVE osd-par~=1. THERE'S A CHANCE ELLIPSIS WOULD SHEAR UNDER ROTATION, & DON'T DISPLAY AS PERFECT CIRCLES.
 end
 mp.observe_property('osd-par','number',on_osd_par)  --0@file-loaded, 1@playback-restart.
 
@@ -199,25 +195,26 @@ function on_toggle(mute)
     if not target then _,error_input = mp.command(('vf-command %s brightness 0 eq'):format(label)) end  --NULL-OP.  OLD MPV REPORTS ERROR/S. scale DOESN'T UNDERSTAND brightness.
     target        = target or error_input and '' or 'eq'  --OLD MPV OR NEW. v0.37.0+ SUPPORTS TARGETED COMMANDS. BUT DON'T CHECK VERSION NUMBERS BECAUSE THEY CAN BE ANYTHING.
     p,brightness  = {},-1-brightness  -- 0,-1 = ON,OFF p=PROPERTIES LIST FOR osd_on_toggle.
-    if is1frame then file_loaded()  --no_mask & albumart.
-    else time_pos,Δbrightness = mp.get_property_number('time-pos')+.1,brightness-(-1-brightness)  --time+.1 BY TRIAL & ERROR. SHOULD BE AN OPTION IN FUTURE VERSION. 
+    if is1frame then mp.command('no-osd vf toggle @'..label)  --no_mask & albumart.  vf toggle PRESERVES ORDER (BEFORE PADDING).
+    else time_pos,Dbrightness = mp.get_property_number('time-pos')+.1,brightness-(-1-brightness)  --time+.1 BY TRIAL & ERROR. SHOULD BE AN OPTION IN FUTURE VERSION.  Δ INVALID ON mpv.app (SAME LUA VERSION, BUT BUILT DIFFERENT).
          toggle_duration      = pause and 0 or o.toggle_duration 
          clip                 = toggle_duration==0 and 1 or ('clip((t-%s)/(%s),0,1)'):format(time_pos,toggle_duration)
          clip                 = (o.toggle_clip):gsub('%%s',clip)  --NON-LINEAR clip. 
-         mp.command(('vf-command %s brightness %d+%d*(%s) %s'):format(label,-1-brightness,Δbrightness,clip,target))   --INITIAL BRIGHTNESS + DIFFERENCE. 
-         if pause and o.unpause_on_toggle~=0 then mp.command('no-osd set terminal no;no-osd set pause no')  --unpause_on_toggle. COULD ALSO BE MADE SILENT.  COULD ALSO CHECK IF NEAR end-file (NOT ENOUGH TIME).  terminal GAP REQUIRED BY SMPLAYER-v24.5 OR IT GLITCHES. BUT SHOULD VERIFY FIRST THERE'S A terminal!
+         mp.command(('vf-command %s brightness %d+%d*(%s) %s'):format(label,-1-brightness,Dbrightness,clip,target))   --INITIAL BRIGHTNESS + DIFFERENCE. 
+         if pause and o.unpause_on_toggle~=0 then mp.command('no-osd set terminal no;no-osd set pause no')  --unpause_on_toggle. COULD ALSO BE MADE SILENT.  COULD ALSO CHECK IF NEAR end-file (NOT ENOUGH TIME).  terminal GAP REQUIRED BY SMPLAYER-v24.5 OR IT GLITCHES. 
             timers.pause:resume() end end
     if o.osd_on_toggle then for property in ('mpv-version ffmpeg-version libass-version lavfi-complex af vf video-out-params'):gmatch('[^ ]+')
             do table.insert(p,mp.get_property_osd(property)) end
-            mp.osd_message(('mpv-version: %s\nffmpeg-version: %s\nlibass-version: %s\n\nlavfi-complex: %s\n\nAudio filters: \n%s\n\nVideo filters: \n%s\n\nvideo-out-params: \n%s') 
-                           :format(p[1],p[2],p[3],p[4],p[5],p[6],p[7]),o.osd_on_toggle) end   --table.unpack(p) INCOMPATIBLE WITH .flatpak LUA VERSION.
+            mp.osd_message(('_VERSION=%s\nmpv-version=%s\nffmpeg-version=%s\nlibass-version=%s\n\nlavfi-complex: %s\n\nAudio filters: \n%s\n\nVideo filters: \n%s\n\nvideo-out-params: \n%s') 
+                           -- :format(_VERSION,p[1],p[2],p[3],p[4],p[5],p[6],p[7]),o.osd_on_toggle) end   --table.unpack(p) INCOMPATIBLE WITH .flatpak LUA VERSION.
+                           :format(_VERSION,unpack(p)),o.osd_on_toggle) end  --NEEDS TESTING.
 end
 for key in (o.key_bindings):gmatch('[^ ]+') do mp.add_key_binding(key, 'toggle_mask_'..key, on_toggle) end
 mp.observe_property('mute','bool',on_toggle)
 
 timers    = {  --CARRY OVER IN MPV PLAYLIST.
     mute  = mp.add_periodic_timer(o.toggle_on_double_mute,function() end),  --mute TIMER TIMES. 0s VALID.
-    pause = mp.add_periodic_timer(o.unpause_on_toggle    ,function() mp.command('no-osd set pause yes;no-osd set terminal yes') end),  --pause TIMER PAUSES & RETURNS terminal.  HOWEVER SHOULD FIRST CHECK THERE EVER WAS A terminal!
+    pause = mp.add_periodic_timer(o.unpause_on_toggle    ,function() mp.command('no-osd set pause yes;no-osd set terminal yes') end),  --pause TIMER PAUSES & RETURNS terminal.  HOWEVER SHOULD FIRST CHECK THERE EVER WAS A terminal TO BEGIN WITH!
 }
 for _,timer in pairs(timers) do timer.oneshot=1
                                 timer:kill() end
