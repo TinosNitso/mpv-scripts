@@ -1,12 +1,12 @@
 ----IN SMPLAYER'S ADVANCED mpv PREFERENCES ENTER OPTION  --script=~/Desktop/mpv-scripts/  OR ELSE  --script=.  (FROM WINDOWS smplayer.exe FOLDER).  LINUX snap: --script=/home/user/Desktop/mpv-scripts/    ASSUMING mpv-scripts FOLDER IS PLACED ON Desktop.
-----https://github.com/yt-dlp/yt-dlp/releases/tag/2024.03.10  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY & REDTUBE ALSO.
+----https://github.com/yt-dlp/yt-dlp/releases/tag/2024.03.10  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY & REDTUBE ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  twitter.com/i/... WORKS WITHOUT seeking, BUT NOT x.com (THE OLD DOMAIN STREAMS).
 
 options={     --ALL OPTIONAL & CAN BE REMOVED.
     scripts={ --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE. TYPOS CAN TOGGLE THEM ON & OFF.  autocomplex & automask HAVE osd_on_toggle WHICH DISPLAYS VERSION NUMBERS & FILTERGRAPHS.
         "aspeed.lua",      --EXTRA AUDIO DEVICES SPEED RANDOMIZATION, + SYNCED CLOCKS. INSTA-TOGGLE.  CAN CONVERT MONO TO (RANDOMIZED) SURROUND SOUND, FOR 10 HOURS.  MY FAVOURITE OVERALL. CONVERTS SPEAKERS INTO METAPHORICAL MOCKING-BIRDS.
         "autocrop.lua",    --CROPS OFF BLACK BARS BEFORE automask, BUT AFTER autocomplex. SMOOTH-TOGGLE. ALSO SUPPORTS START & END TIMES (TIME-CROP SUBCLIPS), & CROPS THROUGH TRANSPARENCY.
         -- "autocrop-smooth.lua",  --SMOOTH CROPPING & PADDING. NOT UP TO DATE.  DISABLE autocomplex.lua DUE TO EXCESSIVE CPU USAGE. INCOMPATIBLE WITH .AppImage (FFMPEG-v4.2).
-        "autocomplex.lua", --ANIMATED AUDIO SPECTRUM, VOLUME BARS, FPS LIMITER. DUAL lavfi-complex OVERLAY. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE CAN BE LIKE WINGS OF BIRD). 
+        "autocomplex.lua", --ANIMATED AUDIO SPECTRUM, VOLUME BARS, FPS LIMITER. DUAL lavfi-complex OVERLAY. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE CAN BE LIKE WINGS OF BIRD).  TWITTER INCOMPATIBLE.
         "automask.lua",    --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE. LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE TRIANGLE_SPIN=automask2.lua, 500MB RAM EACH WITH UNIQUE KEYBINDS).
     },
     ytdl={    --YOUTUBE DOWNLOAD. PLACE ALONGSIDE main.lua.  LIST ALL POSSIBLE EXECUTABLE FILENAMES, IN PREFERRED ORDER. NO ";" ALLOWED.  
@@ -19,26 +19,22 @@ options={     --ALL OPTIONAL & CAN BE REMOVED.
     clear_osd      = .2, --SECONDS TO CLEAR osd, BEHIND title. TIMED FROM playback-START.  EMBEDDED MPV OFTEN DISPLAYS SPURIOUS WARNINGS @LOAD.
     loop_limit     = 10, --SECONDS (MAX). INFINITE loop GIF & SHORT MP4 IF duration IS LESS. STOPS MPV SNAPPING.  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
     -- sid         =  1, --UNCOMMENT FOR SUBTITLE TRACK ID OVERRIDE, @PLAYBACK-START. (ALSO secondary-sid.)  BY TRIAL & ERROR, auto & 1 NEEDED BEFORE & AFTER lavfi-complex, FOR YOUTUBE.
-    options        = ''  --FREE FORM  ' opt1 val1  opt2=val2  --opt3=val3 '...  main SETS NON-CRITICAL options MORE EASILY.
-        ..'  ytdl-format=bv[height<1080]+ba/best '  -- bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
-        ..' --keepaspect=no  profile fast '  --FREE aspect IF MPV HAS ITS OWN WINDOW.  profile=fast MAY HELP WITH EXCESSIVE LAG (VIRTUALBOX-MACOS). 
-        ..'          sub=auto  sub-border-size=2   sub-font-size=32   '  --DEFAULTS no ,3,55    (BOOL,PIXELS,PIXELS)  sub=sid=auto BEFORE YOUTUBE LOADS.  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
-        ..'      osd-bar=no    osd-border-size=2    osd-duration=5000 '  --DEFAULTS yes,3,1000  (BOOL,PIXELS,ms    )  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd. 
-    ,
+    options        = {   --main SETS NON-CRITICAL options MORE EASILY.
+        ' ytdl-format bv[height<1080]+ba/best       ',  --bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
+        '  keepaspect no   ','         profile fast ',  --FREE aspect IF MPV HAS ITS OWN WINDOW.  profile=fast MAY HELP WITH EXCESSIVE LAG (VIRTUALBOX-MACOS). 
+        '         sub auto ',' sub-border-size 2    ',' sub-font-size 32   ',  --DEFAULTS no ,3,55    (BOOL,PIXELS,PIXELS)  sub=sid=auto BEFORE YOUTUBE LOADS.  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
+        '     osd-bar no   ',' osd-border-size 2    ','  osd-duration 5000 ',  --DEFAULTS yes,3,1000  (BOOL,PIXELS,ms    )  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd. 
+    },
 }  
-o         = options  --ABBREV.
-for opt,val in pairs({scripts={},ytdl={},title_duration=0,options=''})
-do o[opt] = o[opt] or val end  --ESTABLISH DEFAULTS. 
-o.options = (o.options):gsub('-%-','  '):gmatch('[^ ]+') --'-%-' MEANS "--".  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN DOESN'T EXIST IN THE LUA USED BY THE NEWEST mpv.app (SAME VERSION, BUILT DIFFERENT).
-while 1 
-do   opt  = o.options()  
-     find = opt  and (opt):find('=')  --RIGOROUS FREE-FORM.
-     val  = find and (opt):sub(  find+1) or o.options()  --SKIP+2 PASSED "=", OR ELSE NEXT gmatch.
-     opt  = find and (opt):sub(0,find-1) or opt
-     if not val  then break   end
-     mp.set_property(opt,val) end  --mp=MEDIA-PLAYER
-
-scripts,script_opts   = mp.get_property_native('scripts'),mp.get_property_native('script-opts')  --get_property_native FOR FILENAMES.
+o                     = options  --ABBREVIATION.
+for   opt,val in pairs({scripts={},ytdl={},title_duration=0,options=''})
+do  o[opt]            = o[opt] or val end  --ESTABLISH DEFAULTS. 
+for   opt in ('title_duration clear_osd loop_limit'):gmatch('[^ ]+')  --gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN DOESN'T EXIST IN THE LUA USED BY THE NEWEST mpv.app (SAME VERSION, BUILT DIFFERENT).
+do  o[opt]            = o[opt] and loadstring(('return %s'):format(o[opt]))() end  --CONVERSION→number: '1+1'→2  load INVALID ON mpv.app.  ALTERNATIVE loadstring('return {%s}') CAN DO THEM ALL IN 1 table.
+for _,opt in pairs(o.options)
+do command            = ('%s no-osd set %s;'):format(command or '',opt) end  --ALL SETS IN 1.
+mp.command(command)     --mp=MEDIA-PLAYER
+script_opts,scripts   = mp.get_property_native('script-opts'),mp.get_property_native('scripts')  --get_property_native FOR FILENAMES.
 directory             = require 'mp.utils'.split_path(scripts[1])    --split FROM WHATEVER THE USER ENTERED.  UTILITIES ARE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
 directory             = mp.command_native({'expand-path',directory}) --yt-dlp REQUIRES ~/ EXPANDED. command_native RETURNS. hook SPECIFIES yt-dlp EXECUTABLE.
 COLON                 = mp.get_property('platform')=='windows' and ';' or ':'     --FILE LIST SEPARATOR.  WINDOWS=;  UNIX=:
@@ -48,8 +44,8 @@ do  ytdl              = directory..'/'..ytdl  --'/' FOR WINDOWS & UNIX.
     script_opts[hook] = script_opts[hook] and script_opts[hook]..COLON..ytdl or ytdl end  --APPEND ALL ytdl.
 mp.set_property_native('script-opts',script_opts)  --EMPLACE hook.  ALTERNATIVE change-list WON'T ALLOW BOTH " " & "'" IN THE FILENAMES.
 
-for _,script in pairs(o.scripts) do is_present=false   
-    for _,val in pairs(scripts) do if (script):lower()==(val):lower() then is_present=true --SEARCH NOT CASE SENSITIVE. CHECK IF is_present (ALREADY LOADED).
+for _,script in pairs(o.scripts) do                                         is_present=false   
+    for _,val in pairs(scripts)  do if script:lower()==val:lower() then is_present=true --SEARCH NOT CASE SENSITIVE. CHECK IF is_present (ALREADY LOADED).
             break end end    
     if not is_present then table.insert(scripts,script)
         mp.commandv('load-script',directory..'/'..script) end end  --commandv FOR FILENAMES. join_path AFTER split_path FROM WHATEVER THE USER TYPED IN.
@@ -57,8 +53,8 @@ mp.set_property_native('scripts',scripts)  --ANNOUNCE scripts.
 
 function file_loaded() 
     osd_level,duration = mp.get_property_number('osd-level'),mp.get_property_number('duration') --osd_level ACTS AS SWITCH FOR FIRST playback-restart.  JPEG duration = (nil & 0) @ (file-loaded & playback-restart). nil & 0 MAY INTERCHANGE.  MPV MAY NOT ACTUALLY DEDUCE TRUE duration DUE TO 3RD PARTY FILTERS.
-    if o.clear_osd  and o.clear_osd+0>0 and osd_level>0 then mp.set_property_number('osd-level',0) end 
-    if o.loop_limit and  (duration or 0)<o.loop_limit+0 then mp.set_property('loop','inf') end  --loop GIF. +0 CONVERTS→number.
+    if o.clear_osd  and o.clear_osd>0 and osd_level>0 then mp.set_property_number('osd-level',0) end 
+    if o.loop_limit and  (duration or 0)<o.loop_limit then mp.set_property('loop','inf') end  --loop GIF.
 end
 mp.register_event('file-loaded',file_loaded)
 
@@ -85,15 +81,15 @@ end
 ----MACOS mpv.app: /Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"        (DRAG & DROP mpv.app ONTO Applications.)
 ---- SMPlayer.app: /Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"      
 
-----https://sourceforge.net/projects/mpv-player-windows/files/release/ FOR NEW MPV WINDOWS BUILDS.  CAN REPLACE mpv.exe IN SMPLAYER.
-----https://laboratory.stolendata.net/~djinn/mpv_osx/ FOR NEW MPV MACOS BUILDS.
-----https://smplayer.info/en/download-linux & https://apt.fruit.je/ubuntu/jammy/mpv/ FOR LINUX SMPLAYER & MPV.  OFFLINE LINUX ALL-IN-ONE: SMPlayer-24.5.0-x86_64.AppImage  (BUT IT HAS THE WORST PERFORMANCE.)
+----https://sourceforge.net/projects/mpv-player-windows/files/release/               FOR NEW MPV WINDOWS BUILDS. CAN REPLACE mpv.exe IN SMPLAYER.
+----https://laboratory.stolendata.net/~djinn/mpv_osx/                                FOR NEW MPV MACOS BUILDS.   THESE BUILDS WORK FINE BUT THEIR LUA DOESN'T RECOGNIZE '%g', NOR GREEK (Δ).
+----https://smplayer.info/en/download-linux & https://apt.fruit.je/ubuntu/jammy/mpv/ FOR LINUX SMPLAYER & MPV.   OFFLINE LINUX ALL-IN-ONE: SMPlayer-24.5.0-x86_64.AppImage  BUT IT HAS THE WORST PERFORMANCE OF ALL BUILDS ON ALL SYSTEMS.
 
 ----SAFETY INSPECTION: LUA & JS SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* & change-list SAFE EXCEPT FOR script-opts WHICH MAY hook AN UNSAFE EXECUTABLE INTO A DIFFERENT SCRIPT, LIKE youtube-dl.
 ----MPV  v0.38.0(.7z .exe v3)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)  ALL TESTED. 
 ----FFMPEG  v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4(mpv.app)  v5.1.2(SMPlayer.app)  v4.4.2(.snap)  v4.2.7(.AppImage)  ALL TESTED.  MPV-v0.36.0 IS BUILT WITH FFMPEG-v4, v5 & v6, SO ALL GRAPHS COVER 3 VERSIONS.
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
-----SMPLAYER-v24.5, RELEASES .7z .exe .dmg .AppImage .flatpak .snap win32  &  .deb-v23.12  ALL TESTED.
+----SMPLAYER-v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES). MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
 ----THIS SCRIPT HAS NO TOGGLE. INSTEAD OF ALL scripts LAUNCHING EACH OTHER WITH THE SAME CODE, THIS SCRIPT LAUNCHES THEM ALL. DECLARING local VARIABLES HELPS WITH HIGHLIGHTING & COLORING, BUT UNNECESSARY.
@@ -103,22 +99,23 @@ end
 ----VIRTUALBOX: CAN INCREASE VRAMSize FROM 128→256 MB. MACOS LIMITED TO 3MB VIDEO MEMORY. CAN ALSO SWITCH AROUND Command & Control(^) MODIFIER KEYS.  "C:\Program Files\Oracle\VirtualBox\VBoxManage" setextradata macOS_11 VBoxInternal/Devices/smc/0/Config/DeviceKey ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc
 
 ----BUG: RARE YT VIDEOS LOAD no-vid. EXAMPLE: https://youtu.be/y9YhWjhhK-U
-----BUG: CAN'T seek WITH TWITTER.    EXAMPLE: https://twitter.com/i/status/1696643892253466712
+----BUG: NO seeking WITH TWITTER.    EXAMPLE: https://twitter.com/i/status/1696643892253466712  x.com NO STREAMING.
 
 ----flatpak run info.smplayer.SMPlayer  snap run smplayer  FOR flatpak & snap TESTING. 
 ----sudo apt install smplayer flatpak snapd mpv     FOR RELEVANT LINUX INSTALLS. 
 ----flatpak install *.flatpak  snap install *.snap  FOR INSTALLS, AFTER cd TO RELEASES. MUST BE ON INTERNET, EVEN FOR snap.
 ----snap DOESN'T WORK WITH "~/", BLOCKS SYSTEM COMMANDS, & WORKS DIFFERENTLY WITH SOME FILTERS LIKE showfreqs (FFMPEG-v4.4).
 
-----o.options DUMP (FREE FORM). NICER WITHOUT "=". FOR DEBUG CAN TRY TOGGLE ALL THESE SIMULTANEOUSLY.
-        -- ..' framedrop decoder+vo  video-sync desync  vd-lavc-dropframe nonref  vd-lavc-skipframe nonref'  --frame=none default nonref bidir  CAN SKIP NON-REFERENCE OR B-FRAMES.  video-sync=display-resample & display-tempo GLITCHED. 
-        -- ..' vo gpu  msg-level=ffmpeg/demuxer=error  hr-seek always  index recreate  wayland-content-type none  background color  alpha blend'
-        -- ..' video-latency-hacks yes  hr-seek-framedrop yes  access-references yes  ordered-chapters no  stop-playback-on-init-failure yes'
-        -- ..' osc no  ytdl yes  cache yes  cache-pause no  cache-pause-initial no  initial-audio-sync yes  gapless-audio no  keepaspect-window no  force-seekable yes  vd-queue-enable yes  ad-queue-enable yes'
-        -- ..' demuxer-lavf-hacks yes  demuxer-lavf-linearize-timestamps no  demuxer-seekable-cache yes  demuxer-cache-wait no  demuxer-donate-buffer yes  demuxer-thread yes'
-        -- ..' audio-delay 0  cache-pause-wait 0  video-timing-offset 1  hr-seek-demuxer-offset 1  audio-buffer 10'
-        -- ..' demuxer-lavf-analyzeduration 1024  demuxer-termination-timeout 1024  cache-secs 1024  vd-queue-max-secs 1024  ad-queue-max-secs 1024  demuxer-readahead-secs 1024  audio-backward-overlap 1024  video-backward-overlap 1024  audio-backward-batch 1024  video-backward-batch 1024'
-        -- ..' demuxer-lavf-buffersize 1000000  stream-buffer-size 1000000  audio-reversal-buffer 1000000  video-reversal-buffer 1000000'
-        -- ..' vd-queue-max-samples 1000000  ad-queue-max-samples 1000000  chapter-seek-threshold 1000000  demuxer-backward-playback-step 1000000'
-        -- ..' demuxer-max-bytes 1000000000  demuxer-max-back-bytes 1000000000  vd-queue-max-bytes 1000000000  ad-queue-max-bytes 1000000000'
-
+----o.options DUMP. FOR DEBUG CAN TRY TOGGLE ALL THESE SIMULTANEOUSLY.
+    -- 'framedrop decoder+vo','video-sync desync','vd-lavc-dropframe nonref','vd-lavc-skipframe nonref',  --frame=none default nonref bidir  CAN SKIP NON-REFERENCE OR B-FRAMES.  video-sync=display-resample & display-tempo GLITCHED. 
+    -- 'vo gpu','msg-level ffmpeg/demuxer=error','hr-seek always','index recreate','wayland-content-type none','background color','alpha blend',
+    -- 'video-latency-hacks yes','hr-seek-framedrop yes','access-references yes','ordered-chapters no','stop-playback-on-init-failure yes',
+    -- 'osc no','ytdl yes','cache yes','cache-pause no','cache-pause-initial no','initial-audio-sync yes','gapless-audio no','keepaspect-window no','force-seekable yes','vd-queue-enable yes','ad-queue-enable yes',
+    -- 'demuxer-lavf-hacks yes','demuxer-lavf-linearize-timestamps no','demuxer-seekable-cache yes','demuxer-cache-wait no','demuxer-donate-buffer yes','demuxer-thread yes',
+    -- 'audio-delay 0','cache-pause-wait 0','video-timing-offset 1','hr-seek-demuxer-offset 1','audio-buffer 10',
+    -- 'demuxer-lavf-analyzeduration 1024','demuxer-termination-timeout 1024','cache-secs 1024','vd-queue-max-secs 1024','ad-queue-max-secs 1024','demuxer-readahead-secs 1024','audio-backward-overlap 1024','video-backward-overlap 1024','audio-backward-batch 1024','video-backward-batch 1024',
+    -- 'demuxer-lavf-buffersize 1000000','stream-buffer-size 1000000','audio-reversal-buffer 1000000','video-reversal-buffer 1000000',
+    -- 'vd-queue-max-samples 1000000','ad-queue-max-samples 1000000','chapter-seek-threshold 1000000','demuxer-backward-playback-step 1000000',
+    -- 'demuxer-max-bytes 1000000000','demuxer-max-back-bytes 1000000000','vd-queue-max-bytes 1000000000','ad-queue-max-bytes 1000000000',
+    
+    
