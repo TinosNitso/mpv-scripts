@@ -5,12 +5,12 @@
 
 options={  --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATIVE).      nil & false → DEFAULT VALUES    (BUT '' MEANS true). 
     key_bindings        = 'Ctrl+M Ctrl+m M', --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER.  m=MUTE.  'ALT+M' COULD BE automask2.lua.
-    double_mute_timeout =   .5 ,  --SECONDS FOR DOUBLE-MUTE TOGGLE (m&m DOUBLE-TAP). TRIPLE MUTE DOUBLES BACK. SCRIPTS CAN BE SIMULTANEOUSLY TOGGLED USING DOUBLE MUTE.  REQUIRES AUDIO IN SMPLAYER.
-    toggle_duration     =   .3 ,  --SECONDS TIME FOR mask FADE. REMOVE FOR INSTA-TOGGLE. 
-    unpause_on_toggle   =   .12,  --SECONDS TIME TO UNPAUSE FOR TOGGLE, LIKE FRAME-STEPPING.  REMOVE TO DISABLE. A FEW FRAMES ARE ALREADY DRAWN IN ADVANCE.
-    vf_command_t_delay  =   .1 ,  --DEFAULT=0 SECONDS.  RAPID TOGGLING HAS ~.1s LAG DUE TO FRAMES ALREADY BEING DRAWN IN ADVANCE.
-    filterchain         = 'null,' --CAN REPLACE null WITH OTHER FILTERS, LIKE pp (POSTPROCESSING). FOR SHARPEN CAN USE  convolution=0 -1 0 -1 5 -1 0 -1 0:0 -1 0 -1 5 -1 0 -1 0:0 -1 0 -1 5 -1 0 -1 0:0 -1 0 -1 5 -1 0 -1 0  (3x3 MATRIX APPLIED TO 4 PLANES.)  TIMELINE SWITCHES ALSO POSSIBLE (FILTER1→FILTER2→ETC). 
-             ..'lutyuv=y=255*((1-val/255)^4*(1+.5*.15)+.15*(2.5*gauss((255-val)/(255-maxval)/1.7-1.5)-1*gauss(val/minval/1.5-1))/gauss(0)+.01*sin(2*PI*val/minval))'  --+1% SINE WAVE ADDS RIPPLE TO CHANGING DEPTH, BUT ALSO CAUSES FACE WRINKLES. FORMS PART OF lutyuv GLOW-LENS.  15% DROP ON WHITE-IS-WHITE (TOO MUCH MIXES GRAYS).
+    double_mute_timeout =    .5,  --SECONDS FOR DOUBLE-MUTE TOGGLE (m&m DOUBLE-TAP). TRIPLE MUTE DOUBLES BACK. SCRIPTS CAN BE SIMULTANEOUSLY TOGGLED USING DOUBLE MUTE.  REQUIRES AUDIO IN SMPLAYER.
+    toggle_duration     =    .3,  --SECONDS TIME FOR mask FADE. REMOVE FOR INSTA-TOGGLE. 
+    unpause_on_toggle   =    .1,  --SECONDS TIME TO UNPAUSE FOR TOGGLE, LIKE FRAME-STEPPING.  REMOVE TO DISABLE. A FEW FRAMES ARE ALREADY DRAWN IN ADVANCE.
+    vf_command_t_delay  =    .1,  --DEFAULT=0 SECONDS.  RAPID TOGGLING HAS ~.1s LAG DUE TO A FEW FRAMES WHICH AREN'T REDRAWN FAST ENOUGH.
+    filterchain         = 'null,' --CAN REPLACE null WITH OTHER FILTERS, LIKE pp (POSTPROCESSING). FOR SHARPEN CAN USE  convolution="0 -1 0 -1 5 -1 0 -1 0:0 -1 0 -1 5 -1 0 -1 0:0 -1 0 -1 5 -1 0 -1 0"  (3x3x3 MATRIX ON 3 PLANES.)  TIMELINE SWITCHES ALSO POSSIBLE (FILTER1→FILTER2→ETC).
+             ..'lutyuv=y=255*((1-val/255)^4*(1+.5*.15)+.15*(2.5*gauss((255-val)/(255-maxval)/1.7-1.5)-1*gauss(val/minval/1.5-1))/gauss(0)+.01*sin(2*PI*val/minval))'  --+1% SINE WAVE ADDS RIPPLE TO CHANGING DEPTH, BUT ALSO CAUSES FACE WRINKLES. FORMS PART OF lutyuv GLOW-LENS.  15% DROP ON WHITE-IS-WHITE (TOO MUCH MIXES GRAYS).  1*gauss MAY MEAN 1 ROUND.
                    ..':u=128*(1+abs(val/128-1)^.7*clip(val-128\\,-1\\,1))'  --u & v. clip IS EQUIVALENT TO sgn, BUT SUPPORTED BY FFMPEG-v4.  A DIFFERENT PERCENTAGE FOR v MAY BE BETTER.  LINEAR SATURATION (eq) OVER-SATURATES TOO EASILY. 
                    ..':v=128*(1+abs(val/128-1)^.7*clip(val-128\\,-1\\,1))',
     fps_mask            =     30 ,  --DEFAULT=1/period → 1FRAME/period.  REDUCE OR REMOVE FOR MUCH FASTER LOAD/seeking TIMES, ESPECIALLY WITH LARGE period (SLOW ANIMATION).  DEFAULT GENERATES 1 FRAME/period ONLY, FOR FAST MONACLE.
@@ -36,7 +36,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATIVE).      nil & fal
     
     
     ----13 EXAMPLES:  UNCOMMENT A LINE TO ACTIVATE IT.  ALL options CAN BE COMBINED ONTO 1 LINE (WITH TITLE), & COPIED. DON'T FORGET COMMAS!  MONACLE & PENTAGON ARE FAST.  INCREASE SECTIONS>1 FOR TELESCOPIC. 
-    -- NO_MASK        , SECTIONS=0,periods=0,  --NULL OVERRIDE FOR FAST CALIBRATION.  LENS WITHOUT FRAME. TOGGLE STILL FRAMES WITHOUT FADE.  CAN CHECK A FEW THINGS: 1) BROWN SUN, NOT BLACK. 2) BRIGHT CLOTHING OF MARCHING ARMY (CREASES IN PANTS). 3) BROWN HAMMER & SICKLE.
+    -- NO_MASK        , SECTIONS=0,periods=0,  --NULL OVERRIDE FOR FAST CALIBRATION.  LENS WITHOUT FRAME. STILL FRAMES TOGGLE WITHOUT FADE.  CAN CHECK A FEW THINGS: 1) BROWN SUN, NOT BLACK.  2) BRIGHT CLOTHING OF MARCHING ARMY (CREASES IN PANTS).  3) BROWN HAMMER & SICKLE.
     -- MONACLE        , SECTIONS=1,DUAL=nil,widths=nil,heights='ih',x=nil,y=nil,crops=nil,rotations=nil,zoompan=nil,fps_mask=nil, --INVERTING MONACLE.  geq=nil  FOR SQUARE.  SECTIONS>1 FOR CONCENTRIC DISCS.  MONACLE MAY BE THE BEST OVERALL.  
     -- BINACLES       , SECTIONS=1,widths='iw',heights=nil,x=nil,y=nil,crops=nil,zoompan=nil,
     -- PENTAGON_HOUSE , SECTIONS=1,DUAL=nil,widths=nil,heights='ih+2',x=nil,y=nil,crops=nil,rotations=nil,zoompan=nil,geq='255*lt(abs(X-W/2)\\,Y)',fps_mask=nil,  --+2 TO REACH THE BOTTOM. WIDTH=SCREEN_HEIGHT. TRIANGLE_HEIGHT=HALF_SCREEN.  BOTH THIS & MONACLE CAN BE LOADED SIMULTANEOUSLY (CTRL+M & ALT+M keybinds), & IT MAY LOAD FASTER THAN ANIMATION.  IT MAY BE POSSIBLE TO EXTEND THE HOUSE USING HALF-LUMINANCE.
@@ -55,7 +55,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATIVE).      nil & fal
     -- t = '5/30', n = 5,    --UNCOMMENT FOR STATIONARY SPECTACLES (FREEZE FRAME). ONLY 1 OR THE OTHER IS NEEDED.  THESE ARE SUBSTITUTIONS FOR (t) & (n)=(on)=(in). BRACKETS ARE CLEARER.  IMPLIES fps_mask=nil.
     -- osd_on_toggle = 5,    --SECONDS. UNCOMMENT TO INSPECT VERSIONS, FILTERGRAPHS & PARAMETERS. 0 CLEARS THE osd INSTEAD. DISPLAYS mpv-version ffmpeg-version libass-version _VERSION lavfi-complex af vf video-out-params
     -- mask_no_vid   = true, --mask ONTOP OF no-vid (PURE lavfi-complex). ABSTRACT VISUALS MAY BE OPTIMAL WITHOUT mask.
-    -- toggle_expr   = 'sin(PI/2*%s)',  --DEFAULT=%s=LINEAR_IN_TIME  UNCOMMENT FOR NON-LINEAR SINUSOIDAL TRANSITION (QUARTER-WAVE). DOMAIN & RANGE BOTH [0,1].  LINEAR MAY BE SUPERIOR BECAUSE A SINE WAVE IS 57% FASTER @MAX GRADIENT (PI/2=1.57).
+    -- toggle_expr   = 'sin(PI/2*%s)',  --DEFAULT=%s=LINEAR_IN_TIME_EXPRESSION  UNCOMMENT FOR NON-LINEAR SINUSOIDAL TRANSITION (QUARTER-WAVE). DOMAIN & RANGE BOTH [0,1].  LINEAR MAY BE SUPERIOR BECAUSE A SINE WAVE IS 57% FASTER @MAX GRADIENT (PI/2=1.57).
     -- dimensions    = {w=1680,h=1050,par=1},  --DEFAULT={w=display-width,h=display-height,par=osd-par=ON-SCREEN-DISPLAY-PIXEL-ASPECT-RATIO}  THESE ARE OUTPUT PARAMETERS.  MPV EMBEDDED IN VIRTUALBOX OR SMPLAYER MAY NOT KNOW DISPLAY w,h,par @file-loaded, SO OVERRIDE IS REQUIRED.  CAN MEASURE display TO DETERMINE par.
     options          = {
         'vd-lavc-threads 0 ','   hwdec no ',  --vd-lavc=VIDEO DECODER-LIBRARY AUDIO VIDEO. 0=AUTO OVERRIDES SMPLAYER OR ELSE MAY FAIL TESTING.  HARDWARE DECODER (MPV-v0.36.0) WAS BAD FOR automask.
@@ -71,10 +71,11 @@ for _,opt in pairs(o.options or {})
 do command = ('%s no-osd set %s;'):format(command or '',opt) end  --ALL SETS IN 1.
 if command then mp.command(command) end
 
-function round(N,D)  --ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1). N & D MAY ALSO BE STRINGS OR nil.  PRECISION LIMITER, TO MULTIPLES OF 4.
+function round(N,D)  --ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1). N & D MAY ALSO BE STRINGS OR nil.  PRECISION LIMITER.
     D = D or 1
     return N and math.floor(.5+N/D)*D  --LUA DOESN'T SUPPORT math.round(N)=math.floor(.5+N)
 end
+function clip(N,min,max) return N and min and max and math.min(math.max(N,min),max) end  --N,min,max ARE NUMBERS OR nil.  FFMPEG SUPPORTS clip BUT NOT LUA.  math.clip(#,min,max)=math.min(math.max(#,min),max)  FOR RAPID TOGGLE CORRECTIONS.
 
 if not o.period or o.period..''=='0' or o.periods==0 then no_mask,o.fps_mask,o.period,o.periods = true,nil,1,1 end --POSSIBLE no_mask BECAUSE NO TIME DEPENDENCE (FP=1). periods=1.  period>0 CAN BE ANYTHING (FP=1).
 g_opts            = 'widths heights x y rotations zoompan negate_enable lut0_enable'  --GEOMETRIC options WHICH NEED TO BE STRINGS & GSUBBED.
@@ -119,11 +120,11 @@ skip_loop,periods_size = FP*o.periods_skipped,FP*o.periods    --# OF EXTRA LEAD 
 m,p,brightness    = {},{},0  --m=MEMORY FOR vid & brightness.  p=PROPERTIES FOR o.osd_on_toggle.
 
 
-graph=no_mask and o.filterchain or ( --NULL OVERRIDE FOR SAME-FRAME TOGGLE/FAST LOAD.
-      'fps=%s,scale=%%d:%%d,setsar=1,split=3[vo][t0],%s[vf],nullsrc=1x1:%s:0.001,format=y8,lut=0,split[0][1],[0][vo]scale2ref=floor(oh*a*(%%s)/%d/4)*4:floor(ih*(%s)/4)*4[0][vo],[1][0]scale2ref=oh:ih[1][0],[1]geq=%s,loop=%s:1[1],[0]loop=%s:1[0],[1][0]scale2ref=floor((%s)/4)*4:floor((%s)/4)*4:eval=frame[1][0],[1]%s[m],[m][vo]scale2ref=oh*a:ih*(%s)[m][vo],[m]loop=%s:%s,loop=%s:1,rotate=%s:iw*oh/ih:ih/(%s),lut=val*gt(val\\,16),zoompan=%s:d=1:s=%%dx%%d:fps=%s,negate=enable=%s,lut=0:enable=%s,loop=-1:%d,trim=start_frame=%d[m],[t0]trim=end_frame=1,setpts=PTS-(1/FRAME_RATE+%s)/TB,setsar[t0],[t0][m]concat,trim=start_frame=1,fps=%s,eq=brightness=%%s:eval=frame[m],[vo][vf][m]maskedmerge'
+graph=no_mask and o.filterchain or ( --NULL OVERRIDE FOR SAME-FRAME TOGGLE/FAST LOAD, OR...
+      "fps=%s,scale=%%d:%%d,setsar=1,split=3[vo][t0],%s[vf],nullsrc=1x1:%s:0.001,format=y8,lut=0,split[0][1],[0][vo]scale2ref=floor(oh*a*(%%s)/%d/4)*4:floor(ih*(%s)/4)*4[0][vo],[1][0]scale2ref=oh:ih[1][0],[1]geq=%s,loop=%s:1[1],[0]loop=%s:1[0],[1][0]scale2ref=floor((%s)/4)*4:floor((%s)/4)*4:eval=frame[1][0],[1]%s[m],[m][vo]scale2ref=oh*a:ih*(%s)[m][vo],[m]loop=%s:%s,loop=%s:1,rotate=%s:iw*oh/ih:ih/(%s),lut=val*gt(val\\,16),zoompan=%s:d=1:s=%%dx%%d:fps=%s,negate=enable=%s,lut=0:enable=%s,loop=-1:%d,trim=start_frame=%d[m],[t0]trim=end_frame=1,setpts=PTS-(1/FRAME_RATE+%s)/TB,setsar[t0],[t0][m]concat,trim=start_frame=1:%%s,fps=%s,eq=brightness=%%s:eval=frame[m],[vo][vf][m]maskedmerge"
 ):format(o.fps,o.filterchain,o.fps_mask,o.DUAL,o.RES_MULT or 1,o.geq,FP-1,FP-1,g.w[1],g.h[1],mask,o.RES_SAFETY,periods_loop,FP,skip_loop,g.rots[1],o.RES_SAFETY,o.zoompan,o.fps_mask,o.negate_enable,o.lut0_enable,periods_size,periods_size,o.lead_time or 0,o.fps)  --fps REPEATS FOR STREAM & eq.  fps_mask REPEATS FOR nullsrc & zoompan.  RES_SAFETY REPEATS FOR mask EXCESS & THEN rotate CROPS IT OFF.  FP REPEATS FOR [0],[1] INITIALIZATION & periods_loop.  periods_size REPEATS FOR INFINITE loop & FINAL SELECTOR.
 
-----lavfi           = [graph] [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTERGRAPH  [vo]=VIDEO-OUT [vf]=VIDEO-FILTERED [m]=MASK [t0]=STARTPTS-FRAME [0]=SEMI-CANVAS  [1][2]...[N] ARE SECTIONS.  SELECT FILTER NAME TO HIGHLIGHT IT. NO WORD-WRAP → SIDE-SCROLL PROGRAMMING, WITH HIGHLIGHTING ETC. %% SUBSTITUTIONS OCCUR @file-loaded. (%s) NEEDS BRACKETS FOR MATH. NO audio ALLOWED. RE-USING LABELS IS SIMPLER.  [t0] SIMPLIFIES MATH BTWN VARIOUS GRAPHS, SO THEY ALL SCOOT AROUND TOGETHER.  THIS EXACT CODE PROPERLY IMPLEMENTS RES_SAFETY, WITH PRECISION. 
+----lavfi           = [graph] [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTERGRAPH  [vo]=VIDEO-OUT [vf]=VIDEO-FILTERED [m]=MASK [t0]=STARTPTS-FRAME [0]=SEMI-CANVAS  [1][2]...[N] ARE SECTIONS.  SELECT FILTER NAME TO HIGHLIGHT IT. NO WORD-WRAP → SIDE-SCROLL PROGRAMMING, WITH HIGHLIGHTING ETC. %% SUBSTITUTIONS OCCUR @file-loaded. (%s) NEEDS BRACKETS FOR MATH. NO audio ALLOWED. RE-USING LABELS IS SIMPLER.  [t0] SIMPLIFIES MATH BTWN VARIOUS GRAPHS, SO THEY ALL SCOOT AROUND TOGETHER.  THIS CODE PROPERLY IMPLEMENTS RES_SAFETY, WITH PRECISION.  ALL INSTANCES OF "\\," CAN BE REPLACED USING INVERTED COMMAS.
 ----fps             = fps:start_time (SECONDS)  DEFAULT=25  IS THE START.  start_time FOR image --start (FREE TIMESTAMP).  CAN LIMIT [vo] TO 30fps.
 ----zoompan         = z:x:y:d:s:fps     (z>=1)  DEFAULT=1:0:0:...:hd720:25  d=1 (OR 0) FRAMES DURATION-OUT PER FRAME-IN. NEEDS setsar FOR SAFE concat.  INPUT-NUMBER=in=on=OUTPUT-NUMBER  zoompan OPTIMAL FOR ZOOMING.
 ----nullsrc         = s:r:d                     DEFAULT=320x240:25:-1  (size:rate=FPS:duration=SECONDS)  GENERATES 1x1 ATOMIC FRAME. MOST RELIABLE OVER MPV-v0.34→v0.38. A SINGLE ATOM IS CLONED OVER BOTH SPACE & TIME, IN THIS DESIGN.
@@ -137,7 +138,7 @@ graph=no_mask and o.filterchain or ( --NULL OVERRIDE FOR SAME-FRAME TOGGLE/FAST 
 ----setpts          = expr                      DEFAULT=PTS  ZEROES OUT TIME FOR THE CANVAS, & IMPLEMENTS lead_time. SHOULD SUBTRACT 1/FRAME_RATE/TB FROM [t0].
 ----eq              = ...:brightness:...:eval   DEFAULT=...:0:...:init  RANGES  [-1,1]:{init,frame}  EQUALIZER IS THE FINISH ON [m]. TIME-DEPENDENT CONTROLLER FOR SMOOTH-TOGGLE.  MAY ALSO BE USED IN filterchain, BUT TOGGLE WOULD INTERFERE WITH ITS brightness.
 ----geq             = lum    GLOBAL EQUALIZER   DEFAULT=lum(X\\,Y)   SLOW EXCEPT ON 1 FRAME. CAN DRAW ANY SHAPE.  IN A NON-PERIODIC DESIGN ITS DRAWING/S CAN BE RECYCLED INDEFINITELY.  st,ld = STORE,LOAD  FUNCTIONS MAY IMPROVE PERFORMANCE.  IT CAN ALSO ACT SMOOTHLY ON TINY VIDEO.  
-----trim            = ...:start_frame:end_frame DEFAULT=...:0 TRIMS OFF TIMESTAMP FRAME [t0] FOR ITS TIME, &  REMOVES THE FIRST TWIRL (CHOPPY LAG).
+----trim            = ...end:...:start_frame:end_frame  DEFAULT start_frame=0  TRIMS OFF TIMESTAMP FRAME [t0] FOR ITS TIME, & REMOVES THE FIRST TWIRL (CHOPPY LAG). CAN ALSO END mask.
 ----loop            = loop:size  ( >=-1 : >0 )      ENABLES INFINITE loop SWITCH ON JPEG. ALSO LOOPS INITIAL CANVAS [0] & DISC [1], FOR period (BOTH SEPARATE). THEN LOOPS TWIRL FOR periods-periods_skipped-1, THEN loop LEAD FRAME FOR periods_skipped, & THEN loop INFINITE. LOOPED FRAMES GO FIRST.
 ----format          = pix_fmts  {yuva420p,y8=gray}  SECTIONAL overlay FORCES yuva420p, WHILE y8 IS PREFERRED WHENEVER POSSIBLE. ya8 (16-BIT) INCOMPATIBLE WITH rotate & overlay.
 ----null              PLACEHOLDER, IS THE START FOR BOTH filterchain & mask (LIKE A 0TH SECTION).
@@ -150,33 +151,30 @@ graph=no_mask and o.filterchain or ( --NULL OVERRIDE FOR SAME-FRAME TOGGLE/FAST 
 
 
 function file_loaded() --ALSO @seek, @vid, @on_toggle(is1frame) & @osd-par.
-    v,v_params = mp.get_property_native('current-tracks/video') or {},mp.get_property_native('video-params') or {} 
+    v,v_params             = mp.get_property_native('current-tracks/video') or {},mp.get_property_native('video-params') or {} 
     if not (v.id or v_params.w) or not (v.id or o.crop_no_vid) then return end  --RAW AUDIO (~w) ENDS HERE, & lavfi-complex MAY NOT NEED mask.
+    lavfi_complex,duration = mp.get_opt('lavfi-complex'),mp.get_property_number('duration') 
+    command,insta_pause    = '',not p.pause  --command COMBO APPLIES AFTER INSERTION.  
     
-    lavfi_complex,insta_pause,command = mp.get_opt('lavfi-complex'),not p.pause,''  --command IS COMBO WHICH APPLIES AFTER INSERTION.  
     m        = {vid=v.id,brightness=brightness,par=par,toggle_duration=o.toggle_duration}  --MEMORY @INSERTION.  RAPID TOGGLING MAY REQUIRE MEMORY OF PRIOR DURATION - IT COULD BE 0 WHEN PAUSED.
     W        = o.dimensions.w or o.dimensions[1] or mp.get_property_number('display-width' ) or v_params.w or v['demux-w']  --(scale OVERRIDE) OR (display=WINDOWS & MACOS) OR (LINUX=[vo] DIMENSIONS)  osd-dimensions=WINDOW SIZE, BUT THEN RESIZING THE WINDOW WOULD REPLACE THE WHOLE ANIMATION OR ELSE THE PUPILS WON'T BE PROPER CIRCLES.
     H        = o.dimensions.h or o.dimensions[2] or mp.get_property_number('display-height') or v_params.h or v['demux-h'] 
     is1frame = v.albumart and not lavfi_complex or      no_mask --albumart & NULL OVERRIDE ARE is1frame RELATIVE TO on_toggle.  MP4TAG & MP3TAG ARE BOTH albumart. SPECIAL & DON'T loop WITHOUT lavfi-complex. CAN COMPARE .JPG TO .MP3. image MAY HAVE VF TIME-STREAM, BUT NOT albumart.
     loop     = v.image    and not lavfi_complex and not no_mask
-    time_pos = loop       and round(mp.get_property_number('time-pos'),.001)       --NEAREST MILLISECOND.
-    FP       = is1frame   and 1 or FP  --FUTURE VERSION MIGHT INSERT %%s=FP=1 IN THIS CASE (VARIES WITH vid). HOW MANY FRAMES TO STORE IN RAM?
-    p['end'] = mp.get_property('end')
-    set_end  = not (v.image and not v.albumart) and p['end']=='none' and p['end']~='100%'  --ENDS mask (IF ~JPEG). SIMPLER THAN TRIMMING ITS TIMESTAMPS, OR eof_action=endall. BUT NOT FOR JPEG (100%=0).  SAFE FOR MPV PLAYLIST: 100%→100%.
+    time_pos = loop       and round(mp.get_property_number('time-pos'),.001)  --NEAREST MILLISECOND.
+    FP       = is1frame   and 1 or FP  --FOR SPEED-LOADING albumart A FUTURE VERSION MIGHT INSERT %%s=FP=1 IN THIS CASE (VARIES WITH vid). HOW MANY FRAMES TO STORE IN RAM?
+    trim_end = duration   and duration>0 and 'end='..round(duration,.001) or ''  --CAN ALSO 'set end 100%' BUT THAT'S ANOTHER SUB-COMMAND, & end PERSISTS IN MPV PLAYLIST.  BY DEFAULT MPV LOOPS INDEFINITELY.
     
-    mp.command((
-        (insta_pause and 'set pause yes;' or '')..  --PREVENTS EMBEDDED MPV FROM SNAPPING, & is1frame INTERFERENCE. 
-        "no-osd vf append '@%s:lavfi=[%s]';"   ..  --"''" FOR SPACEBARS IN filterchain (OR ELSE CAN USE NATIVE FORM). W,H REPEAT FOR scale & zoompan. 
-    ''):format(label,graph):format(W,H,par,W,H,brightness))
+    if insta_pause then mp.command('set pause yes') end  --PREVENTS EMBEDDED MPV FROM SNAPPING, & is1frame INTERFERENCE. 
+    mp.commandv('vf','append',("@%s:lavfi=[%s]"):format(label,graph):format(W,H,par,W,H,trim_end,brightness))  --W,H REPEAT FOR scale & zoompan.  commandv MAY BE MORE ELEGANT FOR SYMBOLS & SPACES, IN filterchain.
     
     for _,filter in pairs(mp.get_property_native('vf')) do if filter.label=='loop' 
         then command =   'no-osd vf  remove @loop;' end end  --remove @loop, AT CHANGE IN vid. COULD ALSO BE THERE DUE TO OTHER SCRIPTS.
     command          = command..(
-        (loop        and 'no-osd vf  pre    @loop:lavfi=[loop=-1:1,fps=%s:%s];' or '')..  --ALL MASKS CAN REPLACE @loop.
-        (insta_pause and        'set pause  no;'                                or '')..
-        (set_end     and 'no-osd set end    100%%;'                             or '')..
+        (loop        and 'no-osd vf  pre   @loop:lavfi=[loop=-1:1,fps=%s:%s];' or '')..  --ALL MASKS CAN REPLACE @loop.
+        (insta_pause and        'set pause no;'                                or '')..
     ''):format(o.fps,time_pos)
-    if command~='' then mp.command(command) end
+    if command~='' then mp.command(command) end  --UNPAUSE/loop.
 end
 mp.register_event('file-loaded'     ,file_loaded) --RELOAD IF brightness CHANGES. EACH REPLACEMENT TRIGGERS ANOTHER seek. 
 mp.register_event('seek'            ,function() if m.brightness~=brightness and not is1frame then file_loaded() end end) --RELOAD IF brightness CHANGES. EACH REPLACEMENT TRIGGERS ANOTHER seek.  is1frame HAS NO ACTUAL brightness (EXCEPT 0).
@@ -196,26 +194,24 @@ function on_toggle(mute)
     elseif mute and not timers.mute:is_enabled() then timers.mute:resume() --START timer OR ELSE toggle. 
         return end
     
-    if not target 
-    then _,error_input = mp.command(('vf-command %s brightness 0 eq'):format(label)) end  --NULL-OP.  OLD MPV REPORTS ERROR/S. SCALERS DON'T UNDERSTAND brightness.
-    target             = target or error_input and '' or 'eq'  --OLD MPV OR NEW. v0.37.0+ SUPPORTS TARGETED COMMANDS. BUT DON'T CHECK VERSION NUMBERS BECAUSE THEY CAN BE ANYTHING.
-    brightness         = -1-brightness  --0,-1 = ON,OFF  
-    Dbrightness        = brightness-(-1-brightness)  --Δ INVALID ON mpv.app (SAME LUA VERSION, BUILT DIFFERENT).
-    time_pos           = mp.get_property_number('time-pos')+(o.vf_command_t_delay or 0)
-    m.time_pos         = m.time_pos or -1  --INITIALIZE IF MEMORY BLANK.  -1 MEANS NO RAPID-SUBTRACTION.
-    time_pos           = time_pos-math.max(0,m.toggle_duration-math.max(0,time_pos-m.time_pos))  --REMAINING_DURATION_OF_PRIOR_TOGGLE=DURATION-TIME_SINCE_LAST_TOGGLE    RAPID TOGGLE CORRECTION: SUBTRACT REMAINING_DURATION, FOR CURRENT TOGGLE. 
-    toggle_duration    = p.pause and 0 or o.toggle_duration
-    clip               = toggle_duration==0 and 1 or ('clip((t-%s)/(%s),0,1)'):format(time_pos,toggle_duration)  --COULD BE RENAMED toggle_expr.
-    clip               = (o.toggle_expr or '%s'):gsub('%%s',clip)  --NON-LINEAR clip. 
-    insta_unpause      = p.pause       and not is1frame and o.unpause_on_toggle>0
-    return_terminal    = insta_unpause and mp.get_property_bool('terminal')
+    if not target then _,error_input = mp.command(('vf-command %s brightness 0 eq'):format(label)) end  --NULL-OP.  OLD MPV REPORTS ERROR/S. SCALERS DON'T UNDERSTAND brightness.
+    target          = target or error_input and '' or 'eq'  --OLD MPV OR NEW. v0.37.0+ SUPPORTS TARGETED COMMANDS. BUT DON'T CHECK VERSION NUMBERS BECAUSE THEY CAN BE ANYTHING.
+    brightness      = -1-brightness  --0,-1 = ON,OFF  
+    Dbrightness     = brightness-(-1-brightness)  --Δ INVALID ON mpv.app (SAME LUA VERSION, BUILT DIFFERENT).
+    time_pos        = mp.get_property_number('time-pos')+(o.vf_command_t_delay or 0)
+    time_pos        = time_pos-(m.time_pos and clip(m.toggle_duration-(time_pos-m.time_pos),0,m.toggle_duration) or 0)  --REMAINING_DURATION_OF_PRIOR_TOGGLE=LAST_DURATION-TIME_SINCE_LAST_TOGGLE  (SUBTRACT REMAINING_DURATION).  THE MOST ELEGANT FORM IS TO CLIP THE TIME DIFFERENCE TO BTWN 0 & DURATION.
+    toggle_duration = p.pause and 0 or o.toggle_duration
+    toggle_expr     = toggle_duration==0 and 1 or ('clip((t-%s)/(%s),0,1)'):format(time_pos,toggle_duration)  --COULD BE RENAMED toggle_expr.
+    toggle_expr     = (o.toggle_expr or '%s'):gsub('%%s',toggle_expr)  --NON-LINEAR clip. 
+    insta_unpause   = p.pause       and not is1frame and o.unpause_on_toggle>0
+    return_terminal = insta_unpause and mp.get_property_bool('terminal')
     m.time_pos,m.toggle_duration = time_pos,toggle_duration
     
     mp.command((
         is1frame and 'no-osd vf toggle @%s;'  --no_mask & albumart. PRESERVES FILTER ORDER (BEFORE PADDING).
             or 'vf-command %s brightness %d+%d*(%s) %s;'.. --INITIAL BRIGHTNESS + DIFFERENCE.   
                 (insta_unpause and 'no-osd set terminal no;set pause no;' or '')  --THEN UNPAUSE IF NEEDED.
-    ):format(label,-1-brightness,Dbrightness,clip,target))
+    ):format(label,-1-brightness,Dbrightness,toggle_expr,target))
     
     if insta_unpause       then timers.pause:resume() end  --REPAUSE.
     if not o.osd_on_toggle then return                end  --osd BELOW.
@@ -223,7 +219,7 @@ function on_toggle(mute)
     for property in ('mpv-version ffmpeg-version libass-version lavfi-complex af vf video-out-params'):gmatch('[^ ]+')
     do p[property]      = mp.get_property_osd(property) end  --PROPERTIES
     mp.osd_message((
-        '_VERSION       = %s    \n'..
+        '_VERSION       = %s    \n'..  --MONOSPACE FONT PREFERRED.
         'mpv-version    = %s    \n'..
         'ffmpeg-version = %s    \n'..
         'libass-version = %s  \n\n'..

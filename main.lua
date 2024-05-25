@@ -36,7 +36,7 @@ for _,opt in pairs(o.options or {})
 do command            = ('%s no-osd set %s;'):format(command or '',opt) end  --ALL SETS IN 1.
 if command then mp.command(command) end  --mp=MEDIA-PLAYER
 script_opts,scripts   = mp.get_property_native('script-opts'),mp.get_property_native('scripts')  --get_property_native FOR FILENAMES.
-directory             = require 'mp.utils'.split_path(scripts[1])    --ASSUME PRIMARY DIRECTORY.  split FROM WHATEVER THE USER ENTERED.  UTILITIES ARE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
+directory             = require 'mp.utils'.split_path(scripts[1])    --ASSUME PRIMARY DIRECTORY.  split FROM WHATEVER THE USER ENTERED.  UTILITIES CAN BE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
 directory             = mp.command_native({'expand-path',directory}) --yt-dlp REQUIRES ~/ EXPANDED. command_native RETURNS. hook SPECIFIES yt-dlp EXECUTABLE.
 COLON                 = mp.get_property('platform')=='windows' and ';' or ':'     --FILE LIST SEPARATOR.  WINDOWS=;  UNIX=:
 hook,title            = 'ytdl_hook-ytdl_path',mp.create_osd_overlay('ass-events') --ass-events IS THE ONLY FORMAT.
@@ -45,20 +45,20 @@ do  ytdl              = directory..'/'..ytdl  --'/' FOR WINDOWS & UNIX.
     script_opts[hook] = script_opts[hook] and script_opts[hook]..COLON..ytdl or ytdl end  --APPEND ALL ytdl.
 mp.set_property_native('script-opts',script_opts)  --EMPLACE hook.  ALTERNATIVE change-list WON'T ALLOW BOTH " " & "'" IN THE FILENAMES.
 
-for _,script  in pairs(o.scripts or {}) do                               is_present=false   
-    for _,val in pairs(  scripts) do if script:lower()==val:lower() then is_present=true end end  --SEARCH NOT CASE SENSITIVE. CHECK IF is_present (ALREADY LOADED).
+for _,script  in pairs(o.scripts or {}) do is_present=false   
+    for _,val in pairs(  scripts      ) do is_present=is_present or script:lower()==val:lower() end  --SEARCH NOT CASE SENSITIVE. CHECK IF is_present (ALREADY LOADED).  COULD ALSO USE string.find.
     if not is_present then table.insert(scripts,script)
         mp.commandv('load-script',directory..'/'..script) end end  --commandv FOR FILENAMES. join_path AFTER split_path FROM WHATEVER THE USER TYPED IN.
-mp.set_property_native('scripts',scripts)  --ANNOUNCE scripts.
+mp.set_property_native('scripts',scripts)  --ANNOUNCE scripts.  SHOULD PROBABLY BE DONE WITH directory..'/'
 
 function playback_start()               --title WAITS FOR PLAYBACK START.
     if playback_started then return end --ONLY ONCE, PER LOAD.
     playback_started,duration = 1,mp.get_property_number('duration')  --JPEG duration = nil&0 @file-loaded&playback-restart. MAY NOT BE TRUE DURATION DUE TO FILTERS.
     loop        = duration<(o.autoloop_duration or 0) and mp.get_property('loop')
     command     = loop and 'no-osd set loop inf;' or ''
-    for _,opt in pairs(o.options_playback_start or {})
-    do command  = ('%s no-osd set %s;'):format(command,opt) end  --ALL SETS IN 1.
-    if command ~='' then mp.command(command) end  --mp=MEDIA-PLAYER
+    for _,opt in pairs(o.options_playback_start or {})  --PLAYBACK OVERRIDES.
+    do command  = ('%s no-osd set %s;'):format(command,opt) end
+    if command ~='' then mp.command(command) end 
     
     if o.title 
     then title.data = o.title..mp.get_property_osd('media-title')
@@ -75,7 +75,7 @@ mp.register_event('end-file',end_file)
 
 
 ----mpv TERMINAL COMMANDS:
-----WINDOWS   CMD: MPV\MPV --script=. TEST.MP4      (PLACE o.scripts & TEST.MP4 INSIDE smplayer.exe FOLDER. THEN COPY/PASTE COMMAND INTO NOTEPAD & SAVE AS TEST.CMD, & DOUBLE-CLICK IT.)
+----WINDOWS   CMD: MPV\MPV --script=. TEST.MP4      (PLACE scripts & TEST.MP4 INSIDE smplayer.exe FOLDER. THEN COPY/PASTE COMMAND INTO NOTEPAD & SAVE AS TEST.CMD, & DOUBLE-CLICK IT.)
 ----LINUX      sh: mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"
 ----MACOS mpv.app: /Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"        (DRAG & DROP mpv.app ONTO Applications.)
 ---- SMPlayer.app: /Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"      
@@ -85,8 +85,8 @@ mp.register_event('end-file',end_file)
 ----https://smplayer.info/en/download-linux & https://apt.fruit.je/ubuntu/jammy/mpv/ FOR LINUX SMPLAYER & MPV.   OFFLINE LINUX ALL-IN-ONE: SMPlayer-24.5.0-x86_64.AppImage  BUT IT HAS POOR PERFORMANCE.
 
 ----SAFETY INSPECTION: LUA & JS SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* & change-list SAFE EXCEPT FOR script-opts WHICH MAY hook AN UNSAFE EXECUTABLE INTO A DIFFERENT SCRIPT, LIKE youtube-dl.
-----MPV  v0.38.0(.7z .exe v3)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)  ALL TESTED.  v3 BLOCKS TRANSPARENCY.
-----FFMPEG  v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4(mpv.app)  v5.1.2(SMPlayer.app)  v4.4.2(.snap)  v4.2.7(.AppImage)  ALL TESTED.  MPV IS OFTEN BUILT WITH 3 VERSIONS OF FFMPEG: v4, v5 & v6.
+----MPV  v0.38.0(.7z .exe v3)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)  ALL TESTED.  v0.34 INCOMPATIBLE WITH yt-dlp_x86.
+----FFMPEG  v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4(mpv.app)  v5.1.2(SMPlayer.app)  v4.4.2(.snap)  v4.2.7(.AppImage)  ALL TESTED.  MPV IS STILL OFTEN BUILT WITH 3 VERSIONS OF FFMPEG: v4, v5 & v6.
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER-v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
@@ -98,7 +98,7 @@ mp.register_event('end-file',end_file)
 ----VIRTUALBOX: CAN INCREASE VRAMSize FROM 128→256 MB. MACOS LIMITED TO 3MB VIDEO MEMORY. CAN ALSO SWITCH AROUND Command & Control(^) MODIFIER KEYS.  "C:\Program Files\Oracle\VirtualBox\VBoxManage" setextradata macOS_11 VBoxInternal/Devices/smc/0/Config/DeviceKey ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc
 
 ----BUG: RARE YT VIDEOS LOAD no-vid. EXAMPLE: https://youtu.be/y9YhWjhhK-U
-----BUG: NO seeking WITH TWITTER.    EXAMPLE: https://twitter.com/i/status/1696643892253466712  x.com NO STREAMING.
+----BUG: NO seeking WITH TWITTER.    EXAMPLE: https://twitter.com/i/status/1696643892253466712  x.com NO STREAMING.  NO lavfi-complex.
 
 ----flatpak run info.smplayer.SMPlayer  snap run smplayer  FOR flatpak & snap TESTING. 
 ----sudo apt install smplayer flatpak snapd mpv     FOR RELEVANT LINUX INSTALLS. 

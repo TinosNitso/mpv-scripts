@@ -25,16 +25,16 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
     min_samples_time   =   20,  --DEFAULT= 20 SECONDS  SAMPLE COUNT USUALLY STABILIZES WITHIN 10 SECONDS (EXCEPT ON YOUTUBE+lavfi-complex).  IT'S ALWAYS A HALF-INTEGER @MEASUREMENT.  THIS OPTION SHOULD BE REMOVED IN A FUTURE VERSION (MPV-v0.38 DOESN'T NEED IT).
     -- meta_osd        =    1,  --SECONDS TO DISPLAY astats METADATA, PER OBSERVATION. UNCOMMENT FOR STATS.  IRONICALLY astats (audio STATISTICS) DOESN'T KNOW ANYTHING ABOUT TIME ITSELF, YET IT'S THE BASIS FOR TEN HOUR SYNCHRONY.
     -- mutelr          = 'muter', --DEFAULT='mutel'    UNCOMMENT TO SWITCH PRIMARY CONTROLLER CHANNEL TO LEFT. PRIMARY device HAS 1 CHANNEL IN NORMAL SYNC TO video.  HARDWARE USUALLY HAS A PRIMARY, BUT IT'S 50/50 (HEADPHONES OPPOSITE TO SPEAKERS).
-    options            = {
+    options            = {  --CONTROLLER ONLY.
         'image-display-duration inf',  --DEFAULT=1  BUT inf FOR JPEG clock.
         '   osd-scale-by-window no ','osd-font Consolas',  --DEFAULT=yes,sans-serif  SCALING 720p CAUSES Day MISALIGNMENT. DISABLING IT IS THE LAZY SOLUTION COMPARED TO SETTING CLOCK res_x,res_y.  THIS FONT IS DEFAULT, WITHOUT STYLE OVERRIDE (LIKE A FRENCH FONT FOR FRANCE, ETC).
         -- 'osd-border-color   0/.5',  --DEFAULT=#FF000000  UNCOMMENT FOR TRANSPARENT CLOCK FONT OUTLINE.  RED=1/0/0/1, BLUE=0/0/1/1, ETC
     },
     options_subprocesses={  --APPLY TO ALL NON-PRIMARY CHANNELS.
-        '      vid no ',' terminal no    ','ytdl-format bestaudio/best', --DEFAULTS auto,yes,''  REMOVE TO SEE VIDEO OF EACH CHANNEL.
-        ' geometry 25%','msg-level all=no','   priority abovenormal   ',  --geometry IF vid.  all=no STOPS CONTROLLER LOG FROM FILLING UP. SOMEHOW SUBPROCESSES PIPE BACK, IN WINDOWS. 
-        'keep-open yes','    pause yes   ',  --DEFAULTS no,no   keep-open FOR seek NEAR end-file.  pause PREVENTS STARTING GLITCH WHERE A SPEAKER CHIRPS.  
-        -- 'audio-pitch-correction no    ',  --DEFAULT=yes  UNCOMMENT FOR CHIPMUNK MODE (NO scaletempo# FILTER). WORKS OK WITH SPEECH & COMICAL MUSIC.
+        '      vid no ','ytdl-format bestaudio/best', --REMOVE TO SEE VIDEO OF EACH CHANNEL.
+        ' geometry 25%','  msg-level all=no        ','priority abovenormal',  --geometry IF vid.  all=no STOPS CONTROLLER LOG FROM FILLING UP. 
+        'keep-open yes','      pause yes           ',  --DEFAULTS no,no   keep-open FOR seek NEAR end-file.  pause PREVENTS STARTING GLITCH WHERE A SPEAKER CHIRPS.  
+        -- '  audio-pitch-correction no            ',  --DEFAULT=yes  UNCOMMENT FOR CHIPMUNK MODE (NO scaletempo# FILTER). WORKS OK WITH SPEECH & COMICAL MUSIC.
     },
     clocks       = {  --TOGGLE LINES TO INCLUDE/EXCLUDE VARIOUS STYLES FROM THE LIST.  REPETITION VALID.  CLOCKS REQUIRE VIDEO OR IMAGE.  A SIMPLE LIST OF STRINGS IS EASY TO RE-ORDER & DUPLICATE, LIKE REPEATING YEMEN FOR THE ARABIC.
         duration = 2, --SECONDS, INTEGER.  TIME PER CLOCK STYLE (CYCLE DURATION).  STYLE TICKS OVER EVERY SECOND SECOND.  BUT MAYBE IT TAKES LONGER TO COMFORTABLY RECOGNIZE EACH & EVERY COUNTRY. 
@@ -43,7 +43,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
         -- DIRECTIVES_OVERRIDE = true, --UNCOMMENT TO DISPLAY ALL os.date DIRECTIVE CODES & THEIR CURRENT VALUES (SPECIAL CLOCK). MAY DEPEND ON LUA VERSION.  EXAMPLES: %I,%M,%S,%a,%n = HRS(12),MINS,SECS,Day,RETURN  %n (♪) & \\N (◙) ARE DIFFERENT.  %n ENABLES NEW NUMPAD ALIGNMENT, WHICH COULD HELP WITH A MADAGASCAR STYLE.
 ----    "         COUNTRY             HOUR     MINUTE   SECOND  POPULATION       [AbDays]            {\\STYLE OVERRIDES} %DIRECTIVES                                                                        ",  --{ REQUIRED, & EVERYTHING BEFORE IT IS REMOVED.  {} ALONE REMOVES LEADING 0 FOLLOWING IT.  AbDays LOCALES START WITH Sun (BUT Mon IN REALITY), & CAN BE REPLACED WITH ANYTHING (1 LOTE CAN BE COPIED OVER ALL THE OTHERS).  https://lh.2xlibre.net/locales/ FOR ABBREVIATED DAYS IN ALL LOCALES, ETC.  
         "     BELGIUM  BELGIË         BLACK    YELLOW   RED      12M  [Zo ,Ma ,Di ,Wo ,Do ,Vr ,Za ]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c     0\\fs55\\bord1}%I{\\c24DAFD\\bord3} %M{\\c4033EF         } %S",  --BLACK PRIMARY (THIN BORDER), LIKE GERMANY.  VERTICAL TRICOLOR (HORIZONTAL TAB). HEX ORDERED BGR.  CAN RECITE COUNTRIES (BELGIUM CAPITAL).  SECS ARE THE CORNERSTONE (ANCHOR).  CAN USE ":" OR " " BTWN DIGITS.  Ma=Mon BUT ALSO Tue IN SPANISH.  %a SHOULD PROBABLY GO ONTOP OF MINUTES, NOT SECONDS.
-        "     ROMANIA  ROMÂNIA        BLUE     YELLOW   RED      19M  [Du ,Lu ,Ma ,Mi ,Jo ,Vi ,Sa ]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c7F2B00\\fs55\\bord3}%I{\\c16D1FC       } %M{\\c2611CE         } %S",  --CHAD SIMILAR.  MOLDOVA & ANDORRA SIMILAR BUT CHARGED. 
+        "     ROMANIA  ROMÂNIA        BLUE     YELLOW   RED      19M  [Du ,Lu ,Ma ,Mi ,Jo ,Vi ,Sa ]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c7F2B00\\fs55\\bord3}%I{\\c16D1FC       } %M{\\c2611CE         } %S",  --CHAD SIMILAR.  MOLDOVA & ANDORRA SIMILAR BUT CHARGED.  
         "           MALI              GREEN    YELLOW   RED      21M  [Aca,Etl,Tal,Arb,Kam,Gum,Sab]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c3AB514\\fs55\\bord3}%I{\\c16D1FC       } %M{\\c2611CE         } %S",  --SENEGAL SIMILAR BUT CHARGED.  IDEAL COLOR LIST MIXES AFRO & EURO FLAGS. 
         "      GUINEA  GUINÉE         RED      YELLOW   GREEN    14M  [Dim,Lun,Mar,Mer,Jeu,Ven,Sam]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c2611CE\\fs55\\bord3}%I{\\c16D1FC       } %M{\\c609400         } %S",  --RED IS RIGHT, EXCEPT FOR GUINEA!  REVERSE OF MALI, SIMILAR TO ROMANIA.  
         "          NIGERIA            GREEN    WHITE    GREEN   231M  [Sun,Mon,Tue,Wed,Thu,Fri,Sat]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c  8000\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c  8000         } %S",  --BICOLOR TRIBAND.  THE ONLY ENGLISH (PLAIN) TRIBAND/QUADBAND.  WHITE ALWAYS IN THE MIDDLE. ORDER ALIGNS WHITES & REDS.  
@@ -51,8 +51,8 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
         "     IRELAND  ÉIREANN        GREEN    WHITE    ORANGE    7M  [Dom,Lua,Mái,Céa,Déa,Aoi,Sat]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c629B16\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c3E88FF         } %S",
         "       ITALY  ITALIA         GREEN    WHITE    RED      59M  [Dom,Lun,Mar,Mer,Gio,Ven,Sab]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c458C00\\fs55\\bord3}%I{\\cF0F5F4       } %M{\\c2A21CD         } %S",  --MEXICO SIMILAR BUT CHARGED. CATHOLIC, LIKE IRELAND.  Mar=Tuesday IS THIRD, LIKE MARCH.
         "          FRANCE             BLUE     WHITE    RED      68M  [Dim,Lun,Mar,Mer,Jeu,Ven,Sam]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\cA45500\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c3541EF         } %S", 
-        "        PERU  PERÚ           RED      WHITE    RED      34M  [Do ,Lu ,Ma ,Mi ,Ju ,Vi ,Sa ]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c2310D9\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c2310D9         } %S",  --BICOLOR.  CANADA MIGHT BE SIMILAR BUT WITH REDUCED HRS & SECS fs.
-        "     AUSTRIA  ÖSTERREICH     RED    ◙ WHITE  ◙ RED       9M  [So ,Mo ,Di ,Mi ,Do ,Fr ,Sa ]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c2E10C8\\fs55\\bord3}%I{\\cFFFFFF     }\\N%M{\\c2E10C8       }\\N%S",  --BICOLOR. HORIZONTAL TRICOLOR (VERTICAL TAB).  LIKE A TAB FROM THE FLAG.  BLACK Day MAY OVERLAP WITH BLACK BARS ON SCREEN-EDGE.  {\\fr-90} IS ANOTHER OPTION.
+        "        PERU  PERÚ           RED      WHITE    RED      34M  [Do ,Lu ,Ma ,Mi ,Ju ,Vi ,Sa ]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c2310D9\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c2310D9         } %S",  --BICOLOR.  Vi=Friday  CANADA MIGHT BE SIMILAR BUT WITH REDUCED HRS & SECS fs.  
+        "     AUSTRIA  ÖSTERREICH     RED    ◙ WHITE  ◙ RED       9M  [So ,Mo ,Di ,Mi ,Do ,Fr ,Sa ]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c2E10C8\\fs55\\bord3}%I{\\cFFFFFF     }\\N%M{\\c2E10C8       }\\N%S",  --BICOLOR. HORIZONTAL TRIBAND (VERTICAL TAB).  LIKE A TAB FROM THE FLAG.  BLACK Day MAY OVERLAP WITH BLACK BARS ON SCREEN-EDGE.  {\\fr-90} IS ANOTHER OPTION.
         "     HUNGARY  MAGYARORSZÁG   RED    ◙ WHITE  ◙ GREEN    10M  [ V , H , K ,Sze,Cs , P ,Szo]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c3929CE\\fs55\\bord3}%I{\\cFFFFFF     }\\N%M{\\c507047       }\\N%S",
         "  LUXEMBOURG  LËTZEBUERG     RED    ◙ WHITE  ◙ CYAN     <1M  [So ,Mo ,Di ,Mi ,Do ,Fr ,Sa ]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c4033EF\\fs55\\bord3}%I{\\cFFFFFF     }\\N%M{\\cE0A300       }\\N%S",
         " NETHERLANDS  NEDERLAND      RED    ◙ WHITE  ◙ BLUE     18M  [Zo ,Ma ,Di ,Wo ,Do ,Vr ,Za ]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c251DAD\\fs55\\bord3}%I{\\cFFFFFF     }\\N%M{\\c85471E       }\\N%S",  --PARAGUAY & CROATIA SIMILAR BUT CHARGED.  YUGOSLAVIA WAS CHARGED REVERSE.
@@ -94,8 +94,9 @@ if command then mp.command(command) end
 
 function round(N,D)  --ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1). N & D MAY ALSO BE STRINGS OR nil.  PRECISION LIMITER FOR txtfile.
     D = D or 1
-    return N and math.floor(.5+N/D)*D  --LUA DOESN'T SUPPORT math.round(N)=math.floor(.5+N)
+    return N and math.floor(.5+N/D)*D  --FFMPEG SUPPORTS round, BUT NOT LUA.
 end
+function clip(N,min,max) return N and min and max and math.min(math.max(N,min),max) end  --N,min,max ARE NUMBERS OR nil.  FFMPEG SUPPORTS clip BUT NOT LUA.    math.clip(#,min,max)=math.min(math.max(#,min),max)  ENFORCES speed LIMIT.
 
 if not is_controller then math.randomseed(p.pid)  --UNIQUE randomseed, OTHERWISE TEMPO MAY BE SAME OR PREDICTABLE, BTWN SUBPROCESSES.
 else for _,command in pairs(o.mpv) do if mp.command_native({'subprocess',command}).error_string~='init'  --CONTROLLER command LOOP (NULL-OPS). error=init IF INCORRECT COMMAND.  subprocess RETURNS (NOT run).
@@ -132,7 +133,7 @@ else for _,command in pairs(o.mpv) do if mp.command_native({'subprocess',command
 
 graph=not o.mpv[1] and o.filterchain or (is_controller  --OVERRIDE (NO SUBPROCESSES),  OR...
       and ('stereotools,astats=.5:1,%s,asplit[0],stereotools=%s=1[1],[0][1]astreamselect=2:%%d'):format(o.filterchain,mutelr)
-      or  ('stereotools=%s=1,astats=.5:1,%s'):format(mutelr,o.filterchain)  --(MAYBE) LESS CPU USAGE WITHOUT asplit.
+      or  ('stereotools=%s=1,astats=.5:1,%s'):format(mutelr,o.filterchain)  --LESS CPU USAGE WITHOUT asplit (MAYBE).
 )
 ----lavfi         = [graph] [ao]→[ao] LIBRARY-AUDIO-VIDEO-FILTERGRAPH.  aspeed IS LIKE A MASK FOR audio, WHICH DISJOINTS IT. 
 ----stereotools   = ...:mutel:muter (BOOLS)  DEFAULT=...:0:0  IS THE START.  MAY BE SUPERIOR @CONVERSION→stereo FROM mono & SURROUND-SOUND. astats MAY NEED stereo FOR RELIABILITY. ALSO MUTES EITHER SIDE. FFMPEG-v4 INCOMPATIBLE WITH softclip.
@@ -143,21 +144,16 @@ graph=not o.mpv[1] and o.filterchain or (is_controller  --OVERRIDE (NO SUBPROCES
 ----asplit          [ao]→[0][1]=[NOmutelr][mutelr]
 
 
-function start_file()  --LAUNCH INSTANTLY, FOR YOUTUBE. AT LEAST 4 STAGES: LOAD-SCRIPT start-file file-loaded playback-restart
-    for  property in ('path script-opts'):gmatch('[^ ]+')  --ytdl_hook SCRIPT-OPT POTENTIALLY UNSAFE & ONLY EVER DECLARED ONCE (IN TASK MANAGER).
-    do p[property]       = mp.get_property(property) end
-    if not mpv then return end  --OVERRIDE, ALREADY LAUNCHED, OR ~is_controller. CONTROLLER ONLY BELOW.  ALSO LAUNCH ON JPEG, FOR MPV PLAYLIST.
-    script               = ('%s/%s.lua'):format(directory,label)  --COULD SWITCH .lua TO .js FOR JAVASCRIPT.   
-    for N,device in pairs(devices) do for mutelr in ('mutel muter'):gmatch('[^ ]+') do if not (N==1 and mutelr==o.mutelr) then mp.command_native({  --DON'T LAUNCH ON PRIMARY device CHANNEL (INTERFERENCE). 
-                    name = 'subprocess',playback_only=false,capture_stdout=false,capture_stderr=false,detach=true,  --EXTRA FLAGS FOR UNIX RELIABILITY, & BACKWARDS COMPATIBILITY.  script-opts COULD BE REPLACED BY env (ENVIRONMENTAL VARIABLES FOR EACH MPV).
-                    args = {mpv,'--idle','--script='..script,('--script-opts=%s=1,pid=%d,%s'):format(mutelr,p.pid,p['script-opts']),'--audio-device='..device}  --mutelr & audio-device VARY.
-                }) end end end
-    mpv                  = nil
+function start_file()  --CONTROLLER ONLY.  LAUNCHES BEFORE file-loaded.  AT LEAST 4 STAGES: LOAD-SCRIPT start-file file-loaded playback-restart
+    if mpv then script,p['script-opts'] = ('%s/%s.lua'):format(directory,label),mp.get_property('script-opts')  --.lua COULD BE .js FOR JAVASCRIPT.   ytdl_hook SCRIPT-OPT POTENTIALLY UNSAFE & ONLY EVER DECLARED ONCE (IN TASK MANAGER).  ALSO LAUNCH ON JPEG, FOR MPV PLAYLIST.
+        for N,device in pairs(devices) do for mutelr in ('mutel muter'):gmatch('[^ ]+') do if not (N==1 and mutelr==o.mutelr)  --DON'T LAUNCH ON PRIMARY device CHANNEL.
+                then mp.commandv('run',mpv,'--idle','--audio-device='..device,'--script='..script,("--script-opts=%s=1,pid=%d,"):format(mutelr,p.pid)..p['script-opts']) end end end end  --mutelr & audio-device VARY.  commandv MAY BE MORE ELEGANT FOR SYMBOLS & SPACES. 
+    mpv=nil  --ONCE ONLY.
 end
 mp.register_event('start-file',start_file) 
 
 function file_loaded() 
-    if m.map ~= map then mp.command(("no-osd af pre '@%s:lavfi=[%s]'"):format(label,graph):format(map)) end  --GRAPH INSERTION. "''" FOR SPACEBARS IN filterchain.  astats USES SOURCE samplerate.  
+    if m.map ~= map then mp.commandv('af','pre',("@%s:lavfi=[%s]"):format(label,graph):format(map)) end  --GRAPH INSERTION. commandv MAY BE MORE ELEGANT FOR SYMBOLS & SPACES, IN filterchain.  astats USES SOURCE samplerate.  
     m   .map  = map
 end
 mp.register_event('file-loaded',file_loaded)  --RISKY TO INSERT GRAPH SOONER (DEPENDING ON FFMPEG VERSION).  HARDWARE samplerate UNKNOWN @file-loaded.
@@ -181,7 +177,7 @@ function on_toggle(property)  --CONTROLLER ONLY. INSTA-TOGGLE (SWITCH). SUBPROCE
     if not (p.path and is_controller) then return  --NOT STARTED YET.
     elseif property and not timers.mute:is_enabled() then timers.mute:resume() --START TIMER OR ELSE TOGGLE.  DOUBLE-MUTE MAY FAIL TO OBSERVE EITHER mute IF seeking.
     else OFF,map = not OFF,1-map --TOGGLE:  1,0 = ON,OFF 
-        if OFF then mp.add_timeout(.4,function() txt.mute=OFF end) --DELAYED MUTE ON, OR ELSE LEFT CHANNEL CUTS OUT A TINY BIT.  txtfile IS TOO QUICK FOR af-command! THE EXACT timeout COULD BE A NEW option.  GRAPH REPLACEMENT INTERRUPTS PLAYBACK.
+        if OFF then mp.add_timeout(.4,function() txt.mute=OFF end) --DELAYED MUTE ON, OR ELSE LEFT CHANNEL CUTS OUT A TINY BIT.  txtfile IS TOO QUICK FOR af-command!  ALTERNATIVE GRAPH REPLACEMENT INTERRUPTS PLAYBACK.  A FUTURE VERSION SHOULD ELIMINATE astreamselect ENTIRELY, SO THE .4s WON'T EXIST.
         else                                     txt.mute=OFF end  --INSTANT UNMUTE.
         
         if not target then _,error_input = mp.command(('af-command %s map %d astreamselect'):format(label,map)) end  --NULL-OP TO ACQUIRE target.
@@ -204,18 +200,18 @@ end
 timers              = {  --CARRY OVER IN MPV PLAYLIST.
     mute            = mp.add_periodic_timer(o.double_mute_timeout or 0, function()end ),   --mute TIMER TIMES.
     osd             = mp.add_periodic_timer(1,clock_update),  --THIS 1 MOSTLY DETERMINES THE EXACT TICK OF THE clock, WHICH IS USUALLY IRRELEVANT TO audio.
-}                     
+}
 timers.mute.oneshot = 1
 timers.mute:kill()
 clock_update()  --INSTANT clock.
 
 function os_sync()  --RUN 10ms LOOP UNTIL SYSTEM CLOCK TICKS. os.time() HAS 1s PRECISION WHICH MAY BE IMPROVED TO 10ms, TO SYNC time-pos WITH SUBPROCESSES. 
-    if not time1 then time1=os.time()  --time1=nil IF NOT ALREADY SYNCING (ACTS AS SWITCH). COULD BE RENAMED "time_syncing".
-        timers.os_sync:resume() 
+    if not time1 then timers.os_sync:resume()  --time1=nil IF NOT ALREADY SYNCING (ACTS AS SWITCH). 
+        time1=os.time()  
         return end
-    
     sync_time=os.time()  --INTEGER SECONDS FROM 1970, @EXACT TICK OF CLOCK.
-    if sync_time>time1 then time1,clock2time = nil,sync_time-os.clock()   --time1 ACTS AS A SWITCH. clock2time=os_time_relative_to_os_clock IS THE CONSTANT TO ADD TO CPU CLOCK TIME TO GET TIMEFROM1970 TO WITHIN 10ms.  mp.get_time()=os.clock()+CONSTANT (GIVES SAME NET RESULT TO WITHIN HALF A MILLISECOND).
+    
+    if sync_time>time1 then time1,os2mp_time = nil,sync_time-mp.get_time()   --os2mp_time=os_time_relative_to_mp_clock  IS THE CONSTANT TO ADD TO CPU CLOCK TIME TO GET TIMEFROM1970 TO WITHIN 10ms.  os.clock WORKS EQUALLY WELL ON WINDOWS, BUT NOT UNIX.  mp.get_time()=os.clock()+CONSTANT  (WITHIN HALF A MILLISECOND.)
         timers.os_sync:kill()
         timers.osd    :kill()  --SYNC clock TICK TO SYSTEM. 
         clock_update() end
@@ -227,11 +223,11 @@ function property_handler(property,val)  --CONTROLLER WRITES TO txtfile, & SUBPR
     if     property 
     then p[property] = val 
         if property ~= 'af-metadata/'..label and not is_controller then return end end  --OBSERVING SUBPROCESSES END HERE, EXCEPT ON astats TRIGGER. CONTROLLER PROCEEDS.
-    os_time          = clock2time and clock2time+os.clock() or os.time() --os_time=TIMEFROM1970  PRECISE TO 10ms.
-    samples_time     = clock2time and type(val)=='table' and val[key] and p.samplerate and val[key]/p.samplerate  --ALWAYS A HALF INTEGER, OR nil.  TIME=sample#/samplerate  string[key] BUGS OUT ON 32-BIT.
-    time_pos         = mp.get_property_number('time-pos')   or 0         --0 DURING YOUTUBE LOAD TO STOP timeout. 
-        
+    os_time          = os2mp_time and os2mp_time+mp.get_time() or os.time() --os_time=TIMEFROM1970  PRECISE TO 10ms.
+    samples_time     = os2mp_time and type(val)=='table' and val[key] and p.samplerate and val[key]/p.samplerate  --ALWAYS A HALF INTEGER, OR nil.  TIME=sample#/samplerate  string[key] BUGS OUT ON 32-BIT.
+    time_pos         = mp.get_property_number('time-pos') or 0         --0 DURING YOUTUBE LOAD TO STOP timeout. 
     if sync_time and os_time-sync_time>o.resync_delay then os_sync() end  --RESYNC EVERY 30s.
+    
     if samples_time and samples_time>o.min_samples_time  --THESE 3 LINES ARE FOR BACKWARDS COMPATIBILITY. MPV-v0.36 (& MAYBE v0.37) CAN'T SYNC WITHOUT astats. BOTH MP4 & MP3 LAG BEHIND THE SUBPROCESSES.  time-pos, playback-time & audio-pts WORKED WELL OVER 1 MINUTE, BUT NOT 1 HOUR.
     then initial_time_pos = initial_time_pos or time_pos-samples_time  --initial_time_pos=initial_time_pos_relative_to_samples_time  INITIALIZE AFTER CHECKING samples_time. THIS # STAYS THE SAME FOR THE NEXT 10 HOURS. 
          time_pos         = initial_time_pos+samples_time end  --NEW METRIC WHOSE CHANGE IS BASED ON astats (METRIC SWITCH). 
@@ -274,9 +270,9 @@ function property_handler(property,val)  --CONTROLLER WRITES TO txtfile, & SUBPR
     target_pos       = math.abs(time_gained)>o.seek_limit and target_pos
     time_gained      = target_pos and 0 or time_gained  --→0 IF OVER LIMIT.
     txt.speed        = (txt.path ~=p.path or time_from_write>o.timeouts.pause) and 0 or txt.speed+0  --loadfile PAUSED. 0 MEANS PAUSE.
-    txt.pause        =  txt.speed==0 and 'yes' or 'no'
-    speed            =  txt.speed*(1-time_gained/.5)*(1+math.random(-o.max_random_percent,o.max_random_percent)/100)  --time_gained→0 OVER NEXT .5 SECONDS IN time-pos (astats UPDATE TIME). +-RANDOM EXTRA.  RANDOM BOUNDS [.9,1.1] MAYBE SHOULD BE [1/1.1,1.1]=[.91,1.1]. 1% SKEWED TOWARDS SLOWING IT DOWN.
-    speed            = math.min(math.max( speed , txt.speed/o.max_speed_ratio ), txt.speed*o.max_speed_ratio )  --speed LIMIT RELATIVE TO CONTROLLER.  LUA DOESN'T SUPPORT math.clip(#,min,max)=math.min(math.max(#,min),max)
+    txt.pause        = txt.speed==0 and 'yes' or 'no'
+    speed            = txt.speed*(1-time_gained/.5)*(1+math.random(-o.max_random_percent,o.max_random_percent)/100)  --time_gained→0 OVER NEXT .5 SECONDS IN time-pos (astats UPDATE TIME). +-RANDOM EXTRA.  RANDOM BOUNDS [.9,1.1] MAYBE SHOULD BE [1/1.1,1.1]=[.91,1.1]. 1% SKEWED TOWARDS SLOWING IT DOWN.
+    speed            = clip(speed,txt.speed/o.max_speed_ratio,txt.speed*o.max_speed_ratio)  --speed LIMIT RELATIVE TO CONTROLLER.
     command          = 
         (p.a.id     ~= txt.aid   +0  and ('set aid    %s;'         ):format(txt.aid    ) or '')..  --UNTESTED. MAY REQUIRE GRAPH REPLACEMENT?
         (p.volume   ~= txt.volume+0  and ('set volume %s;'         ):format(txt.volume ) or '')..
@@ -286,7 +282,7 @@ function property_handler(property,val)  --CONTROLLER WRITES TO txtfile, & SUBPR
     ''
     if command~='' then mp.command(command) end
 end
-for property in ('mute pause seeking volume speed current-tracks/audio af-metadata/'..label):gmatch('[^ ]+')        --INSTANT write TO txtfile. CASCADE @volume REQUIRES pcall.  BOOLS, NUMBERS, string & TABLES.
+for property in ('mute pause seeking volume speed path current-tracks/audio af-metadata/'..label):gmatch('[^ ]+')        --INSTANT write TO txtfile. CASCADE @volume REQUIRES pcall.  BOOLS, NUMBERS, string & TABLES.
     do mp.observe_property(property,          'native',function(property,val) pcall(property_handler,property,val)  end) end --TRIGGERS INSTANTLY.  astats TRIGGERS EVERY HALF A SECOND, ON playback-restart, frame-drop-count & shutdown.
 timers.auto=mp.add_periodic_timer(auto_delay,          function(            ) pcall(property_handler             )  end)     --IDLER & RESPONSE TIMER. STARTS INSTANTLY TO STOP YOUTUBE TIMING OUT. TRIGGERS EVERY QUARTER/HALF SECOND.
 mp.observe_property('audio-params/samplerate','number',function(property,val) p.samplerate,initial_time_pos = val,nil end)   --samplerate MAY DEPEND ON lavfi-complex.  ALSO RESET SAMPLE COUNT.
@@ -298,11 +294,12 @@ mp.observe_property('audio-params/samplerate','number',function(property,val) p.
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER-v24.5, RELEASES .7z .exe .dmg .AppImage .flatpak .snap win32  &  .deb-v23.12  ALL TESTED.
 
-----SCRIPT WRITTEN TO TRIGGER AN ERROR ON PURPOSE ON OLD MPV. MORE RELIABLE THAN USING VERSION NUMBERS INSTEAD.
-----BUG: SUBPROCESSES TOO SLOW TO seek THROUGH LONG YOUTUBE VIDEOS. FEEDBACK COULD BE USED TO TOGGLE OFF (CHILDREN COULD ALSO WRITE TO txtfile). 
+----SCRIPT NAME MUST NOT HAVE SYMBOLS OR SPACES.  BUT ITS DIRECTORY MAY HAVE BOTH.
+----SCRIPT WRITTEN TO TRIGGER AN INPUT ERROR ON OLD MPV (<0.37). MORE RELIABLE THAN VERSION NUMBERS. 
+----BUG: SUBPROCESSES TOO SLOW TO seek THROUGH LONG YOUTUBE VIDEOS. FEEDBACK COULD BE USED TO TOGGLE OFF (SUBPROCESSES COULD ALSO WRITE TO txtfile). 
 ----autospeed.lua IS A DIFFERENT SCRIPT FOR VIDEO speed, NOT AUDIO. "autotempo.lua" OR "atempo.lua" MIGHT BE GOOD NAMES.
-----A FUTURE SMOOTH TOGGLE COULD WORK USING volume & amix INSTEAD OF astreamselect.  astats SHOULDN'T EVEN BE THERE IN MPV-v0.38...
-----GRAND-CHILD SUBPROCESSES COULD WORK FOR SURROUND SOUND. EACH CHILD LAUNCHES ITS OWN CHILDREN TO COVER ALL device CHANNELS.  BUT STEREOS ARE CHEAPER!  CODING FOR A SURROUND SOUND SOURCE SIGNAL IS EVEN MORE COMPLICATED. 
+----A FUTURE SMOOTH TOGGLE COULD WORK USING volume & amix INSTEAD OF astreamselect.
+----GRAND-CHILD SUBPROCESSES COULD WORK FOR SURROUND SOUND. EACH CHILD LAUNCHES ITS OWN CHILDREN TO COVER ALL device CHANNELS. OR THE CONTROLLER COULD SWITCH THROUGH ALL DEVICES INSTANTLY.  CODING FOR A SURROUND SOUND SOURCE SIGNAL IS EVEN MORE COMPLICATED. 
 ----REPLACING txtfile WITH PIPES IS EASY ON WINDOWS, BUT REQUIRES A DEPENDENCY ON LINUX. socat (sc) & netcat (nc) ARE POPULAR (socat MAY MEAN "SOCKET AT - ..."). input-ipc-server (INTER-PROCESS-COMMUNICATION) IS FOR PIPES. THE DEPENDENCY MAY BE A SECURITY THREAT. A FUTURE MPV (OR LUA) VERSION MAY SUPPORT WRITING TO SOCKET (socat BUILT IN, OR lua-socket). WINDOWS CMD CAN ALREADY ECHO TO ANY SOCKET. I HAVE A PIPE VERSION OF THIS SCRIPT BUT PREFER txtfile.  INSTALLING A DEPENDENCY IS LIKE PUTTING NEW WATER PIPES UNDER A HOUSE, FOR A TOY WATER FOUNTAIN.
 
 ----ALTERNATIVE FILTERS:
