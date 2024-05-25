@@ -55,16 +55,16 @@ SMPlayer v24.5.0 supported. v23.12 has an annoying pause issue: `no-osd seek 0 r
 FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) supported.
 
 ## Latest Updates
-Newest scripts haven't been properly released yet, nor fully tested on Linux.
 - aspeed: Combined `o.timeout` & `o.timeout_pause` into `o.timeouts`. Added `o.options_subprocesses` (can load them with vid). Replaced `o.clock` with `o.clocks`, which includes `duration`, `offset`, `no_locales` & `DIRECTIVES_OVERRIDE` sub-options. Added 23 clock examples which cycle btwn each other, including French & Russian (vertical & horizontal tricolors). The abday of week is translated into Russian, Arabic, Armenian etc, depending on the colors. Special " " for alignment. The OVERRIDE is a clear list of all `os.date` format directives. Improved reliability: should close txtfile & start subprocesses paused. Named filter options.  
 - automask has rapid smooth toggling. It uses a time-dependent equalizer with time-corrections. Also added a few more examples: PENTAGON_HOUSE, SQUARES_SPIN, TRIANGLE_SPIN & DIAMOND_EYES. Have added `o.fps_mask` to speed up load time for monacle & pentagon (only 2 frames are needed for on/off). Bugfix for FP (frames/period) being off-by-1 (must round, not take floor). Also section widths & heights may now be time-dependent.
 - autocrop `start` (>0) & `end` (<0) time limits implemented better. Added `o.keybinds_pad` for padding toggle, `o.format` for transparent bars & `o.pad_scale_flags` for bilinear down-scaling. Rapid pad-toggling now smooth, using pad_time corrections. Can now handle odd output dimensions, & smooth padding for raw JPEG. Replaced `o.detector_image`, `o.detect_limit_image` & `o.detect_min_ratio_image` with `o.options_image`. Combined `o.TOLERANCE` options, too. Pad-on or off state now preserved btwn tracks. Improved SMPlayer.app support (shared memory requires removing alpha). Padding now `vf append` so automask doesn't affect the black bars. `o.meta_osd` now displays version info.
 - autocomplex: Combined `o.freqs_mode`, `o.freqs_win_size`, `o.freqs_win_func` & `o.freqs_averaging` into `o.freqs_options`. Combined `o.volume_fade` & `o.volume_dm` into `o.volume_options`. Combined `o.volume_highpass` & `o.volume_dynaudnorm` into `o.volume_filterchain`. Combined `o.volume_width` & `o.volume_height` into `o.volume_scale` options. Removed `o.freqs_alpha` & `o.gb`. Safe zoompan for shrunk primary. Improved codes & commentary.
 - loadstrings '1+1'→2 for all scripts, when needed. Improved codes.
 - Added `o.toggle_expr` to autocrop & automask for non-linear toggle transition.
-- Added `o.vf_command_t_delay` to autocrop & automask. A few frames are already drawn in advance so rapid smooth-toggling needs a .1s offset.
+- Added `o.vf_command_t_delay` to autocrop & automask. A few frames aren't redrawn fast enough, so rapid smooth-toggling needs a .1s offset.
 - `osd-par` observations (& `o.dimensions` override) for autocrop & automask, for displays with non-square pixels. autocrop also takes the source par into account. They also have terminal gaps for insta_unpause (bugfix for SMPlayer-v24.5). `o.osd_on_toggle` & `o.meta_osd` now gives LUA version. The same LUA code & version often breaks on MacOS.
 - main.lua replaced `o.sid` & `o.clear_osd` with `o.options_playback_start`.
+- clip function added to aspeed, autocrop & automask. Rapid toggling clips the remaining duration of prior toggle.
 - SMPlayer-v24.5 .AppImage now supported. It uses FFmpeg-v4.2 - the oldest I've tested! New mpv is often built with old FFmpeg. It needs more rigorous codes, like extra bgra & gbrap formatting.
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
