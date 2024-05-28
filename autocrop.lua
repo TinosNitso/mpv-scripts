@@ -36,8 +36,8 @@ options={
     limits={  --NOT CASE SENSITIVE.  SPACETIME CROPPING IS AN ALTERNATIVE TO SUB-CLIP EXTRACTS.  STARTING & ENDING CREDITS ARE EASIER TO CROP THAN INTERMISSION (INTERMEDIATE AUTO-seek). 
     ----["path-substring"]={start,end,detect_limit}={SECONDS,SECONDS<0,number} (OR nil).  detect_limit IS FINAL OVERRIDE.  start & end MAY ALSO BE PERCENTAGES.  CAN ALSO USE END OF YOUTUBE URL.  MATCHES ON FIRST find.
          ["We are army of people - Red Army Choir"]={detect_limit=50}
-        ,[  "День Победы."]={4,-13}                        -- АБЧДЭФГХИЖКЛМНОП РСТУВ  ЙЗЕЁ ЫЮ Я Ц ШЩ ЬЪ
-        ,["＂Den' Pobedy!＂ - Soviet Victory Day Song"]={7} --اABČDEFGHIĴKLMNOP RSTUV  YZЕYoYYuYaTsŠŠčʹʺ
+        ,[  "День Победы."]={4,-13}                        --АБЧДЭФГХИЖКЛМНОП РСТУВ  ЙЗЕЁ ЫЮ Я Ц ШЩ ЬЪ
+        ,["＂Den' Pobedy!＂ - Soviet Victory Day Song"]={7} --ABČDEFGHIĴKLMNOP RSTUV  YZЕYoYYuYaTsŠŠčʹʺ
         ,["Megadeth Sweating Bullets Official Music Video"]={0,-5}
         
     },
@@ -117,16 +117,16 @@ function file_loaded()  --ALSO @vid, @alpha & @osd-par.  MPV REQUIRES EXTRA ~.1s
     do command        = filter.label=='loop' and ('%s vf remove @loop;'):format(command_prefix) or command end  --remove @loop, AT CHANGE IN vid. COULD ALSO BE THERE DUE TO OTHER SCRIPTS.  COMBO-COMMANDS IF GRAPHS ARE ALL SIMPLE.
     
     
-    command         = (command
+    command           = (command
         ..(return_msg_level and '%s set msg-level "%s";' or ''):format(command_prefix,p['msg-level'])     --MAY BE BLANK.  INSTA-SWITCH RETURN, TO REPORT ERRORS PROPERLY.
-        ..(insta_pause      and '%s set pause     yes ;' or ''):format(command_prefix)                    --PREVENTS EMBEDDED MPV FROM SNAPPING, & is1frame INTERFERENCE.  HOWEVER lavfi-complex DOESN'T NEED IT.
+        ..(insta_pause      and '%s set pause     yes ;' or ''):format(command_prefix)                    --PREVENTS EMBEDDED MPV FROM SNAPPING ON JPEG, & is1frame INTERFERENCE. 
         ..                      '%s vf  pre       @%s-scale:lavfi=[scale=%d:%d,setsar=1];'                --setsar=1 REQUIRED FOR RELIABILITY ON SMPlayer.app (INTERFERENCE).  SEPARATE GRAPH BECAUSE INPUT OR OUTPUT DIMENSIONS SHOULD BE CONSTANT FOR EACH FILTER.  W,H NOT W2,H2.
         ..                      '%s vf  pre       @%s-crop:crop=keep_aspect=1:exact=1;'                   --SEPARATE FOR RELIABILITY WITH OLD FFMPEG & PNG-alpha.  
         ..                      '%s vf  pre       @%s:lavfi=[format=%s,%s];'                              --cropdetect OR bbox
         ..(loop             and '%s vf  pre       @loop:lavfi=[format=%s,loop=-1:1,fps=25:%s];' or ''):format(command_prefix,detect_format,time_pos)  --FORMATTING BEFORE loop PREVENTS EMBEDDED MPV FROM SNAPPING ON PNG (TRANSPARENCY). FORCING yuva420p MAY BE SAFER THAN ARBITRARY RGBA FORMATS.  fps=25 MAY BE AN ISSUE FOR LEAD-FRAMES (MP4TAG).  mpv.app BUGS OUT IF ~time_pos.
         ..(insta_pause      and '%s set pause     no;'                                          or '')    --UNPAUSE.
     ):format(command_prefix,label,W,H,command_prefix,label,command_prefix,label,detect_format,detector,command_prefix)
-    command_timeout = (''                                                                                 --10ms timeout GIVES OTHER SCRIPTS TIME TO INSERT THEIR GRAPHS BEFORE BEING PADDED.
+    command_timeout   = (''                                                                               --10ms timeout ALLOWS OTHER SCRIPTS TO INSERT THEIR GRAPHS FIRST.
         ..'%s vf append @%s-scale-pad:scale=w=%d:h=%d:flags=%s:eval=frame;'                               --PRE-pad DOWN-SCALER. NULL-OP (USUALLY), WHEN ON.
         ..'%s vf append @%s-pad:lavfi=[format=%s,pad=%d:%d:(ow-iw)/2:(oh-ih)/2:%s,scale=%d:%d,setsar=1];' --FINAL scale ALMOST ALWAYS NULL-OP. W,H MAY BE ODD.
     ):format(command_prefix,label,pad_iw,pad_ih,o.pad_scale_flags or '',command_prefix,label,pad_format,W2,H2,o.pad_color or '',W,H)
@@ -144,8 +144,8 @@ function file_loaded()  --ALSO @vid, @alpha & @osd-par.  MPV REQUIRES EXTRA ~.1s
     
     
     mp                             .command(command        )
-    mp.add_timeout(.01,function()mp.command(command_timeout)end)  --10ms SUFFICIENT.
-    if not m.aspect or m.aspect==aspects.ON then on_toggle_pad() end  --TOGGLE ON IF NEEDED: PRESERVE pad STATE.
+    mp.add_timeout(.01,function()mp.command(command_timeout)end)     --10ms SUFFICIENT.
+    if not m.aspect or m.aspect==aspects.ON then on_toggle_pad() end --TOGGLE ON IF NEEDED: PRESERVE pad STATE.
     timers.auto_delay:resume() --auto_delay (OR detect_seconds) NEEDED FOR INITIAL DETECTION (is1frame).
 end
 mp.register_event('file-loaded',file_loaded)
@@ -165,7 +165,7 @@ end
 mp.observe_property('video-params','native',on_v_params)  
 
 function playback_restart() --GRAPH STATES ARE RESET, UNLESS is1frame. 
-    if W and not is1frame then m.w,m.h,m.x,m.y,m.aspect = nil,nil,nil,nil,nil  --W MEANS CROPPER ACTIVE.  FORCE ALL vf-COMMANDS, IF NEEDED.
+    if W and not is1frame then m.time_pos,m.w,m.h,m.x,m.y,m.aspect = nil,nil,nil,nil,nil,nil  --W MEANS CROPPER ACTIVE.  FORCE ALL vf-COMMANDS, IF NEEDED.
         aspect=aspect==aspects.ON and aspects.OFF or aspects.ON  --ON←→OFF  FORCE pad TOGGLE BACK TO PROPER STATE.
         on_toggle_pad()
         detect_crop() end  --RESUMES TIMER.
@@ -175,7 +175,7 @@ mp.register_event('playback-restart',playback_restart)
 function on_toggle(mute)  --TOGGLES BOTH crop & PADDING.
     if not W then return  --~LOADED.
     elseif mute and not timers.mute:is_enabled() then timers.mute:resume()  --START timer OR ELSE TOGGLE.  
-    else OFF = not OFF  --OFF SWITCH (FOR CROPS ONLY).
+    else OFF,m.time_pos = not OFF,nil  --OFF SWITCH (FOR CROPS ONLY).  ~m.time_pos OVERRIDES TOLERANCE.
         if OFF then apply_crop({ x=0,y=0, w=max_w,h=max_h }) end --NULL crop.
         detect_crop() 
         on_toggle_pad() end  --THIS TOGGLE OPERATES 2 TOGGLES: LIKE 2 SCRIPTS IN 1.
@@ -206,8 +206,8 @@ function on_toggle_pad()     --PAD TOGGLE ONLY - NO CHANGE IN crop.  PADS BLACK 
         ..(insta_unpause and '%s set terminal no;%s set pause no;'      or ''        ):format(command_prefix,command_prefix     )  --unpause_on_toggle, UNLESS is1frame. COULD ALSO BE MADE SILENT.  COULD ALSO CHECK IF NEAR end-file (NOT ENOUGH TIME).  
     
     if command~='' then mp.command(command) end
-    if not is1frame and error_format and vf_command~='' then for N=1,7
-        do mp.add_timeout(2^N/100,function()mp.command(vf_command)end) end end  --OLD FFMPEG REQUIRES REPEATING vf_command. BUT THAT CAUSES LAG.  CAN USE EXPONENTIAL TIMEOUTS (.02 .04 .08 .16 .32 .64 1.28)s, LIKE A SERIES OF DOUBLE-TAPS (FOR MACOS-VIRTUALBOX.)  vf_command EXISTS BECAUSE loadstring DIDN'T WORK IN THIS CONTEXT IN SMPlayer.app.
+    if not is1frame and error_format and vf_command~='' then for N=1,3
+        do mp.add_timeout(2^N/100,function()mp.command(vf_command)end) end end  --OLD FFMPEG REQUIRES REPEATING vf_command. BUT THAT CAUSES LAG.  CAN USE EXPONENTIAL TIMEOUTS (.02 .04 .08)s, LIKE A SERIES OF DOUBLE-TAPS (FOR MACOS-VIRTUALBOX.)  vf_command EXISTS BECAUSE loadstring DIDN'T WORK IN THIS CONTEXT IN SMPlayer.app.
     if insta_unpause then timers.pause:resume() end  --RE-PAUSER
 end
 for key in (o.key_bindings_pad or ''):gmatch('[^ ]+') do mp.add_key_binding(key,'toggle_pad_'..key,on_toggle_pad) end
