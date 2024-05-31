@@ -57,6 +57,8 @@ SMPlayer v24.5.0 supported. v23.12 has an annoying pause issue: `no-osd seek 0 r
 FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) supported.
 
 ## Latest Updates
-- aspeed: Centered all clock AbDays, using scaled fullwidth space. Only "　" works on MacOS.  Arabic code alignment using LRMs (Left to Right Marks) btwn AbDays‎.  Removed `o.min_samples_time` (samples_time no longer used for MPV-v0.37+).  `o.extra_devices_index_list` now supports repetition. Rapid toggling bugfix. Improved AbDays: Mali is French, Irish length-4 & Spanish length-4.
-- autocrop: Pad filters last (after automask) using a delayed `vf append` command.  No `insta_unpause` when seeking paused. Also, force toggle to ignore TOLERANCE.
-- automask: Color bugfix (uv properly filtered using shuffleplanes).  Combined `o.widths` & `o.heights` into `o.scales`.  Bugfix for monacle & pentagon near end-file (it could hang due to low fps on trim_end). 
+Newest scripts above in `mpv-scripts.zip` aren't properly released yet. autocomplex.lua graph needs to be improved/optimized first. Also aspeed.lua needs a `o.speed_expr` option to vary speed using a formula.
+- aspeed: Improved AbDay centering. ' '=64%'　' not 60%.
+- autocrop: Improved performance on MacOS (old FFmpeg).
+- automask: Colors bugfix. Latest release failed at this. But now CPU consumption is too high!  Also the mask now fades in at @playback-restart (using toggle). `o.mask_no_vid` bugfix, & `convolution` can sharpen with variable percentage.
+- Improved codes for all scripts.
