@@ -4,7 +4,7 @@
 ----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS. WORKS WELL WITH MP4, MP3, MP2, M4A, AVI, WAV, OGG, AC3, OPUS, WEBM & YOUTUBE.
 
 options={  --ALL OPTIONAL & MAY BE REMOVED.
-    key_bindings             = 'Ctrl+C Ctrl+c F1',  --CASE SENSITIVE. DOESN'T WORK INSIDE SMPLAYER.  TOGGLE DOESN'T APPLY TO filterchain.  C IS autocrop.lua, NOT CLOCK.
+    key_bindings             = 'Ctrl+C Ctrl+c F1',  --CASE SENSITIVE. DON'T WORK INSIDE SMPLAYER.  TOGGLE DOESN'T APPLY TO filterchain.  C IS autocrop.lua, NOT CLOCK.
     double_mute_timeout      = .5,  --SECONDS FOR DOUBLE-MUTE-TOGGLE (m&m DOUBLE-TAP). TRIPLE MUTE DOUBLES BACK. SCRIPTS CAN BE SIMULTANEOUSLY TOGGLED USING DOUBLE MUTE.  REQUIRES AUDIO IN SMPLAYER.
     extra_devices_index_list = {},  --TRY {3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. REPETITION IGNORED.  1=auto  2=NORMAL DEVICE OVERLAP (ECHO).  EACH CHANNEL FROM EACH device IS A SEPARATE SUBPROCESS & STREAM. 
     filterchain              = 'anull,'  --CAN REPLACE anull WITH EXTRA FILTERS (vibrato highpass aresample ETC).
@@ -22,7 +22,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
     resync_delay       =   30,  --DEFAULT= 60 SECONDS  os_sync RESYNC WITH THIS DELAY.   os.clock BASED ON CPU TIME, WHICH GOES OFF WITH RANDOM LAG.
     auto_delay         =  .25,  --DEFAULT= .5 SECONDS  subprocess RESPONSE TIME. THEY CHECK txtfile THIS OFTEN.
     os_sync_delay      =  .01,  --DEFAULT=.01 SECONDS  ACCURACY FOR SYNC TO os.time. A perodic_timer CHECKS SYSTEM clock EVERY 10 MILLISECONDS (FOR THE NEXT TICK).  WIN10 CMD "TIME 0>NUL" GIVES 10ms ACCURATE SYSTEM TIME.
-    -- meta_osd        =    1,  --SECONDS TO DISPLAY astats METADATA, PER OBSERVATION. UNCOMMENT FOR STATS.  IRONICALLY astats (audio STATISTICS) DOESN'T KNOW ANYTHING ABOUT TIME ITSELF, YET IT'S THE BASIS FOR TEN HOUR SYNCHRONY.
+    -- meta_osd        =    1,  --SECONDS TO DISPLAY astats METADATA, PER OBSERVATION. UNCOMMENT FOR STATS.  IRONICALLY astats (audio STATISTICS)  SHOULD BE REMOVED IN FUTURE VERSION, SINCE MPV-v0.37+ SYNC PROPERLY.
     -- mutelr          = 'muter', --DEFAULT='mutel'    UNCOMMENT TO SWITCH PRIMARY CONTROLLER CHANNEL TO LEFT. PRIMARY device HAS 1 CHANNEL IN NORMAL SYNC TO video.  HARDWARE USUALLY HAS A PRIMARY, BUT IT'S 50/50 (HEADPHONES OPPOSITE TO SPEAKERS).
     options            = {  --CONTROLLER ONLY.
         'image-display-duration inf',  --DEFAULT=1  BUT inf FOR JPEG clock.
@@ -31,7 +31,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
     },
     options_subprocesses={  --APPLY TO ALL NON-PRIMARY CHANNELS.
         '      vid no ','ytdl-format bestaudio/best', --REMOVE TO SEE VIDEO OF EACH CHANNEL.
-        ' geometry 25%','  msg-level all=no        ','priority abovenormal',  --geometry IF vid.  REMOVE msg-level TO LOG ALL speed CHANGES FROM SUBPROCESSES.
+        ' geometry 25%','  msg-level all=no        ','priority abovenormal',  --geometry IF vid.  REMOVE msg-level TO LOG ALL speed CHANGES FROM SUBPROCESSES.  priority ONLY VALID ON WINDOWS.
         'keep-open yes','      pause yes           ',  --DEFAULTS no,no   keep-open FOR seek NEAR end-file.  pause PREVENTS STARTING GLITCH WHERE A SPEAKER CHIRPS.  
         -- '  audio-pitch-correction no            ',  --DEFAULT=yes  UNCOMMENT FOR CHIPMUNK MODE (NO scaletempo# FILTER). WORKS OK WITH SPEECH & COMICAL MUSIC.
     },
@@ -40,38 +40,38 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
         offset   = 0, --SECONDS, INTEGER.  CHANGE STYLE ON EVENS OR ODDS? 0=EVEN.  ALL SMPLAYER INSTANCES HAVE SAME CLOCK @SAME TIME.
         -- no_locales          = true, --UNCOMMENT FOR English ONLY.  REPLACE [AbDays] WITH [ABDAYS] FOR UPPERCASE, OR [abdays] FOR LOWERCASE. EACH CLOCK CAN DICTATE ITS OWN AbDays.  VERTICAL SPELLING ALSO, LIKE Sun→S◙u◙n.
         -- DIRECTIVES_OVERRIDE = true, --UNCOMMENT TO DISPLAY ALL os.date DIRECTIVE CODES & THEIR CURRENT VALUES (SPECIAL CLOCK). MAY DEPEND ON LUA VERSION.  EXAMPLES: %I,%M,%S,%a,%p,%H,%n = HRS(12),MINS,SECS,Day,A/PM,HRS,RETURN  %n(♪) & \\N(◙) ARE DIFFERENT.  %n ENABLES NEW NUMPAD ALIGNMENT, WHICH COULD HELP WITH A MADAGASCAR STYLE.
-----    "         COUNTRY             HOUR     MINUTE   SECOND  POPULATION  [AbDays-----EACH-SPACE-WORTH-ONLY-HALF]  {\\STYLE OVERRIDES}              %DIRECTIVES        ↓↓(CLOCK SIZE)                                                        ",  --"{" REQUIRED, & EVERYTHING BEFORE IT IS REMOVED.  {} ALONE REMOVES LEADING 0 FOLLOWING IT.  AbDays (ABBREVIATED DAYS) LOCALES START WITH Sun (BUT Mon IN REALITY), & CAN BE REPLACED WITH ANYTHING (1 LOTE CAN BE COPIED OVER ALL THE OTHERS).  https://lh.2xlibre.net/locales/ FOR LOCALES, BUT GOOGLE TRANSLATE ALSO.  
-        "     BELGIUM  BELGIË         BLACK    YELLOW   RED      12M  [--Zon-- Ma -- Di --- Wo -- Do -- Vr -- Za -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c     0\\fs55\\bord1}%I{\\c24DAFD\\bord3} %M{\\c4033EF         } %S",  --37=55*2/3  BLACK PRIMARY (THIN BORDER), LIKE GERMANY.  VERTICAL TRICOLOR (HORIZONTAL TAB). HEX ORDERED BGR.  CAN RECITE COUNTRIES (BELGIUM CAPITAL).  SECS ARE THE CORNERSTONE (ANCHOR).  CAN USE ":" OR " " BTWN DIGITS.  Ma=Mon BUT ALSO Tue IN SPANISH.  %a COULD GO ONTOP OF MINUTES INSTEAD OF SECONDS.  
-        "     ROMANIA  ROMÂNIA        BLUE     YELLOW   RED      19M  [- Du ---Lun---Mar--- Mi ---Joi-- Vi -- Sb -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c7F2B00\\fs55\\bord3}%I{\\c16D1FC       } %M{\\c2611CE         } %S",  --CHAD SIMILAR.  MOLDOVA & ANDORRA SIMILAR BUT CHARGED.  
+----    "         COUNTRY             HOUR     MINUTE   SECOND  POPULATION  [AbDays-----EACH-SPACE-WORTH-ONLY-HALF]  {\\STYLE OVERRIDES}              %DIRECTIVES        ↓↓(CLOCK SIZE)                                          ",  --"{" REQUIRED, & EVERYTHING BEFORE IT IS REMOVED.  {} ALONE REMOVES LEADING 0 FOLLOWING IT.  AbDays (ABBREVIATED DAYS) LOCALES START WITH Sun (BUT Mon IN REALITY), & CAN BE REPLACED WITH ANYTHING (1 LOTE CAN BE COPIED OVER ALL THE OTHERS).  https://lh.2xlibre.net/locales/ FOR LOCALES, BUT GOOGLE TRANSLATE ALSO.  
+        "     BELGIUM  BELGIË         BLACK    YELLOW   RED      12M  [--Zon-- Ma -- Di --- Wo -- Do -- Vr -- Za -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c     0\\fs55\\bord1}%I{\\c24DAFD\\bord3} %M{\\c4033EF         } %S",  --37=55*2/3  BLACK PRIMARY (THIN BORDER), LIKE GERMANY.  VERTICAL TRICOLOR (HORIZONTAL TAB). HEX ORDERED BGR.  CAN RECITE COUNTRIES (BELGIUM CAPITAL).  SECS ARE THE CORNERSTONE (ANCHOR).  CAN USE ":" OR " " BTWN DIGITS.  %a COULD GO ONTOP OF MINUTES INSTEAD OF SECONDS.  
+        "     ROMANIA  ROMÂNIA        BLUE     YELLOW   RED      19M  [- Du ---Lun---Mar--- Mi ---Joi-- Vi -- Sb -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c7F2B00\\fs55\\bord3}%I{\\c16D1FC       } %M{\\c2611CE         } %S",  --CHAD SIMILAR.  MOLDOVA & ANDORRA SIMILAR BUT CHARGED.  Vi=FRIDAY  
         "           MALI              GREEN    YELLOW   RED      21M  [--Dim---Lun---Mar----Mer---Jeu---Ven---Sam-]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c3AB514\\fs55\\bord3}%I{\\c16D1FC       } %M{\\c2611CE         } %S",  --SENEGAL SIMILAR BUT CHARGED.  IDEAL COLOR LIST MIXES AFRO & EURO FLAGS. 
         "      GUINEA  GUINÉE         RED      YELLOW   GREEN    14M  [--Dim---Lun---Mar----Mer---Jeu---Ven---Sam-]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c2611CE\\fs55\\bord3}%I{\\c16D1FC       } %M{\\c609400         } %S",  --RED IS RIGHT, EXCEPT FOR GUINEA!  REVERSE OF MALI, SIMILAR TO ROMANIA.  
         "          NIGERIA            GREEN    WHITE    GREEN   231M  [--Sun---Mon---Tue----Wed---Thu---Fri---Sat-]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c  8000\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c  8000         } %S",  --BICOLOR TRIBAND.  THE ONLY ENGLISH (PLAIN) TRIBAND/QUADBAND.  WHITE ALWAYS IN THE MIDDLE. ORDER ALIGNS WHITES & REDS.  
         " IVORY COAST  CÔTE D'IVOIRE  ORANGE   WHITE    GREEN    31M  [--Dim---Lun---Mar----Mer---Jeu---Ven---Sam-]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c  82FF\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c449A00         } %S", 
-        "     IRELAND  ÉIREANN        GREEN    WHITE    ORANGE    7M  [--Domh--Luan--Máir---Céad--Déar--Aoin--Sath]  {\\an3\\b1\\c     0\\fs28\\bord0}%a\\N{\\c629B16\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c3E88FF         } %S",
+        "     IRELAND  ÉIREANN        GREEN    WHITE    ORANGE    7M  [--Domh--Luan--Máir---Céad--Déar--Aoin--Sath]  {\\an3\\b1\\c     0\\fs28\\bord0}%a\\N{\\c629B16\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c3E88FF         } %S",  --28~=55/2 FOR LENGTH 4.
         "       ITALY  ITALIA         GREEN    WHITE    RED      59M  [--Dom---Lun---Mar----Mer---Gio---Ven---Sab-]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c458C00\\fs55\\bord3}%I{\\cF0F5F4       } %M{\\c2A21CD         } %S",  --MEXICO SIMILAR BUT CHARGED. CATHOLIC, LIKE IRELAND.  Mar=TUESDAY IS THIRD, LIKE MARCH.
-        "          FRANCE             BLUE     WHITE    RED      68M  [--Dim---Lun---Mar----Mer---Jeu---Ven---Sam-]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\cA45500\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c3541EF         } %S",  --"dim." SUPPOSEDLY FOR FRENCH, SO DOTS ARE SPECIAL. THAT'S WHY HYPHENS ARE USED. BUT '-'=SEPARATOR COULD BE ANOTHER SUB-OPTION.  FOR 4 LETTERS CAN REDUCE FONT-SIZE TO \\fs28.
-        "        PERU  PERÚ           RED      WHITE    RED      34M  [--Dom---Lun---Mar----Mié---Jue---Vie---Sáb-]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c2310D9\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c2310D9         } %S",  --BICOLOR.  Vi=FRIDAY  CANADA MIGHT BE SIMILAR BUT WITH REDUCED HRS & SECS fs.  
-        "     AUSTRIA  ÖSTERREICH     RED    ◙ WHITE  ◙ RED       9M  [- So -- Mo -- Di --- Mi -- Do -- Fr -- Sa -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c2E10C8\\fs55\\bord3}%I{\\cFFFFFF     }\\N%M{\\c2E10C8       }\\N%S",  --BICOLOR. HORIZONTAL TRIBAND (VERTICAL TAB).  LIKE A TAB FROM THE FLAG.  BLACK Day MAY OVERLAP WITH BLACK BARS ON SCREEN-EDGE.  {\\fr-90} IS ANOTHER OPTION.  MANY STYLES PAIR UP, LIKE PERU & AUSTRIA.
+        "          FRANCE             BLUE     WHITE    RED      68M  [--Dim---Lun---Mar----Mer---Jeu---Ven---Sam-]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\cA45500\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c3541EF         } %S",  --"dim." IS ALSO FRENCH, SO DOTS ARE SPECIAL & MAY BE USED FOR ALL abdays.  THAT'S WHY THERE ARE HYPHENS (SEPARATOR='-' COULD BE ANOTHER SUB-OPTION). 
+        "        PERU  PERÚ           RED      WHITE    RED      34M  [--Dom---Lun---Mar----Mié---Jue---Vie---Sáb-]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c2310D9\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c2310D9         } %S",  --BICOLOR.  CANADA MIGHT BE SIMILAR BUT WITH REDUCED HRS & SECS fs.  
+        "     AUSTRIA  ÖSTERREICH     RED    ◙ WHITE  ◙ RED       9M  [- So -- Mo -- Di --- Mi -- Do -- Fr -- Sa -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c2E10C8\\fs55\\bord3}%I{\\cFFFFFF     }\\N%M{\\c2E10C8       }\\N%S",  --BICOLOR.  HORIZONTAL TRIBAND (VERTICAL TAB).  LIKE A TAB FROM THE FLAG.  BLACK Day MAY OVERLAP WITH BLACK BARS ON SCREEN-EDGE.  {\\fr-90} IS ANOTHER OPTION.  MANY STYLES PAIR UP, LIKE PERU & AUSTRIA.
         "     HUNGARY  MAGYARORSZÁG   RED    ◙ WHITE  ◙ GREEN    10M  [--Vas---Hét---Ked----Sze-- Cs ---Pén---Szo-]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c3929CE\\fs55\\bord3}%I{\\cFFFFFF     }\\N%M{\\c507047       }\\N%S",
         "  LUXEMBOURG  LËTZEBUERG     RED    ◙ WHITE  ◙ CYAN     <1M  [- So -- Mo -- Di --- Mi -- Do -- Fr -- Sa -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c4033EF\\fs55\\bord3}%I{\\cFFFFFF     }\\N%M{\\cE0A300       }\\N%S",
-        " NETHERLANDS  NEDERLAND      RED    ◙ WHITE  ◙ BLUE     18M  [--Zon-- Ma -- Di --- Wo -- Do -- Vr -- Za -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c251DAD\\fs55\\bord3}%I{\\cFFFFFF     }\\N%M{\\c85471E       }\\N%S",  --PARAGUAY & CROATIA SIMILAR BUT CHARGED.  YUGOSLAVIA WAS CHARGED REVERSE.
-        "       Yemen  اليمن           ‎ا‎RED    ◙ WHITE  ◙ BLACK    34M  [  ح  -‎  ن  -‎  ث  -‎  ر  -‎  خ  -‎  ج  -‎  س  ]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c2611CE\\fs55\\bord3}%I{\\cFFFFFF     }\\N%M{\\c     0\\bord1}\\N%S",  --SPECIAL ".‎" CONTAINS LRM=0x0E20=LEFT_TO_RIGHT_MARK, AN INVISIBLE 3B CHAR TO OVERRIDE ARABIC FORM. THIS ISN'T THE ALM (ARABIC LETTER MARK), SINCE THAT GOES THE OTHER WAY!  ا="a" FROM اليمن="alyaman" ALSO FOR ALIGNMENT.  THE EXTRA DOTS EXIST BECAUSE OF YEMEN, WHICH REPRESENTS ARABIA. SOUTH OF SAUDI.  ARABIC & HEBREW ARE RIGHT-TO-LEFT, & DOTS LINE THEM UP WELL ENOUGH.
+        " NETHERLANDS  NEDERLAND      RED    ◙ WHITE  ◙ BLUE     18M  [--Zon-- Ma -- Di --- Wo -- Do -- Vr -- Za -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c251DAD\\fs55\\bord3}%I{\\cFFFFFF     }\\N%M{\\c85471E       }\\N%S",  --PARAGUAY & CROATIA SIMILAR BUT CHARGED.  YUGOSLAVIA WAS CHARGED REVERSE.  Zon BEING INITIAL MAY HAVE 3 LETTERS?
+        "       Yemen  اليمن           ‎ا‎RED    ◙ WHITE  ◙ BLACK    34M  [  ح  -‎  ن  -‎  ث  -‎  ر  -‎  خ  -‎  ج  -‎  س  ]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c2611CE\\fs55\\bord3}%I{\\cFFFFFF     }\\N%M{\\c     0\\bord1}\\N%S",  --SPECIAL "-‎" CONTAINS LRM=0x0E20=LEFT_TO_RIGHT_MARK, AN INVISIBLE 3B OVERRIDE. THIS ISN'T THE ALM (ARABIC LETTER MARK), SINCE THAT GOES THE OTHER WAY!  ا="a" FROM اليمن="alyaman" ALSO FOR ALIGNMENT.  YEMEN REPRESENTS ARABIA, SOUTH OF SAUDI.  ARABIC & HEBREW ARE RIGHT-TO-LEFT, & HYPHENS LINE THEM UP WELL ENOUGH.
         "          BOLIVIA            RED    ◙ YELLOW ◙ GREEN    12M  [--Dom---Lun---Mar----Mié---Jue---Vie---Sáb-]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c1C29DA\\fs55\\bord3}%I{\\c  E4F4     }\\N%M{\\c337A00       }\\N%S",
         "         MAURITIUS     RED ◙ BLUE   ◙ YELLOW ◙ GREEN     1M  [--Dim---Lin---Mar----Mer-- Ze ---Van---Sam-]  {\\an3\\b1\\c3624EB\\fs37\\bord2}%a\\N{\\c6D1A13\\fs55\\bord3}%I{\\c  D6FF     }\\N%M{\\c50A600       }\\N%S",  --QUAD-COLOR QUAD-BAND, ISLANDS NEAR MADAGASCAR.  
-        "     ARMENIA  ՀԱՅԱՍՏԱՆ       RED    ◙ BLUE   ◙ ORANGE    3M  [--Կրկ---Երկ---Երք----Չրք---Հնգ---Ուր---Շբթ-]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c1200D9\\fs55\\bord3}%I{\\cA03300     }\\N%M{\\c00A8F2       }\\N%S",
+        "     ARMENIA  ՀԱՅԱՍՏԱՆ       RED    ◙ BLUE   ◙ ORANGE    3M  [--Կրկ---Երկ---Երք----Չրք---Հնգ---Ուր---Շբթ-]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c1200D9\\fs55\\bord3}%I{\\cA03300     }\\N%M{\\c00A8F2       }\\N%S",  --LOWERCASE BIGGER THAN UPPERCASE!
         "      RUSSIA  РОССИЯ         WHITE  ◙ BLUE   ◙ RED     147M  [- Вс -- Пн -- Вт --- Ср -- Чт -- Пт -- Сб -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\cFFFFFF\\fs55\\bord3}%I{\\cA73600     }\\N%M{\\c1827D6       }\\N%S",  --SLOVENIA SIMILAR, BUT CHARGED. SERBIA IS CHARGED REVERSE.  
         "    BULGARIA  БЪЛГАРИЯ       WHITE  ◙ GREEN  ◙ RED       6M  [- Вс -- Пн -- Вт --- Ср -- Чт -- Пт -- Сб -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\cFFFFFF\\fs55\\bord3}%I{\\c  9900     }\\N%M{\\c    CC       }\\N%S",
         "   LITHUANIA  LIETUVA        YELLOW ◙ GREEN  ◙ RED       3M  [- Sk -- Pr -- An --- Tr -- Kt -- Pn -- Št -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c13B9FD\\fs55\\bord3}%I{\\c446A00     }\\N%M{\\c2D27C1       }\\N%S",
-        "     ESTONIA  EESTI          BLUE   ◙ BLACK  ◙ WHITE     1M  [  P  -  E  -  T  --  K  -  N  -  R  -  L  -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\cCE7200\\fs55\\bord3}%I{\\c   0\\bord1}\\N%M{\\cFFFFFF\\bord3}\\N%S",  --P,K = SUNDAY,WEDNESDAY  BUT ALSO FRIDAY,TUESDAY IN HUNGARIAN.  P IS ALSO LIKE PM IN LATIN.  THE COLORS DICTATE THE MEANING OF THE SYMBOLS. 
+        "     ESTONIA  EESTI          BLUE   ◙ BLACK  ◙ WHITE     1M  [  P  -  E  -  T  --  K  -  N  -  R  -  L  -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\cCE7200\\fs55\\bord3}%I{\\c   0\\bord1}\\N%M{\\cFFFFFF\\bord3}\\N%S",  --P=SUNDAY BUT ALSO LIKE PM IN LATIN.  THE COLORS DICTATE THE MEANING OF THE SYMBOLS. 
         "     GERMANY  DEUTSCHLAND    BLACK  ◙ RED    ◙ GOLD     85M  [- So -- Mo -- Di --- Mi -- Do -- Fr -- Sa -]  {\\an3\\b1\\c     0\\fs37\\bord0}%a\\N{\\c     0\\fs55\\bord1}%I{\\c  FF\\bord3}\\N%M{\\c  CCFF       }\\N%S",
         -- "        Wedge             BIG    : MEDium : Little  tiny                                                 {\\an3                                        \\fs70\\bord2}{}%I{\\fs42          }:%M{\\fs25 }:%S{\\fs15} %a",  --''  RATIO=.6  DIAGONAL PATTERN.  MY FAV.
-----    STYLE CODES: \\,alpha##,an#,fs#,bord#,c######,b1,fscx## = \,TRANSPARENCY,ALIGNMENT-NUMPAD,FONT-SIZE(p),BORDER(p),COLOR,BOLD,FONTSCALEX(%)  (DEFAULT an0=an7=TOPLEFT)    MORE: shad#,be1,i1,u1,s1,fn*,fr##,fscy## = SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEY(%)  EXAMPLES: USE {\\alpha80} FOR TRANSPARENCY. USE {\\fscx130} FOR +30% IN HORIZONTAL.  A TRANSPARENT clock CAN BE TWICE AS BIG. be ACTS LIKE SEMI-BOLD.  
+----    STYLE CODES: \\,alpha##,an#,fs#,bord#,c######,b1,fscx## = \,TRANSPARENCY,ALIGNMENT-NUMPAD,FONT-SIZE(p),BORDER(p),COLOR,BOLD,FONTSCALEX(%)  (DEFAULT an0=an7=TOPLEFT)    MORE: shad#,be1,i1,u1,s1,fn*,fr##,fscy## = SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEY(%)  EXAMPLES: USE {\\alpha80} FOR TRANSPARENCY. USE {\\fscx130} FOR +30% IN HORIZONTAL.  A TRANSPARENT clock CAN BE BIGGER. be ACTS LIKE SEMI-BOLD.  
     },
 } 
 o,label           = options,mp.get_script_name()  --label=aspeed  mp=MEDIA_PLAYER
 for  opt,val in pairs({filterchain='anull',mpv={},timeouts={},max_random_percent=0,max_speed_ratio=1.2,seek_limit=.5,auto_delay=.5,resync_delay=60,os_sync_delay=.01,mutelr='mutel',clocks={},})
 do o[opt]         = o[opt] or val end  --ESTABLISH DEFAULTS. 
-for  opt in ('seek_limit resync_delay'):gmatch('[^ ]+')  --gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN DOESN'T EXIST IN THE LUA USED BY THE NEWEST mpv.app (SAME VERSION, BUILT DIFFERENT).
+for  opt in ('seek_limit resync_delay'):gmatch('[^ ]+')  --gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON mpv.app (SAME LUA VERSION, BUILT DIFFERENT).
 do o[opt]         = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end  --string→number: '1+1'→2  load INVALID ON mpv.app. 
 directory         = require 'mp.utils'.split_path(mp.get_property_native('scripts')[1]) --SCRIPT FOLDER. UTILITIES SHOULD BE AVOIDED & POTENTIALLY NOT FUTURE COMPATIBLE. HOWEVER CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
 directory         = mp.command_native({'expand-path',directory})   --command_native EXPANDS ~/
@@ -85,29 +85,30 @@ mutelr            = p['script-opts'].mutel and 'mutel' or p['script-opts'].muter
 m,map,key         = {},1,'lavfi.astats.Overall.Number_of_samples' --m=MEMORY FOR map GRAPH SWITCH, WHICH CHANGES ONLY FOR CONTROLLER.  key=LOCATION OF astats SAMPLE COUNT.  TESTED @OVER 1 BILLION.
 for _,opt in pairs(is_controller and (o.options or {}) or o.options_subprocesses or {})
 do command        = ('%s no-osd set %s;'):format(command or '',opt) end
-if command then mp.command(command) end
+command           = command and mp.command(command)  --ALL SETS IN 1.
 
 function round(N,D)  --ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1). N & D MAY ALSO BE STRINGS OR nil.  PRECISION LIMITER FOR txtfile.
     D = D or 1
-    return N and math.floor(.5+N/D)*D  --FFMPEG SUPPORTS round, BUT NOT LUA.
+    return N and math.floor(.5+N/D)*D  --FFMPEG SUPPORTS round, BUT NOT LUA.  math.round(N)=math.floor(.5+N)
 end
 function clip(N,min,max) return N and min and max and math.min(math.max(N,min),max) end  --N,min,max ARE NUMBERS OR nil.  FFMPEG SUPPORTS clip BUT NOT LUA.  math.clip(#,min,max)=math.min(math.max(#,min),max)  ENFORCES speed LIMIT.
 
 if not is_controller then math.randomseed(p.pid)  --UNIQUE randomseed, OTHERWISE TEMPO MAY BE SAME OR PREDICTABLE, BTWN SUBPROCESSES.
 else clocks,abdays,LOCALES = {},{},{}  --LOCALES IS LIST OF SUB-TABLES, FOR LOTE.
     o.auto_delay,devices   = .5,{mp.get_property('audio-device')}  --CONTROLLER auto_delay EXISTS ONLY TO STOP timeout.  devices=LIST OF audio-devices WHICH WILL ACTIVATE (STARTING WITH EXISTING device).  "wasapi/" (WINDOWS AUDIO SESSION APP. PROGRAM. INTERFACE) OR "pulse/alsa" (LINUX) OR "coreaudio/" (MACOS).  IT DOESN'T GIVE THE SAMPLERATES NOR CHANNEL-COUNTS.
-    o.clocks.duration = o.clocks.duration and o.clocks.duration+0>0 and o.clocks.duration  --+0 CONVERTS→number.  duration=nil IF 0.  THESE ARE CLOCK CYCLE PARAMETERS.
-    o.clocks.offset   = o.clocks.offset or  0  --DEFAULT= 0 SECS
+    o.clocks.duration      = o.clocks.duration and o.clocks.duration+0>0 and o.clocks.duration  --+0 CONVERTS→number.  duration=nil IF 0.  THESE ARE CLOCK CYCLE PARAMETERS.
+    o.clocks.offset        = o.clocks.offset     or  0  --DEFAULT= 0 SECS
+    o.clocks.no_locales    = o.clocks.no_locales or o.clocks.DIRECTIVES_OVERRIDE  --OVERRIDE→no_locales
     for _,command in pairs(o.mpv)  --CONTROLLER command LOOP. 
-    do mpv            = mpv or mp.command_native({'subprocess',command}).error_string~='init' and command end  --error=init IF INCORRECT.  FIRST CORRECT command, ONLY.  subprocess RETURNS DIRECTLY INTO LUA, SO IS MORE ELEGANT THAN run IN THIS CASE.
+    do  mpv                = mpv or mp.command_native({'subprocess',command}).error_string~='init' and command end  --error_string=init IF INCORRECT.  TAKE FIRST CORRECT command, ONLY.  subprocess RETURNS DIRECTLY INTO LUA, SO IS MORE ELEGANT THAN run IN THIS CASE.
     for _,index in pairs(o.extra_devices_index_list or {})  --ESTABLISHES devices WHICH ACTIVATE.  DUPLICATES ALLOWED.
-    do device         = p['audio-device-list'][index]
+    do  device             = p['audio-device-list'][index]
         if device then table.insert(devices,device.name) end end 
 
     for abday in ('Sun Mon Tue Wed Thu Fri Sat'):gmatch('[^ ]+') do table.insert(abdays,abday) end  --DEFAULT=English
     for  _,clock in pairs(o.clocks) do if type(clock)=='string'  --CLOCKS ARE STRINGS.  SPLITTING THE STRINGS IN HALF WOULD BE MORE COMPLICATED (LOCALE DEFINED SEPARATELY TO STYLE CODES).
         then LOCALE,clock    = {},clock:gsub('◙','\\N')  --◙ LOOKS BETTER THAN \N (UP TO END-USER).  LOCALE HAS ABDAYS AS KEYS.
-            gmatch           = (clock:gmatch('%[.*%]')() or ''):gsub('  ','{\\fscx60}　{\\fscx100}'):gsub(' ','{\\fscx30}　{\\fscx100}'):gmatch('[^%-%[%]]+') --ABDAY ITERATOR.  EACH SPACE (30%) WORTH ONLY HALF A NORMAL SPACE (60%), MEASURED AGAINST '　'='\xE3\x80\x80'=IDEOGRAPHIC_SPACE.  ONLY THIS SPACE IS RESPECTED BY ALL SYSTEMS, WHEREAS WINDOWS RESPECTS MOST OF THEM. IT'S LIKE THE CHINESE SPACEBAR.  '.*' MEANS LONGEST MATCH OR NOTHING.  "-[]" ARE MAGIC & EXCLUDED FROM ABDAYS.  IF '　' WERE EXACTLY DOUBLE IT WOULDN'T NECESSARILY EXIST (ONLY 66% EXTRA).
+            gmatch           = (clock:gmatch('%[.*%]')() or ''):gsub('  ','{\\fscx64}　{\\fscx100}'):gsub(' ','{\\fscx32}　{\\fscx100}'):gmatch('[^%-%[%]]+') --ABDAY ITERATOR.  EACH SPACE (32%) WORTH ONLY HALF A NORMAL SPACE (64%), VERSUS '　'='\xE3\x80\x80'=IDEOGRAPHIC_SPACE.  64% BY TRIAL & ERROR.  ONLY THIS SPACE IS RESPECTED BY ALL SYSTEMS, WHEREAS WINDOWS RESPECTS MOST OF THEM. IT'S LIKE THE CHINESE SPACEBAR.  '.*' MEANS LONGEST MATCH OR NOTHING.  "-[]" ARE MAGIC & EXCLUDED FROM ABDAYS.
             for _,abday in pairs(abdays) --SKIP OTHER SUB-OPTIONS.
             do LOCALE[abday] = o.clocks.no_locales and abday or gmatch() or abday end  --OVERRIDE OR LOCALE OR DEFAULT.
             table.insert(LOCALES,LOCALE)
@@ -117,7 +118,7 @@ else clocks,abdays,LOCALES = {},{},{}  --LOCALES IS LIST OF SUB-TABLES, FOR LOTE
     then clocks      = {''} 
         for N        = 0,128  --LOOP OVER ALL POSSIBLE BYTECODE FROM 0→0x80.
         do char      = string.char(N)  --A,a = 0x41,0x61 = 65,97  
-           N         =        char=='a' and '\n' or ''  --◙ FOR a.
+           N         =        char=='a' and '\n' or ''  --NEWLINE FOR LOWERCASE.
            DIRECTIVE =   '%'..char
            clocks[1] = os.date(DIRECTIVE):sub(1,1)=='%' and clocks[1]  --os.date RETURNS %char IF INVALID (SKIP). 
                        or ('%s%s%%%s="%s"  '):format(clocks[1],N,DIRECTIVE,DIRECTIVE) end end
@@ -153,32 +154,30 @@ mp.register_event('seek'       ,file_loaded)  --RELOAD @seek.
 mp.register_event('shutdown'   ,function()os.remove(txtpath)end)
 
 function playback_restart() 
-    if m.map~=map then mp.command(('af-command %s map %d %s'):format(label,map,target or '')) end  --FOR TOGGLE DURING seeking, BUT AFTER seek (ALREADY RELOADED).
-    on_frame_drop()  --RESET SAMPLE COUNT.
+    command          = m.map~=map and mp.command(('af-command %s map %d %s'):format(label,map,target or ''))  --SPECIAL CASE: FOR TOGGLE DURING seeking, BUT AFTER seek (ALREADY RELOADED).
+    initial_time_pos = nil  --FOR OLD MPV, RESET SAMPLE COUNT.
+    os_sync()
     for N=1,4 do mp.add_timeout(2^N,os_sync) end   --RESYNC ON EXPONENTIAL TIMEOUTS, DUE TO HDD LAG. 0 2 4 8 16 SECONDS.
 end  
 mp.register_event('playback-restart',playback_restart)
 
-function on_frame_drop()  --ALSO @playback-restart.  
-    initial_time_pos=nil  
-    os_sync()  
-end
-mp.observe_property('frame-drop-count','number',on_frame_drop)  --BUGFIX FOR EXCESSIVE LAG: RESET SAMPLE COUNT & RESYNC clock.
-
-function on_toggle(property)  --CONTROLLER ONLY. INSTA-TOGGLE (SWITCH). SUBPROCESSES MAINTAIN SYNC WHEN OFF.
-    if not (p.path and is_controller) then return  --NOT STARTED YET.
-    elseif property and not timers.mute:is_enabled() then timers.mute:resume() --START TIMER OR ELSE TOGGLE.  DOUBLE-MUTE MAY FAIL TO OBSERVE EITHER mute IF seeking.
-    else OFF,map,txt.mute = not OFF,1-map,false --TOGGLE:  1,0 = ON,OFF   INSTANT UNMUTE IN txtfile.
-        if OFF then mp.add_timeout(.4,function() txt.mute=OFF end) end  --DELAYED MUTE ON, OR ELSE LEFT CHANNEL CUTS OUT A TINY BIT.  txtfile IS TOO QUICK FOR af-command!  ALTERNATIVE GRAPH REPLACEMENT INTERRUPTS PLAYBACK.  A FUTURE VERSION SHOULD ELIMINATE astreamselect ENTIRELY, SO THE .4s WON'T EXIST.
-        mp.command(('af-command %s map %d %s'):format(label,map,target or ''))  --NO unpause_on_toggle FOR AUDIO.
-        clock_update() end --INSTANT clock_update, OR IT WAITS TO SYNC.
+function on_toggle(mute)  --CONTROLLER ONLY. INSTA-TOGGLE (SWITCH). SUBPROCESSES MAINTAIN SYNC WHEN OFF.
+    start_timer = m.map and mute and not timers.mute:is_enabled() and (timers.mute:resume() or true)  --m.map IS LOADED SWITCH.
+    if start_timer or not (m.map and is_controller) then return end --NO TOGGLE return CONDITIONS.  BELOW FOR CONTROLLER ONLY.
+    
+    OFF,txt.mute = not OFF,false --INSTANT UNMUTE IN txtfile.
+    map=OFF and 0 or 1           --TOGGLE:  0,1 = OFF,ON
+    if OFF then mp.add_timeout(.4,function() txt.mute=OFF end) end  --DELAYED MUTE ON, OR ELSE LEFT CHANNEL CUTS OUT A TINY BIT.  txtfile IS TOO QUICK FOR af-command!  ALTERNATIVE GRAPH REPLACEMENT INTERRUPTS PLAYBACK.  A FUTURE VERSION SHOULD ELIMINATE astreamselect ENTIRELY, SO THE .4s WON'T EXIST.
+    
+    mp.command(('af-command %s map %d %s'):format(label,map,target or ''))  --NO unpause_on_toggle FOR AUDIO.
+    clock_update()  --INSTANT clock_update, OR IT WAITS TO SYNC.
 end
 for key in (o.key_bindings or ''):gmatch('[^ ]+') do mp.add_key_binding(key, 'toggle_aspeed_'..key, on_toggle)  end 
 
 function clock_update()                        
     if clock then if OFF then clock:remove() --OFF SWITCH.  COULD BE MADE SMOOTH BY VARYING {\\alpha##} IN clock.data.
         else timers.osd:resume()  --KILLED @os_sync.
-             clock_index   = o.clocks.duration and round((os.time()+o.clocks.offset+1)/o.clocks.duration)%#clocks+1 or 1  --BTWN 1 & #clocks.  SMOOTH TRANSITIONS (& SMOOTH TOGGLE) BTWN STYLES SEEMS TOO DIFFICULT.  THE TIMEFROM1970 IS NEEDED JUST TO DECIDE WHICH STYLE! MPV SHOULD HAVE THE SAME CLOCK STYLE SIMULTANEOUSLY ALL OVER THE EARTH, REGARDLESS OF TIMEZONE OR DST, FOR THESE EXACT options.
+             clock_index   = o.clocks.duration and round((os.time()+o.clocks.offset+1)/o.clocks.duration)%#clocks+1 or 1  --BTWN 1 & #clocks.  SMOOTH TRANSITIONS (& SMOOTH TOGGLE) BTWN STYLES SEEMS TOO DIFFICULT.  THE TIMEFROM1970 IS NEEDED JUST TO DECIDE WHICH STYLE! MPV WOULD HAVE THE SAME CLOCK STYLE SIMULTANEOUSLY ALL OVER THE EARTH, REGARDLESS OF TIMEZONE OR DST, FOR THE SAME o.clocks.
              clock   .data = os.date(clocks[clock_index]):gsub('{}0','{}')  --REMOVE LEADING 0 AFTER "{}" NULL-OP STYLE CODE.
              for _,abday in pairs(abdays) 
              do clock.data = clock.data:gsub(abday,LOCALES[clock_index][abday]) end
@@ -207,7 +206,8 @@ end
 timers.os_sync=mp.add_periodic_timer(o.os_sync_delay,os_sync)
 
 function property_handler(property,val)  --CONTROLLER WRITES TO txtfile, & SUBPROCESSES READ FROM IT.  ONLY EVER pcall, FOR RELIABLE INSTANT write & SIMULTANEOUS io.remove.
-    property         = property=='current-tracks/audio' and 'a' or property  --a←→current-tracks/audio  
+    property         = property=='current-tracks/audio' and 'a'       or property  --a←→current-tracks/audio  
+    initial_time_pos = property=='frame-drop-count'     and os_sync() or initial_time_pos  --FOR OLD MPV.  BUGFIX FOR EXCESSIVE LAG: RESET SAMPLE COUNT & RESYNC clock.
     if     property 
     then p[property] = val 
         if property ~= 'af-metadata/'..label and not is_controller then return end end  --OBSERVING SUBPROCESSES END HERE, EXCEPT ON astats TRIGGER. CONTROLLER PROCEEDS.
@@ -215,15 +215,14 @@ function property_handler(property,val)  --CONTROLLER WRITES TO txtfile, & SUBPR
     mp_time,time_pos = mp.get_time(),mp.get_property_number('time-pos') or 0 --0 DURING YOUTUBE LOAD TO STOP timeout. 
     os_time          = mp2os_time and mp2os_time+mp_time or os.time()        --os_time=TIMEFROM1970  PRECISE TO 10ms.
     target           = target or load_time and mp_time-load_time>1 and (     --target ACQUISITION REQUIRES file-loaded + 10ms. astreamselect IS SLOW!  ONLY STRICTLY NEEDED TO DETECT OLD MPV (ACTS AS ERROR DETECTOR).
-        mp.command(('af-command %s map %d astreamselect'):format(label,map)) and 'astreamselect' or ''  --NEW MPV OR OLD. v0.37.0+ SUPPORTS TARGETED COMMANDS.  command RETURNS true IF SUCCESSFUL. MORE RELIABLE THAN VERSION NUMBERS BECAUSE THOSE CAN BE ANYTHING.  TARGETED COMMANDS WERE INTRODUCED WITH time-pos BUGFIX.
-    )
+                           mp.command(('af-command %s map %d astreamselect'):format(label,map)) and 'astreamselect' or ''  --NEW MPV OR OLD. v0.37.0+ SUPPORTS TARGETED COMMANDS.  command RETURNS true IF SUCCESSFUL. MORE RELIABLE THAN VERSION NUMBERS BECAUSE THOSE CAN BE ANYTHING.  TARGETED COMMANDS WERE INTRODUCED WITH time-pos BUGFIX.
+                       )
+    initial_time_pos = initial_time_pos or target=='' and samples_time and samples_time>20 and time_pos-samples_time --FOR OLD MPV. v0.36 CAN'T SYNC WITHOUT astats. BOTH MP4 & MP3 LAGGED BEHIND THE SUBPROCESSES. time-pos, playback-time & audio-pts WORKED WELL OVER 1 MINUTE, BUT NOT 1 HOUR.  SAMPLE COUNT STABILIZES WITHIN 20s (YOUTUBE+lavfi-complex). IT'S ALWAYS A HALF-INTEGER @MEASUREMENT.  initial_time_pos=initial_time_pos_relative_to_samples_time  THIS # STAYS THE SAME FOR THE NEXT 10 HOURS. 
+    time_pos         = initial_time_pos and samples_time and initial_time_pos+samples_time or  time_pos              --NEW METRIC WHOSE CHANGE IS BASED ON astats (METRIC SWITCH). 
     
-    if sync_time and os_time-sync_time>o.resync_delay then os_sync() end --RESYNC EVERY 30s.
-    if target=='' and samples_time and samples_time>20                   --THESE 3 LINES ARE FOR BACKWARDS COMPATIBILITY. MPV-v0.36 CAN'T SYNC WITHOUT astats. BOTH MP4 & MP3 LAG BEHIND THE SUBPROCESSES.  time-pos, playback-time & audio-pts WORKED WELL OVER 1 MINUTE, BUT NOT 1 HOUR.  SAMPLE COUNT USUALLY STABILIZES WITHIN 10 SECONDS (EXCEPT ON YOUTUBE+lavfi-complex).  IT'S ALWAYS A HALF-INTEGER @MEASUREMENT.
-    then initial_time_pos = initial_time_pos or time_pos-samples_time    --initial_time_pos=initial_time_pos_relative_to_samples_time  INITIALIZE AFTER CHECKING samples_time. THIS # STAYS THE SAME FOR THE NEXT 10 HOURS. 
-         time_pos         = initial_time_pos+samples_time end            --NEW METRIC WHOSE CHANGE IS BASED ON astats (METRIC SWITCH). 
-    if is_controller then if property=='mute' then on_toggle('mute') end --FOR DOUBLE mute TOGGLE.
-        txt.speed         = (not p.a or p.pause or p.seeking) and 0 or p.speed or 0 --seeking→pause FIXES A YOUTUBE STARTING GLITCH.
+    if sync_time and os_time-sync_time>o.resync_delay then os_sync() end  --RESYNC EVERY ~30s.
+    if is_controller then if property=='mute' then on_toggle('mute') end  --DOUBLE-mute TOGGLE.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).
+        txt.speed=(not p.a or p.pause or p.seeking) and 0 or p.speed or 0 --seeking→pause FIXES A YOUTUBE STARTING GLITCH.
         if not o.mpv[1] or not p.path or not property and txt.speed>0 and p.a then return  --return CONDITIONS.  OVERRIDE: NO SUBPROCESSES.  OR NOT STARTED YET.  OR ELSE IT'S THE auto IDLER, TO STOP timeout WHEN SPEED=0 (UNLESS JPEG). THE IDLER SHOULD ALWAYS BE RUNNING FOR RELIABILITY. PURE JPEG MAYBE PART OF A PLAYLIST (INTERMISSION BTWN FILES).
         elseif o.meta_osd and samples_time then mp.osd_message(mp.get_property_osd('af-metadata/'..label):gsub('\n','    '),o.meta_osd) end   --TAB EACH STAT (TOO MANY LINES), FOR osd.  samples_time CORRESPONDS TO NEW OBSERVATION.
         
@@ -235,16 +234,18 @@ function property_handler(property,val)  --CONTROLLER WRITES TO txtfile, & SUBPR
             txt.speed                                  ,
             round(os_time ,.001)                       ,  --MILLISECOND PRECISION.
             round(time_pos,.001)
+            ----FUTURE VERSION MIGHT HAVE ANOTHER LINE FOR SMOOTH TOGGLE (SOMETIMES MUTE SMOOTHLY USING t-DEPENDENT af-command).
         ))
         txtfile:close() --EITHER flush() OR close().  (txtfile) SOMETIMES FAILS.
         return end      --CONTROLLER ENDS HERE.  SUBPROCESSES BELOW.
         
-    txt.os_time = txt.os_time or os_time  --INITIALIZATION. SUBPROCESSES WILL quit IF txtfile NEVER COMES INTO EXISTENCE.
-    time_from_write,txtfile = os_time-txt.os_time,io.open(txtpath)  --'r' MODE, 'r+' ALSO WORKS.  ALTERNATIVE io.lines RAISES ERROR.  Δ INCOMPATIBLE WITH mpv.app.
-    command     =  time_from_write>o.timeouts.quit                  and 'quit' or 
-                  (time_from_write>o.timeouts.pause or not txtfile) and 'set pause yes'  --SOMETIMES txtpath IS INACCESSIBLE, SO AWAIT timeout.  txtfile CAN'T TELL WHEN TO quit, BECAUSE SOME SUBPROCESSES WOULD quit WITHOUT THE OTHERS.
-    if command     then mp.command(command) end
-    if not txtfile then return              end  --EITHER CONTROLLER STOPPED OR FILE INACCESSIBLE.
+    txt.os_time = txt.os_time or os_time  --INITIALIZE TIME_OF_WRITE. SUBPROCESSES WILL quit IF txtfile NEVER COMES INTO EXISTENCE.
+    time_from_write,txtfile = os_time-txt.os_time,io.open(txtpath)  --'r' MODE, 'r+' ALSO WORKS.  ALTERNATIVE io.lines RAISES ERROR.  Δ INVALID ON mpv.app (SAME LUA VERSION, BUILT DIFFERENT).
+    command =  
+        time_from_write >o.timeouts.quit                  and 'quit' or
+        (time_from_write>o.timeouts.pause or not txtfile) and 'set pause yes' --quit OR pause.  SOMETIMES txtpath IS INACCESSIBLE, SO AWAIT timeout.  txtfile CAN'T TELL WHEN TO quit, BECAUSE SOME SUBPROCESSES WOULD quit WITHOUT THE OTHERS.
+    command = command and mp.command(command)
+    if not txtfile then return end  --EITHER CONTROLLER STOPPED OR FILE INACCESSIBLE.
     
     lines    = txtfile:lines()  --ITERATOR RETURNS 0 OR 6 LINES, AS function. 
     txt.path = lines()          --LINE1=path
@@ -254,7 +255,7 @@ function property_handler(property,val)  --CONTROLLER WRITES TO txtfile, & SUBPR
     
     for line in ('aid volume speed os_time time_pos'):gmatch('[^ ]+') 
     do txt[line]     = lines() end --LINES 2→6
-    txtfile:close()    --close NEEDED, BUT RARELY (SUDDEN LAG MAY CAUSE txtfile TO BE LOCKED BY A FAILED AUTO-CLOSURE).
+    txtfile:close()    --close RARELY NEEDED. SUDDEN LAG MAY CAUSE FAILED AUTO-CLOSURE.
     time_from_write  = os_time-txt.os_time
     target_pos       = txt.time_pos+time_from_write*txt.speed  --=Δtime_pos=Δos_time*speed
     time_gained      = time_pos-target_pos  
@@ -265,14 +266,14 @@ function property_handler(property,val)  --CONTROLLER WRITES TO txtfile, & SUBPR
     speed            = txt.speed*(1-time_gained/.5)*(1+math.random(-o.max_random_percent,o.max_random_percent)/100)  --time_gained→0 OVER NEXT .5 SECONDS IN time-pos (astats UPDATE TIME). +-RANDOM EXTRA.  RANDOM BOUNDS [.9,1.1] MAYBE SHOULD BE [1/1.1,1.1]=[.91,1.1]. 1% SKEWED TOWARDS SLOWING IT DOWN.
     speed            = clip(speed,txt.speed/o.max_speed_ratio,txt.speed*o.max_speed_ratio)  --speed LIMIT RELATIVE TO CONTROLLER.
     command          = ''
-        ..(p.a.id   ~=  txt.aid   +0  and ('set aid    %s;'         ):format(txt.aid    ) or '')  --UNTESTED. MAY REQUIRE GRAPH REPLACEMENT?
-        ..(p.volume ~=  txt.volume+0  and ('set volume %s;'         ):format(txt.volume ) or '')
-        ..(p.pause  ~=     (speed==0) and ('set pause  %s;'         ):format(txt.pause  ) or '')
-        ..(samples_time and speed> 0  and ('set speed  %s;'         ):format(speed      ) or '')  --REQUIRES NON-0 TARGET speed, & ACCURATE samples_time.
-        ..(target_pos                 and ('seek %s absolute exact;'):format(target_pos ) or '')  --absolute MORE RELIABLE.  SYNC USING seek INSTEAD OF speed (BETTER TO SKIP THE TRACK THAN ACCELERATE ITS SPEED).  ANOTHER LINE OF CODE MAY BE NEEDED TO IMPROVE INITIAL DRUM-ROLL (--start=0 FROM --idle TRIGGER).
-    if command~='' then mp.command(command) end
+        ..(p.a.id   ~=  txt.aid   +0  and ('set aid    %s;'         ):format(txt.aid   ) or '')  --UNTESTED. MAY REQUIRE GRAPH REPLACEMENT?
+        ..(p.volume ~=  txt.volume+0  and ('set volume %s;'         ):format(txt.volume) or '')
+        ..(p.pause  ~=     (speed==0) and ('set pause  %s;'         ):format(txt.pause ) or '')
+        ..(samples_time and speed> 0  and ('set speed  %s;'         ):format(speed     ) or '')  --REQUIRES NON-0 TARGET speed, & ACCURATE samples_time (OLD MPV OR ELSE OPTIONAL).
+        ..(target_pos                 and ('seek %s absolute exact;'):format(target_pos) or '')  --absolute MORE RELIABLE.  SYNC USING seek INSTEAD OF speed (BETTER TO SKIP THE TRACK THAN ACCELERATE ITS SPEED).  ANOTHER LINE OF CODE MAY BE NEEDED TO IMPROVE INITIAL DRUM-ROLL (--start=0 FROM --idle TRIGGER).
+    command          = command~=''    and mp.command(command)
 end
-for property in ('mute pause seeking volume speed audio-params/samplerate path current-tracks/audio af-metadata/'..label):gmatch('[^ ]+')            --INSTANT write TO txtfile. CASCADE @volume REQUIRES pcall.  BOOLS, NUMBERS, string & TABLES.  samplerate MAY DEPEND ON lavfi-complex.  
+for property in ('mute pause seeking volume speed audio-params/samplerate frame-drop-count path current-tracks/audio af-metadata/'..label):gmatch('[^ ]+')            --INSTANT write TO txtfile. CASCADE @volume REQUIRES pcall.  BOOLS, NUMBERS, string & TABLES.  samplerate MAY DEPEND ON lavfi-complex.  
     do mp.observe_property(property,          'native',function(property,val) pcall(property_handler,property,val)  end) end --TRIGGERS INSTANTLY.  astats TRIGGERS EVERY HALF A SECOND, ON playback-restart, frame-drop-count & shutdown.
 timers.auto=mp.add_periodic_timer(o.auto_delay        ,function(            ) pcall(property_handler             )  end)     --IDLER & RESPONSE TIMER. STARTS INSTANTLY TO STOP YOUTUBE TIMING OUT. TRIGGERS EVERY QUARTER/HALF SECOND.
 
@@ -284,12 +285,12 @@ timers.auto=mp.add_periodic_timer(o.auto_delay        ,function(            ) pc
 ----SMPLAYER-v24.5, RELEASES .7z .exe .dmg .AppImage .flatpak .snap win32  &  .deb-v23.12  ALL TESTED.
 
 ----SCRIPT NAME MUST NOT HAVE SYMBOLS OR SPACES.  BUT ITS DIRECTORY MAY HAVE BOTH.
-----SCRIPT WRITTEN TO TRIGGER AN INPUT ERROR ON OLD MPV (<0.37). MORE RELIABLE THAN VERSION NUMBERS. 
+----SCRIPT WRITTEN TO TRIGGER AN INPUT ERROR ON OLD MPV (<=0.36). MORE RELIABLE THAN VERSION NUMBERS. 
 ----BUG: SUBPROCESSES TOO SLOW TO seek THROUGH LONG YOUTUBE VIDEOS. FEEDBACK COULD BE USED TO TOGGLE OFF (SUBPROCESSES COULD ALSO WRITE TO txtfile). 
 ----autospeed.lua IS A DIFFERENT SCRIPT FOR VIDEO speed, NOT AUDIO. "autotempo.lua" OR "atempo.lua" MIGHT BE GOOD NAMES.
 ----A FUTURE SMOOTH TOGGLE COULD WORK USING volume & amix INSTEAD OF astreamselect.
 ----FOR SURROUND SOUND THE CONTROLLER COULD SWITCH THROUGH ALL DEVICES INSTANTLY TO ASCERTAIN CHANNEL COUNTS. OR ELSE GRAND-CHILD SUBPROCESSES COULD WORK.  THERE'S A RISK OF RIGHT CHANNEL ON BACK-LEFT (R→BL), OR L→BR. CHANNEL GEOMETRY PROBLEM.  CODING FOR A SURROUND SOUND SOURCE SIGNAL IS EVEN MORE COMPLICATED.  
-----REPLACING txtfile WITH PIPES IS EASY ON WINDOWS, BUT REQUIRES A DEPENDENCY ON LINUX. socat (sc) & netcat (nc) ARE POPULAR (socat MAY MEAN "SOCKET AT - ..."). input-ipc-server (INTER-PROCESS-COMMUNICATION) IS FOR PIPES. THE DEPENDENCY MAY BE A SECURITY THREAT. A FUTURE MPV (OR LUA) VERSION MAY SUPPORT WRITING TO SOCKET (socat BUILT IN, OR lua-socket). WINDOWS CMD CAN ALREADY ECHO TO ANY SOCKET. I WROTE A PIPE VERSION BUT PREFER txtfile.  INSTALLING A DEPENDENCY IS LIKE PUTTING NEW WATER PIPES UNDER A HOUSE, FOR A TOY WATER FOUNTAIN.
+----REPLACING txtfile WITH PIPES IS EASY ON WINDOWS, BUT REQUIRES A DEPENDENCY ON LINUX. socat (sc) & netcat (nc) ARE POPULAR (socat MAY MEAN "SOCKET AT - ..."). input-ipc-server (INTER-PROCESS-COMMUNICATION) IS FOR PIPES. THE DEPENDENCY (REQUIRING sudo) MAY BE LIKE A SECURITY THREAT. A FUTURE MPV (OR LUA) VERSION MAY SUPPORT WRITING TO SOCKET (socat BUILT IN, OR lua-socket). WINDOWS CMD CAN ALREADY ECHO TO ANY SOCKET. I WROTE A PIPE VERSION BUT PREFER txtfile.  INSTALLING A DEPENDENCY IS LIKE PUTTING NEW WATER PIPES UNDER A HOUSE, FOR A TOY WATER FOUNTAIN.
 
 ----ALTERNATIVE FILTERS:
 ----loudnorm = I:LRA:TP   DEFAULT -24:7:-2. INTENSITY TARGET (-70 TO -5) : LOUDNESS RANGE (1 TO 20) : TRUE PEAK (-9 TO 0). LACKS f & g SETTINGS. SOUNDED OFF.  OUTPUTS A BUFFERED STREAM, NOT A RAW AUDIO STREAM.
@@ -300,5 +301,5 @@ timers.auto=mp.add_periodic_timer(o.auto_delay        ,function(            ) pc
 ----aresample    (Hz)  OPTIONAL.  OUTPUTS CONSTANT samplerate → astats.
 
 ----SIERRA LEONE, GABON, CHAD & COLOMBIA MISSING.  THE FORMER 2 ARE SIMILAR: SIMPLE TRICOLOR TRIBARS.  PLAIN & SIMPLE TRI-BANDS & QUAD-BANDS ONLY, SO FAR.  BOTH INDIA & CHINA ARE CHARGED.  MISSISSIPPI STATE FLAG IS CHARGED (1 MISSISSIPPI | 2 MISSISSIPPI | 3 MISSISSIPPI).
-----A SEPARATE "clock.lua" SCRIPT COULD GET THEM ALL EXACTLY RIGHT. RESYNCING THE EXACT TICK EVERY 30s USES 0% CPU.  AN UKRAINIAN/POLISH STYLE MIGHT REQUIRE VERTICALLY SPLITTING THE OSD IN HALF, TO COLOR IT.  CONCEIVABLY ADVERTISEMENTS COULD FIT INSIDE EACH DIGIT OF A CLOCK.
+----A SEPARATE "clock.lua" SCRIPT COULD GET THEM ALL EXACTLY RIGHT. RESYNCING THE EXACT TICK EVERY 30s USES 0% CPU.  AN UKRAINIAN/POLISH STYLE MIGHT REQUIRE SPLITTING THE OSD IN HALF (ACROSS), TO COLOR IT.  CONCEIVABLY ADVERTISEMENTS COULD FIT INSIDE EACH DIGIT OF A CLOCK.
         
