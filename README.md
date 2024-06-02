@@ -57,8 +57,8 @@ SMPlayer v24.5.0 supported. v23.12 has an annoying pause issue: `no-osd seek 0 r
 FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) supported.
 
 ## Latest Updates
-Newest scripts above in `mpv-scripts.zip` aren't properly released yet. autocomplex.lua graph needs to be improved/optimized first. Also aspeed.lua needs a `o.speed_expr` option to vary speed using a formula.
+Newest scripts above in `mpv-scripts.zip` aren't properly released yet. Coding style improved but more consistency & testing required for next release.
+- automask: Colors bugfix. Latest release failed at this. But now CPU consumption is higher!  Also the mask fades in at @playback-restart. `o.mask_no_vid` bugfix, & `convolution` can sharpen with variable percentage.
+- main.lua: Proper expansion of `o.title`. Added `o.options_delay`.  Improved codes for all scripts.
 - aspeed: Improved AbDay centering. ' '=64%'　' not 60%.
-- autocrop: Improved performance on MacOS (old FFmpeg).
-- automask: Colors bugfix. Latest release failed at this. But now CPU consumption is too high!  Also the mask now fades in at @playback-restart (using toggle). `o.mask_no_vid` bugfix, & `convolution` can sharpen with variable percentage.
-- Improved codes for all scripts.
+- autocrop: Replaced `o.msg_log` with `o.msg_level`. Improved performance on MacOS (old FFmpeg). 
