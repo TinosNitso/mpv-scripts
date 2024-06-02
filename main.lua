@@ -14,66 +14,75 @@ options={     --ALL OPTIONAL & CAN BE REMOVED.
         "yt-dlp_linux", --CASE SENSITIVE.  sudo apt remove yt-dlp  TO REMOVE OLD VERSION.
         "yt-dlp_macos",
     },
-    title             = '{\\b1\\fs32\\bord2}',  --REMOVE TO REMOVE title.  STYLE OVERRIDES: \\,fs##,bord# = \,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,b1,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,BOLDSHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
-    title_duration    =  5, --DEFAULT=0 SECONDS.  COUNTS FROM PLAYBACK-START.
-    autoloop_duration = 10, --SECONDS. MAX duration FOR INFINITE loop.  FOR GIF & SHORT MP4.  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
     options           = { 
         'ytdl-format bv[height<1080]+ba/best ','   keepaspect no  ',  --FREE aspect IF MPV HAS ITS OWN WINDOW.  bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
         '        sub auto','sub-border-size 2','sub-font-size 32  ',  --DEFAULTS no ,3,55    (BOOL,PIXELS,PIXELS)  sub=sid=auto BEFORE YOUTUBE LOADS.  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
         '    osd-bar no  ','osd-border-size 2',' osd-duration 5000',  --DEFAULTS yes,3,1000  (BOOL,PIXELS,ms    )  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd. 
-        '  osd-level 0   ', --PREVENTS SPURIOUS MESSAGES @load-script.
+        '  osd-level 0   ', --PREVENTS UNWANTED MESSAGES.
     },
+    title             = '{\\b1\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,b1,fs##,bord# = \,BOLD,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
+    title_duration    =  5, --DEFAULT=0 SECONDS (NO title).  @playback_start+.2s
+    autoloop_duration = 10, --DEFAULT=0 SECONDS.  MAX duration FOR INFINITE loop.  FOR GIF & SHORT MP4.  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
+    options_delay     = .2, --DEFAULT=0 SECONDS,  FROM playback_start.
     options_delayed   = {   --@playback_start+.2s
         '  osd-level 1   ', --RETURN osd-level.
         -- '     sid 1   ','secondary-sid 1',  --UNCOMMENT FOR SUBTITLE TRACK ID OVERRIDE.  auto & 1 NEEDED BEFORE & AFTER lavfi-complex, FOR YOUTUBE.
     },  
 }
-o                    = options  --ABBREVIATION.
-for   opt in ('title_duration autoloop_duration'):gmatch('[^ ]+')  --CONVERSION TO NUMBERS IF NEEDED ('1+1'→2).  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON mpv.app (SAME LUA VERSION, BUILT DIFFERENT).
-do  o[opt]           = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end  --string→number.  load INVALID ON mpv.app.  ALTERNATIVE loadstring('return {%s}') CAN DO THEM ALL IN 1 table.
-for _,opt in pairs(o.options or {})
-do command           = ('%s no-osd set %s;'):format(command or '',opt) end
-command              = command and mp.command(command)  --mp=MEDIA-PLAYER  ALL SETS IN 1.
-key,title            = 'ytdl_hook-ytdl_path',mp.create_osd_overlay('ass-events') --key SCRIPT-OPT POTENTIALLY UNSAFE.  ass-events IS THE ONLY FORMAT.  
-COLON                = mp.get_property('platform')=='windows' and ';' or ':'     --FILE LIST SEPARATOR.  WINDOWS=;  UNIX=:
-script_opts,scripts  = mp.get_property_native('script-opts'),mp.get_property_native('scripts')  --get_property_native FOR FILENAMES.
-directory            = mp.command_native({'expand-path',(require 'mp.utils'.split_path(scripts[1]))}) --yt-dlp REQUIRES ~/ EXPANDED. BRACKETS CAPTURE FIRST RETURN.  command_native RETURNS.  ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  UTILITIES CAN BE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
-for _,ytdl in pairs(o.ytdl or {}) 
-do  ytdl             = directory..'/'..ytdl  --'/' FOR WINDOWS & UNIX.
-    script_opts[key] = script_opts[key] and script_opts[key]..COLON..ytdl or ytdl end  --APPEND ALL ytdl.
-mp.set_property_native('script-opts',script_opts)  --EMPLACE HOOK.  ALTERNATIVE change-list WON'T ALLOW BOTH " " & "'" IN THE FILENAMES.
+o          = options  --ABBREVIATION.
+for   opt,val in pairs({scripts={},ytdl={},options={},title='',title_duration=0,autoloop_duration=0,options_delay=0,options_delayed={},})
+do  o[opt] = o[opt] or val end  --ESTABLISH DEFAULT OPTION VALUES.
+for   opt in ('autoloop_duration title_duration options_delay'):gmatch('[^ ]+')  --NUMBERS OR nil.  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON mpv.app (SAME LUA _VERSION, BUILT DIFFERENT).
+do  o[opt] = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end  --'1+1'→2  load INVALID ON mpv.app.  ALTERNATIVE loadstring('return {%s}') CAN DO THEM ALL IN 1 table.
+for _,opt in pairs(o.options)
+do command = ('%s no-osd set %s;'):format(command or '',opt) end
+command    = command and mp.command(command)           --mp=MEDIA-PLAYER  ALL SETS IN 1.
+scripts,title = mp.get_property_native('scripts'),mp.create_osd_overlay('ass-events')  --ass-events IS THE ONLY FORMAT. 
+directory  = require 'mp.utils'.split_path(scripts[1]) --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  UTILITIES CAN BE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
+COLON      = mp.get_property('platform')=='windows' and ';' or ':'  --FILE LIST SEPARATOR.  windows=;  UNIX=:
 
-for _,script  in pairs(o.scripts or {}) do script_loaded,script_lower = false,script:lower()
-    for _,val in pairs(  scripts      ) do script_loaded=script_loaded or val:lower()==script_lower end  --SEARCH NOT CASE SENSITIVE.  CODE NOT FULLY RIGOROUS.
-    if not script_loaded 
-    then table.insert(   scripts  ,script )
-         script=directory..'/'   ..script
-         table.insert(   scripts  ,script )  --CAN ALSO DECLARE EXPANDED PATH, TO PREVENT REPETITION.
-         mp.commandv('load-script',script ) end end  --commandv FOR FILENAMES.
-mp.set_property_native( 'scripts' ,scripts)  --OPTIONAL: DECLARE scripts. 
+for _,script  in pairs(o.scripts) 
+do script_loaded,script_lower = false,script:lower()
+    for _,val in pairs(scripts) 
+    do script_loaded = script_loaded or val:lower()==script_lower end         --SEARCH NOT CASE SENSITIVE.  CODE NOT FULLY RIGOROUS.
+    command          = not script_loaded and mp.commandv('load-script',directory..'/'..script) and table.insert(scripts,script) end  --commandv FOR FILENAMES. '/' FOR windows & UNIX.  INSERTION OPTIONAL: MAY PREVENT REPETITION.
+directory            = mp.command_native({'expand-path',directory})           --command_native EXPANDS '~/' FOR yt-dlp. 
+for _,ytdl in pairs(o.ytdl) 
+do script_opt        = (script_opt or 'ytdl_hook-ytdl_path=')..directory..'/'..ytdl..COLON end      --APPEND ALL ytdl.
+command              =  script_opt and mp.commandv('change-list','script-opts','append',script_opt) --EMPLACE ytdl.
 
 function playback_start() 
-    if playback_started then return end  --ONLY ONCE, PER LOAD.
-    playback_started,duration = true,mp.get_property_number('duration')  --JPEG duration = nil&0 @file-loaded&playback-restart. MAY NOT BE TRUE DURATION DUE TO FILTERS.
-    
-    loop            = duration<(o.autoloop_duration or 0) and mp.get_property('loop')
-    command         = loop and 'no-osd set loop inf;' or ''
-    for _,opt in pairs(o.options_delayed or {})  --PLAYBACK OVERRIDES.
-    do command      = ('%s no-osd set %s;'):format(command,opt) end
-    command         = command~='' and   mp.command(command)
-    if o.title 
-    then title.data = o.title..mp.get_property_osd('media-title') --WAITS FOR timeout, OTHERWISE STREAM COULD HANG UNDER EXCESSIVE LAG.
-         title:update()
-         mp.add_timeout(o.title_duration or 0,function()title:remove()end) end
+    if playback_started then return end  --ONLY ONCE PER file.
+    playback_started = true  --JPEG duration = nil & 0  @file-loaded & @playback-restart
+    loop             = mp.get_property_number('duration')<o.autoloop_duration and mp.get_property('loop')
+    set_loop         = loop and mp.set_property('loop','inf')  --BEFORE TIMEOUT.
+    timers.playback_start:resume()
 end
-mp.register_event('playback-restart',function()mp.add_timeout(.2,playback_start)end)  --timeout REQUIRED TO SUPPRESS SPURIOUS MESSAGES DUE TO SMPLAYER.
+mp.register_event('playback-restart',playback_start)  --timeout REQUIRED TO SUPPRESS SPURIOUS MESSAGES DUE TO SMPLAYER.
 
 function end_file()
     playback_started = nil  --RE-REGISTERS playback_start.
-    loop             = loop and mp.set_property('loop',loop)  --RETURN WHATEVER IT WAS.
+    set_loop         = loop and mp.set_property('loop',loop)  --RETURN WHATEVER IT WAS, OR ELSE IT PERSISTS.
 end
 mp.register_event('end-file',end_file)
 
+function after_playback_start()
+    command    = ''
+    for _,opt in pairs(o.options_delayed)  --PLAYBACK OVERRIDES.
+    do command = ('%s no-osd set %s;'):format(command,opt) end
+    command    = command~='' and   mp.command(command)
+    title.data = mp.command_native({'expand-text',o.title}) 
+    title:update()  --AWAITS TIMEOUT, OTHERWISE OLD MPV COULD HANG UNDER EXCESSIVE LAG.
+    timers.title_remove:resume()
+end 
+
+timers             = {  --TRIGGER ONCE PER file.
+    playback_start = mp.add_periodic_timer(o.options_delay ,after_playback_start),
+    title_remove   = mp.add_periodic_timer(o.title_duration,function()title:remove()end),
+}
+for _,timer in pairs(timers)
+do    timer.oneshot=true
+      timer:kill() end
 
 ----mpv TERMINAL COMMANDS:
 ----WINDOWS   CMD: MPV\MPV --script=. TEST.MP4      (PLACE scripts & TEST.MP4 INSIDE smplayer.exe FOLDER. THEN COPY/PASTE COMMAND INTO NOTEPAD & SAVE AS TEST.CMD, & DOUBLE-CLICK IT.)
@@ -92,7 +101,7 @@ mp.register_event('end-file',end_file)
 ----SMPLAYER-v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES). MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
-----THIS SCRIPT HAS NO TOGGLE. INSTEAD OF ALL scripts LAUNCHING EACH OTHER WITH THE SAME CODE, THIS SCRIPT LAUNCHES THEM ALL. DECLARING local VARIABLES HELPS WITH HIGHLIGHTING & COLORING, BUT UNNECESSARY.
+----THIS SCRIPT HAS NO TOGGLE.  osd_on_toggle FROM autocomplex & automask COULD BE MOVED HERE, BUT WOULD REQUIRE MORE CODE.  INSTEAD OF ALL scripts LAUNCHING EACH OTHER WITH THE SAME CODE, THIS SCRIPT LAUNCHES THEM ALL.  DECLARING local VARIABLES HELPS WITH HIGHLIGHTING & COLORING, BUT UNNECESSARY.
 ----45%CPU+15%GPU USAGE (5%+15% WITHOUT scripts).  ~75%@30FPS (OR 55%@25FPS) WITHOUT GPU DRIVERS, @FULLSCREEN.  ARGUABLY SMOOTHER THAN VLC, DEPENDING ON VIDEO (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER).
 ----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS. THEY'RE ALL <300 LINES LONG, WITH MANY PARTS COPY/PASTED FROM EACH OTHER.  ULTIMATELY TV FIRMWARE (1GB) COULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. 
 ----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, & MULTI-LINE ALT-EDITING. AIDS RAPID GRAPH TESTING.  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK PRODUCES 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
