@@ -9,7 +9,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
     extra_devices_index_list = {},  --TRY {3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. REPETITION IGNORED.  1=auto  2=NORMAL DEVICE OVERLAP (ECHO).  EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS & STREAM.  ARGUABLY INTERNAL SPEAKERS SHOULD ONLY COUNT AS 1 (NO mutelr).
     filterchain              = 'anull,'       --CAN REPLACE anull WITH EXTRA FILTERS (vibrato highpass aresample ETC).
                 ..'dynaudnorm=g=5:p=1:m=100', --DEFAULT=...:31:.95:10  DYNAMIC AUDIO NORMALIZER.  ALL MPV INSTANCES USE THIS. GRAPH COMMENTARY HAS MORE DETAILS.
-    mpv                      = {  --REMOVE FOR NO CHILDREN OVERRIDE (clocks+filterchain ONLY). LIST ALL POSSIBLE mpv COMMANDS, IN ORDER OF PREFERENCE. SPAWNS ALL CHILDREN. A COMMAND MAY NOT BE A PATH.  
+    mpv                      = {  --REMOVE FOR NO CHILDREN OVERRIDE (clocks+filterchain ONLY). LIST ALL POSSIBLE mpv COMMANDS, IN ORDER OF PREFERENCE.  FIRST MATCH SPAWNS ALL CHILDREN.  A COMMAND MAY NOT BE A PATH.  
         "mpv"  ,  --LINUX & SMPLAYER (WINDOWS)
         "./mpv",  --        SMPLAYER (LINUX & MACOS)
         "/Applications/mpv.app/Contents/MacOS/mpv"     ,  --     mpv.app
@@ -31,9 +31,9 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
     },
     child_options = {
         '      vid no ','ytdl-format bestaudio/best',  --REMOVE TO SEE VIDEO FROM ALL CHILDREN. THIS SCRIPT OVERRIDES ANY ATTEMPT TO CONTROL THEM USING GUI.
-        ' geometry 25%','  msg-level all=error     ','priority abovenormal',  --geometry IF vid.  REMOVE THIS LINE TO LOG CHILD SETS.  priority ONLY VALID ON WINDOWS.
+        ' geometry 25%','  msg-level all=no        ','priority abovenormal',  --geometry IF vid.  REMOVE THIS LINE TO LOG CHILDREN.  priority ONLY VALID ON WINDOWS.  (CHILDREN LOG ERRORS ON JPEG.)
         'keep-open yes','      pause yes           ',  --DEFAULTS no,no   keep-open FOR seek NEAR end-file.  pause PREVENTS STARTING GLITCH WHERE A SPEAKER CHIRPS.  
-        -- '  audio-pitch-correction no            ',  --DEFAULT=yes  UNCOMMENT FOR CHIPMUNK MODE (NO scaletempo# FILTER). WORKS OK WITH SPEECH & COMICAL MUSIC.
+        -- '  audio-pitch-correction no            ',  --DEFAULT=yes  UNCOMMENT FOR CHIPMUNK MODE (NO scaletempo# FILTER). WORKS OK WITH SPEECH & COMICAL MUSIC.  REDUCES CPU CONSUMPTION (5*1%=5%) - NO SCALING TEMPO @VARYING SPEEDS.
     },
     clocks       = {  --TOGGLE LINES TO INCLUDE/EXCLUDE VARIOUS STYLES FROM THE LIST.  REPETITION VALID.  CLOCKS REQUIRE VIDEO OR IMAGE.  A SIMPLE LIST OF STRINGS IS EASY TO RE-ORDER & DUPLICATE, LIKE REPEATING YEMEN FOR THE ARABIC.
         duration = 2, --SECONDS, INTEGER.  TIME PER CLOCK STYLE (CYCLE DURATION).  STYLE TICKS OVER EVERY SECOND SECOND. (ON THE DOUBLE.)
@@ -68,50 +68,56 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
 ----    STYLE CODES: \\,alpha##,an#,fs#,bord#,c######,b1,fscx## = \,TRANSPARENCY,ALIGNMENT-NUMPAD,FONT-SIZE(p),BORDER(p),COLOR,BOLD,FONTSCALEX(%)  (DEFAULT an0=an7=TOPLEFT)    MORE: shad#,be1,i1,u1,s1,fn*,fr##,fscy## = SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEY(%)  EXAMPLES: USE {\\alpha80} FOR TRANSPARENCY. USE {\\fscx130} FOR +30% IN HORIZONTAL.  A TRANSPARENT clock CAN BE BIGGER. be ACTS LIKE SEMI-BOLD.  
     },
 } 
-o,label           = options,mp.get_script_name()  --label=aspeed  mp=MEDIA_PLAYER
+o,p              = options,{}  --p=PROPERTIES
+label            = mp.get_script_name()  --label=aspeed  mp=MEDIA_PLAYER  FILENAME MUST NOT HAVE SPACES, BUT ITS DIRECTORY CAN.
 for  opt,val in pairs({key_bindings='',double_mute_timeout=0,extra_devices_index_list={},filterchain='anull',mpv={},timeouts={},max_random_percent=0,max_speed_ratio=1.2,seek_limit=.5,auto_delay=.5,resync_delay=60,os_sync_delay=.01,mutelr='mutel',options={},child_options={},clocks={},})
-do o[opt]         = o[opt] or val end  --ESTABLISH DEFAULT OPTION VALUES.
+do o[opt]        = o[opt] or val end  --ESTABLISH DEFAULT OPTION VALUES.
 for  opt in ('seek_limit resync_delay'):gmatch('[^ ]+')  --gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON mpv.app (SAME LUA VERSION, BUILT DIFFERENT).
-do o[opt]         = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end  --string→number: '1+1'→2  load INVALID ON mpv.app. 
-directory         = mp.command_native({'expand-path',(require 'mp.utils'.split_path(mp.get_property_native('scripts')[1]))})  --command_native EXPANDS '~/', REQUIRED BY io.open.  BRACKETS CAPTURE FIRST RETURN.  ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
-p                 = {pid=mp.get_property('pid'),['script-opts']=mp.get_property_native('script-opts'),['audio-device-list']=mp.get_property_native('audio-device-list')}  --PROPERTIES table.
-txt               = {pid=p['script-opts'].pid or p.pid}  --txt = txtfile-TABLE
-is_controller     = not  p['script-opts'].pid  --ONLY CONTROLLER DOESN'T HAVE pid SCRIPT-OPT.  
-o.timeouts.quit   = (o.timeouts.quit  or o.timeouts[1] or 10)+0  --DEFAULT=10  SECONDS
-o.timeouts.pause  = (o.timeouts.pause or o.timeouts[2] or  5)+0  --DEFAULT= 5 
-txtpath           = ('%s/%s-PID%d.txt'):format(directory,label,txt.pid)  --"/" FOR WINDOWS & UNIX. txtfile INSTEAD OF PIPES. CREATED FOR RAW JPEG ALSO, TO HANDLE playlist-next.
-mutelr            = p['script-opts'].mutel and 'mutel' or p['script-opts'].muter and 'muter' or o.mutelr  --mutelr IS A GRAPH INSERT.
-m,map,key         = {},1,'lavfi.astats.Overall.Number_of_samples' --m=MEMORY FOR map GRAPH SWITCH, WHICH CHANGES ONLY FOR CONTROLLER.  key=LOCATION OF astats SAMPLE COUNT.  TESTED @OVER 1 BILLION.
+do o[opt]        = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end  --string→number: '1+1'→2  load INVALID ON mpv.app. 
+for  property in ('scripts pid script-opts audio-device-list audio-device'):gmatch('[^ ]+')  --STRINGS NUMBERS TABLES
+do p[property]   = mp.get_property_native(property) end
+directory        = mp.command_native({'expand-path',(require 'mp.utils'.split_path(p.scripts[1]))})  --command_native EXPANDS '~/', REQUIRED BY io.open.  BRACKETS CAPTURE FIRST RETURN.  ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
+txt              = {pid=p['script-opts'].pid or p.pid}  --txt = txtfile-TABLE
+is_controller    = not  p['script-opts'].pid  --ONLY CONTROLLER DOESN'T HAVE pid SCRIPT-OPT.  
+o.timeouts.quit  = (o.timeouts.quit  or o.timeouts[1] or 10)+0  --DEFAULT=10  SECONDS
+o.timeouts.pause = (o.timeouts.pause or o.timeouts[2] or  5)+0  --DEFAULT= 5 
+txtpath          = ('%s/%s-PID%d.txt'):format(directory,label,txt.pid)  --"/" FOR WINDOWS & UNIX. txtfile INSTEAD OF PIPES. CREATED FOR RAW JPEG ALSO, TO HANDLE playlist-next.
+mutelr           = p['script-opts'].mutel and 'mutel' or p['script-opts'].muter and 'muter' or o.mutelr  --mutelr IS A GRAPH INSERT.
+m,map,key        = {},1,'lavfi.astats.Overall.Number_of_samples' --m=MEMORY FOR map GRAPH SWITCH, WHICH CHANGES ONLY FOR CONTROLLER.  key=LOCATION OF astats SAMPLE COUNT.  TESTED @OVER 1 BILLION.
 for _,opt in pairs(is_controller and o.options or o.child_options)
-do command        = ('%s no-osd set %s;'):format(command or '',opt) end
-command           = command and mp.command(command)  --ALL SETS IN 1.  
+do command       = ('%s no-osd set %s;'):format(command or '',opt) end
+command          = command and mp.command(command)  --ALL SETS IN 1.  
+math.randomseed(p.pid)  --OTHERWISE CHILD TEMPO MAY BE SAME OR PREDICTABLE.
+
 function round(N,D)  --ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1). N & D MAY ALSO BE STRINGS OR nil.  PRECISION LIMITER FOR txtfile.
-    D             = D or 1
+    D = D or 1
     return N and math.floor(.5+N/D)*D  --FFMPEG SUPPORTS round, BUT NOT LUA.  math.round(N)=math.floor(.5+N)
 end
 function clip(N,min,max) return N and min and max and math.min(math.max(N,min),max) end  --N,min,max ARE NUMBERS OR nil.  FFMPEG SUPPORTS clip BUT NOT LUA.  math.clip(#,min,max)=math.min(math.max(#,min),max)  ENFORCES speed LIMIT.
-math.randomseed(p.pid)  --OTHERWISE CHILD TEMPO MAY BE SAME OR PREDICTABLE.
 
 if is_controller 
-then clocks,abdays,LOCALES = {},{},{}  --CONTROLLER LISTS.  LOCALES IS LIST OF SUB-TABLES, FOR LOTE.
-    o.auto_delay,devices   = .5,{mp.get_property('audio-device')}  --CONTROLLER auto_delay EXISTS ONLY TO STOP timeout.  devices=LIST OF audio-devices WHICH WILL ACTIVATE (STARTING WITH EXISTING device).  "wasapi/" (WINDOWS AUDIO SESSION APP. PROGRAM. INTERFACE) OR "pulse/alsa" (LINUX) OR "coreaudio/" (MACOS).  IT DOESN'T GIVE THE SAMPLERATES NOR CHANNEL-COUNTS.
-    o.clocks.duration      = o.clocks.duration and o.clocks.duration+0>0 and o.clocks.duration  --+0 CONVERTS→number.  duration=nil IF 0.  THESE ARE CLOCK CYCLE PARAMETERS.
-    o.clocks.offset        = o.clocks.offset     or  0  --DEFAULT= 0 SECS
-    o.clocks.no_locales    = o.clocks.no_locales or o.clocks.DIRECTIVES_OVERRIDE  --OVERRIDE→no_locales
+then clocks,abdays,LOCALES   = {},{},{}  --CONTROLLER LISTS.  LOCALES IS LIST OF SUB-TABLES, FOR LOTE.
+    script,p['script-opts']  = ('%s/%s.lua'):format(directory,label),mp.get_property('script-opts')  --.lua COULD BE .js FOR JAVASCRIPT.  script-opts MAY BE BLANK.  ytdl_hook POTENTIALLY UNSAFE & ONLY EVER DECLARED ONCE (IN TASK MANAGER).  
+    o.auto_delay,devices     = .5,{p['audio-device']}  --CONTROLLER auto_delay EXISTS ONLY TO STOP timeout.  devices=LIST OF audio-devices WHICH WILL ACTIVATE (STARTING WITH EXISTING device).  "wasapi/" (WINDOWS AUDIO SESSION APP. PROGRAM. INTERFACE) OR "pulse/alsa" (LINUX) OR "coreaudio/" (MACOS).  IT DOESN'T GIVE THE SAMPLERATES NOR CHANNEL-COUNTS.
+    o.clocks.duration        = o.clocks.duration and o.clocks.duration+0>0 and o.clocks.duration  --+0 CONVERTS→number.  duration=nil IF 0.  THESE ARE CLOCK CYCLE PARAMETERS.
+    o.clocks.offset          = o.clocks.offset     or  0  --DEFAULT= 0 SECS
     for _,command in pairs(o.mpv)  --CONTROLLER command LOOP. 
-    do  mpv                = mpv or mp.command_native({'subprocess',command}).error_string~='init' and command end  --error_string=init IF INCORRECT.  TAKE FIRST CORRECT command, ONLY.  subprocess RETURNS DIRECTLY INTO LUA, SO IS MORE ELEGANT THAN run IN THIS CASE.
-    for _,index in pairs(o.extra_devices_index_list)  --ESTABLISHES devices WHICH ACTIVATE.  DUPLICATES ALLOWED.
-    do  device             = p['audio-device-list'][index]
-        insert             = device and table.insert(devices,device.name) end
-
+    do  mpv                  = mpv or mp.command_native({'subprocess',command}).error_string~='init' and command end  --error_string=init IF INCORRECT.  BREAKS ON FIRST CORRECT command.  subprocess RETURNS NATIVELY INTO LUA, SO IS MORE ELEGANT THAN run IN THIS CASE.
+    for _,index in pairs(o.extra_devices_index_list)  --ESTABLISHES devices WHICH ACTIVATE (IF mpv).  DUPLICATES ALLOWED.
+    do  device               = p['audio-device-list'][index]
+        device_insert        = device and table.insert(devices,device.name) end
+    for N,device in pairs(mpv and devices or {}) do for mutelr in ('mutel muter'):gmatch('[^ ]+')  --ONLY IF mpv.
+        do command           = not (N==1 and mutelr==o.mutelr) and mp.commandv('run',mpv,'--idle','--audio-device='..device,'--script='..script,('--script-opts=%s=1,pid=%d,%s'):format(mutelr,p.pid,p['script-opts'])) end end  --CHILD SPAWN.  DON'T LAUNCH ON PRIMARY device CHANNEL. mutelr & audio-device VARY.  commandv FOR SYMBOLS.  ALSO LAUNCH ON JPEG, FOR MPV PLAYLIST.
     for abday in ('Sun Mon Tue Wed Thu Fri Sat'):gmatch('[^ ]+') do table.insert(abdays,abday) end  --DEFAULT=English
-    for  _,clock in pairs(o.clocks) do if type(clock)=='string'  --CLOCKS ARE STRINGS.  SPLITTING THE STRINGS IN HALF WOULD BE MORE COMPLICATED (LOCALE DEFINED SEPARATELY TO STYLE CODES).
-        then LOCALE,clock    = {},clock:gsub('◙','\\N')  --◙ LOOKS BETTER THAN \N (UP TO END-USER).  LOCALE HAS ABDAYS AS KEYS.
-            gmatch           = (clock:gmatch('%[.*%]')() or ''):gsub('%-%-','{\\fscx64}　{\\fscx100}'):gsub('%-','{\\fscx32}　{\\fscx100}'):gmatch('[^%[ %]]+') --ABDAY ITERATOR.  '-','--' = 32%,64% OF '　'='\xE3\x80\x80'=IDEOGRAPHIC_SPACE.  64% (OR 62%) FOR CONSOLAS. EXACT PERCENTAGE COULD BE ANOTHER SUB-OPTION (DEPENDS ON FONT?).  ONLY THIS SPACE IS VALID ON MACOS, WHEREAS WINDOWS RESPECTS OTHERS. IT'S LIKE THE CHINESE SPACEBAR.  '.*' MEANS LONGEST MATCH OR NOTHING.  "[-]" ARE MAGIC & EXCLUDED FROM ABDAYS.
-            for _,abday in pairs(abdays) --SKIP OTHER SUB-OPTIONS.
-            do LOCALE[abday] = o.clocks.no_locales and abday or gmatch() or abday end  --OVERRIDE OR LOCALE OR DEFAULT.
+    abdays                   = (o.clocks.no_locales or o.clocks.DIRECTIVES_OVERRIDE) and {} or abdays --OVERRIDES.  EVERYTHING PERTAINING TO abdays BECOMES A NULL-OP.
+    for  _,clock in pairs(o.clocks) do if type(clock)=='string'     --CLOCKS ARE STRINGS.  SPLITTING THE STRINGS IN HALVES OR THIRDS WOULD BE MORE COMPLICATED IN options.
+        then LOCALE,clock    = {},clock:gsub('◙','\\N')             --◙ LOOKS BETTER THAN \N (UP TO END-USER).  LOCALE HAS ABDAYS AS KEYS.
+            table.insert(clocks, (clock:gsub('[^{]*','',1)))        --EXTRA BRACKETS CAPTURE FIRST gsub RETURN.  '*' MAY ELIMINATE NOTHING BEFORE LEADING {.  ONCE ONLY.  
+            gmatch           =   (clock:gmatch('%[.*%]')() or ''):gsub('%-%-','{\\fscx64}　{\\fscx100}'):gsub('%-','{\\fscx32}　{\\fscx100}'):gmatch('[^%[ %]]+') --ABDAY ITERATOR.  '-','--' = 32%,64% OF '　'='\xE3\x80\x80'=IDEOGRAPHIC_SPACE.  64% (OR 62%) FOR CONSOLAS. EXACT PERCENTAGE COULD BE ANOTHER SUB-OPTION (DEPENDS ON FONT?).  THIS SPACE WORKS ON MACOS, BUT NOT OTHERS. IT'S LIKE THE CHINESE SPACEBAR.  '.*' MEANS LONGEST MATCH OR NOTHING.  "[-]" ARE MAGIC & EXCLUDED FROM ABDAYS.
+            for _,abday in pairs(abdays)             --SKIP OTHER SUB-OPTIONS.
+            do LOCALE[abday] = gmatch() or abday end --LOCALE OR DEFAULT.
             table.insert(LOCALES,LOCALE)
-            table.insert(clocks,(clock:gsub('[^{]*','',1))) end end  --EXTRA BRACKETS CAPTURE FIRST gsub RETURN.  '*' MAY ELIMINATE NOTHING BEFORE LEADING {.  ONCE ONLY.  
+            end end  
     
     if o.clocks.DIRECTIVES_OVERRIDE  
     then clocks      = {''}  --ONLY 1 CLOCK.
@@ -128,23 +134,15 @@ graph=not o.mpv[1] and o.filterchain or  --OVERRIDE (NO CHILDREN),  OR...
 
 ----lavfi         = [graph] [ao]→[ao] LIBRARY-AUDIO-VIDEO-FILTERGRAPH.  aspeed IS LIKE A MASK FOR audio, WHICH DISJOINTS IT. 
 ----stereotools   = ...:mutel:muter (BOOLS)  DEFAULT=...:0:0  IS THE START.  MAY BE SUPERIOR @CONVERSION→stereo FROM mono & SURROUND-SOUND. astats MAY NEED STEREO FOR RELIABILITY. ALSO MUTES EITHER SIDE. FFMPEG-v4 INCOMPATIBLE WITH softclip.
-----dynaudnorm    = ...:g:p:m                DEFAULT=...:31:.95:10  ...:GAUSSIAN_WIN_SIZE(ODD>1):PEAK_TARGET[0,1]:MAX_GAIN[1,100]  DYNAMIC AUDIO NORMALIZER OUTPUTS A BUFFERED STREAM WITH TB=1/SAMPLE_RATE & FORMAT=doublep.  INSERTS BEFORE asplit DUE TO INSTA-TOGGLE FRAME-TIMING. IT MAY SLOW DOWN YOUTUBE, BY PRE-LOADING MANY FRAME-LENGTHS (g=31). A 2 STAGE PROCESS MIGHT BE IDEAL (SMALL g → BIG g).  ALTERNATIVES INCLUDE loudnorm & acompressor, BUT dynaudnorm IS BEST. IT'S USED SEVERAL TIMES SIMULTANEOUSLY: EACH SPEAKER + lavfi-complex + VARIOUS GRAPHICS.
+----dynaudnorm    = ...:g:p:m                DEFAULT=...:31:.95:10  ...:GAUSSIAN_WIN_SIZE(ODD>1):PEAK_TARGET[0,1]:MAX_GAIN[1,100]  DYNAMIC AUDIO NORMALIZER OUTPUTS A BUFFERED STREAM WITH TB=1/SAMPLE_RATE & FORMAT=doublep.  INSERTS BEFORE asplit DUE TO INSTA-TOGGLE FRAME-TIMING. IT MAY SLOW DOWN YOUTUBE, BY PRE-LOADING MANY FRAME-LENGTHS (g=31). A 2 STAGE PROCESS MIGHT BE IDEAL (SMALL g → BIG g).  ALTERNATIVES INCLUDE loudnorm & acompressor, BUT dynaudnorm IS BEST. IT'S USED SEVERAL TIMES SIMULTANEOUSLY: EACH SPEAKER + lavfi-complex + VARIOUS GRAPHICS.  IT CAN BE TESTED WITH FILTERS BEFORE IT, TO PROVE IT NORMALIZES PERFECTLY.
 ----astats        = length:metadata (SECONDS:BOOL)  CONTINUAL SAMPLE COUNT IS BASIS FOR 10 HOUR SYNC. ~0% CPU USAGE. ALL PRECEDING FILTERS MUST BE FULLY DETERMINISTIC OVER 10 HRS, BUT NOT FILTERS FOLLOWING. USING THIS AS PRIMARY METRIC AVOIDS MESSING WITH MPV/SMPLAYER SETTINGS TO ACHIEVE 10 HOUR SYNC.  MPV-v0.38 CAN SYNC ON ITS OWN WITHOUT astats (BUT NOT v0.36).
 ----astreamselect = inputs:map  IS THE FINISH.  ENABLES INSTA-TOGGLE. "af-command" NOT "af toggle". DOUBLE REPLACING GRAPH OR FULL TOGGLE CAUSES CONTROLLER GLITCH. SHOULD BE PLACED LAST BECAUSE SOME FILTERS (dynaudnorm) DON'T INSTANTLY KNOW WHICH STREAM TO FILTER, BECAUSE THAT'S DETERMINED BY af-command (0 OR 1). ON=1 BY DEFAULT.
 ----anull           PLACEHOLDER.
 ----asplit          [ao]→[0][1]=[NOmutelr][mutelr]
 
 
-function start_file()  --CONTROLLER ONLY. CHILDREN SPAWN BEFORE file-loaded.  AT LEAST 4 STAGES: load-script start-file file-loaded playback-restart
-    if mpv then script,p['script-opts'] = ('%s/%s.lua'):format(directory,label),mp.get_property('script-opts')  --.lua COULD BE .js FOR JAVASCRIPT.   ytdl_hook SCRIPT-OPT POTENTIALLY UNSAFE & ONLY EVER DECLARED ONCE (IN TASK MANAGER).  ALSO LAUNCH ON JPEG, FOR MPV PLAYLIST.
-        for N,device in pairs(devices) do for mutelr in ('mutel muter'):gmatch('[^ ]+') 
-            do command = not (N==1 and mutelr==o.mutelr) and mp.commandv('run',mpv,'--idle','--audio-device='..device,'--script='..script,("--script-opts=%s=1,pid=%d,%s"):format(mutelr,p.pid,p['script-opts'])) end end end  --DON'T LAUNCH ON PRIMARY device CHANNEL. mutelr & audio-device VARY.  commandv FOR SYMBOLS. 
-    mpv                = nil
-end
-mp.register_event('start-file',start_file) 
-
 function file_loaded()  --ALSO @seek
-    command = m.map~=map and mp.commandv('af','pre',('@%s:lavfi=[%s]'):format(label,graph):format(map))  --GRAPH INSERTION.  commandv FOR graph BYTECODE.  astats USES SOURCE samplerate.  
+    command = m.map~=map and mp.commandv('af','pre',('@%s:lavfi=[%s]'):format(label,graph):format(map))  --graph INSERTION.  commandv FOR BYTECODE.
     m.map,load_time = map,mp.get_time()  --load_time MEANS LOADED.
 end
 mp.register_event('file-loaded',file_loaded)  --RISKY TO INSERT GRAPH SOONER (DEPENDING ON FFMPEG VERSION).  HARDWARE samplerate UNKNOWN @file-loaded.
@@ -159,17 +157,17 @@ function playback_restart()
 end  
 mp.register_event('playback-restart',playback_restart)
 
-function on_toggle(mute)  --CONTROLLER ONLY. INSTA-TOGGLE (SWITCH). CHILDREN MAINTAIN SYNC WHEN OFF.
-    start_timer = load_time and mute and not timers.mute:is_enabled()
-    if not is_controller or not load_time or start_timer and (timers.mute:resume() or true) then return end --return CONDITIONS.  BELOW FOR CONTROLLER ONLY AFTER LOADED.
+function on_toggle()  --CONTROLLER ONLY. INSTA-TOGGLE (SWITCH). CHILDREN MAINTAIN SYNC WHEN OFF.  MUST TOGGLE FOR JPEG TOO!
+    if not load_time then return end
     OFF         = not OFF  --INSTANT UNMUTE IN txtfile.
     map         =     OFF and 0  or 1  --TOGGLE:  0,1 = OFF,ON
     mp.add_timeout(   OFF and .4 or 0,function() txt.mute=OFF end)  --DELAYED MUTE ON, OR ELSE LEFT CHANNEL CUTS OUT A TINY BIT.  txtfile IS TOO QUICK FOR af-command!  ALTERNATIVE GRAPH REPLACEMENT INTERRUPTS PLAYBACK.  A FUTURE VERSION SHOULD REMOVE THIS, & NEVER USE astreamselect.
     
     mp.command(('af-command %s map %d %s'):format(label,map,target or ''))  --NO unpause_on_toggle FOR AUDIO.
     clock_update()  --INSTANT clock_update, OR IT WAITS TO SYNC.
+    return true
 end
-for key in o.key_bindings:gmatch('[^ ]+') do mp.add_key_binding(key, 'toggle_aspeed_'..key, on_toggle)  end 
+for key in o.key_bindings:gmatch('[^ ]+') do mp.add_key_binding(key,'toggle_aspeed_'..key,on_toggle)  end 
 
 function clock_update()  --@os_sync & @on_toggle
     clock_remove = clock and OFF and clock:remove()  --clock OFF SWITCH.  COULD BE MADE SMOOTH BY VARYING {\\alpha##} IN clock.data.
@@ -187,7 +185,7 @@ timers              = {  --CARRY OVER IN MPV PLAYLIST.
     mute            = mp.add_periodic_timer(o.double_mute_timeout,function()end),  --mute TIMER TIMES.
     osd             = mp.add_periodic_timer(1                    ,clock_update ),  --THIS 1 MOSTLY DETERMINES THE EXACT TICK OF THE clock, WHICH IS USUALLY IRRELEVANT TO AUDIO.
 }
-timers.mute.oneshot = true
+timers.mute.oneshot = 1
 timers.mute:kill()
 clock_update()  --INSTANT clock.
 
@@ -208,16 +206,16 @@ function property_handler(property,val)  --ALSO @timers.auto  CONTROLLER WRITES 
     p[property or '']  = val 
     a,mp_time,time_pos = p['current-tracks/audio'],mp.get_time(),mp.get_property_number('time-pos')  --a=current-tracks/audio
     os_time            = mp2os_time and mp2os_time+mp_time or os.time()   --os_time=TIMEFROM1970  PRECISE TO 10ms.
-    samples_time       = mp2os_time and property=='af-metadata/'..label and val[key]/p['audio-params/samplerate']  --ALWAYS A HALF INTEGER, OR nil.  TIME=sample#/samplerate  string[key] BUGS OUT ON 32-BIT.
+    samples_time       = mp2os_time and property=='af-metadata/'..label and val[key]/p['audio-params/samplerate']  --ALWAYS A HALF INTEGER, OR nil.  TIME=sample#/samplerate  (SOURCE SAMPLERATE)  string[key] BUGS OUT ON 32-BIT.
     target             = target or load_time and mp_time-load_time>1 and  --target ACQUISITION REQUIRES file-loaded + 10ms. astreamselect IS SLOW!  ONLY STRICTLY NEEDED TO DETECT OLD MPV (ACTS AS ERROR DETECTOR).
                          (mp.command(('af-command %s map %d astreamselect'):format(label,map)) and 'astreamselect' or '')  --NEW MPV OR OLD. v0.37.0+ SUPPORTS TARGETED COMMANDS.  command RETURNS true IF SUCCESSFUL. MORE RELIABLE THAN VERSION NUMBERS BECAUSE THOSE CAN BE ANYTHING.  TARGETED COMMANDS WERE INTRODUCED WITH time-pos BUGFIX.
     resync             = (property=='frame-drop-count' or sync_time and os_time-sync_time>o.resync_delay)      and os_sync()  --ON_LAG & EVERY ~30s.
     initial_time_pos   =  property~='frame-drop-count'     and initial_time_pos or target=='' and samples_time and samples_time>20 and time_pos-samples_time --FOR OLD MPV.  EXCESSIVE LAG RESETS SAMPLE COUNT.  v0.36 CAN'T SYNC WITHOUT astats. BOTH MP4 & MP3 LAGGED BEHIND THE CHILDREN. time-pos, playback-time & audio-pts WORKED WELL OVER 1 MINUTE, BUT NOT 1 HOUR.  SAMPLE COUNT STABILIZES WITHIN 20s (YOUTUBE+lavfi-complex). IT'S ALWAYS A HALF-INTEGER @MEASUREMENT.  initial_time_pos=initial_time_pos_relative_to_samples_time  THIS # STAYS THE SAME FOR THE NEXT 10 HOURS. 
     time_pos           = initial_time_pos and samples_time and initial_time_pos+samples_time or  time_pos or 0  --0 DURING YOUTUBE LOAD TO STOP timeout.  OLD MPV USES NEW METRIC WHOSE CHANGE IS BASED ON astats (METRIC SWITCH). 
     if is_controller   
-    then toggle        = property=='mute' and on_toggle('mute')  --DOUBLE-mute TOGGLE.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).
+    then toggle        = property=='mute' and load_time  and (timers.mute:is_enabled() and on_toggle() or timers.mute:resume())  --DOUBLE-mute TOGGLE.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).
         txt.speed      = (not a or p.pause or p.seeking) and 0 or p.speed or 0 --seeking→pause FIXES A YOUTUBE STARTING GLITCH.
-        if not o.mpv[1] or not p.path or not property and txt.speed>0 and a then return end  --return CONDITIONS.  OVERRIDE: NO CHILDREN.  OR NOT STARTED YET.  OR ELSE IT'S THE auto IDLER, TO STOP timeout WHEN SPEED=0 (UNLESS JPEG). THE IDLER SHOULD ALWAYS BE RUNNING FOR RELIABILITY.  txtfile DOESN'T EXIST BEFORE start-file.
+        if not mpv or not p.path or not property and txt.speed>0 and a then return end  --return CONDITIONS.  OVERRIDE: NO CHILDREN.  OR NOT STARTED YET.  OR ELSE IT'S THE auto IDLER, TO STOP timeout WHEN txt.speed=0 (UNLESS JPEG). THE IDLER SHOULD ALWAYS BE RUNNING FOR RELIABILITY.
         meta_osd       = o.meta_osd and not OFF and samples_time and mp.osd_message(mp.get_property_osd('af-metadata/'..label):gsub('\n','    '),o.meta_osd)  --TAB EACH STAT (TOO MANY LINES), FOR osd.  samples_time CORRESPONDS TO NEW OBSERVATION.
         txtfile        = io.open(txtpath,'w+')  --w+=ERASE+WRITE  w ALSO WORKS.  mpv.app REQUIRES txtfile BE WELL-DEFINED.
         txtfile:write( ('%s\n%d\n%d\n%s\n%s\n%s'):format(  --CONTROLLER REPORT.  SECURITY PRECAUTION: NO ARBITRARY COMMANDS OR SETS (property NAMES). A set COULD HOOK AN UNSAFE EXECUTABLE, SIMILAR TO PIPING TO A SOCKET. DIFFERENT LINES MIGHT REQUIRE SECURITY OVERRIDES.
@@ -256,10 +254,10 @@ function property_handler(property,val)  --ALSO @timers.auto  CONTROLLER WRITES 
     speed            = txt.speed*(1-time_gained/.5)*(1+math.random(-o.max_random_percent,o.max_random_percent)/100)  --time_gained→0 OVER NEXT .5 SECONDS IN time-pos (astats UPDATE TIME). +-RANDOM EXTRA.  RANDOM BOUNDS [.9,1.1] MAYBE SHOULD BE [1/1.1,1.1]=[.91,1.1]. 1% SKEWED TOWARDS SLOWING IT DOWN.
     speed            = clip(speed,txt.speed/o.max_speed_ratio,txt.speed*o.max_speed_ratio)  --speed LIMIT RELATIVE TO CONTROLLER.
     command          =                                    ''
-                       ..(a.id     ~=  txt.aid   +0  and ('set aid    %s;'         ):format(txt.aid   ) or '')  --UNTESTED. MAY REQUIRE GRAPH REPLACEMENT?
-                       ..(p.volume ~=  txt.volume+0  and ('set volume %s;'         ):format(txt.volume) or '')
-                       ..(p.pause  ~=     (speed==0) and ('set pause  %s;'         ):format(txt.pause ) or '')
-                       ..(samples_time and speed> 0  and ('set speed  %s;'         ):format(speed     ) or '')  --REQUIRES NON-0 TARGET speed, & ACCURATE samples_time (OLD MPV OR ELSE OPTIONAL).
+                       ..(a.id     ~=  txt.aid   +0  and ('set  aid    %s;'        ):format(txt.aid   ) or '')  --UNTESTED. MAY REQUIRE GRAPH REPLACEMENT?
+                       ..(p.volume ~=  txt.volume+0  and ('set  volume %s;'        ):format(txt.volume) or '')
+                       ..(p.pause  ~=     (speed==0) and ('set  pause  %s;'        ):format(txt.pause ) or '')
+                       ..(samples_time and speed> 0  and ('set  speed  %s;'        ):format(speed     ) or '')  --REQUIRES NON-0 TARGET speed, & ACCURATE samples_time (OLD MPV OR ELSE OPTIONAL).
                        ..(seek                       and ('seek %s absolute exact;'):format(target_pos) or '')  --absolute MORE RELIABLE.  SYNC USING seek INSTEAD OF speed (BETTER TO SKIP THE TRACK THAN ACCELERATE ITS SPEED).  ANOTHER LINE OF CODE MAY BE NEEDED TO IMPROVE INITIAL DRUM-ROLL (--start=0 FROM --idle TRIGGER).
     command          = command~='' and mp.command(command)
 end
@@ -274,10 +272,7 @@ timers.auto=mp.add_periodic_timer(o.auto_delay,function(            ) pcall(prop
 ----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
 ----SMPLAYER-v24.5, RELEASES .7z .exe .dmg .AppImage .flatpak .snap win32  &  .deb-v23.12  ALL TESTED.
 
-----BUG  : CHILDREN TOO SLOW TO seek THROUGH LONG YOUTUBE VIDEOS. FEEDBACK COULD BE USED TO TOGGLE OFF.  CHILDREN COULD ALSO WRITE TO txtfile. 
-----ISSUE: CHILDREN ARE USING 2% OR 3% OF CPU, INSTEAD OF 0% OR 1%.  5*2%=10% OF CPU, FOR NO REASON!  IT'S NOT txtfile, WHICH PROVABLY USES 0%.  astats IS 0% TOO, BUT NOT IN THIS CONTEXT!  10% MAY BE CONSIDERED A BUG.
-
-----SCRIPT NAME MUST NOT HAVE SYMBOLS OR SPACES.  BUT ITS DIRECTORY MAY HAVE BOTH.
+----BUG: CHILDREN TOO SLOW TO seek THROUGH LONG YOUTUBE VIDEOS. FEEDBACK COULD BE USED TO TOGGLE OFF.  CHILDREN COULD ALSO WRITE TO txtfile. 
 ----SCRIPT WRITTEN TO TRIGGER AN INPUT ERROR ON OLD MPV (<=0.36). MORE RELIABLE THAN VERSION NUMBERS. 
 ----autospeed.lua IS A DIFFERENT SCRIPT FOR VIDEO speed, NOT AUDIO. "autotempo.lua" OR "atempo.lua" MIGHT BE GOOD NAMES.
 ----A FUTURE SMOOTH TOGGLE COULD WORK USING volume & amix INSTEAD OF astreamselect.

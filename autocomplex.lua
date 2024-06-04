@@ -42,24 +42,23 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.  UNCOMMENT LINES TO ACTIVATE THEM.  
     -- dual_filterchain=         'shuffleplanes=1:0,lutrgb=a=val/.7',  --UNCOMMENT FOR RED & GREEN DUAL.  EXAMPLE: TO SEESAW IT, APPEND ",rotate=a=PI/32*sin(PI*n/%s):c=BLACK@0"
     -- sine_mix        = {{100,1},{'200:1',1.1},{300,1},{'400:1',1.1},{500,1},{'600:1',1.1},{700,1},{'800:1',1.1},{900,1},{'1000:1',1.1}}, --{{'frequency(Hz):beep_factor',volume},...}  beep_factor OPTIONAL.  sine WAVES FOR CALIBRATION MIX DIRECTLY INTO [ao]. THIS EXAMPLE BEEPS EVERY SECOND, ON EVEN. BEEP ACTIVATES feet, & MAY HELP SET freqs_lead_time.  THE 900Hz PEAK LINES UP, BUT THE SURROUNDING CURVE SKEWS ABOVE 900Hz.  FUTURE VERSION SHOULD SUPPORT JPEG (CURRENTLY REQUIRES EXISTING AUDIO TO MIX WITH).
     -- dimensions      = {w=1680,h=1050},  --DEFAULT=display OR [vo].  THIS IS THE OVERRIDE.
-    -- osd_on_toggle   = 5,  --SECONDS. UNCOMMENT TO INSPECT VERSIONS, FILTERGRAPHS & PARAMETERS. 0 CLEARS THE osd INSTEAD.  DISPLAYS  _VERSION mpv-version ffmpeg-version libass-version lavfi-complex af vf video-out-params  COULD BE MOVED TO main.lua.
+    -- osd_on_toggle   = 5000,  --MILLISECONDS. UNCOMMENT TO INSPECT VERSIONS, FILTERGRAPHS & PARAMETERS. 0 CLEARS THE osd INSTEAD.  DISPLAYS  _VERSION mpv-version ffmpeg-version libass-version platform current-vo lavfi-complex af vf video-out-params  COULD BE MOVED TO main.lua.
     options            = {
         'vd-lavc-threads 0 ','force-window yes',  --vd-lavc=VIDEO DECODER-LIBRARY AUDIO VIDEO. 0=AUTO OVERRIDES SMPLAYER OR ELSE MAY FAIL TESTING.  force-window FOR SHARED MEMORY (SMPlayer.app).
         '  osd-font-size 16','    geometry 50%',  --DEFAULT size 55p MAY NOT FIT automask2 ON osd.  geometry ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW. force-window (DEFAULT no) PREVENTS MPV FROM VANISHING DURING TRACK CHANGES.
     },
 } 
-o,label    = options,mp.get_script_name()  --label=autocomplex (USED TO FISH FOR ERRORS).  mp=MEDIA-PLAYER
-for   opt,val in pairs({overlay_scale={1},fps=30,period=1,af_chain='anull',rotate=0,zoompan=1,overlay='(W-w)/2:(H-h)/2',dual_overlay='(W-w)/2:(H-h)/2',filterchain='null',dual_filterchain='null',dual_scale={},freqs_fps=25/2,freqs_fps_albumart=25,freqs_opts='s=300x500:mode=line:ascale=lin:win_size=512:win_func=parzen:averaging=2',freqs_scale_h=1.1,freqs_clip_h=.3,volume_af_chain='anull',volume_fps=25,volume_alpha=.5,volume_scale={.04,.15},grid_thickness=.1,grid_height=.1,feet_height=.05,feet_lutrgb='r=192:b=255:a=val/.25',dimensions={},})
+o,p        = options,{}  --p=PROPERTIES
+label      = mp.get_script_name()  --label=autocomplex (USED TO FISH FOR ERRORS).  mp=MEDIA-PLAYER
+for   opt,val in pairs({key_bindings='',double_mute_timeout=0,overlay_scale={1},fps=30,period=1,af_chain='anull',rotate=0,zoompan=1,overlay='(W-w)/2:(H-h)/2',dual_overlay='(W-w)/2:(H-h)/2',filterchain='null',dual_filterchain='null',dual_scale={},freqs_dynaudnorm='',freqs_lead_time=0,freqs_fps=25/2,freqs_fps_albumart=25,freqs_opts='s=300x500:mode=line:ascale=lin:win_size=512:win_func=parzen:averaging=2',freqs_scale_h=1.1,freqs_clip_h=.3,volume_af_chain='anull',volume_opts='',volume_fps=25,volume_alpha=.5,volume_scale={.04,.15},grid_alpha=1,grid_thickness=.1,grid_height=.1,feet_height=.05,feet_activation=.5,feet_lutrgb='r=192:b=255:a=val/.25',shoe_color='',sine_mix={},dimensions={},options={},})
 do  o[opt] = o[opt] or val end  --ESTABLISH DEFAULT OPTION VALUES.
 for   opt in ('double_mute_timeout vflip_scale_h freqs_clip_h osd_on_toggle'):gmatch('[^ ]+')  --gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN DOESN'T EXIST IN THE LUA USED BY THE NEWEST mpv.app (SAME VERSION, BUILT DIFFERENT).
 do  o[opt] = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end  --string→number: '1+1'→2  load INVALID ON mpv.app. 
-command    = 'no-osd change-list script-opts append lavfi-complex=yes;'  --WARN OTHER SCRIPTS IMAGES WILL loop.  OTHERWISE THEY MAY HAVE TO OBSERVE lavfi-complex. 
-for _,opt in pairs(o.options or {})
-do command = ('%s no-osd set %s;'):format(command,opt) end
-mp.command(command)  --ALL SETS IN 1.
-
+for _,opt in pairs(o.options)
+do command = ('%s no-osd set %s;'):format(command or '',opt) end
+command    = command and mp.command(command)  --ALL SETS IN 1.
 function round(N,D)  --ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1). N & D MAY ALSO BE STRINGS OR nil.  PRECISION LIMITER, TO MULTIPLES OF 4.
-    D = D or 1
+    D      = D or 1
     return N and math.floor(.5+N/D)*D  --FFMPEG SUPPORTS round, BUT NOT LUA.  math.round(N)=math.floor(.5+N)
 end
 
@@ -69,11 +68,11 @@ do for nt in ('in on n t                     '):gmatch('[^ ]+') do o[opt]=o[opt]
 for opt in ('rotate  dual_filterchain zoompan'):gmatch('[^ ]+') do o[opt]=o[opt]:gsub(     '%%s',('(%s*%s)'):format(o.period,o.volume_fps)) end  --ANIMATIONS ARE @volume_fps. OPTIMIZE USING DIFFERENT fps.  dual_filterchain IS LIKE rotate.
 for opt in ('overlay dual_overlay            '):gmatch('[^ ]+') do o[opt]=o[opt]:gsub(     '%%s',('(%s*%s)'):format(o.period,o.       fps)) end  --OVERLAYS ARE @STREAM fps.
 
-for N,sine in pairs(o.sine_mix or {})  --MAY EXTEND o.af_chain INTO A SUBGRAPH, OR ELSE BLANK.  
+for N,sine in pairs(o.sine_mix)  --MAY EXTEND o.af_chain INTO A SUBGRAPH, OR ELSE BLANK.  
 do amix            = (',sine=%s,volume=%s[a%d]%s[a%d]'):format(sine[1],sine[2],N,amix or ',[ao]',N) end  --RECURSIVELY GENERATE ALL sine WAVES (WITH THEIR volume).  "," SEPERATES THE SINES FROM THE MIX.
 amix               = amix and ('[ao]%samix=%d:first')  :format(amix,#o.sine_mix+1) or ''  --MIXES [ao][a1][a2]...  SINE WAVES ARE INFINITE DURATION.  SINGLETON amix VALID, BUT I LEAVE IT OUT.
 vflip              = o.vflip_scale_h and o.vflip_scale_h>0 
-                     and    ('vflip,scale=iw:ih*(%s),pad=0:ih/(%s):0:0:BLACK@0'):format(o.vflip_scale_h,o.vflip_scale_h)  --scale & pad FOR BOTTOM. PADDING SIMPLIFIES CODE.
+                     and     ('vflip,scale=iw:ih*(%s),pad=0:ih/(%s):0:0:BLACK@0'):format(o.vflip_scale_h,o.vflip_scale_h)  --scale & pad FOR BOTTOM. PADDING SIMPLIFIES CODE.
 vstack             = not (not vflip and o.vflip_only) and o.filterchain..','..((  --PREPEND COLOR SHUFFLING, UNLESS NULL OVERRIDE.
                         not   vflip      and         'pad=0:ih*2:0:0:BLACK@0'     --TOP ONLY. pad*2 FOR ABSENT BOTTOM SIMPLIFIES CODE.
                         or  o.vflip_only and vflip..',pad=0:ih*2:0:oh-ih:BLACK@0' --BOTTOM ONLY, pad DOUBLE.  
@@ -84,13 +83,13 @@ o.overlay_scale[2] =  o.overlay_scale[2] or o.overlay_scale[1]
 o.   dual_scale[2] =     o.dual_scale[1] and (o. dual_scale[2] or o.dual_scale[1])*o.freqs_clip_h*2  --CLIP HEIGHT FOR (PADDED) TOP & BOTTOM (*2). RATIO RELATIVE TO DISPLAY HEIGHT.
 dual               = not o.dual_scale[1] and ''  --NO dual. OR ELSE dual BELOW.
                      or (',[ov]split[ov],%s[dual],[dual][vo]scale2ref=round(iw*(%s)/4)*4:round(ih*(%s)/4)*4[dual][vo],[vo][dual]overlay=%s[vo]'):format(o.dual_filterchain,o.dual_scale[1],o.dual_scale[2],o.dual_overlay)  --APPLY FILTERCHAIN FIRST BECAUSE [ov] IS ONLY 1200p, NOT 4K ACROSS LIKE [vo].
-timer              = mp.add_periodic_timer(o.double_mute_timeout or 0,function()end)  --CARRIES OVER IN MPV PLAYLIST.
-timer.oneshot,p    = true,{}  --p=PROPERTIES
+timer              = mp.add_periodic_timer(o.double_mute_timeout,function()end)  --CARRIES OVER IN MPV PLAYLIST.
+timer.oneshot      = 1
 timer:kill() 
 
 
 graph=('[aid%%d]%s%s,asplit[ao],stereotools,%s,apad,asplit[freqs],aformat=s16,showvolume=%s:0:128:8:t=0:v=0:o=v:%s,format=gbrap,shuffleplanes=1:0,lutrgb=g=0:a=val*(%s),split=3[vol][BAR],crop=iw/2*3/4:ih*(%s):(iw-ow)/2:(ih-oh)*(1-(%s)),lutrgb=%s,pad=iw*4/3:ih+(ow-iw)/a:(ow-iw)/2:oh-ih:%s,split,hstack,split[feet0],shuffleplanes=0:2:1[feet],[vol][feet0]vstack[vol],[BAR][feet]vstack,lutrgb=a=val*(%s),split[RGRID],crop=iw/2:ih:0,pad=iw/%s:0:0:0:BLACK@0,split=10,hstack=10,crop=iw-4:ih:iw-ow,pad=iw+4:0:0:0:BLACK@0[LGRID],[RGRID]crop=iw/2:ih:iw/2,pad=iw/%s:0:ow-iw:0:BLACK@0,split=10,hstack=10,crop=iw-4:ih:0,pad=iw+4:0:ow-iw:0:BLACK@0[RGRID],[LGRID][RGRID]hstack,pad=0:ih*(%s)/(%s):0:oh-ih:BLACK@0[grid],[freqs]aformat=s16:2100,asetpts=max(0\\,PTS-(%s)/TB),dynaudnorm=%s,aformat=s16,showfreqs=%s:colors=BLUE|RED:%%s,fps=%%s,crop=iw/1.05:ih*(%s)/(%s):0:ih-oh,format=gbrp,scale=iw*2:-1,avgblur=1:2^2+2^1,lutrgb=255*gt(val\\,140):0:255*gt(val\\,140),avgblur=2:2^2+2^1,lutrgb=r=255*gt(val\\,90):b=255*gt(val\\,90),framerate=%%s,format=gbrap,split[R],shuffleplanes=0:0:1:1,hflip[L],[R]shuffleplanes=0:0:2:2[R],[grid][L]scale2ref=iw*2-2:ih,overlay[grid+L],[grid+L][R]overlay=W-w,scale=ceil(iw/4)*4:ceil(ih/4)*4,split=3[LHI][RHI],crop=iw/2[MIDDLE],[LHI]crop=iw/4:ih:0,shuffleplanes=0:2:1[LHI],[RHI]crop=iw/4:ih:iw-ow,shuffleplanes=0:2:1[RHI],[LHI][MIDDLE][RHI]hstack=3[ov],[vol][ov]scale2ref=round(iw*(%s)/4)*4:round(ih*(%s)/(%s)/4)*4[vol][ov],[ov][vol]overlay=(W-w)/2:H-h,format=bgra,format=gbrap,%s[ov],%%sfps=%s,format=yuva420p,scale=%%d:%%d,format=yuva420p,split=3[vo][t0],crop=1:1:0:0:1:1,fps=%s,lutyuv=0:128:128:0[to]%s,[to][ov]scale2ref,overlay,setpts=PTS-STARTPTS,rotate=%s:c=BLACK@0,pad=iw/(%s):ih/(%s):(ow-iw)/2:(oh-ih)/2:BLACK@0,zoompan=%s:d=1:s=%%dx%%d:fps=%s[ov],[vo]setpts=PTS-STARTPTS[vo],[vo][ov]overlay=%s[vo],[t0]trim=end_frame=1[t0],[t0][vo]concat,trim=end=%%s:start_frame=1,fps=%s,setpts=PTS-1/FRAME_RATE/TB,format=%%s[vo]'
-):format(o.af_chain,amix,o.volume_af_chain,o.volume_fps,o.volume_opts or '',o.volume_alpha,o.feet_height,o.feet_activation or .5,o.feet_lutrgb,o.shoe_color or '',o.grid_alpha or 1,o.grid_thickness,o.grid_thickness,o.freqs_clip_h,o.grid_height,o.freqs_lead_time or 0,o.freqs_dynaudnorm or '',o.freqs_opts,o.freqs_clip_h,o.freqs_scale_h,o.volume_scale[1],o.volume_scale[2],o.freqs_clip_h,vstack,o.fps,o.volume_fps,dual,o.rotate,o.overlay_scale[1],o.overlay_scale[2],o.zoompan,o.volume_fps,o.overlay,o.fps)  --volume_fps REPEATS FOR volume, TIME-STREAM [to] & zoompan.  fps REPEATS FOR [vo] & AFTER concat.  freqs_clip_h CROPS freqs & PADS volume & [grid].
+):format(o.af_chain,amix,o.volume_af_chain,o.volume_fps,o.volume_opts,o.volume_alpha,o.feet_height,o.feet_activation,o.feet_lutrgb,o.shoe_color,o.grid_alpha,o.grid_thickness,o.grid_thickness,o.freqs_clip_h,o.grid_height,o.freqs_lead_time,o.freqs_dynaudnorm,o.freqs_opts,o.freqs_clip_h,o.freqs_scale_h,o.volume_scale[1],o.volume_scale[2],o.freqs_clip_h,vstack,o.fps,o.volume_fps,dual,o.rotate,o.overlay_scale[1],o.overlay_scale[2],o.zoompan,o.volume_fps,o.overlay,o.fps)  --volume_fps REPEATS FOR volume, TIME-STREAM [to] & zoompan.  fps REPEATS FOR [vo] & AFTER concat.  freqs_clip_h CROPS freqs & PADS volume & [grid].
 
 ----lavfi             LIBRARY-AUDIO-VIDEO-FILTERGRAPH.  [vid#]=VIDEO-IN [aid#]=AUDIO-IN [vo]=VIDEO-OUT [ao]=AUDIO-OUT [ov]=OVERLAY(SPECTRUM) [freqs]=AUDIO-FREQS [to]=TIME-OUT(1x1) [t0]=STARTPTS-FRAME [L]=LEFT [R]=RIGHT [vol]=VOLUME [grid]=VOL-BARS  ALSO [LGRID][RGRID][LHI][RHI].  SELECT FILTER NAME OR LABEL TO HIGHLIGHT IT. NO WORD-WRAP → SIDE-SCROLL PROGRAMMING, WITH LINEDUPLICATE ETC. lavfi-complex MAY COMBINE MANY [aid#] & [vid#] INPUTS. %% SUBS OCCUR LATER. (%s) BRACKETS FOR MATH.  A lavfi string IS LIKE DNA & CAN CREATE VARIOUS CREATURES. SEE FFMPEG-FILTERS MANUAL. A BRICK OF EQUATIONS DEFINE STRING INSERTS.  EACH FOOT HAS A STEREO INSIDE IT. [feet0] (SHOES) ARE THE CENTER-PIECE.  [to] & [t0] CODES ALWAYS VALID, EVEN ON YOUTUBE & FOR MP4 SUBCLIPS WITH OFF TIMESTAMPS. IMPOSSIBLE TO CORRECTLY ENTER NUMBERS LIKE time-pos OR audio-pts. CANVAS [to] SWITCHES OUT [ao]→[vo] TIMESTAMPS (IT'S ACTUALLY [time-vo]).
 ----showvolume      = r:b:w:h:f:...:t:v:o:...:dm:dmc                                       DEFAULT=25:1:400:20:0.95:...:t=1:v=1:o=h:...:dm=0:dmc=orange  →rgba  rate:CHANNEL_GAP:LENGTH:THICKNESS/2:FADE:...:CHANNELVALUES:VOLUMEVALUES:ORIENTATION:...:DISPLAYMAX:DISPLAYMAXCOLOR  LENGTH MINIMUM ~100. t & v ARE TEXT & SHOULD BE DISABLED.  THERE'S SOME TINY BLACK LINE DEFECT, WHICH BLUE COVERS UP.
@@ -99,7 +98,7 @@ graph=('[aid%%d]%s%s,asplit[ao],stereotools,%s,apad,asplit[freqs],aformat=s16,sh
 ----volume          = volume                    DEFAULT=1  RATIO. sine VOLUMES. FORMS TRIPLE WITH sine & amix.
 ----amix            = inputs:duration           DEFAULT=2:longest  MIXES IN SINES. [a1][a2]...→[ao]
 ----hstack,vstack   = inputs                    DEFAULT=2  COMBINES THE VOLUMES INTO A 20 TICK STEREO RULER. ALSO COMBINES feet.  vstack FOR FEET & TOP/BOTTOM.
-----split,asplit    = outputs  CLONE STREAMS.   DEFAULT=2  
+----split,asplit    = outputs                   DEFAULT=2  CLONE STREAMS.
 ----highpass        = f               →floatp   DEFAULT=3000 Hz  MAY BE BLANK.  firequalizer IS MORE GENERAL & COULD MULTIPLY BY FREQUENCY. A CHIRP MAY BECOME DEAFENING @DOUBLE FREQUENCY.
 ----setpts,asetpts  = expr                      DEFAULT=PTS  PRESENTATION TIMESTAMP, FOR SYNC OF rotate,zoompan,overlay WITH OTHER GRAPHS (automask), BY SENDING STARTPTS→0. SHOULD SUBTRACT 1/FRAME_RATE/TB FROM [t0].  asetpts LEADS THE SPECTRUM BY BACKDATING AUDIO.
 ----shuffleplanes   = map0:map1:map2:map3       DEFAULT=0:1:2:3  REDUCES CPU USAGE BY >5% COMPARED TO colorchannelmixer. ORDERED g:b:r:a (LIKE GreatBRitAin, WITH RED ON RIGHT). SHUFFLES WITHOUT MIXING.  FFMPEG-v4 COMPATIBILITY DEPENDS ON EXACT USAGE.  SWITCHES [vol] GREEN & BLUE, [feet] FROM [feet0], & COLORS HIGHS VS LOWS, & [L][R] CHANNELS.
@@ -124,99 +123,88 @@ graph=('[aid%%d]%s%s,asplit[ao],stereotools,%s,apad,asplit[freqs],aformat=s16,sh
 ----nullsink          SINKS VIDEO, FOR ERROR DETECTION.
 
 
-function file_loaded()  --@file-loaded, @aid, @vid & @on_toggle{ON}.    THIS COULD BE REPLACED BY on_av_params. BUT THE .1s DELAY TO DETECT alpha RARELY CAUSES STUTTER/LAG @LOAD.
-    for  property in ('current-tracks/audio current-tracks/video video-params display-width display-height duration'):gmatch('[^ ]+') 
-    do p[property]         = mp.get_property_native(property) end  --TABLES CONTAIN MANY NUMBERS SO ARE MORE EFFICIENT.
-    a,v,v_params           = p['current-tracks/audio'] or {},p['current-tracks/video'] or {},p['video-params'] or {}  --REFERENCES TO p SUB-TABLES. 
-    W                      = o.dimensions.w or o.dimensions[1] or p['display-width' ] or v_params.w or v['demux-w'] or 1280  --(scale OVERRIDE) OR (display) OR ([vo] DIMENSIONS) OR (FALLBACK FOR RAW MP3 IN VIRTUALBOX)
-    H                      = o.dimensions.h or o.dimensions[2] or p['display-height'] or v_params.h or v['demux-h'] or 720
-    format                 = (not v.id or v_params.alpha) and 'yuva420p' or 'yuv420p' --FINAL pixelformat. lavfi-complex CAN'T DETECT WHETHER alpha EVER EXISTED WITHOUT A DELAYED TRIGGER.  overlay FORCES yuva420p, BUT alpha TRIGGERS BUGS IN VARIOUS SCRIPTS.  OLD FFMPEG REQUIRES IT SPECIFIED. IN PRINCIPLE IT SHOULD BE '' INSTEAD OF 'yuva420p'.
-    OFF                    = OFF or not (a.id and vstack)   --~AUDIO  OR  ~vstack
+function file_loaded()       --ALSO @on_toggle & @aid/vid.
+    for  property in ('display-width display-height duration current-tracks/audio current-tracks/video video-params '):gmatch('[^ ]+')  --NUMBERS & TABLES.
+    do p[property]         = mp.get_property_native(property) end
+    a,v,v_params           = p['current-tracks/audio'] or {},p['current-tracks/video'] or {},p['video-params'] or {}  --WELL-DEFINED REFERENCES TO p SUB-TABLES. 
+    W                      = o.dimensions.w  or o.dimensions[1] or p['display-width' ] or v_params.w or v['demux-w'] or 1280  --(scale OVERRIDE) OR (display) OR ([vo] DIMENSIONS) OR (FALLBACK FOR RAW MP3 IN VIRTUALBOX)
+    H                      = o.dimensions.h  or o.dimensions[2] or p['display-height'] or v_params.h or v['demux-h'] or 720
+    format                 = (v_params.alpha or not v.id        or v.image) and 'yuva420p' or 'yuv420p'  --FINAL pixelformat. lavfi-complex CAN'T DETECT WHETHER alpha EVER EXISTED WITHOUT A DELAYED TRIGGER, BUT THE .1s DELAY RARELY CAUSES STUTTER/LAG.  overlay FORCES yuva420p, BUT alpha ON FILM TRIGGERS BUGS IN VARIOUS SCRIPTS.  OLD FFMPEG REQUIRES IT SPECIFIED. IN PRINCIPLE IT SHOULD BE '' INSTEAD OF 'yuva420p'.
+    OFF                    = OFF or not a.id or not vstack  --~AUDIO  OR  ~vstack → FORCE OFF.
     if OFF 
-    then osd_on_toggle,OFF = false,false        --FORCE TOGGLE OFF, IF OFF (WITHOUT osd).  ALSO COVERS OFF CASES. EXAMPLE: JPEG=OFF-albumart.  SOMETIMES A file-loaded CAN BE JUST A TOGGLE OFF.
-         osd_on_toggle     = on_toggle() or o.osd_on_toggle --RETURN PROPER STATE.
+    then osd_on_toggle,OFF = nil,nil  --FORCE TOGGLE OFF, IF OFF (WITHOUT osd).  ALSO COVERS OFF CASES. EXAMPLE: JPEG=OFF-albumart.  SOMETIMES A file-loaded CAN BE JUST A TOGGLE OFF.
+         on_toggle()   
+         osd_on_toggle     = o.osd_on_toggle  --RETURN PROPER VALUE.
          return end          --ON BELOW. 
     ov_w,ov_h              = round(W,4),round(H*o.freqs_clip_h*2,4)  --PRIMARY OVERLAY SCALE (w & h). vstack*2 FACTOR (ALSO VALID IF TOP-ONLY). 
     p.duration             = round(p.duration,.001)  --NEAREST MILLISECOND.
     freqs_fps              = (v.albumart or not v.id) and o.freqs_fps_albumart or o.freqs_fps  --freqs_fps MAY VARY on_vid. SOME ANIMATIONS (LIKE FRACTALS) CAN BE DONE SMOOTHER ON albumart.
-    framerate              = o.freqs_interpolation and o.volume_fps or freqs_fps      --INTERPOLATION: freqs_fps→volume_fps
-    error_ffmpeg           =     error_ffmpeg or  not freqs_rate and not mp.command(('no-osd af pre @%s:lavfi=[asplit[ao],showfreqs=rate=%s,nullsink]'):format(label,freqs_fps))  --~freqs_rate MEANS ONCE ONLY. command RETURNS true IF SUCCESSFUL.  BUT ERROR ON FFMPEG-v4 (.AppImage)  NEW MPV MAY USE OLD FFMPEG COMPONENTS.  BUT ERROR MORE RELIABLE THAN VERSION NUMBERS BECAUSE THEY CAN BE ANYTHING.  THIS LINE ASSUMES AUDIO EXISTS, WHICH IS AN ISSUE FOR CASE 4.
-    remove_filter          = not error_ffmpeg and not freqs_rate  --ONLY IF ABLE TO, ONCE.
-    freqs_rate             =     error_ffmpeg and '' or 'rate='..freqs_fps --FFMPEG-v4 OPERATES showfreqs @25fps (.AppImage & .snap). LATER VERSIONS SUPPORT ANY fps.
-    underlay               =  --3 ON CASES:  1) VIDEO  2) albumart  3) AUDIO-ONLY  
-        v.id and ('[vid%d]'):format(v.id)..(
-            not v.image and ''  --CASE 1: NORMAL VIDEO.  USUALLY [vid1].
-            or ('scale=%d:%d,format=yuva420p,loop=-1:1[vo],[ov]split[ov],trim=end_frame=1,crop=1:1:0:0:1:1,format=yuva420p,scale=%d:%d,setsar[t0],[t0][vo]concat,trim=start_frame=1,'):format(W,H,W,H)  --CASE 2 (albumart) IS THE MOST COMPLICATED. albumart IS LOOPED, WITH ATOMIC TIMESTAMP FRAME [t0] PREPENDED & TRIMMED, TO SUPPORT PROPER seeking.  ALTERNATIVE IS TO INSERT time-pos @seek BUT THAT CAUSED SOME LAG.
-        )
-        or '[ov]split[ov],crop=1:1:0:0:1:1,lutyuv=0:128:128:0,'  --CASE 3  (RAW AUDIO)  underlay USES [ov] (SPECTRUM) INSTEAD OF [vid#], TO BUILD BLANK 1x1 WHO IS SCALED AS THOUGH IT'S A FILM.
-        or ''  --CASE 4 IS MISSING: ~aid + o.sine_mix  IT REQUIRES TOGGLE TOO, FOR sine_mix ON JPEG.  A VIDEO CAN HAVE AUDIO ADDED TO IT, LIKE AUDIO CAN HAVE VIDEO ADDED TO IT.
-    command       =                         ''
-                       ..(remove_filter and 'no-osd af   remove        @%s;' or ''):format(label       )  --remove TEST FILTER.
-                       ..(aid_vid_seek  and 'no-osd seek %s absolute exact;' or ''):format(aid_vid_seek)  --FOR on_aid_vid TRACK CHANGE.  ALTERNATIVE --start OPTION PERSISTS IN A PLAYLIST.
-    command      = command~='' and mp.command(command)
-    aid_vid_seek = nil
-    
+    framerate              = o.freqs_interpolation    and o.volume_fps or freqs_fps      --INTERPOLATION: freqs_fps→volume_fps
+    error_showfreqs        =     error_showfreqs  or  not freqs_rate and not mp.command(('no-osd af pre @%s:lavfi=[asplit[ao],showfreqs=rate=%s,nullsink]'):format(label,freqs_fps))  --~freqs_rate MEANS ONCE ONLY. command RETURNS true IF SUCCESSFUL.  BUT ERROR ON FFMPEG-v4 (.AppImage)  NEW MPV MAY USE OLD FFMPEG COMPONENTS.  BUT ERROR MORE RELIABLE THAN VERSION NUMBERS BECAUSE THEY CAN BE ANYTHING.  THIS LINE ASSUMES AUDIO EXISTS, WHICH IS AN ISSUE FOR CASE 4.
+    remove_filter          = not error_showfreqs  and not freqs_rate  --ONLY IF ABLE TO, ONCE.
+    freqs_rate             =     error_showfreqs  and '' or 'rate='..freqs_fps --FFMPEG-v4 OPERATES showfreqs @25fps (.AppImage & .snap). LATER VERSIONS SUPPORT ANY fps.
+    underlay               =   --3 ON CASES:  1) VIDEO  2) albumart  3) AUDIO-ONLY  
+                             v.id and not v.image and ('[vid%d]'):format(v.id)  --CASE 1: NORMAL VIDEO.  USUALLY [vid1].
+                             or           v.image and ('[vid%d]scale=%d:%d,format=yuva420p,loop=-1:1[vo],[ov]split[ov],trim=end_frame=1,crop=1:1:0:0:1:1,format=yuva420p,scale=%d:%d,setsar[t0],[t0][vo]concat,trim=start_frame=1,'):format(v.id,W,H,W,H)  --CASE 2 (albumart) IS THE MOST COMPLICATED. albumart IS LOOPED, WITH ATOMIC TIMESTAMP FRAME [t0] PREPENDED & TRIMMED, TO SUPPORT PROPER seeking.  ALTERNATIVE IS TO INSERT time-pos @seek BUT THAT CAUSED SOME LAG.
+                             or '[ov]split[ov],crop=1:1:0:0:1:1,lutyuv=0:128:128:0,'  --CASE 3  (RAW AUDIO)  underlay USES [ov] (SPECTRUM) INSTEAD OF [vid#], TO BUILD BLANK 1x1 WHO IS SCALED AS THOUGH IT'S A FILM.
+                             or ''  --CASE 4 IS MISSING: ~aid + o.sine_mix  IT REQUIRES TOGGLE TOO, FOR sine_mix ON JPEG.  A VIDEO CAN HAVE AUDIO ADDED TO IT, LIKE AUDIO CAN HAVE VIDEO ADDED TO IT.
+    command                =                      ''
+                             ..(remove_filter and 'no-osd af remove @%s;'          or ''):format(label        )  --remove TEST FILTER.
+                             ..(p['time-pos'] and 'no-osd seek %s absolute exact;' or ''):format(p['time-pos'])  --INSTA-stop @vid.  ALTERNATIVE --start OPTION PERSISTS IN A PLAYLIST.
+    command                = command~='' and mp.command(command)
+    p['time-pos']          = nil
     mp.set_property('lavfi-complex',graph:format(a.id,freqs_rate,freqs_fps,framerate,underlay,W,H,ov_w,ov_h,p.duration,format))  --graph BYTECODE SHOULD USE DEDICATED COMMAND.
 end 
 mp.register_event('file-loaded',file_loaded)
+mp.register_event('seek'       ,function() command = mp.get_property_number('time-remaining')==0 and mp.command('playlist-next force') end)  --SKIP-10 BUGFIX FOR seek PASSED end-file.  playlist-next FOR MPV PLAYLIST. force FOR SMPLAYER PLAYLIST.  A CONVENIENT WAY TO SKIP NEXT TRACK IN SMPLAYER IS TO SKIP 10 MINUTES, PASSED end-file.  ALSO MUST CORRECT FOR JPEG seeking.
+mp.register_event('end-file'   ,function() mp.set_property('lavfi-complex','') end)  --NEEDED FOR PLAYLIST @vid. UNLOCKS STREAMS.
 
-function on_seek()
-    seek_next = mp.get_property_number('time-remaining')==0 and mp.command('playlist-next force')  --SKIP-10 BUGFIX FOR seek PASSED end-file.  playlist-next FOR MPV PLAYLIST. force FOR SMPLAYER PLAYLIST.  A CONVENIENT WAY TO SKIP NEXT TRACK IN SMPLAYER IS TO SKIP 10 MINUTES, PASSED end-file. 
-    reload    = start_time and file_loaded()  --RESET STARTPTS IF NEEDED (JPEG seeking).  time-remaining=nil IN THAT CASE.
-end 
-mp.register_event('seek',on_seek)  
-
-function end_file()
-    W=nil  --W MEANS LOADED. LOADED SWITCH SHOULD BE CLEARED @end-file.
-    mp.set_property('lavfi-complex','')  --NEEDED FOR MPV PLAYLIST on_aid_vid, BY TRIAL & ERROR. UNLOCKS STREAMS.
-end 
-mp.register_event('end-file',end_file) 
-
-function on_toggle(mute)  --@key_binding, @mute & @file-loaded.  REMOVES THE SPECTRUM FROM THE lavfi-complex.  DOESN'T UNLOCK aid & vid.
-    start_timer = W and mute and not timer:is_enabled() and (timer:resume() or true) --W IS LOADED SWITCH.  resume & return.
-    if start_timer or not W then return end  --return CONDITIONS.
-    OFF         = not OFF  --OFF SWITCH.
-    start_time  = OFF and v.image and round(mp.get_property_number('time-pos'),.001) --SETS STARTPTS FOR JPEG.
-    toggle      = OFF and mp.set_property('lavfi-complex',''                   --OFF
-                  ..(a.id and ('[aid%d]%s[ao]'):format(a.id,o.af_chain) or '') --PREPEND AUDIO. CASE 3 IS NOTHING BUT AUDIO.
-                  ..(a.id and v.id and      ','                         or '') --PREVENTS TRAILS  ',' & ';'  WHICH BUG OUT ON FFMPEG-v5.
-                  ..( 
-                      v.id and not v.image and ('[vid%d]fps=%s,scale=%d:%d,format=%s[vo]'   ):format(v.id,o.fps,W,H,format) --CASE 1: TOGGLE OFF MP4.  fps OPTIONAL, BUT scale & format PREVENT EMBEDDED MPV SNAPPING. 
-                      or           v.image and ('[vid%d]scale=%d:%d,format=%s,loop=-1:1,fps=%s:%s[vo]'):format(v.id,W,H,format,o.fps,start_time)  --CASE 2: image. MORE GENERAL THAN albumart. NO pixelformat TO PRESERVE TRANSPARENCY.  CAN USE ~25% CPU @FULLSCREEN.  NEED start_time FOR --start.  FFmpeg-v5 TAKES A STILL FRAME (DIFFERENT, BUT VALID).  UNFORTUNATELY SNAPS EMBEDDED MPV.
-                      or                        ''  --CASE 3. RAW audio STATIC SPECTRUM.  CAN CHECK MPV LOG FOR OUTPUT IN EACH CASE. 
-                  )) or file_loaded()    --ON
-    if not osd_on_toggle then return end --osd BELOW. 
-    
-    for property in ('mpv-version ffmpeg-version libass-version lavfi-complex af vf video-out-params'):gmatch('[^ ]+')
-    do p[property]=mp.get_property_osd(property) end
-    mp.osd_message((''
-        ..'_VERSION       = %s    \n'  --MONOSPACE FONT PREFERRED.
-        ..'mpv-version    = %s    \n'
-        ..'ffmpeg-version = %s    \n'
-        ..'libass-version = %s  \n\n'
-        ..'lavfi-complex  = \n%s\n\n'
-        ..'Audio filters:   \n%s\n\n'
-        ..'Video filters:   \n%s\n\n'
-        ..'video-out-params=    \n%s'
-    ):format(_VERSION,p['mpv-version'],p['ffmpeg-version'],p['libass-version'],p['lavfi-complex'],p.af,p.vf,p['video-out-params']),o.osd_on_toggle)
+function on_toggle()     --@key_binding, @mute & @file-loaded.  REMOVES THE SPECTRUM FROM THE lavfi-complex.  DOESN'T UNLOCK aid & vid.
+    if not W then return end
+    OFF        = not OFF  --OFF SWITCH.
+    start_time =     OFF and v.image and mp.get_property_number('time-pos')   --FOR JPEG STARTPTS.  THIS NEEDS TO BE CHANGED OVER @seek.
+    toggle     =     OFF and mp.set_property('lavfi-complex',             ''  --OFF
+                 ..(a.id and ('[aid%d]%s[ao]'):format(a.id,o.af_chain) or '') --PREPEND AUDIO.
+                 ..(a.id and v.id and      ','                         or '') --PREVENTS TRAILS  ',' & ';'  WHICH BUG OUT ON FFMPEG-v5.
+                 ..( 
+                     v.id and not v.image and ('[vid%d]fps=%s,scale=%d:%d,format=%s[vo]'             ):format(v.id,o.fps,W,H,format) --CASE 1: TOGGLE OFF MP4.  fps OPTIONAL, BUT scale & format PREVENT EMBEDDED MPV SNAPPING. 
+                     or           v.image and ('[vid%d]scale=%d:%d,format=%s,loop=-1:1,fps=%s:%s[vo]'):format(v.id,W,H,format,o.fps,round(start_time,.001))  --CASE 2: image. MORE GENERAL THAN albumart. NO pixelformat TO PRESERVE TRANSPARENCY.  CAN USE ~25% CPU @FULLSCREEN.  NEED start_time FOR --start.  FFmpeg-v5 TAKES A STILL FRAME (DIFFERENT, BUT VALID).  UNFORTUNATELY SNAPS EMBEDDED MPV.
+                     or                        '' --CASE 3 IS NOTHING BUT AUDIO. RAW audio STATIC SPECTRUM.  CAN CHECK MPV LOG FOR OUTPUT IN EACH CASE. 
+                 ))  or file_loaded()       --OR ON
+    command    = osd_on_toggle and mp.command(('show-text          "'
+                     ..'_VERSION       = %s                       \n'  --Lua 5.1
+                     ..'mpv-version    = ${mpv-version}           \n'  --mpv 0.38.0
+                     ..'ffmpeg-version = ${ffmpeg-version}        \n'
+                     ..'libass-version = ${libass-version}        \n'
+                     ..'platform       = ${platform}              \n'  --windows
+                     ..'current-vo     = ${current-vo}            \n'  --gpu direct3d
+                     ..'lavfi-complex  = \n${lavfi-complex}     \n\n'
+                     ..'Audio filters:   \n${af}                \n\n'
+                     ..'Video filters:   \n${vf}                \n\n'
+                     ..'video-out-params = \n${video-out-params}" %d'  --pixelformat...
+                 ):format(_VERSION,osd_on_toggle))
+    return true
 end
-for key in (o.key_bindings or ''):gmatch('[^ ]+') do mp.add_key_binding(key,'toggle_complex_'..key,on_toggle) end --MAYBE SHOULD BE 'toggle_spectrum_' BECAUSE THIS TOGGLE ONLY TURNS OFF/ON THE SPECTRUM.
-mp.observe_property('mute','bool',on_toggle)
+for key in o.key_bindings:gmatch('[^ ]+') do mp.add_key_binding(key,'toggle_complex_'..key,on_toggle) end --MAYBE SHOULD BE 'toggle_spectrum_' BECAUSE THIS TOGGLE ONLY TURNS OFF/ON THE SPECTRUM.
 
-function on_aid_vid(property,val)   --val=nil OR number.  ONLY GOOD FOR SWITCHING BTWN 1 & 2 (BOTH aid & vid). UNLOCKS lavfi-complex & RESTARTS @time-pos (LIKE A FULLY SLOW TOGGLE).  UNFORTUNATELY SNAPS EMBEDDED MPV (THE VIDEO DIMENSIONS CHANGE AS lavfi-complex UNLOCKS). AN ANTI-SNAP GRAPH IS MORE CODE.
-    if not W or val then return end --W IS LOADED SWITCH.  val IMPLIES 1←→2 SWITCH UNNECESSARY. ~val IS A CONTRADICTION.
-    val =    property=='aid' and (a.id==1 and 2 or 1)  --UNTESTED
-          or property=='vid' and (v.id==1 and 2 or 1)  --  TESTED  (1→2 OR #→1)
-    W,aid_vid_seek = nil,mp.get_property_number('time-pos')  --~W UNOBSERVES vid UNTIL file-loaded.
+function property_handler(property,val)   
+    toggle        =    property=='mute' and W and (timer:is_enabled() and on_toggle() or timer:resume())  --W MEANS LOADED.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).
+    val           = not val and (  --val IMPLIES 1←→2 SWITCH UNNECESSARY. ~val IS A CONTRADICTION.
+                       property=='aid'  and a.id and (a.id==1 and 2 or 1)  --UNTESTED.  (1→2 OR #→1)  ~a.id FOR JPEG.  ONLY GOOD FOR SWITCHING BTWN 1 & 2 (BOTH aid & vid). 
+                    or property=='vid'  and v.id and (v.id==1 and 2 or 1)  --  TESTED  
+                    ) 
+    if not val then return end  --TRACK CHANGE BELOW.  
+    p['time-pos'] = mp.get_property_number('time-pos')  --CAN BE RENAMED back_seek (COMMAND SWITCH).
     
-    mp.command((''
+    mp.command((''  --UNLOCKS lavfi-complex & RESTARTS @time-pos (LIKE A FULLY SLOW TOGGLE).  UNFORTUNATELY SNAPS EMBEDDED MPV (THE VIDEO DIMENSIONS CHANGE AS lavfi-complex UNLOCKS). AN ANTI-SNAP GRAPH IS MORE CODE.
         ..'no-osd set lavfi-complex "";'  --UNLOCK STREAMS.
         ..'no-osd set %s            %d;'  --set vid
-        ..'stop          keep-playlist;'  --INSTA-stop. ALTERNATIVES "video-reload" "rescan-external-files keep-selection" DON'T ACTUALLY FULLY RELOAD PROPERLY IN MPV-v0.38. 
+        ..'stop          keep-playlist;'  --INSTA-stop.  ALTERNATIVES "video-reload" "rescan-external-files keep-selection" DON'T ACTUALLY FULLY RELOAD PROPERLY IN MPV-v0.38. 
         ..'playlist-play-index current;'
     ):format(property,val))
 end 
-for property in ('aid vid'):gmatch('[^ ]+') do mp.observe_property(property,'number',on_aid_vid) end
+for property in ('aid vid mute'):gmatch('[^ ]+')  --NUMBERS & boolean.
+do mp.observe_property(property,'native',property_handler) end
 
 
 ----5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS (& 3 CASES), LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END. ALSO BLURBS ON WEB. CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
