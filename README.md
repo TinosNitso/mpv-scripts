@@ -60,5 +60,7 @@ FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2
 Newest scripts above in `mpv-scripts.zip` aren't properly released yet. Coding style improved but more consistency & testing required for next release.
 - automask: Colors bugfix. Latest release failed at this. But now CPU consumption is higher!  Also the mask fades in at @playback-restart. `o.mask_no_vid` bugfix, & `convolution` can sharpen with variable percentage.
 - main.lua: Proper expansion of `o.title`. Added `o.options_delay`.  Improved codes for all scripts.
-- aspeed: Improved AbDay centering. ' '=64%'　' not 60%.
-- autocrop: Replaced `o.msg_log` with `o.msg_level`. Improved performance on MacOS (old FFmpeg). 
+- aspeed: Improved AbDay centering. ' '=64%'　' not 60%.  Removed `start_file()`.
+- autocrop: Replaced `o.msg_log` with `o.msg_level`. Improved performance on MacOS (old FFmpeg). JPEG seek bugfix (MPV can crash Windows if it doesn't reset STARTPTS).
+- Image (PNG) transparency for autocomplex & automask.
+- `property_handler()` for all scripts, except main.lua.
