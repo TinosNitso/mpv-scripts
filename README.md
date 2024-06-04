@@ -63,4 +63,4 @@ Newest scripts above in `mpv-scripts.zip` aren't properly released yet. Coding s
 - aspeed: Improved AbDay centering. ' '=64%'　' not 60%.  Removed `start_file()`.
 - autocrop: Replaced `o.msg_log` with `o.msg_level`. Improved performance on MacOS (old FFmpeg). JPEG seek bugfix (MPV can crash Windows if it doesn't reset STARTPTS).
 - Image (PNG) transparency for autocomplex & automask.
-- `property_handler()` for all scripts, except main.lua.
+- `property_handler` for all scripts, except main.lua.
