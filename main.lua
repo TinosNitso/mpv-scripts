@@ -9,7 +9,7 @@ options={     --ALL OPTIONAL & CAN BE REMOVED.
         "autocomplex.lua",        --ANIMATED AUDIO SPECTRUM, VOLUME BARS, FPS LIMITER. DUAL lavfi-complex OVERLAY. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE CAN BE LIKE WINGS OF BIRD).  TWITTER INCOMPATIBLE.
         "automask.lua"   ,        --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE. LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE TRIANGLE_SPIN=automask2.lua, 500MB RAM EACH WITH UNIQUE KEYBINDS).
     },
-    ytdl={    --YOUTUBE DOWNLOAD. PLACE ALONGSIDE main.lua.  LIST ALL POSSIBLE EXECUTABLE FILENAMES TO HOOK, IN PREFERRED ORDER. NO ";" ALLOWED.  CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto. 
+    ytdl={              --YOUTUBE DOWNLOAD. PLACE ALONGSIDE main.lua.  LIST ALL POSSIBLE EXECUTABLE FILENAMES TO HOOK, IN PREFERRED ORDER. NO ";" ALLOWED.  CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto. 
         "yt-dlp"      , --.exe
         "yt-dlp_linux", --CASE SENSITIVE.  sudo apt remove yt-dlp  TO REMOVE OLD VERSION.  REMOVE THESE 2 TO SHORTEN HOOK.
         "yt-dlp_macos",
@@ -22,28 +22,28 @@ options={     --ALL OPTIONAL & CAN BE REMOVED.
     },
     title             = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,b1,fs##,bord# = \,BOLD,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
     title_duration    =  5, --DEFAULT=0 SECONDS (NO title).
-    autoloop_duration = 10, --DEFAULT=0 SECONDS (NO AUTO-loop).  MAX duration FOR INFINITE loop.  FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
+    autoloop_duration = 10, --DEFAULT=0 SECONDS (NO AUTO-loop).  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
     options_delay     = .2, --DEFAULT=0 SECONDS (NO DELAY), FROM playback_start. title ON SAME DELAY.
     options_delayed   = {   --@PLAYBACK+DELAY
         '  osd-level 1',    --RETURN osd-level.
         -- '     sid 1','secondary-sid 1',  --UNCOMMENT FOR SUBTITLE TRACK ID OVERRIDE.  auto & 1 NEEDED BEFORE & AFTER lavfi-complex, FOR YOUTUBE.
     },  
 }
-o,p,timers                    = options,{},{}  --p=PROPERTIES  timers TRIGGER ONCE PER file.
+o,p,timers                    = options,{},{}  --p=PROPERTIES,  timers TRIGGER ONCE PER file.
 for   opt,val in pairs({scripts={},ytdl={},options={},title='',title_duration=0,autoloop_duration=0,options_delay=0,options_delayed={},})
 do  o[opt]                    = o[opt] or val end  --ESTABLISH DEFAULT OPTION VALUES.
 for   opt in ('autoloop_duration title_duration options_delay'):gmatch('[^ ]+')  --NUMBERS OR nil.  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON mpv.app (SAME LUA _VERSION, BUILT DIFFERENT).
 do  o[opt]                    = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end  --'1+1'→2  load INVALID ON mpv.app.  ALTERNATIVE loadstring('return {%s}') CAN DO THEM ALL IN 1 table.
-for  property in ('platform scripts script-opts'):gmatch('[^ ]+')  --string & TABLES.
-do p[property]                = mp.get_property_native(property) end
 for _,opt in pairs(o.options)
 do command                    = ('%s no-osd set %s;'):format(command or '',opt) end
 command                       = command and mp.command(command)             --ALL SETS IN 1.  mp=MEDIA-PLAYER
+for  property in ('platform scripts script-opts'):gmatch('[^ ]+')  --string & TABLES.
+do p[property]                = mp.get_property_native(property) end
 directory                     = require 'mp.utils'.split_path(p.scripts[1]) --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  UTILITIES CAN BE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
 for _,script  in pairs(o.scripts) 
 do script_loaded,script_lower = nil,script:lower()
     for _,val in pairs(p.scripts) 
-    do script_loaded          =     script_loaded or  val:lower()==script_lower end         --SEARCH NOT CASE SENSITIVE.  CODE NOT FULLY RIGOROUS.
+    do script_loaded          =     script_loaded or  val:lower()==script_lower end  --SEARCH NOT CASE SENSITIVE.  CODE NOT FULLY RIGOROUS.
     commandv                  = not script_loaded and mp.commandv('load-script',('%s/%s'):format(directory,script)) and table.insert(p.scripts,script) end  --commandv FOR FILENAMES. '/' FOR windows & UNIX.
 mp.set_property_native('scripts',p.scripts)  --DECLARE scripts (OPTIONAL)
 directory,title               = mp.command_native({'expand-path',directory}),mp.create_osd_overlay('ass-events')  --command_native EXPANDS '~/' FOR yt-dlp.  ass-events IS THE ONLY FORMAT. title GETS ITS OWN osd.
@@ -66,7 +66,7 @@ mp.register_event('playback-restart',playback_restart)  --AT LEAST 4 STAGES: loa
 
 function on_pause(_, val)                               --UNPAUSE MAY BE A FIFTH STAGE AFTER playback-restart.
     p.pause        = val
-    playback_start = not p.pause and playback_restarted and playback_restart()
+    playback_start = not p.pause and playback_restarted and playback_restart()  --ACTIVATES ONLY IF STARTING PAUSED. 
 end
 mp.observe_property('pause','bool',on_pause)  
 
@@ -107,7 +107,7 @@ mp.register_event('end-file',end_file)
 ----SAFETY INSPECTION: LUA & JS SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* & change-list SAFE EXCEPT FOR script-opts WHICH MAY hook AN UNSAFE EXECUTABLE INTO A DIFFERENT SCRIPT, LIKE youtube-dl.
 ----MPV  v0.38.0(.7z .exe v3)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)  ALL TESTED.  v0.34 INCOMPATIBLE WITH yt-dlp.
 ----FFMPEG  v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4(mpv.app)  v5.1.2(SMPlayer.app)  v4.4.2(.snap)  v4.2.7(.AppImage)  ALL TESTED.  MPV IS STILL OFTEN BUILT WITH 3 VERSIONS OF FFMPEG: v4, v5 & v6.
-----WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED.
+----PLATFORMS  windows linux darwin.  Lua 5.1 ONLY!  WIN-10 MACOS-11 LINUX-DEBIAN-MATE  ALL TESTED. 
 ----SMPLAYER-v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES). MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 

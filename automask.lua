@@ -1,10 +1,10 @@
 ----AUTO ANIMATED MASK GENERATOR & MERGE SCRIPT, FOR VIDEO & IMAGES, IN MPV & SMPLAYER, WITH SMOOTH DOUBLE-mute TOGGLE (m&m FOR MASK). COMES WITH A DOZEN MORE EXAMPLES INCLUDING MONACLE, BINACLES, VISORS, SPINNING TRIANGLE, & PENTAGON. MOVING POSITIONS, ROTATIONS & ZOOM. 2 MASKS CAN ALSO ANIMATE & FILTER SIMULTANEOUSLY BY RENAMING A COPY OF THE SCRIPT (WORKS ON JPEG TOO). GENERATOR CAN MAKE MANY DIFFERENT MASKS, WITHOUT BEING AS SPECIFIC AS A .GIF (A GIF IS HARDER TO MAKE). USERS CAN COPY/PASTE PLAIN TEXT INSTEAD. A DIFFERENT FORM OF MASK IS A GAME LIKE TETRIS, WHERE THE PIECES ARE LENSES. A GAMING CONSOLE COULD USE VIDEO-IN/OUT TO MASK ON-TOP.
 ----APPLIES FFMPEG FILTERCHAIN TO MASKED REGION, WITH INVERSION & INVISIBILITY. MASK MAY HELP DETECT DEFECTS, LIKE HAIR ON PASSPORT SCAN. FULLY PERIODIC FOR BEST RES & PERFORMANCE. IT'S LIKE OPTOMETRY FOR TELEVISION, BUT SOME MASKS ARE DECORATIVE.
 ----WORKS WELL WITH JPG, PNG, BMP, GIF, MP3 albumart, AVI, 3GP, MP4, WEBM & YOUTUBE IN SMPLAYER & MPV (DRAG & DROP). albumart LEAD FRAME ONLY (WITHOUT lavfi-complex). .TIFF ONLY DISPLAYS 1 LAYER (BUG). NO WEBP OR PDF. LOAD TIME SLOW (LACK OF BACKGROUND BUFFERING). FULLY RE-BUILDS ON EVERY seek. CHANGING vid TRACKS (MP3TAG,MP4TAG) SUPPORTED. NO drawtext IN THIS mask. SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS (A BIBLE HAS NO SCROLLBAR). 
-----LENS lutyuv FORMULA USES A QUARTIC REDUCTION +- gauss CORRECTIONS FOR BLACK-IS-BLACK & WHITE-IS-WHITE. COLORS uv ALSO USE POWER LAW FOR 25% NON-LINEAR SATURATION (IN EXPONENT). A BIG-SCREEN NEGATIVE IS TOO BRIGHT, SO INSTEAD OF HALVING BRIGHTNESS A QUARTIC IS SHARPER.  gauss SIZES ARE APPROX minval*1.5, SHIFTED 1x, BUT TUNING EACH # SEEMS TOO DIFFICULT - TOO MANY VIDEOS TO CHECK. IT'S A STATISTICAL PROBLEM - HIT & MISS. IDEAL LENS ISN'T A TRUE NEGATER.
+----LENS lutyuv FORMULA USES A QUARTIC REDUCTION +- gauss CORRECTIONS FOR BLACK-IS-BLACK & WHITE-IS-WHITE. COLORS uv ALSO USE POWER LAW FOR 15% NON-LINEAR SATURATION (IN EXPONENT). A BIG-SCREEN NEGATIVE IS TOO BRIGHT, SO INSTEAD OF HALVING BRIGHTNESS A QUARTIC IS SHARPER.  gauss SIZES ARE APPROX minval*1.5, SHIFTED 1x, BUT TUNING EACH # SEEMS TOO DIFFICULT - TOO MANY VIDEOS TO CHECK. IT'S A STATISTICAL PROBLEM - HIT & MISS. IDEAL LENS ISN'T A TRUE NEGATER.
 
 options={  --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATIVE).      nil & false → DEFAULT VALUES    (BUT '' MEANS true). 
-    key_bindings        = 'Ctrl+M Ctrl+m M', --CASE SENSITIVE. DON'T WORK INSIDE SMPLAYER.  m=MUTE.  'ALT+M' COULD BE automask2.lua.
+    key_bindings        = 'Ctrl+M Ctrl+m M', --CASE SENSITIVE. DON'T WORK INSIDE SMPLAYER.  m=MUTE.  'ALT+M' COULD BE automask2.lua.  RAPID-TOGGLING MANY MASKS COULD BE LIKE PLAYING AN ORGAN. EACH KEY GETS ITS OWN LUA SCRIPT.
     double_mute_timeout =   .5 ,  --SECONDS FOR DOUBLE-MUTE TOGGLE (m&m DOUBLE-TAP). TRIPLE MUTE DOUBLES BACK.  SCRIPTS CAN BE SIMULTANEOUSLY TOGGLED USING DOUBLE MUTE.  REQUIRES AUDIO IN SMPLAYER.
     toggle_duration     =   .3 ,  --SECONDS FOR mask FADE. REMOVE FOR INSTA-TOGGLE. 
     unpause_on_toggle   =   .12,  --SECONDS TO UNPAUSE FOR TOGGLE, LIKE FRAME-STEPPING.  REMOVE TO DISABLE.  A FEW FRAMES ARE ALREADY DRAWN IN ADVANCE.  drop-buffers MIGHT HELP?
@@ -58,17 +58,18 @@ options={  --ALL OPTIONAL & MAY BE REMOVED (FOR SIMPLE NEGATIVE).      nil & fal
     -- VISOR_HORIZONT , SECTIONS=1,DUAL=nil,crops=nil,geq=nil,scales='iw/1:ih/3',rotations=nil,periods=1,period=2,RES_MULT=.5,negate_enable=nil,x=nil,y='(H+h)*(n/%s-1/2)',zoompan=nil,  --FALLING  @2 SECONDS.  A THIRD TALL, INSTEAD OF A QUARTER.
     -- DIAMOND_EYES   , geq='255*lt(abs(X-W/2)+abs(Y-H/2)\\,W/2)',  --AN IMPROVED graph COULD GIVE EACH SECTION ITS OWN geq.  SPIKED EYES MAY ALSO BE POSSIBLE.
 } 
-o,m,p,timers = options,{},{},{}   --m,p = MEMORY,PROPERTIES  read_options COULD READ IN MONACLE/TRIANGLE SETTINGS FROM ELSEWHERE.
-label        = mp.get_script_name() --label=automask    mp=MEDIA-PLAYER
-
+o,m,p,timers = options,{},{},{}   --m,p = MEMORY,PROPERTIES
 require 'mp.options'.read_options(o)
+
 for   opt,val in pairs({key_bindings='',double_mute_timeout=0,toggle_duration=0,unpause_on_toggle=0,vf_command_t_delay=0,filterchain='lutyuv=negval',fps=30,lead_time=0,period=0,periods=1,periods_skipped=0,RES_MULT=1,RES_SAFETY=1,geq=255,rotations=0,zoompan=1,negate_enable=0,lut0_enable=0,toggle_expr='%s',dimensions={},options={},})
-do  o[opt] = o[opt] or val end  --ESTABLISH DEFAULT OPTION VALUES.
+do  o[opt]  = o[opt] or val end  --ESTABLISH DEFAULT OPTION VALUES.
 for   opt in ('double_mute_timeout unpause_on_toggle periods periods_skipped RES_SAFETY SECTIONS'):gmatch('[^ ]+')  --NUMBERS OR nil.  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON mpv.app (SAME LUA _VERSION, BUILT DIFFERENT).
-do  o[opt] = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end  --'1+1'→2  load INVALID ON mpv.app. 
+do  o[opt]  = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end  --'1+1'→2  load INVALID ON mpv.app. 
 for _,opt in pairs(o.options)
-do command = ('%s no-osd set %s;'):format(command or '',opt) end
-command    = command and mp.command(command)  --ALL SETS IN 1.
+do command  = ('%s no-osd set %s;'):format(command or '',opt) end
+command     = command and mp.command(command)  --ALL SETS IN 1.
+label       = mp.get_script_name() --label=automask    mp=MEDIA-PLAYER
+insta_pause = not mp.get_property_bool('pause') and mp.set_property_bool('pause',1)      --INSTA-pause PREVENTS EMBEDDED MPV FROM SNAPPING.  THIS ONLY EVER OCCURS ONCE.
 
 function round(N,D)  --ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1). N & D MAY ALSO BE STRINGS OR nil.  PRECISION LIMITER.
     D = D or 1
@@ -155,18 +156,15 @@ graph = no_mask and o.filterchain or ( --NULL OVERRIDE FOR SAME-FRAME TOGGLE/FAS
 
 
 function file_loaded()  --ALSO @property_handler
-    mp.command(('set pause yes;no-osd vf append @%s:setsar=sar=1'):format(label))  --INSTA-pause PREVENTS EMBEDDED MPV FROM SNAPPING.  A STARTING FILTER IMPROVES RELIABILITY. IT HELPS HOOK IN JPEG TIMESTAMPS, ETC. (MPV MAKES ASSUMPTION/S IF NO FILTER EXISTS.)
     for  property in ('display-width display-height time-pos current-tracks/video video-params'):gmatch('[^ ]+')  --NUMBERS & TABLES.
     do p[property]         = mp.get_property_native(property) end    --FASTER THAN AWAITING OBSERVATION.
-    v,v_params             = p['current-tracks/video'],p['video-params']
-    if not v and (not v_params or not o.mask_no_vid)  --return CONDITIONS.  lavfi-complex MAY NOT NEED mask.  RAW AUDIO ENDS HERE.
-    then unpause           = not p.pause and mp.set_property_bool('pause',false)
-        return end
-    v,v_params             = v or {},v_params or {}        --WELL-DEFINED TABLES.
+    v                      = p['current-tracks/video']
+    if not v and (not p['video-params'] or not o.mask_no_vid) then return end --return CONDITIONS.  lavfi-complex MAY NOT NEED mask.  RAW AUDIO ENDS HERE.
+    v,p['video-params']    = v or {},p['video-params'] or {}        --WELL-DEFINED TABLES.
     remove_loop,start_time = nil,round(p['time-pos'],.001) --NEAREST MILLISECOND, FOR loop.
-    W                      = o.dimensions.w   or o.dimensions[1] or p['display-width' ] or v_params.w or v['demux-w']  --(scale OVERRIDE) OR (display=WINDOWS & MACOS) OR (LINUX=[vo] DIMENSIONS)  osd-dimensions=WINDOW SIZE, BUT THEN RESIZING THE WINDOW WOULD REPLACE THE WHOLE ANIMATION OR ELSE THE PUPILS WON'T BE PROPER CIRCLES.
-    H                      = o.dimensions.h   or o.dimensions[2] or p['display-height'] or v_params.h or v['demux-h'] 
-    format                 = (v_params.alpha  or not v.id or v.image) and 'yuva420p'    or 'yuv420p' --FINAL pixelformat.  OLD FFMPEG REQUIRES IT SPECIFIED.  overlay FORCES yuva420p, BUT alpha ON FILM TRIGGERS BUG/S IN VARIOUS SCRIPTS.
+    W                      = o.dimensions.w   or o.dimensions[1]  or p['display-width' ] or p['video-params'].w or v['demux-w']  --(scale OVERRIDE) OR (display=WINDOWS & MACOS) OR (LINUX=[vo] DIMENSIONS)  osd-dimensions=WINDOW SIZE, BUT THEN RESIZING THE WINDOW WOULD REPLACE THE WHOLE ANIMATION OR ELSE THE PUPILS WON'T BE PROPER CIRCLES.
+    H                      = o.dimensions.h   or o.dimensions[2]  or p['display-height'] or p['video-params'].h or v['demux-h'] 
+    format                 = (p['video-params'].alpha or not v.id or v.image) and 'yuva420p' or 'yuv420p' --FINAL pixelformat.  OLD FFMPEG REQUIRES IT SPECIFIED.  overlay FORCES yuva420p, BUT alpha ON FILM TRIGGERS BUG/S IN VARIOUS SCRIPTS.
     loop                   = v.image     and p['lavfi-complex']==''            --FUTURE VERSION COULD REPLACE THIS WITH TRIVIAL lavfi-complex.  
     is1frame               = v.albumart  and p['lavfi-complex']=='' or no_mask --albumart & NULL OVERRIDE ARE is1frame RELATIVE TO on_toggle.  MP4TAG & MP3TAG ARE BOTH albumart. SPECIAL & DON'T loop WITHOUT lavfi-complex. CAN COMPARE .JPG TO .MP3. image MAY HAVE VF TIME-STREAM, BUT NOT albumart.  FUTURE VERSION ALSO INSERT fpp=1 FOR is1frame (SPEED-LOAD).
     brightness             = is1frame    and 0 or -1 --FILM STARTS OFF.  IF STARTING OR seeking PAUSED, IT TAKES A FEW FRAMES FOR THE MASK TO APPEAR.
@@ -176,43 +174,33 @@ function file_loaded()  --ALSO @property_handler
     do remove_loop         = remove_loop or vf.label=='loop' end 
     mp.commandv('vf','append',('@%s:lavfi=[%s]'):format(label,graph):format(W,H,format,par,W,H,brightness,format))  --W,H REPEAT FOR scale & zoompan.  format REPEATS FOR EFFICIENCY.  commandv FOR graph BYTECODE.  
     command                =                                                                              ''
-                             ..(remove_loop and 'no-osd vf  remove @loop;'                             or '')
-                             ..(       loop and 'no-osd vf  pre    @loop:lavfi=[loop=-1:1,fps=%s:%s];' or ''):format(o.fps,start_time)  --ALL MASKS CAN REPLACE @loop.
                              ..(vf_toggle   and 'no-osd vf  toggle @%s  ;'                             or ''):format(label)
-                             ..(not p.pause and '       set pause   no  ;'                             or '')  --FORMATTING BEFORE loop PREVENTS EMBEDDED MPV FROM SNAPPING ON PNG (TRANSPARENCY). FORCING yuva420p MAY BE SAFER THAN ARBITRARY RGBA FORMATS.
+                             ..(remove_loop and 'no-osd vf  remove @loop;'                             or '')
+                             ..(       loop and 'no-osd vf  pre    @loop:lavfi=[loop=-1:1,fps=%s:%s];' or ''):format(o.fps,start_time) --ALL MASKS CAN REPLACE @loop.
+                             ..(insta_pause and        'set pause  no'                                 or '')                          --MUSTN'T WAIT FOR playback-restart.
     command                = command~=''    and mp.command(command)
+    insta_pause            = nil
+    return true  --OPTIONAL
 end
-mp.register_event('file-loaded',file_loaded) 
+mp.register_event('file-loaded',file_loaded)  --BEST TRIGGER.
 mp.register_event('seek'       ,function() loop = loop and mp.command(('no-osd vf pre @loop:lavfi=[loop=-1:1,fps=%s:%s]'):format(o.fps,round(mp.get_property_number('time-pos'),.001))) end)  --RESET STARTPTS FOR JPEG seeking.  
-mp.register_event('end-file'   ,function() W=nil end)  --W IS LOADED SWITCH (~W FOR AUDIO).
 
 function playback_restart()   --GRAPH STATE RESETS, UNLESS is1frame.
+    insta_pause  = insta_pause and mp.set_property_bool('pause',false) and nil  --IF ACCIDENTALLY PAUSED. 
     if not W or is1frame then return end 
-    m.brightness=-1 --→Dbrightness.  IRRELEVANT IF is1frame.
+    m.brightness = -1 --→Dbrightness.  IRRELEVANT IF is1frame.
     apply_eq() 
 end 
 mp.register_event('playback-restart',playback_restart)      
 
-function property_handler(property,val)  --RELOADS
-    p[property] = val
-    par         =   property=='osd-par'       and (o.dimensions.par or o.dimensions[3]  or val>0 and val or 1) or par  --0,1 = AUTO,SQUARE  0@load-script, 0@file-loaded, & 1@playback-restart. BUT MAYBE ~1 ON EXPENSIVE SYSTEM.  UNLESS OVERRIDE, ASSUME osd-par=SCREEN PIXEL ASPECT RATIO = ASPECT OF EACH PIXEL ON TV OR PROJECTOR SCREEN.  IF par>1 THEN zoompan SQUISHES THE CIRCLES INTO ELLIPSES, WHICH ARE THEN VIEWED AS CIRCLES. BUT MAYBE THE CIRCLES COULD SHEAR UNDER ROTATION.
-    double_mute =   property=='mute'    and W and (timers.mute:is_enabled()             and on_toggle() or timers.mute:resume())  --W MEANS LOADED.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).
-    reload      = ((property=='vid'           and val     and val~=m.vid or m.par~=par) and W or  --RELOAD @vid# CHANGES, & @par(UNTESTED).  vid=false WHEN LOCKED BY lavfi-complex.  AN MP4TAG IS vid=2 & CAN BE CROPPED/PADDED TOO. MP3 TOO.  EACH vid HAS DIFFERENT DIMENSIONS. UNFORTUNATELY THIS SNAPS EMBEDDED MPV EVERY TIME.  
-                    property=='lavfi-complex' and val~='' and loop or --remove @loop.
-                    property=='video-params'  and val     and not W   --lavfi-complex TAKES TIME TO CONVERT AUDIO INTO VIDEO → mask RELOAD.  nil@load-script.
-                  ) and file_loaded() 
-end 
-
-for property in ('mute pause terminal vid osd-par lavfi-complex video-params'):gmatch('[^ ]+')  --BOOLEANS NUMBERS string table
-do mp.observe_property(property,'native',property_handler) end           --TRIGGER @load-script.
-timers.mute = mp.add_periodic_timer(o.double_mute_timeout,function()end) --mute TIMER TIMES.
-
 function on_toggle()  --@key_bind & @double_mute.
     if not W then return end 
-    OFF             = not OFF
-    insta_unpause   = p.pause       and not is1frame and o.unpause_on_toggle>0
-    return_terminal = insta_unpause and p.terminal  --terminal GAP REQUIRED BY SMPLAYER-v24.5 OR ELSE IT GLITCHES.  THIS COULD ALSO DEFINE THE REPAUSE COMMAND ITSELF.  
+    timers.re_pause:kill()  --START AGAIN IF NEEDED.
     
+    OFF             = not OFF
+    return_terminal = return_terminal or p.terminal       --THESE 3 LINES FOR RAPID-TOGGLING WHEN PAUSED.  terminal-GAP REQUIRED BY SMPLAYER-v24.5 OR ELSE IT GLITCHES.  MPV MAKES TOGGLING MASK AS QUICK AS TOUCH-TYPING.
+    insta_unpause   = (insta_unpause  or p.pause   and o.unpause_on_toggle>0 and not is1frame)  --ALREADY TOGGLING OR IF PAUSED, UNLESS is1frame.  
+                      and (timers.re_pause:resume() or 1) --COULD ALSO BE MADE SILENT.  COULD ALSO CHECK IF NEAR end-file (NOT ENOUGH TIME).  
     command         =                        ''
                       ..(is1frame        and 'no-osd vf  toggle   @%s;' or apply_eq()  and ''):format(label)  --no_mask & albumart  OVERRIDE.  PRESERVES FILTER ORDER (BEFORE PADDING).
                       ..(insta_unpause   and 'no-osd set terminal no;set pause no;' or     '')
@@ -223,21 +211,38 @@ function on_toggle()  --@key_bind & @double_mute.
                                            ..'libass-version = ${libass-version}          \n'
                                            ..'platform       = ${platform}                \n'  --windows  linux  darwin   
                                            ..'current-vo     = ${current-vo}              \n'  --gpu  direct3d  libmpv  shm  
-                                           ..'media-title    = ${media-title}           \n\n'
+                                           ..'media-title    = ${media-title}           \n\n'  --MAYBE CONVENIENT.
                                            ..'lavfi-complex  = \n${lavfi-complex}       \n\n'
                                            ..'Audio filters:   \n${af}                  \n\n'
                                            ..'Video filters:   \n${vf}                  \n\n'
                                            ..'video-out-params = \n${video-out-params}"   %d' or ''
                       ):format(_VERSION,o.osd_on_toggle)
-    command       = command~=''   and mp.command(command)  --UNPAUSE OR show-text.
-    insta_unpause = insta_unpause and timers.pause:resume()
+    command         = command~='' and mp.command(command)  --UNPAUSE OR show-text.
     return true
 end
 for key in o.key_bindings:gmatch('[^ ]+') do mp.add_key_binding(key,'toggle_mask_'..key,on_toggle) end
 
-timers.pause=mp.add_periodic_timer(o.unpause_on_toggle  ,function()mp.command('set pause yes;'..(return_terminal and 'no-osd set terminal yes;' or ''))end)  --pause TIMER PAUSES, BUT MUST ALSO return_terminal.
+function re_pause()
+    mp.command('set pause yes;'..(return_terminal and 'no-osd set terminal yes' or ''))
+    insta_unpause,return_terminal = nil,nil
+end 
+timers.re_pause     = mp.add_periodic_timer(o.unpause_on_toggle,re_pause)  --pause TIMER PAUSES, BUT MUST ALSO return_terminal.
+
+function property_handler(property,val)  --RELOADS
+    p[property] =   val
+    W           =   property~='path'          and W  --~W BTWN FILES. LOADED SWITCH.  path_handler: LIKE start-file & end-file.  
+    par         =   property=='osd-par'       and (o.dimensions.par or o.dimensions[3]  or val>0 and val or 1) or par  --0,1 = AUTO,SQUARE  0@load-script, 0@file-loaded, & 1@playback-restart. BUT MAYBE ~1 ON EXPENSIVE SYSTEM.  UNLESS OVERRIDE, ASSUME osd-par=SCREEN PIXEL ASPECT RATIO = ASPECT OF EACH PIXEL ON TV OR PROJECTOR SCREEN.  IF par>1 THEN zoompan SQUISHES THE CIRCLES INTO ELLIPSES, WHICH ARE THEN VIEWED AS CIRCLES. BUT MAYBE THE CIRCLES COULD SHEAR UNDER ROTATION.
+    double_mute =   property=='mute'    and W and (timers.mute:is_enabled()             and on_toggle() or timers.mute:resume())  --W MEANS LOADED.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).
+    reload      = ((property=='vid'           and val     and val~=m.vid or m.par~=par) and W or  --RELOAD @vid# CHANGES, & @par(UNTESTED).  vid=false WHEN LOCKED BY lavfi-complex.  AN MP4TAG IS vid=2 & CAN BE CROPPED/PADDED TOO. MP3 TOO.  EACH vid HAS DIFFERENT DIMENSIONS. UNFORTUNATELY THIS SNAPS EMBEDDED MPV EVERY TIME.  
+                    property=='lavfi-complex' and val~='' and loop or --remove_loop
+                    property=='video-params'  and val     and not W   --lavfi-complex TAKES TIME TO CONVERT AUDIO INTO VIDEO → mask RELOAD.  nil@load-script.
+                  ) and file_loaded() 
+end 
+for property in ('mute pause terminal vid osd-par path lavfi-complex video-params'):gmatch('[^ ]+')  --BOOLEANS NUMBERS string table
+do mp.observe_property(property,'native',property_handler) end           --TRIGGER @load-script.
+timers.mute = mp.add_periodic_timer(o.double_mute_timeout,function()end) --mute TIMER TIMES.
 for _,timer in pairs(timers) 
-do    timer.oneshot=1
+do    timer.oneshot = 1  --ALL 1SHOT.
       timer:kill() end
 
 function apply_eq(brightness)  --@on_toggle &  @playback-restart.  UTILITY SEPARATE FROM ITS TOGGLE.
@@ -246,7 +251,7 @@ function apply_eq(brightness)  --@on_toggle &  @playback-restart.  UTILITY SEPAR
     if Dbrightness == 0 or is1frame then return end --return CONDITIONS.
     time_pos        = (mp.get_property_number('time-pos') or 0) + o.vf_command_t_delay  --time-pos=nil RARELY FOR JPEG.  BUG: BACKWARDS-seek NEEDS MUCH LARGER VALUE (+.5s).  COULD USE revert-seek*2 TO DETECT BACKWARDS-seek, BUT THAT'S TOO SLOW (+.3s TO REVERT)..
     time_pos        = time_pos-(m.time_pos and clip(toggle_duration-(time_pos-m.time_pos),0,toggle_duration) or 0)  --REMAINING_DURATION_OF_PRIOR_TOGGLE=LAST_DURATION-TIME_SINCE_LAST_TOGGLE  (SUBTRACT REMAINING_DURATION).  THE MOST ELEGANT FORM IS TO clip THE TIME DIFFERENCE TO BTWN 0 & DURATION.  RAPID TOGGLING USES PRIOR DURATION - IT COULD BE 0 WHEN PAUSED.
-    toggle_duration = p.pause              and 0 or o.toggle_duration
+    toggle_duration = insta_unpause        and 0 or o.toggle_duration
     toggle_expr     = toggle_duration==0   and 1 or ('clip((t-%s)/(%s),0,1)'):format(time_pos,toggle_duration)
     toggle_expr     = o.toggle_expr:gsub('%%s',toggle_expr)  --NON-LINEAR clip. 
     target          = target or mp.command(('vf-command %s brightness %d eq'):format(label,m.brightness)) and 'eq' or ''  --NEW MPV OR OLD. v0.37.0+ SUPPORTS TARGETED COMMANDS.  command RETURNS true IF SUCCESSFUL. MORE RELIABLE THAN VERSION NUMBERS BECAUSE THOSE CAN BE ANYTHING.  SCALERS DON'T UNDERSTAND brightness.  
