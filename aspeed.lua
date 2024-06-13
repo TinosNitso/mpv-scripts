@@ -5,8 +5,8 @@
 
 options={  --ALL OPTIONAL & MAY BE REMOVED.
     key_bindings             = 'Ctrl+C Ctrl+c F1',  --CASE SENSITIVE. DON'T WORK INSIDE SMPLAYER.  TOGGLE DOESN'T APPLY TO filterchain.  C IS autocrop.lua, NOT CLOCK.
-    double_mute_timeout      = .5,        --SECONDS FOR DOUBLE-MUTE-TOGGLE (m&m DOUBLE-TAP). TRIPLE MUTE DOUBLES BACK. SCRIPTS CAN BE SIMULTANEOUSLY TOGGLED USING DOUBLE MUTE.  REQUIRES AUDIO IN SMPLAYER.
-    extra_devices_index_list = {},     --TRY {3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. REPETITION IGNORED.  1=auto  2=NORMAL DEVICE OVERLAP (ECHO).  EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS & STREAM.  ARGUABLY INTERNAL SPEAKERS SHOULD ONLY COUNT AS 1 (NO mutelr).
+    double_mute_timeout      = .5,  --SECONDS FOR DOUBLE-MUTE-TOGGLE (m&m DOUBLE-TAP). TRIPLE MUTE DOUBLES BACK. SCRIPTS CAN BE SIMULTANEOUSLY TOGGLED USING DOUBLE MUTE.  REQUIRES AUDIO IN SMPLAYER.
+    extra_devices_index_list = {},  --TRY {3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS. REPETITION IGNORED.  1=auto  2=NORMAL DEVICE OVERLAP (ECHO).  EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS & STREAM.  ARGUABLY INTERNAL SPEAKERS SHOULD ONLY COUNT AS 1 (NO mutelr).
     filterchain              =   'anull,' --CAN REPLACE anull WITH EXTRA FILTERS (vibrato highpass aresample ETC).
                                ..'dynaudnorm=g=5:p=1:m=100', --DEFAULT=...:31:.95:10  DYNAMIC AUDIO NORMALIZER.  ALL MPV INSTANCES USE THIS. GRAPH COMMENTARY HAS MORE DETAILS.
     mpv                      = {  --REMOVE FOR NO CHILDREN OVERRIDE (clocks+filterchain ONLY). LIST ALL POSSIBLE mpv COMMANDS, IN ORDER OF PREFERENCE.  FIRST MATCH SPAWNS ALL CHILDREN.  A COMMAND MAY NOT BE A PATH.  
@@ -30,10 +30,10 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
         -- '   osd-border-color 0/.5',  --DEFAULT=#FF000000  UNCOMMENT FOR TRANSPARENT CLOCK FONT OUTLINE.  RED=1/0/0/1, BLUE=0/0/1/1, ETC
     },
     options_children = {
-        -- '  audio-pitch-correction no            ',  --DEFAULT=yes  UNCOMMENT FOR CHIPMUNK MODE (NO scaletempo# FILTER). WORKS OK WITH SPEECH & COMICAL MUSIC.  REDUCES CPU CONSUMPTION BY AT LEAST 5%=5*1%.  ACTIVE INDEPENDENT TEMPO SCALING FOR SEVERAL SPEAKERS USES CPU.
-        '      vid no ','ytdl-format bestaudio/best',  --REMOVE TO SEE VIDEO FROM ALL CHILDREN. THIS SCRIPT OVERRIDES ANY ATTEMPT TO CONTROL THEM USING GUI.  BUT THE CLOCK IS ONLY ACTIVE FOR CONTROLLER.
-        ' geometry 25%','   priority abovenormal   ',  --geometry IF vid.  priority (DEFAULT=normal) ONLY VALID ON WINDOWS.  
-        'keep-open yes','  msg-level all=error     ','sub no',  --DEFAULTS no,status,auto.  keep-open FOR seek NEAR end-file.  DEFAULT msg-level LOGS ALL speed CHANGES IN SMPLAYER.
+        -- '  audio-pitch-correction no',  --DEFAULT=yes  UNCOMMENT FOR CHIPMUNK MODE (NO scaletempo# FILTER). WORKS OK WITH SPEECH & COMICAL MUSIC.  REDUCES CPU CONSUMPTION BY AT LEAST 5%=5*1%.  ACTIVE INDEPENDENT TEMPO SCALING FOR SEVERAL SPEAKERS USES CPU.
+        '       vo null     ','ytdl-format bestaudio/best',  --REMOVE TO SEE VIDEO_OUTPUT FROM ALL CHILDREN. THIS SCRIPT OVERRIDES ANY ATTEMPT TO CONTROL THEM USING GUI.  BUT THE CLOCK IS ONLY ACTIVE FOR CONTROLLER.
+        '      sub no       ','   geometry 25%           ',  --geometry FOR vo.   
+        'msg-level all=error','   priority abovenormal   ',  --DEFAULTS status,normal.  BY DEFAULT SMPLAYER LOGS ALL speed CHANGES.  priority ONLY VALID ON WINDOWS.  
     },
     clocks       = {  --TOGGLE LINES TO INCLUDE/EXCLUDE VARIOUS STYLES FROM THE LIST.  REPETITION VALID.  CLOCKS REQUIRE VIDEO OR IMAGE.  A SIMPLE LIST OF STRINGS IS EASY TO RE-ORDER & DUPLICATE, LIKE REPEATING YEMEN FOR THE ARABIC.
         duration = 2, --SECONDS, INTEGER.  TIME PER CLOCK STYLE (CYCLE DURATION).  STYLE TICKS OVER EVERY SECOND SECOND. (ON THE DOUBLE.)
@@ -49,7 +49,7 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
         "          NIGERIA             GREEN WHITE  GREEN   231M  [  Sun   Mon   Tue    Wed   Thu   Fri   Sat ]  {\\an3\\c     0\\fs37\\bord0}%a\\N{\\c  8000\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c  8000         } %S",  --BICOLOR TRIBAND.  WHITE ALWAYS IN THE MIDDLE. ORDER ALIGNS WHITES & REDS.  
         " IVORY COAST  CÔTE D'IVOIRE  ORANGE WHITE  GREEN    31M  [  Dim   Lun   Mar    Mer   Jeu   Ven   Sam ]  {\\an3\\c     0\\fs37\\bord0}%a\\N{\\c  82FF\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c449A00         } %S", 
         "     IRELAND  ÉIREANN         GREEN WHITE  ORANGE    7M  [  Domh  Luan  Máir   Céad  Déar  Aoin  Sath]  {\\an3\\c     0\\fs28\\bord0}%a\\N{\\c629B16\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c3E88FF         } %S",  --28~=55/2 FOR LENGTH 4.
-        "       ITALY  ITALIA          GREEN WHITE  RED      59M  [  Dom   Lun   Mar    Mer   Gio   Ven   Sab ]  {\\an3\\c     0\\fs37\\bord0}%a\\N{\\c458C00\\fs55\\bord3}%I{\\cF0F5F4       } %M{\\c2A21CD         } %S",  --MEXICO SIMILAR BUT CHARGED. CATHOLIC, LIKE IRELAND.  Mar=TUESDAY IS THIRD, LIKE MARCH.
+        "       ITALY  ITALIA          GREEN WHITE  RED      59M  [  Dom   Lun   Mar    Mer   Gio   Ven   Sab ]  {\\an3\\c     0\\fs37\\bord0}%a\\N{\\c458C00\\fs55\\bord3}%I{\\cF0F5F4       } %M{\\c2A21CD         } %S",  --MEXICO SIMILAR BUT CHARGED. CATHOLIC, LIKE IRELAND.  Mar=TUESDAY IS THIRD, LIKE MARCH.  Mer ALSO THIRD (Wed).  Domino's ON SUNDAY!
         "          FRANCE               BLUE WHITE  RED      68M  [  Dim   Lun   Mar    Mer   Jeu   Ven   Sam ]  {\\an3\\c     0\\fs37\\bord0}%a\\N{\\cA45500\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c3541EF         } %S",  --"dim." ALSO FRENCH (CAN USE DOTS).
         "        PERU  PERÚ              RED WHITE  RED      34M  [  Dom   Lun   Mar    Mié   Jue   Vie   Sáb ]  {\\an3\\c     0\\fs37\\bord0}%a\\N{\\c2310D9\\fs55\\bord3}%I{\\cFFFFFF       } %M{\\c2310D9         } %S",  --BICOLOR.  CANADA MIGHT BE SIMILAR BUT WITH REDUCED HRS & SECS fs.  
         "     AUSTRIA  ÖSTERREICH        RED◙WHITE ◙RED       9M  [ -So-  -Mo-  -Di-   -Mi-  -Do-  -Fr-  -Sa- ]  {\\an3\\c     0\\fs37\\bord0}%a\\N{\\c2E10C8\\fs55\\bord3}%I{\\cFFFFFF     }\\N%M{\\c2E10C8       }\\N%S",  --BICOLOR.  HORIZONTAL TRIBAND (VERTICAL TAB).  LIKE A TAB FROM THE FLAG.  BLACK Day IS POSITIONED WITH BLACK BAR ON SCREEN-RIGHT.
@@ -70,8 +70,8 @@ options={  --ALL OPTIONAL & MAY BE REMOVED.
         -- "        Wedge                BIG:MEDium:Little tiny                                                  {\\an3                                    \\fs70\\bord2}{}%I{\\fs42          }:%M{\\fs25 }:%S{\\fs15} %a",  --''  RATIO=.6  DIAGONAL PATTERN.  MY FAV.
 ----    STYLE CODES: \\,N,an#,fs#,bord#,c######,fscx## = \,NEWLINE,ALIGNMENT-NUMPAD,FONT-SIZE(p),BORDER(p),COLOR,FONTSCALEX(%)  (DEFAULT an0=an7=TOPLEFT)    MORE: alpha##,b1,shad#,be1,i1,u1,s1,fn*,fr##,fscy## = TRANSPARENCY,BOLD,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEY(%)  EXAMPLES: USE {\\alpha80} FOR TRANSPARENCY. USE {\\fscx130} FOR +30% IN HORIZONTAL.  A TRANSPARENT clock CAN BE BIGGER. be ACTS LIKE SEMI-BOLD.  
     },
-} 
-o,p,m,timers = options,{},{},{}      --p,m = PROPERTIES,MEMORY
+}
+o,p,m,timers = options,{},{},{}      --p,m = PROPERTIES,MEMORY  timers={mute,auto,os_sync,osd}
 require 'mp.options'.read_options(o) --mp=MEDIA_PLAYER  
 
 for  opt,val in pairs({key_bindings='',double_mute_timeout=0,extra_devices_index_list={},filterchain='anull',mpv={},timeouts={},max_random_percent=0,max_speed_ratio=1.2,seek_limit=.5,auto_delay=.5,resync_delay=60,os_sync_delay=.01,mutelr='mutel',options={},options_children={},clocks={},})
@@ -103,6 +103,7 @@ txtpath,script    = ('%s/%s-PID%d.txt'):format(directory,label,txt.pid),('%s/%s.
 mutelr            = p['script-opts'].mutel and 'mutel' or p['script-opts'].muter and 'muter' or o.mutelr      --graph INSERT.
 p['script-opts']  = mp.get_property('script-opts')               --string FOR SPAWNING. MAY BE BLANK.  ytdl_hook POTENTIALLY UNSAFE & ONLY EVER DECLARED ONCE (IN TASK MANAGER).  
 map,key           = 1,'lavfi.astats.Overall.Number_of_samples'   --map SWITCH ONLY CHANGES ONLY FOR CONTROLLER.  key=LOCATION OF astats SAMPLE COUNT.  TESTED @OVER 1 BILLION.
+
 clocks,abdays,LOCALES    = {},{},{}  --INITIALIZE LISTS.  LOCALES IS LIST OF SUB-TABLES, FOR LOTE.  NEVER USED FOR CHILDREN (UNLESS THEY ALSO HAVE A clock).
 for abday in ('Sun Mon Tue Wed Thu Fri Sat'):gmatch('[^ ]+') do table.insert(abdays,abday) end    --DEFAULT=English
 abdays                   = (o.clocks.no_locales or o.clocks.DIRECTIVES_OVERRIDE) and {} or abdays --OVERRIDES.  EVERYTHING PERTAINING TO abdays BECOMES A NULL-OP.
@@ -145,12 +146,11 @@ graph = not o.mpv[1] and o.filterchain or  --OVERRIDE (NO CHILDREN),  OR...
 
 function file_loaded()  --ALSO @seek
     mp.commandv('af','pre',('@%s:lavfi=[%s]'):format(label,graph):format(map))  --graph INSERTION.  commandv FOR BYTECODE.  ALSO VALID FOR JPEG.
-    m.map=map  --ACTS AS LOADED SWITCH & IS CLEARED @end-file.
+    m.map=map  --ACTS AS LOADED SWITCH.
 end
 mp.register_event('file-loaded',file_loaded)  --RISKY TO INSERT GRAPH SOONER ON OLD FFMPEG.
 mp.register_event('seek'       ,file_loaded) 
-mp.register_event('end-file'   ,function() m.map=nil          end)
-mp.register_event('shutdown'   ,function() os.remove(txtpath) end)
+mp.register_event('shutdown'   ,function()os.remove(txtpath)end)
 
 function playback_restart() 
     os_sync()
@@ -187,10 +187,10 @@ function clock_update()  --@os_sync & @on_toggle.
     clock:update()
     return true  --OPTIONAL
 end
-timers.osd=mp.add_periodic_timer(1,clock_update)  --THIS 1 MOSTLY DETERMINES THE EXACT TICK OF THE clock, WHICH IS USUALLY IRRELEVANT TO AUDIO.
-clock_update()  --INSTANT clock.
+timers.osd=mp.add_periodic_timer(1,clock_update) --THIS 1 MOSTLY DETERMINES THE EXACT TICK OF THE clock, WHICH IS USUALLY IRRELEVANT TO AUDIO.
+clock_update()                                   --INSTANT clock.
 
-function os_sync()  --@resync & @playback-restart.  RUN 10ms LOOP UNTIL SYSTEM CLOCK TICKS. os.time() HAS 1s PRECISION WHICH MAY BE IMPROVED TO 10ms, TO SYNC CHILDREN. 
+function os_sync()  --@property_handler & @playback-restart.  RUN 10ms LOOP UNTIL SYSTEM CLOCK TICKS. os.time() HAS 1s PRECISION WHICH MAY BE IMPROVED TO 10ms, TO SYNC CHILDREN. 
     if not time1 then timers.os_sync:resume()  --time1=nil IF NOT ALREADY SYNCING (ACTS AS SWITCH). 
            time1=os.time()  
            return true end  --true OPTIONAL.
@@ -209,7 +209,8 @@ function property_handler(property,val) --ALSO @timers.auto  CONTROLLER WRITES T
     mp_time,time_pos  = mp.get_time(),mp.get_property_number('time-pos') 
     os_time           = mp2os_time and mp2os_time+mp_time or os.time()  --os_time=TIMEFROM1970  PRECISE TO 10ms.
     samples_time      = mp2os_time and property=='af-metadata/'..label and val[key]/p['audio-params/samplerate']  --ALWAYS A HALF INTEGER, OR nil.  TIME=sample#/samplerate  (SOURCE SAMPLERATE)  string[key] BUGS OUT ON 32-BIT.
-    resync            = (property=='frame-drop-count' or     sync_time and os_time-sync_time>o.resync_delay)      and os_sync() --ON_LAG & EVERY ~30s.
+    m.map             = (property~='path' or val) and m.map  --end-file: CLEAR loaded SWITCH.
+    resync            = (property=='frame-drop-count' or sync_time and os_time-sync_time>o.resync_delay)      and os_sync() --ON_LAG & EVERY ~30s.
     initial_time_pos  =  property~='frame-drop-count'     and initial_time_pos or target=='' and samples_time and samples_time>20 and time_pos-samples_time --FOR OLD MPV.  EXCESSIVE LAG RESETS SAMPLE COUNT.  v0.36 CAN'T SYNC WITHOUT astats. BOTH MP4 & MP3 LAGGED BEHIND THE CHILDREN. time-pos, playback-time & audio-pts WORKED WELL OVER 1 MINUTE, BUT NOT 1 HOUR.  SAMPLE COUNT STABILIZES WITHIN 20s (YOUTUBE+lavfi-complex). IT'S ALWAYS A HALF-INTEGER @MEASUREMENT.  initial_time_pos=initial_time_pos_relative_to_samples_time  THIS # STAYS THE SAME FOR THE NEXT 10 HOURS. 
     time_pos          = initial_time_pos and samples_time and initial_time_pos+samples_time  or time_pos or 0  --0 DURING YOUTUBE LOAD TO STOP timeout.  OLD MPV USES NEW METRIC WHOSE CHANGE IS BASED ON astats (METRIC SWITCH). 
     if is_controller  
@@ -286,16 +287,15 @@ timers.mute:kill()
 ----A FUTURE SMOOTH TOGGLE COULD WORK USING volume & amix INSTEAD OF astreamselect (BAD DESIGN CHOICE).
 
 ----SCRIPT WRITTEN TO TRIGGER AN INPUT ERROR ON OLD MPV (<=0.36). MORE RELIABLE THAN VERSION NUMBERS. 
-----autospeed.lua IS A DIFFERENT SCRIPT FOR VIDEO speed, NOT AUDIO. "autotempo.lua" OR "atempo.lua" MIGHT BE GOOD NAMES.
-----FOR SURROUND SOUND THE CONTROLLER COULD SWITCH THROUGH ALL DEVICES INSTANTLY TO ASCERTAIN CHANNEL COUNTS. OR ELSE GRAND-CHILDREN COULD WORK.  THERE'S A RISK OF RIGHT CHANNEL ON BACK-LEFT (R→BL), OR L→BR. CHANNEL GEOMETRY PROBLEM.  CODING FOR A SURROUND SOUND SOURCE SIGNAL IS EVEN MORE COMPLICATED.  
+----THIS IS LIKE 2 SCRIPTS IN 1 (clock.lua). RESYNCING THE EXACT TICK EVERY 30s USES 0% CPU.  BOTH INDIA & CHINA ARE CHARGED.  COLOMBIA MIGHT BE POSSIBLE ({\\fscy200}%I{\\fscy100}).  MISSISSIPPI STATE FLAG IS CHARGED (1 MISSISSIPPI | 2 MISSISSIPPI | 3 MISSISSIPPI).  AN UKRAINIAN/POLISH STYLE MIGHT REQUIRE SPLITTING THE OSD IN HALF (ACROSS), TO COLOR IT.  CONCEIVABLY ADVERTISEMENTS COULD FIT INSIDE EACH DIGIT OF A CLOCK.
+----autospeed.lua IS A DIFFERENT SCRIPT FOR VIDEO speed, NOT AUDIO. "autotempo.lua" OR "atempo.lua" MIGHT BE GOOD NAMES.  
+----FOR SURROUND SOUND THE CONTROLLER COULD SWITCH THROUGH ALL DEVICES INSTANTLY TO COUNT CHANNELS.  THERE'S A RISK OF RIGHT CHANNEL ON BACK-LEFT (R→BL), OR L→BR. CHANNEL GEOMETRY PROBLEM.  CODING FOR A SURROUND SOUND SOURCE SIGNAL IS EVEN MORE COMPLICATED.  
 ----REPLACING txtfile WITH PIPES IS EASY ON WINDOWS, BUT REQUIRES A DEPENDENCY ON LINUX. socat (sc) & netcat (nc) ARE POPULAR (socat MAY MEAN "SOCKET AT - ..."). input-ipc-server (INTER-PROCESS-COMMUNICATION) IS FOR PIPES. THE DEPENDENCY (REQUIRING sudo) MAY BE LIKE A SECURITY THREAT. A FUTURE MPV (OR LUA) VERSION MAY SUPPORT WRITING TO SOCKET (socat BUILT IN, OR lua-socket). WINDOWS CMD CAN ALREADY ECHO TO ANY SOCKET. I WROTE A PIPE VERSION BUT PREFER txtfile.  INSTALLING A DEPENDENCY IS LIKE PUTTING NEW WATER PIPES UNDER A HOUSE, FOR A TOY WATER FOUNTAIN.
+----subprocess CAN ALSO SPAWN CHILDREN, BUT run IS SIMPLER:  mp.command_native({name='subprocess',detach=true,playback_only=false,capture_stdout=false,capture_stderr=false,args={mpv,'--idle','--audio-device='..device,'--script='..script,("--script-opts=%s=1,pid=%d,%s"):format(mutelr,p.pid,p['script-opts'])}})
 
 ----ALTERNATIVE FILTERS:
 ----volume   = volume:...:eval  DEFAULT=1:...:once  POSSIBLE TIMELINE SWITCH FOR CONTROLLER. startt=t@INSERTION.  COULD BE USED FOR SMOOTH TOGGLE.
 ----loudnorm = I:LRA:TP         DEFAULT=-24:7:-2.  INTENSITY TARGET (-70 TO -5) : LOUDNESS RANGE (1 TO 20) : TRUE PEAK (-9 TO 0). LACKS f & g SETTINGS. SOUNDED OFF.  OUTPUTS A BUFFERED STREAM, NOT A RAW AUDIO STREAM.
 ----acompressor       SMPLAYER DEFAULT NORMALIZER.
 ----firequalizer  OLD SMPLAYER DEFAULT NORMALIZER.
-
-----COLOMBIA MISSING: {\\fscy200}HRS{\\fscy100}.  PLAIN & SIMPLE TRI-BANDS & QUAD-BANDS ONLY, SO FAR.  BOTH INDIA & CHINA ARE CHARGED.  MISSISSIPPI STATE FLAG IS CHARGED (1 MISSISSIPPI | 2 MISSISSIPPI | 3 MISSISSIPPI).  A SEPARATE "clock.lua" SCRIPT COULD GET THEM ALL EXACTLY RIGHT. RESYNCING THE EXACT TICK EVERY 30s USES 0% CPU.  AN UKRAINIAN/POLISH STYLE MIGHT REQUIRE SPLITTING THE OSD IN HALF (ACROSS), TO COLOR IT.  CONCEIVABLY ADVERTISEMENTS COULD FIT INSIDE EACH DIGIT OF A CLOCK.
-----command_native subprocess CAN ALSO SPAWN CHILDREN, BUT run IS SIMPLER.  mp.command_native({name='subprocess',detach=true,playback_only=false,capture_stdout=false,capture_stderr=false,args={mpv,'--idle','--audio-device='..device,'--script='..script,("--script-opts=%s=1,pid=%d,%s"):format(mutelr,p.pid,p['script-opts'])}})
 

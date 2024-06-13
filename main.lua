@@ -15,10 +15,11 @@ options={     --ALL OPTIONAL & CAN BE REMOVED.
         "yt-dlp_macos",
     },
     options = { 
-        'ytdl-format bv[height<1080]+ba/best ','   keepaspect no  ',  --FREE aspect IF MPV HAS ITS OWN WINDOW (DEFAULT yes).  bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
-        '        sub auto','sub-border-size 2','sub-font-size 32  ',  --DEFAULTS no ,3,55    (BOOL,PIXELS,PIXELS)  sub=sid=auto BEFORE YOUTUBE LOADS.  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
-        '    osd-bar no  ','osd-border-size 1',' osd-duration 5000',  --DEFAULTS yes,3,1000  (BOOL,PIXELS,ms    )  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd. 
-        '  osd-level 0   ', --PREVENTS UNWANTED MESSAGES.
+        'ytdl-format bv[height<1080]+ba/best    ',  --bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
+        ' keepaspect no  ','keepaspect-window no',  --DEFAULTS yes,yes  IF MPV HAS ITS OWN WINDOW no,no ALLOWS FREE-SIZING.  keepaspect-window
+        '        sub auto','  sub-border-size 2 ','sub-font-size 32  ',  --DEFAULTS no ,3,55    (BOOL,PIXELS,PIXELS)  sub=sid=auto BEFORE YOUTUBE LOADS.  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
+        '    osd-bar no  ','  osd-border-size 1 ',' osd-duration 5000',  --DEFAULTS yes,3,1000  (BOOL,PIXELS,ms    )  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd.
+        '  osd-level 0   ', --PREVENTS UNWANTED MESSAGES @load-script.
     },
     title             = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,b1,fs##,bord# = \,BOLD,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
     title_duration    =  5, --DEFAULT=0 SECONDS (NO title).
@@ -29,7 +30,7 @@ options={     --ALL OPTIONAL & CAN BE REMOVED.
         -- '     sid 1','secondary-sid 1',  --UNCOMMENT FOR SUBTITLE TRACK ID OVERRIDE.  auto & 1 NEEDED BEFORE & AFTER lavfi-complex, FOR YOUTUBE.
     },  
 }
-o,p,timers                    = options,{},{}  --p=PROPERTIES,  timers TRIGGER ONCE PER file.
+o,p,timers                    = options,{},{}  --p=PROPERTIES  timers={playback_start,title} TRIGGER ONCE PER file
 for   opt,val in pairs({scripts={},ytdl={},options={},title='',title_duration=0,autoloop_duration=0,options_delay=0,options_delayed={},})
 do  o[opt]                    = o[opt] or val end  --ESTABLISH DEFAULT OPTION VALUES.
 for   opt in ('autoloop_duration title_duration options_delay'):gmatch('[^ ]+')  --NUMBERS OR nil.  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON mpv.app (SAME LUA _VERSION, BUILT DIFFERENT).
@@ -51,26 +52,27 @@ COLON                         = p.platform=='windows' and ';' or ':'     --FILE 
 opt                           = 'ytdl_hook-ytdl_path'
 for _,ytdl in pairs(o.ytdl) 
 do  ytdl                      = directory..'/'..ytdl   --'/' FOR WINDOWS & UNIX.
-    p['script-opts'][opt]     = p['script-opts'][opt] and p['script-opts'][opt]..COLON..ytdl or ytdl end  --APPEND ALL ytdl WITHOUT REPLACING SMPLAYER'S!
+    p['script-opts'][opt]     = p['script-opts'][opt] and p['script-opts'][opt]..COLON..ytdl or ytdl end  --APPEND ALL ytdl AFTER SMPLAYER'S!
 mp.set_property_native('script-opts',p['script-opts']) --EMPLACE ALL ytdl.
 
-function playback_restart()   --ALSO @on_pause
+function playback_restart()  --ALSO @property_handler
     playback_restarted = true
-    if p.duration or p.pause then return end                --return CONDITIONS AWAIT UNPAUSE, IF PAUSED.  PROCEED ONCE ONLY, PER file.
-    p.duration         = mp.get_property_number('duration') --ACTS AS STARTED SWITCH.  COULD BE RENAMED playback_started.  duration=WIDTH IN TIME (LIKE 'W'). 
-    p.loop             = p.duration>0 and p.duration<o.autoloop_duration and mp.get_property('loop')  --autoloop BEFORE DELAY. 
-    set_loop           = p.loop       and mp.set_property('loop','inf')
+    if playback_started or p.pause then return end  --AWAIT UNPAUSE, IF PAUSED.  PROCEED ONCE ONLY, PER file.
+    playback_started   = true
+    set_loop           = p.duration>0 and p.duration<o.autoloop_duration and mp.set_property('loop','inf')  --autoloop BEFORE DELAY. 
     timers.playback_start:resume()
 end
-mp.register_event('playback-restart',playback_restart)  --AT LEAST 4 STAGES: load-script start-file file-loaded playback-restart  
+mp.register_event('playback-restart',playback_restart) --AT LEAST 4 STAGES: load-script start-file file-loaded playback-restart  
 
-function on_pause(_, val)                               --UNPAUSE MAY BE A FIFTH STAGE AFTER playback-restart.
-    p.pause        = val
-    playback_start = not p.pause and playback_restarted and playback_restart()  --ACTIVATES ONLY IF STARTING PAUSED. 
-end
-mp.observe_property('pause','bool',on_pause)  
+function property_handler(property,val)                
+    p[property] = val
+    restart     = not p.pause and playback_restarted  and playback_restart()  ----UNPAUSE MAY BE A FIFTH STAGE AFTER playback-restart. FULLY ACTIVATES ONLY IF STARTING PAUSED. 
+    if property=='path' and not val then playback_started,playback_restarted = set_loop and mp.set_property('loop','no') and nil end  --end-file: loop=no FOR NEXT FILE.  nil RE-ACTIVATES SWITCHES.
+end 
+for property in ('pause duration loop path'):gmatch('[^ ]+')  --boolean number STRINGS
+do mp.observe_property(property,'native',property_handler) end
 
-function after_playback_start()  --DELAY REQUIRED TO SUPPRESS UNWANTED MESSAGES DUE TO SMPLAYER.
+function after_playback_start()  --@timers.playback_start  DELAY REQUIRED TO SUPPRESS UNWANTED MESSAGES DUE TO SMPLAYER.
     command    = ''
     for _,opt in pairs(o.options_delayed)  --PLAYBACK OVERRIDES.
     do command = ('%s no-osd set %s;'):format(command,opt) end
@@ -84,14 +86,9 @@ end
 timers.playback_start = mp.add_periodic_timer(o.options_delay ,after_playback_start       )
 timers.title          = mp.add_periodic_timer(o.title_duration,function()title:remove()end)
 for _,timer in pairs(timers) 
-do    timer.oneshot   = 1
+do    timer.oneshot   = 1  --ALL 1SHOT.
       timer:kill() end
       
-function end_file()
-    playback_restarted,p.duration = nil,nil              --RE-ACTIVATE FOR NEXT file. 
-    set_loop = p.loop and mp.set_property('loop',p.loop) --RETURN WHATEVER IT WAS, OR ELSE IT PERSISTS.
-end
-mp.register_event('end-file',end_file)
 
 
 ----mpv TERMINAL COMMANDS:
@@ -113,24 +110,25 @@ mp.register_event('end-file',end_file)
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES). MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
 ----THIS SCRIPT HAS NO TOGGLE.  osd_on_toggle FROM autocomplex & automask COULD BE MOVED HERE, BUT WOULD REQUIRE MORE CODE.  INSTEAD OF ALL scripts LAUNCHING EACH OTHER WITH THE SAME CODE, THIS SCRIPT LAUNCHES THEM ALL.  DECLARING local VARIABLES HELPS WITH HIGHLIGHTING & COLORING, BUT UNNECESSARY.
 ----45%CPU+15%GPU USAGE (5%+15% WITHOUT scripts).  ~75%@30FPS (OR 55%@25FPS) WITHOUT GPU DRIVERS, @FULLSCREEN.  ARGUABLY SMOOTHER THAN VLC, DEPENDING ON VIDEO (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER).
-----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS. THEY'RE MOSTLY <300 LINES LONG, WITH MANY PARTS COPY/PASTED FROM EACH OTHER.  ULTIMATELY TV FIRMWARE (1GB) COULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. 
+----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS. THEY'RE <400 LINES LONG, WITH MANY PARTS COPY/PASTED FROM EACH OTHER.  ULTIMATELY TV FIRMWARE (1GB) COULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. 
 ----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, & MULTI-LINE ALT-EDITING. AIDS RAPID GRAPH TESTING.  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK PRODUCES 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
 ----VIRTUALBOX: CAN INCREASE VRAMSize FROM 128→256 MB. MACOS LIMITED TO 3MB VIDEO MEMORY. CAN ALSO SWITCH AROUND Command & Control(^) MODIFIER KEYS.  "C:\Program Files\Oracle\VirtualBox\VBoxManage" setextradata macOS_11 VBoxInternal/Devices/smc/0/Config/DeviceKey ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc
 
 ----BUG: RARE YT VIDEOS SUFFER no-vid. EXAMPLE: https://youtu.be/y9YhWjhhK-U
 ----BUG: NO seeking WITH TWITTER.      EXAMPLE: https://twitter.com/i/status/1696643892253466712  x.com ~STREAMING.  NO lavfi-complex.
+----BUG: SMPlayer.app yuvj444p IMAGE FORMAT NOT WORKING. 
 
 ----flatpak run info.smplayer.SMPlayer  snap run smplayer  FOR flatpak & snap TESTING. 
 ----sudo apt install smplayer flatpak snapd mpv     FOR RELEVANT LINUX INSTALLS. 
 ----flatpak install *.flatpak  snap install *.snap  FOR INSTALLS, AFTER cd TO RELEASES. MUST BE ON INTERNET, EVEN FOR snap.
 ----snap DOESN'T WORK WITH "~/", BLOCKS SYSTEM COMMANDS, & WORKS DIFFERENTLY WITH SOME FILTERS LIKE showfreqs (FFMPEG-v4.4).
 
-----o.options DUMP. FOR DEBUG CAN TRY TOGGLE ALL THESE SIMULTANEOUSLY.
-    -- 'framedrop decoder+vo','video-sync desync','vd-lavc-dropframe nonref','vd-lavc-skipframe nonref',  --frame=none default nonref bidir  CAN SKIP NON-REFERENCE OR B-FRAMES.  video-sync=display-resample & display-tempo GLITCHED. 
-    -- 'profile fast','vo gpu-next','msg-level ffmpeg/demuxer=error','hr-seek always','index recreate','wayland-content-type none','background color','alpha blend',
+----o.options DUMP. FOR DEBUG CAN TRY TOGGLE ALL THESE SIMULTANEOUSLY.  correct-pts IS ESSENTIAL.
+    -- 'correct-pts yes','profile fast','vo gpu-next','msg-level ffmpeg/demuxer=error','hr-seek always','index recreate','wayland-content-type none','background color','alpha blend',
     -- 'video-latency-hacks yes','hr-seek-framedrop yes','access-references yes','ordered-chapters no','stop-playback-on-init-failure yes',
     -- 'osc no','ytdl yes','cache yes','cache-pause no','cache-pause-initial no','initial-audio-sync yes','gapless-audio no','keepaspect-window no','force-seekable yes','vd-queue-enable yes','ad-queue-enable yes',
     -- 'demuxer-lavf-hacks yes','demuxer-lavf-linearize-timestamps no','demuxer-seekable-cache yes','demuxer-cache-wait no','demuxer-donate-buffer yes','demuxer-thread yes',
+    -- 'framedrop decoder+vo','video-sync desync','vd-lavc-dropframe nonref','vd-lavc-skipframe nonref',  --frame=none default nonref bidir  CAN SKIP NON-REFERENCE OR B-FRAMES.  video-sync=display-resample & display-tempo GLITCHED. 
     -- 'audio-delay 0','cache-pause-wait 0','video-timing-offset 1','hr-seek-demuxer-offset 1','audio-buffer 10',
     -- 'demuxer-lavf-analyzeduration 1024','demuxer-termination-timeout 1024','cache-secs 1024','vd-queue-max-secs 1024','ad-queue-max-secs 1024','demuxer-readahead-secs 1024','audio-backward-overlap 1024','video-backward-overlap 1024','audio-backward-batch 1024','video-backward-batch 1024',
     -- 'demuxer-lavf-buffersize 1000000','stream-buffer-size 1000000','audio-reversal-buffer 1000000','video-reversal-buffer 1000000',
