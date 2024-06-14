@@ -15,10 +15,10 @@ options={     --ALL OPTIONAL & CAN BE REMOVED.
         "yt-dlp_macos",
     },
     options = { 
-        'ytdl-format bv[height<1080]+ba/best    ',  --bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
-        ' keepaspect no  ','keepaspect-window no',  --DEFAULTS yes,yes  IF MPV HAS ITS OWN WINDOW no,no ALLOWS FREE-SIZING.  keepaspect-window
-        '        sub auto','  sub-border-size 2 ','sub-font-size 32  ',  --DEFAULTS no ,3,55    (BOOL,PIXELS,PIXELS)  sub=sid=auto BEFORE YOUTUBE LOADS.  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
-        '    osd-bar no  ','  osd-border-size 1 ',' osd-duration 5000',  --DEFAULTS yes,3,1000  (BOOL,PIXELS,ms    )  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd.
+        'ytdl-format bv[height<1080]+ba/best    ','      profile fast', --bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  fast FOR mpv.app  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
+        ' keepaspect no  ','keepaspect-window no',                      --DEFAULTS yes,yes  IF MPV HAS ITS OWN WINDOW no,no ALLOWS FREE-SIZING.  keepaspect-window FOR mpv.app.
+        '        sub auto','  sub-border-size 2 ','sub-font-size 32  ', --DEFAULTS auto,3,55    (BOOL,PIXELS,PIXELS)  sub=sid=auto BEFORE YOUTUBE LOADS.  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
+        '    osd-bar no  ','  osd-border-size 1 ',' osd-duration 5000', --DEFAULTS yes ,3,1000  (BOOL,PIXELS,ms    )  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd.
         '  osd-level 0   ', --PREVENTS UNWANTED MESSAGES @load-script.
     },
     title             = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,b1,fs##,bord# = \,BOLD,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
@@ -42,7 +42,7 @@ for  property in ('platform scripts script-opts'):gmatch('[^ ]+')  --string & TA
 do p[property]                = mp.get_property_native(property) end
 directory                     = require 'mp.utils'.split_path(p.scripts[1]) --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  UTILITIES CAN BE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
 for _,script  in pairs(o.scripts) 
-do script_loaded,script_lower = nil,script:lower()
+do script_lower,script_loaded = script:lower()
     for _,val in pairs(p.scripts) 
     do script_loaded          =     script_loaded or  val:lower()==script_lower end  --SEARCH NOT CASE SENSITIVE.  CODE NOT FULLY RIGOROUS.
     commandv                  = not script_loaded and mp.commandv('load-script',('%s/%s'):format(directory,script)) and table.insert(p.scripts,script) end  --commandv FOR FILENAMES. '/' FOR windows & UNIX.
@@ -90,12 +90,11 @@ do    timer.oneshot   = 1  --ALL 1SHOT.
       timer:kill() end
       
 
-
 ----mpv TERMINAL COMMANDS:
 ----WINDOWS   CMD: MPV\MPV --script=. TEST.MP4      (PLACE scripts & TEST.MP4 INSIDE smplayer.exe FOLDER. THEN COPY/PASTE COMMAND INTO NOTEPAD & SAVE AS TEST.CMD, & DOUBLE-CLICK IT.)
-----LINUX      sh: mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"
-----MACOS mpv.app: /Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"        (DRAG & DROP mpv.app ONTO Applications.)
----- SMPlayer.app: /Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"      
+----LINUX      sh: mpv --script=~/Desktop/mpv-scripts/ "https://YOUTU.BE/5qm8PH4xAss"
+----MACOS mpv.app: /APPLICATIONS/MPV.APP/CONTENTS/MACOS/MPV --script=~/DESKTOP/MPV-SCRIPTS/ "https://YOUTU.BE/5qm8PH4xAss"        (DRAG & DROP mpv.app ONTO Applications.)
+---- SMPlayer.app: /APPLICATIONS/SMPLAYER.APP/CONTENTS/MACOS/MPV --script=~/DESKTOP/MPV-SCRIPTS/ "https://YOUTU.BE/5qm8PH4xAss"      
 
 ----https://sourceforge.net/projects/mpv-player-windows/files/release/               FOR NEW MPV WINDOWS BUILDS. CAN REPLACE mpv.exe IN SMPLAYER.
 ----https://laboratory.stolendata.net/~djinn/mpv_osx/                                FOR NEW MPV MACOS BUILDS.   THESE BUILDS WORK FINE BUT THEIR LUA DOESN'T RECOGNIZE '%g' PATTERN, NOR GREEK (Δ).
@@ -116,7 +115,7 @@ do    timer.oneshot   = 1  --ALL 1SHOT.
 
 ----BUG: RARE YT VIDEOS SUFFER no-vid. EXAMPLE: https://youtu.be/y9YhWjhhK-U
 ----BUG: NO seeking WITH TWITTER.      EXAMPLE: https://twitter.com/i/status/1696643892253466712  x.com ~STREAMING.  NO lavfi-complex.
-----BUG: SMPlayer.app yuvj444p IMAGE FORMAT NOT WORKING. 
+----BUG: SMPlayer.app yuvj444p IMAGE FORMAT NOT WORKING. shm (SHARED MEMORY) vo.
 
 ----flatpak run info.smplayer.SMPlayer  snap run smplayer  FOR flatpak & snap TESTING. 
 ----sudo apt install smplayer flatpak snapd mpv     FOR RELEVANT LINUX INSTALLS. 
@@ -124,10 +123,10 @@ do    timer.oneshot   = 1  --ALL 1SHOT.
 ----snap DOESN'T WORK WITH "~/", BLOCKS SYSTEM COMMANDS, & WORKS DIFFERENTLY WITH SOME FILTERS LIKE showfreqs (FFMPEG-v4.4).
 
 ----o.options DUMP. FOR DEBUG CAN TRY TOGGLE ALL THESE SIMULTANEOUSLY.  correct-pts IS ESSENTIAL.
-    -- 'correct-pts yes','profile fast','vo gpu-next','msg-level ffmpeg/demuxer=error','hr-seek always','index recreate','wayland-content-type none','background color','alpha blend',
+    -- 'correct-pts no','profile fast','vo gpu-next','msg-level all=error','hr-seek always','index recreate','wayland-content-type none','background color','alpha blend',
     -- 'video-latency-hacks yes','hr-seek-framedrop yes','access-references yes','ordered-chapters no','stop-playback-on-init-failure yes',
-    -- 'osc no','ytdl yes','cache yes','cache-pause no','cache-pause-initial no','initial-audio-sync yes','gapless-audio no','keepaspect-window no','force-seekable yes','vd-queue-enable yes','ad-queue-enable yes',
     -- 'demuxer-lavf-hacks yes','demuxer-lavf-linearize-timestamps no','demuxer-seekable-cache yes','demuxer-cache-wait no','demuxer-donate-buffer yes','demuxer-thread yes',
+    -- 'cache yes','cache-pause no','cache-pause-initial no','initial-audio-sync yes','gapless-audio no','force-seekable yes','vd-queue-enable yes','ad-queue-enable yes',
     -- 'framedrop decoder+vo','video-sync desync','vd-lavc-dropframe nonref','vd-lavc-skipframe nonref',  --frame=none default nonref bidir  CAN SKIP NON-REFERENCE OR B-FRAMES.  video-sync=display-resample & display-tempo GLITCHED. 
     -- 'audio-delay 0','cache-pause-wait 0','video-timing-offset 1','hr-seek-demuxer-offset 1','audio-buffer 10',
     -- 'demuxer-lavf-analyzeduration 1024','demuxer-termination-timeout 1024','cache-secs 1024','vd-queue-max-secs 1024','ad-queue-max-secs 1024','demuxer-readahead-secs 1024','audio-backward-overlap 1024','video-backward-overlap 1024','audio-backward-batch 1024','video-backward-batch 1024',
