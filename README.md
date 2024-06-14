@@ -57,12 +57,4 @@ SMPlayer v24.5.0 supported. v23.12 has an annoying pause issue: `no-osd seek 0 r
 FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) supported.
 
 ## Latest Updates
-- autocrop.lua: True aspect smooth-toggle now valid @all window sizes. (In MacOS mpv needs its own window.) When toggled off, maintains true aspect even as you resize or maximize SMPlayer/mpv!  Replaced `o.msg_log` with `o.msg_level`. Improved performance on MacOS (old FFmpeg). Smooth-pad even after seeking backwards!  Replaced `o.options_image` with just `o.detect_min_ratio_image`. Improved JPEG timestamps (insta-loop).
-- automask.lua: Colors bugfix. Latest release failed at this. But now CPU consumption is higher!  Also the mask fades in at @playback-restart. `o.mask_no_vid` bugfix, & `convolution` can sharpen with variable percentage.
-- aspeed.lua: Proper AbDay centering using '‎ ‎' (LRM LRM).  Removed `start_file()`.  Added Chad, Sierra Leone & Gabon (26 clocks). 
-- `property_handler` for all scripts. Improved codes.
-- main.lua: Proper expansion of `o.title`. Added `o.options_delay`. title waits for unpause if starting paused.  
-- Image (PNG) transparency for autocomplex & automask.
-- JPEG seek bugfix for autocrop & automask (reset STARTPTS). Rapid toggling when paused. Can toggle masks & padding as fast as touch typing!
-- osd-font "COURIER NEW" MacOS compatible, unlike Consolas (proprietary)!
-- autocomplex.lua: JPEG seeking bugfix. JPEG in playlist bugfix (next-track ON).
+Bugfix for aspeed.lua excessive CPU usage, which ruined yesterday's release! Children must `set vid no` not just `set vo null`.  Some improved codes.
