@@ -57,4 +57,6 @@ SMPlayer v24.5.0 supported. v23.12 has an annoying pause issue: `no-osd seek 0 r
 FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) supported.
 
 ## Latest Updates
-Bugfix for aspeed.lua excessive CPU usage, which ruined yesterday's release! Children must `set vid no` not just `set vo null`.  Some improved codes.
+Newest scripts in `mpv-scripts.zip` haven't been properly released nor tested on MacOS. Feedback from the first-child is needed in case it has trouble seeking on YouTube (the first-born is special).
+- aspeed.lua: Added `o.speed_expr` & `o.suppress_osd`. Controller sets speed every half-second according to arbitrary formula. Resolves [issue #1](https://github.com/TinosNitso/mpv-scripts/issues/1).
+- autocrop.lua & automask.lua: Triggering bugfix (last release double-loaded sometimes). Improved track-change handling.
