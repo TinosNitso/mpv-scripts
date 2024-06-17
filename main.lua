@@ -15,8 +15,8 @@ options={     --ALL OPTIONAL & CAN BE REMOVED.
         "yt-dlp_macos",
     },
     options = { 
-        'ytdl-format bv[height<1080]+ba/best    ','      profile fast', --bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  fast FOR mpv.app  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
-        ' keepaspect no  ','keepaspect-window no',                      --DEFAULTS yes,yes  IF MPV HAS ITS OWN WINDOW no,no ALLOWS FREE-SIZING.  keepaspect-window FOR mpv.app.
+        'ytdl-format bv[height<1080]+ba/best    ','      profile fast', --bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  fast FOR MPV.APP (COLORED TRANSPARENCY).  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
+        ' keepaspect no  ','keepaspect-window no',                      --DEFAULTS yes,yes  IF MPV HAS ITS OWN WINDOW no,no ALLOWS FREE-SIZING.  keepaspect-window=no FOR MPV.APP.
         '        sub auto','  sub-border-size 2 ','sub-font-size 32  ', --DEFAULTS auto,3,55    (BOOL,PIXELS,PIXELS)  sub=sid=auto BEFORE YOUTUBE LOADS.  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
         '    osd-bar no  ','  osd-border-size 1 ',' osd-duration 5000', --DEFAULTS yes ,3,1000  (BOOL,PIXELS,ms    )  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd.
         '  osd-level 0   ', --PREVENTS UNWANTED MESSAGES @load-script.
@@ -24,7 +24,7 @@ options={     --ALL OPTIONAL & CAN BE REMOVED.
     title             = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,b1,fs##,bord# = \,BOLD,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
     title_duration    =  5, --DEFAULT=0 SECONDS (NO title).
     autoloop_duration = 10, --DEFAULT=0 SECONDS (NO AUTO-loop).  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
-    options_delay     = .2, --DEFAULT=0 SECONDS (NO DELAY), FROM playback_start. title ON SAME DELAY.
+    options_delay     = .3, --DEFAULT=0 SECONDS (NO DELAY), FROM playback_start. title ON SAME DELAY.
     options_delayed   = {   --@PLAYBACK+DELAY
         '  osd-level 1',    --RETURN osd-level.
         -- '     sid 1','secondary-sid 1',  --UNCOMMENT FOR SUBTITLE TRACK ID OVERRIDE.  auto & 1 NEEDED BEFORE & AFTER lavfi-complex, FOR YOUTUBE.
@@ -33,8 +33,8 @@ options={     --ALL OPTIONAL & CAN BE REMOVED.
 o,p,timers                    = options,{},{}  --p=PROPERTIES  timers={playback_start,title} TRIGGER ONCE PER file
 for   opt,val in pairs({scripts={},ytdl={},options={},title='',title_duration=0,autoloop_duration=0,options_delay=0,options_delayed={},})
 do  o[opt]                    = o[opt] or val end  --ESTABLISH DEFAULT OPTION VALUES.
-for   opt in ('autoloop_duration title_duration options_delay'):gmatch('[^ ]+')  --NUMBERS OR nil.  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON mpv.app (SAME LUA _VERSION, BUILT DIFFERENT).
-do  o[opt]                    = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end  --'1+1'→2  load INVALID ON mpv.app.  ALTERNATIVE loadstring('return {%s}') CAN DO THEM ALL IN 1 table.
+for   opt in ('autoloop_duration title_duration options_delay'):gmatch('[^ ]+')  --NUMBERS OR nil.  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON MPV.APP (SAME LUA _VERSION, BUILT DIFFERENT).
+do  o[opt]                    = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end  --'1+1'→2  load INVALID ON MPV.APP.  ALTERNATIVE loadstring('return {%s}') CAN DO THEM ALL IN 1 table.
 for _,opt in pairs(o.options)
 do command                    = ('%s no-osd set %s;'):format(command or '',opt) end
 command                       = command and mp.command(command)             --ALL SETS IN 1.  mp=MEDIA-PLAYER
@@ -88,17 +88,17 @@ timers.title          = mp.add_periodic_timer(o.title_duration,function()title:r
 for _,timer in pairs(timers) 
 do    timer.oneshot   = 1  --ALL 1SHOT.
       timer:kill() end
-      
+
 
 ----mpv TERMINAL COMMANDS:
-----WINDOWS   CMD: MPV\MPV --script=. TEST.MP4      (PLACE scripts & TEST.MP4 INSIDE smplayer.exe FOLDER. THEN COPY/PASTE COMMAND INTO NOTEPAD & SAVE AS TEST.CMD, & DOUBLE-CLICK IT.)
-----LINUX      sh: mpv --script=~/Desktop/mpv-scripts/ "https://YOUTU.BE/5qm8PH4xAss"
-----MACOS mpv.app: /APPLICATIONS/MPV.APP/CONTENTS/MACOS/MPV --script=~/DESKTOP/MPV-SCRIPTS/ "https://YOUTU.BE/5qm8PH4xAss"        (DRAG & DROP mpv.app ONTO Applications.)
----- SMPlayer.app: /APPLICATIONS/SMPLAYER.APP/CONTENTS/MACOS/MPV --script=~/DESKTOP/MPV-SCRIPTS/ "https://YOUTU.BE/5qm8PH4xAss"      
+----WINDOWS   CMD:  MPV\MPV  --script=.  TEST.MP4      (PLACE scripts & TEST.MP4 INSIDE smplayer.exe FOLDER. THEN COPY/PASTE COMMAND INTO NOTEPAD & SAVE AS TEST.CMD, & DOUBLE-CLICK IT.)
+----LINUX      sh:  mpv  --script=~/Desktop/mpv-scripts/  "https://YOUTU.BE/5qm8PH4xAss"
+----MACOS MPV.APP:  /Applications/mpv.app/Contents/MacOS/mpv  --script=~/Desktop/mpv-scripts/  "https://YOUTU.BE/5qm8PH4xAss"        (DRAG & DROP mpv.app ONTO Applications.  MACOS MAYBE CASE-SENSITIVE.)
+---- SMPlayer.app:  /Applications/SMPlayer.app/Contents/MacOS/mpv  --script=~/Desktop/mpv-scripts/  "https://YOUTU.BE/5qm8PH4xAss"      
 
 ----https://sourceforge.net/projects/mpv-player-windows/files/release/               FOR NEW MPV WINDOWS BUILDS. CAN REPLACE mpv.exe IN SMPLAYER.
 ----https://laboratory.stolendata.net/~djinn/mpv_osx/                                FOR NEW MPV MACOS BUILDS.   THESE BUILDS WORK FINE BUT THEIR LUA DOESN'T RECOGNIZE '%g' PATTERN, NOR GREEK (Δ).
-----https://smplayer.info/en/download-linux & https://apt.fruit.je/ubuntu/jammy/mpv/ FOR LINUX SMPLAYER & MPV.   OFFLINE LINUX ALL-IN-ONE: SMPlayer-24.5.0-x86_64.AppImage  BUT IT HAS POOR PERFORMANCE.
+----https://smplayer.info/en/download-linux & https://apt.fruit.je/ubuntu/jammy/mpv/ FOR LINUX SMPLAYER & MPV.   OFFLINE LINUX ALL-IN-ONE: SMPlayer-24.5.0-x86_64.AppImage  BUT IT HAS POOR PERFORMANCE (NO SMOOTH-PAD OR TRANSPARENCY).
 
 ----SAFETY INSPECTION: LUA & JS SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* & change-list SAFE EXCEPT FOR script-opts WHICH MAY hook AN UNSAFE EXECUTABLE INTO A DIFFERENT SCRIPT, LIKE youtube-dl.
 ----MPV  v0.38.0(.7z .exe v3)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)  ALL TESTED.  v0.34 INCOMPATIBLE WITH yt-dlp.
@@ -115,7 +115,7 @@ do    timer.oneshot   = 1  --ALL 1SHOT.
 
 ----BUG: RARE YT VIDEOS SUFFER no-vid. EXAMPLE: https://youtu.be/y9YhWjhhK-U
 ----BUG: NO seeking WITH TWITTER.      EXAMPLE: https://twitter.com/i/status/1696643892253466712  x.com ~STREAMING.  NO lavfi-complex.
-----BUG: SMPlayer.app yuvj444p IMAGE FORMAT NOT WORKING. shm (SHARED MEMORY) vo.
+----BUG: SMPlayer.app yuvj444p IMAGE FORMAT NOT WORKING.  current-vo=shm (SHARED MEMORY) .
 
 ----flatpak run info.smplayer.SMPlayer  snap run smplayer  FOR flatpak & snap TESTING. 
 ----sudo apt install smplayer flatpak snapd mpv     FOR RELEVANT LINUX INSTALLS. 
