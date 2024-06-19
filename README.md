@@ -58,5 +58,8 @@ FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2
 
 ## Latest Updates
 Newest scripts in `mpv-scripts.zip` haven't been properly released nor tested on MacOS. Feedback from the first-child is needed in case it has trouble seeking on YouTube (the first-born is special).
-- aspeed.lua: Added `o.speed_expr` & `o.suppress_osd`. Controller sets speed every half-second according to arbitrary formula. Resolves [issue #1](https://github.com/TinosNitso/mpv-scripts/issues/1).
-- autocrop.lua & automask.lua: Triggering bugfix (last release double-loaded sometimes). Improved track-change handling.
+- aspeed.lua: Added `o.speed_expr`, `o.suppress_osd` & `o.child_params`. Controller sets speed every half-second according to any formula containing any properties. Resolves [issue #1](https://github.com/TinosNitso/mpv-scripts/issues/1).  Improved script-opts, which `aspeed-` prefix. Children `keep-open`. 
+- All options now well-defined & compulsory. `read_options` otherwise causes errors to be logged.
+- autocrop, automask & autocomplex: Renamed `o.dimensions`→`o.video_out_params={w,h,pixelformat}`
+- autocrop.lua & automask.lua: Improved triggering (last release was delayed sometimes). Improved track-change handling.
+- automask.lua: Removed setsar=1 & added `o.osd_par` override.
