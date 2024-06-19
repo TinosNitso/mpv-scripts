@@ -1,17 +1,17 @@
 ----IN SMPLAYER'S ADVANCED mpv PREFERENCES ENTER OPTION  --script=~/Desktop/mpv-scripts/  OR ELSE  --script=.  (FROM WINDOWS smplayer.exe FOLDER).  LINUX snap: --script=/home/user/Desktop/mpv-scripts/    ASSUMING mpv-scripts FOLDER IS PLACED ON Desktop.
 ----https://github.com/yt-dlp/yt-dlp/releases/tag/2024.03.10  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY & REDTUBE ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  twitter.com/i/... WORKS WITHOUT seeking & ~autocomplex.lua.
 
-options={     --ALL OPTIONAL & CAN BE REMOVED.  
-    scripts={ --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE. TYPOS CAN TOGGLE THEM ON & OFF.  REPETITION BLOCKED.  SPACES & '' ALLOWED.
+options     = {
+    scripts = { --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE. TYPOS CAN TOGGLE THEM ON & OFF.  REPETITION BLOCKED.  SPACES & '' ALLOWED.
         "aspeed.lua"     ,        --EXTRA AUDIO DEVICES SPEED RANDOMIZATION, + SYNCED CLOCKS. INSTA-TOGGLE.  CAN CONVERT MONO TO (RANDOMIZED) SURROUND SOUND, FOR 10 HOURS.  MY FAVOURITE OVERALL. CONVERTS SPEAKERS INTO METAPHORICAL MOCKING-BIRDS.
         "autocrop.lua"   ,        --CROPS BLACK BARS BEFORE automask, BUT AFTER autocomplex. SMOOTH-TOGGLES FOR BOTH CROPPING & EXTRA PADDING. ALSO SUPPORTS start & end TIMES (TIME-CROP SUBCLIPS), & CROPS IMAGES & THROUGH TRANSPARENCY.
         -- "autocrop-smooth.lua", --SMOOTH CROPPING & PADDING. NOT UP TO DATE.  DISABLE autocomplex.lua DUE TO EXCESSIVE CPU USAGE. INCOMPATIBLE WITH .AppImage (FFMPEG-v4.2).
         "autocomplex.lua",        --ANIMATED AUDIO SPECTRUM, VOLUME BARS, FPS LIMITER. DUAL lavfi-complex OVERLAY. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE CAN BE LIKE WINGS OF BIRD).  TWITTER INCOMPATIBLE.
         "automask.lua"   ,        --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE. LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE TRIANGLE_SPIN=automask2.lua, 500MB RAM EACH WITH UNIQUE KEYBINDS).
     },
-    ytdl={              --YOUTUBE DOWNLOAD. PLACE ALONGSIDE main.lua.  LIST ALL POSSIBLE EXECUTABLE FILENAMES TO HOOK, IN PREFERRED ORDER. NO ";" ALLOWED.  CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto. 
+    ytdl = {            --YOUTUBE DOWNLOAD. PLACE EXECUTABLE ALONGSIDE main.lua.  LIST ALL POSSIBLE FILENAMES TO HOOK, IN PREFERRED ORDER. NO ";" ALLOWED.  REMOVE UNIX TO SHORTEN script-opts.  CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto. 
         "yt-dlp"      , --.exe
-        "yt-dlp_linux", --CASE SENSITIVE.  sudo apt remove yt-dlp  TO REMOVE OLD VERSION.  REMOVE THESE 2 TO SHORTEN HOOK.
+        "yt-dlp_linux", --CASE SENSITIVE.  sudo apt remove yt-dlp  TO REMOVE OLD VERSION.  
         "yt-dlp_macos",
     },
     options = { 
@@ -22,23 +22,22 @@ options={     --ALL OPTIONAL & CAN BE REMOVED.
         '  osd-level 0   ', --PREVENTS UNWANTED MESSAGES @load-script.
     },
     title             = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,b1,fs##,bord# = \,BOLD,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
-    title_duration    =  5, --DEFAULT=0 SECONDS (NO title).
-    autoloop_duration = 10, --DEFAULT=0 SECONDS (NO AUTO-loop).  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
-    options_delay     = .3, --DEFAULT=0 SECONDS (NO DELAY), FROM playback_start. title ON SAME DELAY.
-    options_delayed   = {   --@PLAYBACK+DELAY
+    title_duration    =  5, --SECONDS.
+    autoloop_duration = 10, --SECONDS.  0 MEANS NO AUTO-loop.  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
+    options_delay     = .3, --SECONDS, FROM playback_start. title ON SAME DELAY.
+    options_delayed   = {   --@playback_started+options_delay
         '  osd-level 1',    --RETURN osd-level.
         -- '     sid 1','secondary-sid 1',  --UNCOMMENT FOR SUBTITLE TRACK ID OVERRIDE.  auto & 1 NEEDED BEFORE & AFTER lavfi-complex, FOR YOUTUBE.
     },  
 }
-o,p,timers                    = options,{},{}  --p=PROPERTIES  timers={playback_start,title} TRIGGER ONCE PER file
-for   opt,val in pairs({scripts={},ytdl={},options={},title='',title_duration=0,autoloop_duration=0,options_delay=0,options_delayed={},})
-do  o[opt]                    = o[opt] or val end  --ESTABLISH DEFAULT OPTION VALUES.
-for   opt in ('autoloop_duration title_duration options_delay'):gmatch('[^ ]+')  --NUMBERS OR nil.  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON MPV.APP (SAME LUA _VERSION, BUILT DIFFERENT).
-do  o[opt]                    = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end  --'1+1'→2  load INVALID ON MPV.APP.  ALTERNATIVE loadstring('return {%s}') CAN DO THEM ALL IN 1 table.
+o,p,timers                    = options,{},{} --p=PROPERTIES  timers={playback_start,title} TRIGGER ONCE PER file
+require 'mp.options'.read_options(o)          --mp=MEDIA_PLAYER  ALL options SHOULD BE WELL-DEFINED.
+for   opt in ('autoloop_duration title_duration options_delay'):gmatch('[^ ]+')                          --gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON MPV.APP (SAME LUA _VERSION, BUILT DIFFERENT).
+do  o[opt]                    = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end --string→number: '1+1'→2  load INVALID ON MPV.APP.  ALTERNATIVE loadstring('return {%s}') CAN DO THEM ALL IN 1 table.
 for _,opt in pairs(o.options)
 do command                    = ('%s no-osd set %s;'):format(command or '',opt) end
-command                       = command and mp.command(command)             --ALL SETS IN 1.  mp=MEDIA-PLAYER
-for  property in ('platform scripts script-opts'):gmatch('[^ ]+')  --string & TABLES.
+command                       = command and mp.command(command)   --ALL SETS IN 1.
+for  property in ('platform scripts script-opts'):gmatch('[^ ]+') --string & TABLES.
 do p[property]                = mp.get_property_native(property) end
 directory                     = require 'mp.utils'.split_path(p.scripts[1]) --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  UTILITIES CAN BE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
 for _,script  in pairs(o.scripts) 
@@ -47,13 +46,13 @@ do script_lower,script_loaded = script:lower()
     do script_loaded          =     script_loaded or  val:lower()==script_lower end  --SEARCH NOT CASE SENSITIVE.  CODE NOT FULLY RIGOROUS.
     commandv                  = not script_loaded and mp.commandv('load-script',('%s/%s'):format(directory,script)) and table.insert(p.scripts,script) end  --commandv FOR FILENAMES. '/' FOR windows & UNIX.
 mp.set_property_native('scripts',p.scripts)  --DECLARE scripts (OPTIONAL)
-directory,title               = mp.command_native({'expand-path',directory}),mp.create_osd_overlay('ass-events')  --command_native EXPANDS '~/' FOR yt-dlp.  ass-events IS THE ONLY FORMAT. title GETS ITS OWN osd.
-COLON                         = p.platform=='windows' and ';' or ':'     --FILE LIST SEPARATOR.  windows=;  UNIX=:
-opt                           = 'ytdl_hook-ytdl_path'
+directory,title               = mp.command_native({'expand-path',directory}),mp.create_osd_overlay('ass-events') --command_native EXPANDS '~/' FOR yt-dlp.  ass-events IS THE ONLY FORMAT. title GETS ITS OWN osd.
+COLON                         = p.platform=='windows' and ';' or ':' --FILE LIST SEPARATOR.  windows=;  UNIX=:
+opt                           = 'ytdl_hook-ytdl_path'                --ABBREV.
 for _,ytdl in pairs(o.ytdl) 
-do  ytdl                      = directory..'/'..ytdl   --'/' FOR WINDOWS & UNIX.
-    p['script-opts'][opt]     = p['script-opts'][opt] and p['script-opts'][opt]..COLON..ytdl or ytdl end  --APPEND ALL ytdl AFTER SMPLAYER'S!
-mp.set_property_native('script-opts',p['script-opts']) --EMPLACE ALL ytdl.
+do  ytdl                      = directory..'/'..ytdl                                                     --'/' FOR WINDOWS & UNIX.
+    p['script-opts'][opt]     = p['script-opts'][opt] and p['script-opts'][opt]..COLON..ytdl or ytdl end --APPEND ALL ytdl AFTER SMPLAYER'S!
+mp.set_property_native('script-opts',p['script-opts'])                                                   --EMPLACE ALL ytdl.
 
 function playback_restart()  --ALSO @property_handler
     playback_restarted = true
