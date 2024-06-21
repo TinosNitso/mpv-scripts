@@ -31,7 +31,7 @@ options     = {
     },  
 }
 o,p,timers                    = options,{},{} --p=PROPERTIES  timers={playback_start,title} TRIGGER ONCE PER file
-require 'mp.options'.read_options(o)          --mp=MEDIA_PLAYER  ALL options SHOULD BE WELL-DEFINED.
+require 'mp.options'.read_options(o)          --mp=MEDIA_PLAYER  ALL options WELL-DEFINED & COMPULSORY.
 for   opt in ('autoloop_duration title_duration options_delay'):gmatch('[^ ]+')                          --gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON MPV.APP (SAME LUA _VERSION, BUILT DIFFERENT).
 do  o[opt]                    = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end --string→number: '1+1'→2  load INVALID ON MPV.APP.  ALTERNATIVE loadstring('return {%s}') CAN DO THEM ALL IN 1 table.
 for _,opt in pairs(o.options)
