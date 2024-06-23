@@ -57,10 +57,9 @@ SMPlayer v24.5.0 supported. v23.12 has an annoying pause issue: `no-osd seek 0 r
 FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) supported.
 
 ## Latest Updates
-Newest scripts in `mpv-scripts.zip` haven't been properly released nor tested on Linux.
-- aspeed.lua: Added `o.speed`, `o.suppress_osd` & `o.child_params`. Controller sets speed every half-second according to any formula containing any properties. Resolves [issue #1](https://github.com/TinosNitso/mpv-scripts/issues/1).  Improved script-opts, with `aspeed-` prefix. Children `keep-open` due to a block on reloading.  Also added feedback from first-child so that left channel doesn't cut out on long YouTube videos (line7=seeking).
-- All options now well-defined & compulsory. `read_options` otherwise causes errors to be logged.
-- Renamed `o.dimensions`→`o.video_out_params={w,h,pixelformat,par=1}` for autocrop.lua. automask similar, but without par (FFmpeg setsar). & `o.video_params` for autocomplex. Only autocrop (with padding) requires setsar.
-- autocrop & automask: Improved triggering (last release had lag). Improved track-change handling. Ideally all numbers are needed @file-loaded - even if they're guesses.
-- Added `o.osd_par_multiplier` to autocrop & automask, if display-par is ever not 1 & not detected.
-- automask.lua: Combined `o.n` & `o.t` into `o.gsubs` (all gsubs are in options).  Removed `o.fps` & setsar=1.
+- aspeed.lua: Added `o.speed`, `o.suppress_osd` & `o.params`. Controller sets speed every half-second according to any formula containing any properties. Resolves [issue #1](https://github.com/TinosNitso/mpv-scripts/issues/1).  Improved script-opts, with `aspeed-` prefix. Children `keep-open` due to a block on reloading.  Also added feedback from first-child so that left channel doesn't cut out when seeking through long YouTube videos (line7=seeking). Now all players (the whole family) read from & can write to txtfile.  Added `apply_astreamselect` function. Improved reliability & codes.
+- All options now well-defined & compulsory. `read_options` otherwise logs errors.
+- Renamed `o.dimensions`→`o.video_out_params={par=1,w,h,pixelformat}` for autocrop.lua. automask similar. `o.video_params` for autocomplex.  But only autocrop (with padding) requires par (FFmpeg setsar).
+- autocrop & automask: Improved triggering (last release had lag). Improved track-change handling. All numbers needed @file-loaded - even if they're guesses.
+- Added `o.osd_par_multiplier` to autocrop & automask, in case display-par is undetected.
+- automask.lua: Combined `o.n` & `o.t` into `o.gsubs` (all gsubs in options). Added `o.gsubs_passes` since gsubs can depend on each other.  Removed `o.fps` & setsar=1.
