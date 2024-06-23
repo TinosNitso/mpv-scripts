@@ -1,5 +1,5 @@
 ----IN SMPLAYER'S ADVANCED mpv PREFERENCES ENTER OPTION  --script=~/Desktop/mpv-scripts/  OR ELSE  --script=.  (FROM WINDOWS smplayer.exe FOLDER).  LINUX snap: --script=/home/user/Desktop/mpv-scripts/    ASSUMING mpv-scripts FOLDER IS PLACED ON Desktop.
-----https://github.com/yt-dlp/yt-dlp/releases/tag/2024.03.10  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY & REDTUBE ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  twitter.com/i/... WORKS WITHOUT seeking & ~autocomplex.lua.
+----https://github.com/yt-dlp/yt-dlp/releases/tag/2024.03.10  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY & REDTUBE ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  twitter.com/i/... WORKS WITHOUT seeking & autocomplex.lua.
 
 options     = {
     scripts = { --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE. TYPOS CAN TOGGLE THEM ON & OFF.  REPETITION BLOCKED.  SPACES & '' ALLOWED.
@@ -7,7 +7,7 @@ options     = {
         "autocrop.lua"   ,        --CROPS BLACK BARS BEFORE automask, BUT AFTER autocomplex. SMOOTH-TOGGLES FOR BOTH CROPPING & EXTRA PADDING. ALSO SUPPORTS start & end TIMES (TIME-CROP SUBCLIPS), & CROPS IMAGES & THROUGH TRANSPARENCY.
         -- "autocrop-smooth.lua", --SMOOTH CROPPING & PADDING. NOT UP TO DATE.  DISABLE autocomplex.lua DUE TO EXCESSIVE CPU USAGE. INCOMPATIBLE WITH .AppImage (FFMPEG-v4.2).
         "autocomplex.lua",        --ANIMATED AUDIO SPECTRUM, VOLUME BARS, FPS LIMITER. DUAL lavfi-complex OVERLAY. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE CAN BE LIKE WINGS OF BIRD).  TWITTER INCOMPATIBLE.
-        "automask.lua"   ,        --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE. LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE TRIANGLE_SPIN=automask2.lua, 500MB RAM EACH WITH UNIQUE KEYBINDS).
+        "automask.lua"   ,        --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE. LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE TRIANGLE_SPIN=automask2.lua, 500MB RAM EACH, +UNIQUE KEYBINDS).
     },
     ytdl = {            --YOUTUBE DOWNLOAD. PLACE EXECUTABLE ALONGSIDE main.lua.  LIST ALL POSSIBLE FILENAMES TO HOOK, IN PREFERRED ORDER. NO ";" ALLOWED.  REMOVE UNIX TO SHORTEN script-opts.  CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto. 
         "yt-dlp"      , --.exe
@@ -17,8 +17,8 @@ options     = {
     options = { 
         'ytdl-format bv[height<1080]+ba/best    ','      profile fast', --bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  fast FOR MPV.APP (COLORED TRANSPARENCY).  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://youtu.be/8cor7ygb1ms?t=60
         ' keepaspect no  ','keepaspect-window no',                      --DEFAULTS yes,yes  IF MPV HAS ITS OWN WINDOW no,no ALLOWS FREE-SIZING.  keepaspect-window=no FOR MPV.APP.
-        '        sub auto','  sub-border-size 2 ','sub-font-size 32  ', --DEFAULTS auto,3,55    (BOOL,PIXELS,PIXELS)  sub=sid=auto BEFORE YOUTUBE LOADS.  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
-        '    osd-bar no  ','  osd-border-size 1 ',' osd-duration 5000', --DEFAULTS yes ,3,1000  (BOOL,PIXELS,ms    )  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd.
+        '        sub auto','  sub-border-size 2 ','sub-font-size 32  ', --DEFAULTS auto,3,55   sub=sid=auto BEFORE YOUTUBE LOADS.  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
+        '    osd-bar no  ','  osd-border-size 1 ',' osd-duration 5000', --DEFAULTS yes ,3,1000 MILLISECONDS SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT. TAKES A FEW SECS TO READ/SCREENSHOT osd.
         '  osd-level 0   ', --PREVENTS UNWANTED MESSAGES @load-script.
     },
     title             = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,b1,fs##,bord# = \,BOLD,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
@@ -26,7 +26,7 @@ options     = {
     autoloop_duration = 10, --SECONDS.  0 MEANS NO AUTO-loop.  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://github.com/zc62/mpv-scripts/blob/master/autoloop.lua
     options_delay     = .3, --SECONDS, FROM playback_start. title ON SAME DELAY.
     options_delayed   = {   --@playback_started+options_delay
-        '  osd-level 1',    --RETURN osd-level.
+        '  osd-level 1',    --RETURN osd-level. DEFAULT=3
         -- '     sid 1','secondary-sid 1',  --UNCOMMENT FOR SUBTITLE TRACK ID OVERRIDE.  auto & 1 NEEDED BEFORE & AFTER lavfi-complex, FOR YOUTUBE.
     },  
 }
@@ -37,7 +37,7 @@ do  o[opt]                    = type(o[opt])=='string' and loadstring('return '.
 for _,opt in pairs(o.options)
 do command                    = ('%s no-osd set %s;'):format(command or '',opt) end
 command                       = command and mp.command(command)   --ALL SETS IN 1.
-for  property in ('platform scripts script-opts'):gmatch('[^ ]+') --string & TABLES.
+for  property in ('platform scripts script-opts'):gmatch('[^ ]+') --string LIST table.
 do p[property]                = mp.get_property_native(property) end
 directory                     = require 'mp.utils'.split_path(p.scripts[1]) --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  UTILITIES CAN BE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
 for _,script  in pairs(o.scripts) 
@@ -61,11 +61,11 @@ function playback_restart()  --ALSO @property_handler
     set_loop           = p.duration>0 and p.duration<o.autoloop_duration and mp.set_property('loop','inf')  --autoloop BEFORE DELAY. 
     timers.playback_start:resume()
 end
-mp.register_event('playback-restart',playback_restart) --AT LEAST 4 STAGES: load-script start-file file-loaded playback-restart  
+mp.register_event('playback-restart',playback_restart)  --AT LEAST 4 STAGES: load-script start-file file-loaded playback-restart  
 
 function property_handler(property,val)                
     p[property] = val
-    restart     = not p.pause and playback_restarted  and playback_restart()  ----UNPAUSE MAY BE A FIFTH STAGE AFTER playback-restart. FULLY ACTIVATES ONLY IF STARTING PAUSED. 
+    restart     = not p.pause and playback_restarted  and playback_restart()  --UNPAUSE MAY BE A FIFTH STAGE AFTER playback-restart.
     if property=='path' and not val then playback_started,playback_restarted = set_loop and mp.set_property('loop','no') and nil end  --end-file: loop=no FOR NEXT FILE.  nil RE-ACTIVATES SWITCHES.
 end 
 for property in ('pause duration loop path'):gmatch('[^ ]+')  --boolean number STRINGS
@@ -107,7 +107,7 @@ do    timer.oneshot   = 1  --ALL 1SHOT.
 
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES). MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
 ----THIS SCRIPT HAS NO TOGGLE.  osd_on_toggle FROM autocomplex & automask COULD BE MOVED HERE, BUT WOULD REQUIRE MORE CODE.  INSTEAD OF ALL scripts LAUNCHING EACH OTHER WITH THE SAME CODE, THIS SCRIPT LAUNCHES THEM ALL.  DECLARING local VARIABLES HELPS WITH HIGHLIGHTING & COLORING, BUT UNNECESSARY.
-----45%CPU+15%GPU USAGE (5%+15% WITHOUT scripts).  ~75%@30FPS (OR 55%@25FPS) WITHOUT GPU DRIVERS, @FULLSCREEN.  ARGUABLY SMOOTHER THAN VLC, DEPENDING ON VIDEO (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER).
+----45%CPU+15%GPU USAGE (5%+15% WITHOUT scripts).  ~75%@30FPS (OR 55%@25FPS) WITHOUT GPU DRIVERS, @FULLSCREEN.  ARGUABLY SMOOTHER THAN VLC, DEPENDING (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER). FREE GPU IMPROVES MULTI-TASKING.
 ----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS. THEY'RE <400 LINES LONG, WITH MANY PARTS COPY/PASTED FROM EACH OTHER.  ULTIMATELY TV FIRMWARE (1GB) COULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. 
 ----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, & MULTI-LINE ALT-EDITING. AIDS RAPID GRAPH TESTING.  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK PRODUCES 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
 ----VIRTUALBOX: CAN INCREASE VRAMSize FROM 128→256 MB. MACOS LIMITED TO 3MB VIDEO MEMORY. CAN ALSO SWITCH AROUND Command & Control(^) MODIFIER KEYS.  "C:\Program Files\Oracle\VirtualBox\VBoxManage" setextradata macOS_11 VBoxInternal/Devices/smc/0/Config/DeviceKey ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc
