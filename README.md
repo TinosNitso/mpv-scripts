@@ -5,7 +5,7 @@
 - [Versions](#versions)
 - [Latest Updates](#latest-updates)
 
-Video clocks, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), animated mask generator ([automask](automask.lua)), dual animated spectrum ([autocomplex](autocomplex.lua)) & insta-cropping ([autocrop](autocrop.lua)) for [SMPlayer](https://smplayer.info) & [MPV](https://mpv.io)! Newest scripts in `mpv-scripts.zip` on GitHub. Toggle them by double-clicking on mute (m&m). Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. The scripts can be opened & options edited in Notepad (no word wrap). [main](main.lua) has much more info, & options for which scripts & subtitles load, & ytdl. I use [Notepad++](https://notepad-plus-plus.org/downloads/) on Windows, & Brackets on MacOS. All free for Windows, Linux & MacOS. 🙂
+Video clocks, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), animated mask generator ([automask](automask.lua)), dual animated spectrum ([autocomplex](autocomplex.lua)) & insta-cropping ([autocrop](autocrop.lua)) for [SMPlayer](https://smplayer.info) & [MPV](https://mpv.io)! Newest scripts in `mpv-scripts.zip` on GitHub. Toggle them by double-clicking on mute (m&m). Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. The scripts can be opened & options edited in Notepad (no word wrap). [main](main.lua) has much more info, & options for which scripts & subtitles load, & ytdl. I use [Notepad++](https://notepad-plus-plus.org/downloads/) on Windows, & Brackets on MacOS.  All free for Windows, Linux, MacOS & Android. But Android has no extra-device randomization, & only sans-serif font (no Armenian), & no ytdl.
 
 To use on YouTube select Open→URL in SMPlayer. Rumble, Odyssey & RedTube also compatible. Double-clicking mute makes the mask smoothly vanish or re-appear, along with black-bars (smooth padding), & the audio switches btwn randomized & normal. aspeed.lua options can activate chipmunk mode on left-channel (in sync), as well as tri-color clocks! autocrop handles transparent input, too, along with a track-list with start & end times. MPV has instant zoom, but unfortunately no scroll bar (to pan around with mouse, etc). Keyboard shortcuts only work if MPV has its own window (SMPlayer preference).
 
@@ -24,10 +24,16 @@ In Linux & MacOS create folder `mpv-scripts` on Desktop. Then extract all script
 
 `~/` means home folder. In Linux try `sudo apt install smplayer` or double-click the `.AppImage`. All scripts also compatible with `.snap` & `.flatpak` releases. 
 
+On Android, go to mpv→SETTINGS→Advanced→Edit mpv.conf, then enter
+
+`script=/sdcard/Android/media/is.xyz.mpv/`
+
+Then copy all scripts in to that exact folder. Then open a test MP4 to give mpv media read-permission. In Android-v11+ media-apps can't run scripts from outside the media folder.  aspeed.lua struggles primarily because Android apps are singletons who can't spawn children.  I recommend cx-file-explorer for exploring & 920 for text-editing.  
+
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
 
 ## Safety Inspection
-Before running scripts it's safer to first check them in Notepad++. Search for & highlight `os.execute` (operating system), `io.popen` (input output process) & `mp.command*` (media player). Safe commands include `expand-path` `frame-step` `seek` `playlist-next` `playlist-play-index` `stop` `quit` `af*` `vf*`, but `load-script` `run` `subprocess*` may be unsafe. `set*` & `change-list` are safe except for `script-opts` which may hook an unsafe executable. To inspect a script check potentially unsafe commands. Ignore all comments (anything following `--`). 
+Before running scripts it's safer to first check them in Notepad++. Search for & highlight `os.execute` (operating system), `io.popen` (input output process) & `mp.command*` (media player). Safe commands include `expand-path` `show-text` `seek` `playlist-next` `playlist-play-index` `stop` `quit` `af*` `vf*`, but `load-script` `run` `subprocess*` may be unsafe. `set*` are safe except for `script-opts` which may hook an unsafe executable. To inspect a script check potentially unsafe commands. Ignore all comments (anything following `--`). 
 
 ## Terminal Commands
 To run in Windows from Command Prompt, create a New Text Document in SMPlayer folder & rename it `TEST.CMD`. Also copy in `TEST.MP4`. Then right-click on `TEST.CMD` & click `Edit`. In Notepad copy/paste:
@@ -48,18 +54,20 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 
 `/Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"` 
 
-## Versions
+## App Versions
 
-MPV v0.38.0, v0.37.0, v0.36.0 & v0.35.1 fully supported. v0.37+ preferred. mpv.exe can be [replaced](https://sourceforge.net/projects/mpv-player-windows/files/release/), within smplayer-portable. New MacOS builds are [here](https://laboratory.stolendata.net/~djinn/mpv_osx/).
+MPV v0.38.0, v0.37.0, v0.36.0 & v0.35.1 fully supported. v0.37+ preferred. mpv.exe can be [replaced](https://sourceforge.net/projects/mpv-player-windows/files/release/), within smplayer-portable. New MacOS builds are [here](https://laboratory.stolendata.net/~djinn/mpv_osx/), & Android is [here](https://github.com/mpv-android/mpv-android/releases).
 
-SMPlayer v24.5.0 supported. v23.12 has an annoying pause issue: `no-osd seek 0 relative exact` accompanying every `set pause yes`. Releases tested include .7z .exe .app .AppImage .flatpak & .snap.
+SMPlayer v24.5.0 supported. v23.12 had an annoying pause/seek issue. Releases tested include .7z .exe .app .AppImage .flatpak & .snap.
 
 FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) supported.
 
+Lua versions v5.1 & v5.2(Android) supported.
+
 ## Latest Updates
-- aspeed.lua: Added `o.speed`, `o.suppress_osd` & `o.params`. Controller sets speed every half-second according to any formula containing any properties. Resolves [issue #1](https://github.com/TinosNitso/mpv-scripts/issues/1).  Improved script-opts, with `aspeed-` prefix. Children `keep-open` due to a block on reloading.  Also added feedback from first-child so that left channel doesn't cut out when seeking through long YouTube videos (line7=seeking). Now all players (the whole family) read from & can write to txtfile.  Added `apply_astreamselect` function. Improved reliability & codes.
-- All options now well-defined & compulsory. `read_options` otherwise logs errors.
-- Renamed `o.dimensions`→`o.video_out_params={par=1,w,h,pixelformat}` for autocrop.lua. automask similar. `o.video_params` for autocomplex.  But only autocrop (with padding) requires par (FFmpeg setsar).
-- autocrop & automask: Improved triggering (last release had lag). Improved track-change handling. All numbers needed @file-loaded - even if they're guesses.
-- Added `o.osd_par_multiplier` to autocrop & automask, in case display-par is undetected.
-- automask.lua: Combined `o.n` & `o.t` into `o.gsubs` (all gsubs in options). Added `o.gsubs_passes` since gsubs can depend on each other.  Removed `o.fps` & setsar=1.
+Above scripts in `mpv-scripts.zip` haven't been properly released yet.  More Android-arm64 testing needed.
+- All scripts working well on Android except for aspeed.lua (no children & no Armenian).  No YouTube & wrong font (sans-serif only).  `o.speed` should still work though.
+- All double_mute toggles valid on Android. Android mutes by unselecting the current-track, which requires slightly more code. 
+- aspeed.lua: Longer Dutch, Arabic, Russian, Lithuanian, Estonian & German AbDays.  Improved feedback reliability.
+- autocrop.lua: Removed `o.msg_level`.
+
