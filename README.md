@@ -28,7 +28,7 @@ On Android, go to mpv→SETTINGS→Advanced→Edit mpv.conf, then enter
 
 `script=/sdcard/Android/media/is.xyz.mpv/`
 
-Then copy all scripts in to that exact folder. Then open a test MP4 to give mpv media read-permission. In Android-v11+ media-apps can't run scripts from outside the media folder.  aspeed.lua struggles primarily because Android apps are singletons who can't spawn children.  I recommend cx-file-explorer for exploring & 920 for text-editing.  
+Then copy all scripts in to that exact folder, in internal main storage. `sdcard` is internal, unlike SD card.  Then use MPV file-picker to open an MP4 to give it media read-permission. In Android-v11+ media-apps can't run scripts from outside a media folder.  aspeed.lua struggles primarily because Android apps are singletons who can't spawn subprocesses.  I recommend [cx-file-explorer](https://cxfileexplorerapk.net/) as explorer, & 920 for text-editing.  
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
 
@@ -65,9 +65,10 @@ FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2
 Lua versions v5.1 & v5.2(Android) supported.
 
 ## Latest Updates
-Above scripts in `mpv-scripts.zip` haven't been properly released yet.  More Android-arm64 testing needed.
-- All scripts working well on Android except for aspeed.lua (no children & no Armenian).  No YouTube & wrong font (sans-serif only).  `o.speed` should still work though.
-- All double_mute toggles valid on Android. Android mutes by unselecting the current-track, which requires slightly more code. 
-- aspeed.lua: Longer Dutch, Arabic, Russian, Lithuanian, Estonian & German AbDays.  Improved feedback reliability.
+Above scripts in `mpv-scripts.zip` haven't been properly released yet.  Every AbDay is special & needs to be double-checked! I want them all valid, like the Arabic.
+- All scripts working well on Android except for aspeed.lua (no children & no Armenian).  No YouTube & wrong font (sans-serif only).  `o.speed` should still work though.  However autocomplex is hopeless on cheap smartphone.
+- Double-mute insta-toggles valid on Android. Android mutes by de-selecting the current-track.  However smartphone takes a triple-tap.  Smartphone may need a better technique in future.
+- aspeed.lua: Removed Irish.  Improved longer AbDays. Many languages lowercase for better symmetry.  Improved feedback reliability.
 - autocrop.lua: Removed `o.msg_level`.
+- autocomplex.lua: Added `o.gsubs_passes` & `o.gsubs`. Formulas now abbreviated.  Improved automask gsubs.  Improved codes.
 
