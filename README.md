@@ -65,10 +65,10 @@ FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2
 Lua versions v5.1 & v5.2(Android) supported.
 
 ## Latest Updates
-Above scripts in `mpv-scripts.zip` haven't been properly released yet.  Every AbDay is special & needs to be double-checked! I want them all valid, like the Arabic.
-- All scripts working well on Android except for aspeed.lua (no children & no Armenian).  No YouTube & wrong font (sans-serif only).  `o.speed` should still work though.  However autocomplex is hopeless on cheap smartphone.
-- Double-mute insta-toggles valid on Android. Android mutes by de-selecting the current-track.  However smartphone takes a triple-tap.  Smartphone may need a better technique in future.
-- aspeed.lua: Removed Irish.  Improved longer AbDays. Many languages lowercase for better symmetry.  Improved feedback reliability.
+- main.lua/aspeed.lua: Added `o.options_android`, for Droid Sans Mono.  All scripts working on Android except for aspeed.lua (no subprocesses & no Armenian). `o.speed` works.  But no YouTube.  However autocomplex.lua is too slow on cheap smartphone.  Automask isn't giving perfect circles without manual override (w,h) option.
+- Double-mute toggles valid on Android, using its audio-track selector button.  Smartphone could also use better mechanism in future.
+- aspeed.lua: Removed Irish.  Longer & improved AbDays. Many lowercase for better symmetry.  Improved child-feedback reliability.  YouTube bugfix where it reloads, without JPEG ever loading (removed reload-blocking).
 - autocrop.lua: Removed `o.msg_level`.
 - autocomplex.lua: Added `o.gsubs_passes` & `o.gsubs`. Formulas now abbreviated.  Improved automask gsubs.  Improved codes.
+- autocomplex/automask: Added `(rand)` gsub for randomization @file-loaded.  Enables unique positioning & mask on each load.
 
