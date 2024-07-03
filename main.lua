@@ -1,6 +1,6 @@
-----WINDOWS  :  --script=.                                  IN SMPLAYER'S ADVANCED mpv PREFERENCES.  PLACE ALL scripts WITH smplayer.exe
-----LINUX/MAC:  --script=~/Desktop/mpv-scripts/             IN SMPLAYER.  PLACE mpv-scripts ON Desktop.  LINUX snap: --script=/home/user/Desktop/mpv-scripts/
-----ANDROID  :    script=/sdcard/Android/media/is.xyz.mpv/  IN ADVANCED SETTING Edit mpv.conf.  PLACE ALL SCRIPTS IN THIS EXACT FOLDER IN INTERNAL MAIN STORAGE. OTHER FOLDERS DON'T WORK IN ANDROID-v11+.  ENABLE MPV MEDIA-ACCESS USING ITS FILE-PICKER.  'sdcard'~='SD card'(EXTERNAL)  CAN ALSO INSTALL cx-file-explorer & 920 (.APK).  920 CAN HANDLE WORDWRAP & WHITESPACE.
+----WINDOWS    :  --script=.                                  IN SMPLAYER'S ADVANCED mpv PREFERENCES.  PLACE ALL scripts WITH smplayer.exe
+----LINUX/MACOS:  --script=~/Desktop/mpv-scripts/             IN SMPLAYER.  PLACE mpv-scripts ON Desktop.  LINUX snap: --script=/home/user/Desktop/mpv-scripts/
+----ANDROID    :    script=/sdcard/Android/media/is.xyz.mpv/  IN ADVANCED SETTING Edit mpv.conf.  PLACE ALL SCRIPTS IN THIS EXACT FOLDER IN INTERNAL MAIN STORAGE. OTHER FOLDERS DON'T WORK IN ANDROID-v11+.  ENABLE MPV MEDIA-ACCESS USING ITS FILE-PICKER.  'sdcard'~='SD card'(EXTERNAL)  CAN ALSO INSTALL cx-file-explorer & 920 (.APK).  920 CAN HANDLE WORDWRAP & WHITESPACE.
 ----https://GITHUB.COM/yt-dlp/yt-dlp/releases/tag/2024.03.10  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY & REDTUBE ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  twitter.com/i/... WORKS WITHOUT seeking & autocomplex.lua.
 
 options     = {                
@@ -22,11 +22,11 @@ options     = {
         'osd-bar     no  ','osd-border-size 1','osd-duration  5000','osd-font "COURIER NEW"','osd-bold yes',  --DEFAULTS yes,3,1000,sans-serif,no   MILLISECONDS SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT.  1000 MILLISECONDS ISN'T ENOUGH TO READ/SCREENSHOT osd.  COURIER NEW NEEDS bold (FANCY).  CONSOLAS IS PROPRIETARY & INVALID ON MACOS.
         'osd-level   0   ',  --PREVENTS UNWANTED MESSAGES @load-script.
     },
-    title             = '{\\fs40\\bord2}${media-title}' , --REMOVE FOR NO title.  STYLE OVERRIDES: \\,b1,fs##,bord# = \,BOLD,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
+    title             = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,b1,fs##,bord# = \,BOLD,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
     title_duration    =  5 , --SECONDS.
     autoloop_duration = 10 , --SECONDS.  0 MEANS NO AUTO-loop.  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://GITHUB.COM/zc62/mpv-scripts/blob/master/autoloop.lua
     options_delay     = .3 , --SECONDS, FROM playback_start. title ON SAME DELAY.
-    options_delayed   = {    --@playback_started+options_delay
+    options_delayed   = {    --@playback_started+options_delay, FOR EVERY FILE.
         'osd-level 1',       --RETURN osd-level. DEFAULT=3
         -- 'sid    1','secondary-sid 1',  --UNCOMMENT FOR SUBTITLE TRACK ID OVERRIDE.  auto & 1 NEEDED BEFORE & AFTER lavfi-complex, FOR YOUTUBE.
     },
@@ -34,11 +34,12 @@ options     = {
         'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',  --sub-fonts-dir & sub-font ALSO.
     },
 }
-o,p,timers = options,{},{} --TABLES.  p=PROPERTIES  timers={playback_start,title} TRIGGER ONCE PER file
-require 'mp.options'.read_options(o)  --mp=MEDIA_PLAYER  ALL options WELL-DEFINED & COMPULSORY.
+o,p,timers = options,{},{}           --TABLES.  p=PROPERTIES  timers={playback_start,title} TRIGGER ONCE PER file
+require 'mp.options'.read_options(o) --mp=MEDIA_PLAYER  ALL options WELL-DEFINED & COMPULSORY.
 
+gp                            = mp.get_property_native
 for   property in ('platform scripts script-opts'):gmatch('[^ ]+') --string LIST table.  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON MPV.APP (SAME LUA _VERSION, BUILT DIFFERENT).
-do  p[property]               = mp.get_property_native(property) end
+do  p[property]               = gp(property) end
 for   opt in ('title_duration autoloop_duration options_delay'):gmatch('[^ ]+')
 do  o[opt]                    = type(o[opt])=='string' and loadstring('return '..o[opt])() or o[opt] end  --string→number: '1+1'→2  load INVALID ON MPV.APP.  ALTERNATIVE loadstring('return {%s}') CAN DO THEM ALL IN 1 table.
 for _,opt in pairs(o.options)
@@ -61,28 +62,27 @@ do  ytdl                      = directory..'/'..ytdl                            
     p['script-opts'][opt]     = p['script-opts'][opt] and p['script-opts'][opt]..COLON..ytdl or ytdl end --APPEND ALL ytdl AFTER SMPLAYER'S!
 mp.set_property_native('script-opts',p['script-opts'])                                                   --EMPLACE ALL ytdl.
 
-function playback_restart()  --ALSO @property_handler
+function playback_restart()  --ALSO @on_pause
     playback_restarted = true
-    if playback_started or p.pause then return end --AWAIT UNPAUSE, IF PAUSED.  PROCEED ONCE ONLY, PER file.
-    playback_started   = true                      --ONLY AFTER UNPAUSE.
-    set_loop           = p.duration>0 and p.duration<o.autoloop_duration and mp.set_property('loop','inf')  --autoloop BEFORE DELAY. 
+    if playback_started or p.pause then return end    --AWAIT UNPAUSE, IF PAUSED.  PROCEED ONCE ONLY, PER file.
+    playback_started,p.duration = true,gp('duration') --ONLY AFTER UNPAUSE.
+    set_loop = p.duration>0 and p.duration<o.autoloop_duration and mp.set_property('loop','inf')  --autoloop BEFORE DELAY.
     timers.playback_start:resume()
 end
+mp.register_event('end-file',function() playback_restarted,playback_started = set_loop and mp.set_property('loop','no' ) and nil end) --CLEAR SWITCHES FOR NEXT FILE.  UNDO-set_loop.
 mp.register_event('playback-restart',playback_restart)  --AT LEAST 4 STAGES: load-script start-file file-loaded playback-restart  
 
-function property_handler(property,val)                
-    p[property] = val
-    restart     = not p.pause and playback_restarted and playback_restart()  --UNPAUSE MAY BE A FIFTH STAGE AFTER playback-restart.
-    if property=='path' and not val then playback_started,playback_restarted = set_loop and mp.set_property('loop','no') and nil end  --end-file: loop=no FOR NEXT FILE.  nil RE-ACTIVATES SWITCHES.
+function on_pause(_,paused)                
+    p.pause =       paused
+    restart =   not paused and playback_restarted and playback_restart()  --UNPAUSE MAY BE A FIFTH STAGE AFTER playback-restart.
 end 
-for property in ('pause duration loop path'):gmatch('[^ ]+')  --boolean number STRINGS
-do mp.observe_property(property,'native',property_handler) end
+mp.observe_property('pause','bool',on_pause)
 
 function after_playback_start()  --@timers.playback_start  DELAY REQUIRED TO SUPPRESS UNWANTED MESSAGES DUE TO SMPLAYER.
     command    = ''
     for _,opt in pairs(o.options_delayed)  --PLAYBACK OVERRIDES.
     do command = ('%s no-osd set %s;'):format(command,opt) end
-    command    = command~='' and   mp.command(command)
+    command    = command~=''   and mp.command(command)
     title.data = mp.command_native({'expand-text',o.title}) 
     
     title:update()  --AWAITS UNPAUSE (PLAYING MESSAGE).  ALSO AWAITS TIMEOUT, OR ELSE OLD MPV COULD HANG UNDER EXCESSIVE LAG.
@@ -103,7 +103,7 @@ do    timer.oneshot   = 1  --ALL 1SHOT.
 ---- SMPlayer.app:  /Applications/SMPlayer.app/Contents/MacOS/mpv  --script=~/Desktop/mpv-scripts/  "https://YOUTU.BE/5qm8PH4xAss"      
 
 ----https://SOURCEFORGE.NET/projects/mpv-player-windows/files/release               FOR NEW MPV WINDOWS BUILDS. CAN REPLACE mpv.exe IN SMPLAYER.
-----https://laboratory.STOLENDATA.NET/~djinn/mpv_osx                                FOR NEW MPV MACOS   BUILDS.   THESE BUILDS WORK FINE BUT '%g' (PATTERN) & Δ (GREEK) ARE INVALID.  https://BRACKETS.IO FOR TEXT-EDITOR.
+----https://laboratory.STOLENDATA.NET/~djinn/mpv_osx                                FOR NEW MPV MACOS   BUILDS.  https://BRACKETS.IO FOR TEXT-EDITOR.  THESE BUILDS WORK FINE BUT '%g' (PATTERN) & Δ (GREEK) ARE INVALID.  
 ----https://GITHUB.COM/mpv-android/mpv-android/releases                             FOR NEW MPV ANDROID BUILDS.  https://CXFILEEXPLORERAPK.NET
 ----https://SMPLAYER.INFO/en/download-linux & https://apt.FRUIT.JE/ubuntu/jammy/mpv FOR LINUX SMPLAYER & MPV.   OFFLINE LINUX ALL-IN-ONE: SMPlayer-24.5.0-x86_64.AppImage  BUT IT HAS POOR PERFORMANCE (NO SMOOTH-PAD OR TRANSPARENCY).
 
@@ -113,13 +113,13 @@ do    timer.oneshot   = 1  --ALL 1SHOT.
 ----PLATFORMS  windows linux darwin(Lua 5.1) android(Lua 5.2) ALL TESTED.  WIN-10 MACOS-11 LINUX-DEBIAN-MATE ANDROID-7 & ANDROID-11.  ANDROID HAS NO ytdl & WON'T OPEN IMAGES (JPEG/PNG).
 ----SMPLAYER-v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
-----SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS CAN'T MOVE LEFT/RIGHT & IT'S MORE DIFFICULT TO RETYPE ",".  script-opts ARE CONFIGURED DIRECTLY ON SMARTPHONE.  LEADING COMMAS ON EACH LINE ARE AVOIDED.
+----~100 LINES & ~2000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES). MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
-----INSTEAD OF ALL scripts LAUNCHING EACH OTHER WITH THE SAME CODE, THIS SCRIPT LAUNCHES THEM ALL.  DECLARING local VARIABLES MAY IMPROVE HIGHLIGHTING/COLORING, BUT UNNECESSARY.
 ----45%CPU+15%GPU USAGE (5%+15% WITHOUT scripts).  ~75%@30FPS (OR 55%@25FPS) WITHOUT GPU DRIVERS, @FULLSCREEN.  ARGUABLY SMOOTHER THAN VLC, DEPENDING (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER). FREE GPU IMPROVES MULTI-TASKING.
-----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS. THEY'RE <400 LINES LONG, WITH MANY PARTS COPY/PASTED FROM EACH OTHER.  ULTIMATELY TV FIRMWARE (1GB) COULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. 
+----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS.  ULTIMATELY TV FIRMWARE (1GB) COULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. 
 ----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, & MULTI-LINE ALT-EDITING. AIDS RAPID GRAPH TESTING.  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK PRODUCES 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
 ----VIRTUALBOX: CAN INCREASE VRAMSize FROM 128→256 MB. MACOS LIMITED TO 3MB VIDEO MEMORY. CAN ALSO SWITCH AROUND Command & Control(^) MODIFIER KEYS.  BRACKETS FOR TEXT-EDITING (WORD-WRAP).  "C:\Program Files\Oracle\VirtualBox\VBoxManage" setextradata macOS_11 VBoxInternal/Devices/smc/0/Config/DeviceKey ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc
+----DECLARING local VARIABLES MAY IMPROVE HIGHLIGHTING/COLORING, BUT UNNECESSARY.
 
 ----BUG: RARE YT VIDEOS SUFFER no-vid. EXAMPLE: https://YOUTU.BE/y9YhWjhhK-U
 ----BUG: NO seeking WITH TWITTER.      EXAMPLE: https://TWITTER.COM/i/status/1696643892253466712  X.COM NO STREAMING.  NO lavfi-complex.
@@ -130,7 +130,7 @@ do    timer.oneshot   = 1  --ALL 1SHOT.
 ----flatpak install *.flatpak  snap install *.snap         FOR INSTALLS, AFTER cd TO RELEASES. MUST BE ON INTERNET, EVEN FOR snap.
 ----snap DOESN'T WORK WITH "~/", BLOCKS SYSTEM COMMANDS, & WORKS DIFFERENTLY WITH SOME FILTERS LIKE showfreqs (FFMPEG-v4.4).
 
-----o.options DUMP. FOR DEBUG CAN TRY TOGGLE ALL THESE SIMULTANEOUSLY.  correct-pts IS ESSENTIAL, & embeddedfonts.
+----o.options DUMP. FOR DEBUG CAN TRY TOGGLE ALL THESE SIMULTANEOUSLY.  correct-pts IS ESSENTIAL.
     -- 'correct-pts no','embeddedfonts no','profile fast','vo gpu-next','msg-level all=error','hr-seek always','index recreate','wayland-content-type none','background color','alpha blend',
     -- 'video-latency-hacks yes','hr-seek-framedrop yes','access-references yes','ordered-chapters no','stop-playback-on-init-failure yes',
     -- 'demuxer-lavf-hacks yes','demuxer-lavf-linearize-timestamps no','demuxer-seekable-cache yes','demuxer-cache-wait no','demuxer-donate-buffer yes','demuxer-thread yes',
