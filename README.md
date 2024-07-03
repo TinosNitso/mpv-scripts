@@ -28,7 +28,7 @@ On Android, go to mpv→SETTINGS→Advanced→Edit mpv.conf, then enter
 
 `script=/sdcard/Android/media/is.xyz.mpv/`
 
-Then copy all scripts in to that exact folder, in internal main storage. `sdcard` is internal, unlike SD card.  Then use MPV file-picker to open an MP4 to give it media read-permission. In Android-v11+ media-apps can't run scripts from outside a media folder.  aspeed.lua struggles primarily because Android apps are singletons who can't spawn subprocesses.  I recommend [cx-file-explorer](https://cxfileexplorerapk.net/) as explorer, & 920 for text-editing.  
+Then copy all scripts in to that exact folder, in internal main storage. However leave out autocomplex.lua on smartphone (laggy).  `sdcard` is internal, unlike `SD card`.  Then use MPV file-picker to open an MP4 to give MPV media read-permission. In Android-v11+ media-apps can't run scripts from outside a media folder.  aspeed.lua struggles primarily because Android apps are singletons who can't spawn subprocesses.  I recommend [cx-file-explorer](https://cxfileexplorerapk.net/) as explorer, & 920 for text-editing.  
 
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
 
@@ -58,17 +58,13 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 
 MPV v0.38.0, v0.37.0, v0.36.0 & v0.35.1 fully supported. v0.37+ preferred. mpv.exe can be [replaced](https://sourceforge.net/projects/mpv-player-windows/files/release/), within smplayer-portable. New MacOS builds are [here](https://laboratory.stolendata.net/~djinn/mpv_osx/), & Android is [here](https://github.com/mpv-android/mpv-android/releases).
 
-SMPlayer v24.5.0 supported. v23.12 had an annoying pause/seek issue. Releases tested include .7z .exe .app .AppImage .flatpak & .snap.
+SMPlayer-v24.5.0 supported.  Releases tested include .7z .exe .app .AppImage .flatpak & .snap.
 
 FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2 (.snap) & v4.3.2 (.AppImage) supported.
 
 Lua versions v5.1 & v5.2(Android) supported.
 
 ## Latest Updates
-- main.lua/aspeed.lua: Added `o.options_android`, for Droid Sans Mono.  All scripts working on Android except for aspeed.lua (no subprocesses & no Armenian). `o.speed` works.  But no YouTube.  However autocomplex.lua is too slow on cheap smartphone.  Automask isn't giving perfect circles without manual override (w,h) option.
-- Double-mute toggles valid on Android, using its audio-track selector button.  Smartphone could also use better mechanism in future.
-- aspeed.lua: Removed Irish.  Longer & improved AbDays. Many lowercase for better symmetry.  Improved child-feedback reliability.  YouTube bugfix where it reloads, without JPEG ever loading (removed reload-blocking).
-- autocrop.lua: Removed `o.msg_level`.
-- autocomplex.lua: Added `o.gsubs_passes` & `o.gsubs`. Formulas now abbreviated.  Improved automask gsubs.  Improved codes.
-- autocomplex/automask: Added `(rand)` gsub for randomization @file-loaded.  Enables unique positioning & mask on each load.
-
+Above scripts in `mpv-scripts.zip` haven't been properly released.  Better mechanism for toggling on smartphone is needed - maybe double-sid or double-tap. Toggling current-ao (double-mute) causes lag. Different scripts can use different mechanisms.
+- aspeed.lua: Improved AbDays (more accurate, more lowercase). No-Armenian override for Android.  Faster YouTube load by always loading path even without audio (JPEG-reload blocked after successful load). 
+- autocrop.lua: Improved JPEG reliability (insta_pause).
