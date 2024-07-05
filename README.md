@@ -65,6 +65,11 @@ FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2
 Lua versions v5.1 & v5.2(Android) supported.
 
 ## Latest Updates
-Above scripts in `mpv-scripts.zip` haven't been properly released.  Better mechanism for toggling on smartphone is needed - maybe double-sid or double-tap. Toggling current-ao (double-mute) causes lag. Different scripts can use different mechanisms.
-- aspeed.lua: Improved AbDays (more accurate, more lowercase). No-Armenian override for Android.  Faster YouTube load by always loading path even without audio (JPEG-reload blocked after successful load). 
-- autocrop.lua: Improved JPEG reliability (insta_pause).
+Above scripts in `mpv-scripts.zip` haven't been properly released yet.  `android-surface-area` may help with perfect circles for automask.
+- Added `o.double_aid_timeout` to aspeed, autocrop & automask. Double-aid is similar to double-mute, due to Android.  Causes lag, but necessary.
+- Added `o.double_sid_timeout` to all scripts except main. Best smartphone toggle mechanism: doesn't cause lag or glitch audio. `sid` to toggle is artificially added.
+- Added `o.android`, `o.windows`, `o.linux` & `o.darwin` platform overrides to all scripts except autocrop.  It can work exactly the same on Android, but smartphones work better speed-loading monacle/single-complex.
+- automask.lua: Returned `o.fps`. If produced @30fps, film must also be 30fps.  `%s` bugfix for examples (I broke half of them in the last release).
+- aspeed.lua: Removed `o.clocks.no_locales` flag.  Improved AbDays (more accurate, more lowercase).  No-Armenian override for Android.  Faster YouTube load by always loading path even without audio (JPEG-reload blocked after successful load). 
+- autocrop.lua: Improved JPEG reliability (insta_pause). 
+- All script-opt types now well-defined.  A GUI like SMPlayer could hook in various preferences via `read_options`.
