@@ -65,11 +65,14 @@ FFmpeg versions v6.1 (.deb), v6.0 (.exe .flatpak), v5.1.3, v5.1.2 (.app), v4.4.2
 Lua versions v5.1 & v5.2(Android) supported.
 
 ## Latest Updates
-Above scripts in `mpv-scripts.zip` haven't been properly released yet.  `android-surface-area` may help with perfect circles for automask.
-- Added `o.double_aid_timeout` to aspeed, autocrop & automask. Double-aid is similar to double-mute, due to Android.  Causes lag, but necessary.
+Above scripts in `mpv-scripts.zip` haven't been properly released yet - more MacOS testing needed.  Automask examples have to be adjusted for portrait/landscape on smartphone (pentagon, etc). Automask has to be disabled when MPV is in the background.
+- Added `o.android`, `o.windows`, `o.linux` & `o.darwin` platform overrides to all scripts.  Smartphones work better with different options, like monacle.
+- Added `o.double_aid_timeout` to aspeed, autocrop & automask. Double-aid is similar to double-mute, due to Android.  Causes lag, but needed.
 - Added `o.double_sid_timeout` to all scripts except main. Best smartphone toggle mechanism: doesn't cause lag or glitch audio. `sid` to toggle is artificially added.
-- Added `o.android`, `o.windows`, `o.linux` & `o.darwin` platform overrides to all scripts except autocrop.  It can work exactly the same on Android, but smartphones work better speed-loading monacle/single-complex.
-- automask.lua: Returned `o.fps`. If produced @30fps, film must also be 30fps.  `%s` bugfix for examples (I broke half of them in the last release).
+- `android-surface-area` W,H computation for automask, autocrop & autocomplex. Monacle now a perfect circle on smartphone! Improved formula takes portrait/landscape into account.  Graphs reload on rotation.
+- automask.lua: Returned `o.fps`. If produced @30fps, film must also be 30fps.  Bugfix for examples (I broke half of them in the last release).
 - aspeed.lua: Removed `o.clocks.no_locales` flag.  Improved AbDays (more accurate, more lowercase).  No-Armenian override for Android.  Faster YouTube load by always loading path even without audio (JPEG-reload blocked after successful load). 
-- autocrop.lua: Improved JPEG reliability (insta_pause). 
-- All script-opt types now well-defined.  A GUI like SMPlayer could hook in various preferences via `read_options`.
+- autocomplex.lua: Bugfix for aid on/off. It toggles off & on with only one click of aid.
+- Added `function gp` (Get Property) to all scripts. More elegant codes.  All script-opt types now well-defined.  A GUI like SMPlayer could hook in various preferences via `read_options`.
+- Added `o.toggle_command` to aspeed, automask & autocrop.  So their toggles can activate any command.  May be a waste of space.
+- `insta_pause` removed from `start-file` function so can pause during YouTube load.  Improved JPEG reliability for autocrop.  
