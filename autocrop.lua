@@ -6,7 +6,7 @@
 options                    = { 
     auto                   = true , --IF REMOVED, CROPS OCCUR ONLY @on_toggle & @playback-restart (BUT ~@UNPAUSE). 
     auto_delay             =   .5 , --ORIGINALLY 4 SECONDS.  
-    detect_limit           = '24/255', --ORIGINALLY "24/255".  SET TO 0 FOR NO CROPPING.  CAN INCREASE FOR VARIOUS TRACKS.
+    detect_limit           = '24', --ORIGINALLY "24/255".  SET TO 0 FOR NO CROPPING.  CAN INCREASE FOR VARIOUS TRACKS.
     detect_round           =    1 , --ORIGINALLY 2.  DEFAULT=16.
     detect_min_ratio       =  .25 , --ORIGINALLY 0.5.
     suppress_osd           = true , --ORIGINALLY false.
