@@ -5,13 +5,14 @@
 
 options                 = {  
     key_bindings        = 'Ctrl+M Ctrl+m M',  --CASE SENSITIVE. DON'T WORK INSIDE SMPLAYER.  m=MUTE.  'ALT+M' COULD BE automask2.lua.  RAPID-TOGGLING MANY MASKS COULD BE LIKE PLAYING AN ORGAN. EACH KEY GETS ITS OWN LUA SCRIPT. BUT THERE COULD BE A SECOND KEYBIND FOR SLOW toggle_duration, LIKE A PIANO PEDAL.
-    double_mute_timeout =  .5  ,  --SECONDS FOR DOUBLE-MUTE        TOGGLE (m&m DOUBLE-TAP).  SET TO 0 TO DISABLE.  BEST SMPLAYER TOGGLE.    REQUIRES AUDIO IN SMPLAYER.  VARIOUS SCRIPT/S CAN BE SIMULTANEOUSLY TOGGLED USING THESE 3 MECHANISMS. 
-    double_aid_timeout  =  .5  ,  --SECONDS FOR DOUBLE-AUDIO-ID    TOGGLE (#&# DOUBLE-TAP).  SET TO 0 TO DISABLE.  ANDROID MUTES USING aid. REQUIRES AUDIO. 
-    double_sid_timeout  =  .5  ,  --SECONDS FOR DOUBLE-SUBTITLE-ID TOGGLE (j&j DOUBLE-TAP).  SET TO 0 TO DISABLE.  BEST SMARTPHONE TOGGLE.  NEVER INTERRUPTS PLAYBACK OR AUDIO.  REQUIRES sid.
+    double_mute_timeout =  .5  ,  --SECONDS FOR DOUBLE-MUTE-TOGGLE        (m&m DOUBLE-TAP).  SET TO 0 TO DISABLE.  BEST SMPLAYER TOGGLE.    REQUIRES AUDIO IN SMPLAYER.  VARIOUS SCRIPT/S CAN BE SIMULTANEOUSLY TOGGLED USING THESE 3 MECHANISMS. 
+    double_aid_timeout  =  .5  ,  --SECONDS FOR DOUBLE-AUDIO-ID-TOGGLE    (#&# DOUBLE-TAP).  SET TO 0 TO DISABLE.  ANDROID MUTES USING aid. REQUIRES AUDIO. 
+    double_sid_timeout  =  .5  ,  --SECONDS FOR DOUBLE-SUBTITLE-ID-TOGGLE (j&j DOUBLE-TAP).  SET TO 0 TO DISABLE.  BEST SMARTPHONE TOGGLE.  NEVER INTERRUPTS PLAYBACK OR AUDIO.  REQUIRES sid.
     toggle_duration     =  .4  ,  --SECONDS FOR MASK FADE (EQUALIZER). 0 FOR INSTA-TOGGLE.
     unpause_on_toggle   =  .12 ,  --SECONDS TO UNPAUSE FOR TOGGLE, LIKE FRAME-STEPPING.  0 TO DISABLE.  A FEW FRAMES ARE ALREADY DRAWN IN ADVANCE. is1frame IRRELEVANT. 
     vf_command_t_delay  =  .12 ,  --SECONDS.  RAPID TOGGLING HAS ~.1s LAG DUE TO A FEW FRAMES WHICH AREN'T REDRAWN FAST ENOUGH.
     osd_on_toggle       =   0  ,  --MILLISECONDS.  SET TO 5000 TO INSPECT VERSIONS, FILTERGRAPHS, ETC.  0 IS INACTIVE.  1 CLEARS THE OSD.  -1 MEANS INFINITE.  DISPLAYS  _VERSION mpv-version ffmpeg-version libass-version media-title platform current-ao,current-vo lavfi-complex af vf video-out-params.
+    toggle_command      =    '',  --EXECUTES on_toggleBLANK DOES NOTHING EXTRA.  OTHERWISE .  EXAMPLE: 'set speed 1'.
     filterchain         = 'null,' --CAN REPLACE null WITH OTHER FILTERS, LIKE pp (POSTPROCESSING).   TIMELINE SWITCHES ALSO POSSIBLE (FILTER1→FILTER2→ETC).  
     -- ..'convolution=0m=0 -1 0 -1 7 -1 0 -1 0:0rdiv=1/(7-4),'  --UNCOMMENT FOR 33% SHARPEN, USING A 3x3 MATRIX. INCREASE THE 7 & 7 FOR LESS%.  ALTERNATIVELY CAN SHARPEN COLORS ONLY (1m & 2m), INSTEAD OF BRIGHTNESS 0m.
        ..      'lutyuv=y=255*((1-val/255)^4*(1+.6*.15)+.15*(2.5*gauss((255-val)/(255-maxval)/1.7-1.5)-1*gauss(val/minval/1.5-1))/gauss(0)+.005*sin(2*PI*val/minval))'  --+.5% SINE WAVE ADDS RIPPLE TO CHANGING DEPTH, BUT COULD ALSO CAUSE FACE WRINKLES. FORMS PART OF lutyuv GLOW-LENS.  15% DROP ON WHITE-IS-WHITE (TOO MUCH MIXES GRAYS).  1*gauss MAY MEAN 1 ROUND.  A SIMPLE NEGATIVE IS JUST negval.  USE (random) TO RANDOMIZE.
@@ -27,78 +28,87 @@ options                 = {
     res_safety          =   1.15 ,  --≥1.  PREVENTS PRIMARY rotation FROM CLIPPING, BY DIMINISHING res_multiplier. SAME FOR X & Y.  REDUCE TO 1.1 TO SEE CLIPPING.  +10%+2% FOR iw*1.1 & W/64 (PRIMARY width & x). HOWEVER 1.12 ISN'T ENOUGH (1/.88=1.14?).  HALF EXCESS IS LOST IF DUAL. NEEDED FOR ~DUAL TOO.  FUTURE VERSION SHOULD SUBTRACT 1.
     SECTIONS            =      6 ,  --DEFAULT=#scales.  0 FOR BLINKING FULL SCREEN.  LIMITS NUMBER OF DISCS (BEFORE FLIP & STACK). AUTO-GENERATES IF scales ARE MISSING.  SECTIONS: 1=SPECTACLE,2=EYELID,3=EYE,4=PUPIL,5=NERVE,6=INNER-NERVE.
     DUAL                =   true ,  --REMOVE FOR ONE SERIES OF SECTIONS, ONLY.  true ENABLES hstack WITH LEFT→RIGHT hflip, & HALVES INITIAL iw (display CANVAS).
-    gsubs_passes        =      4 ,  --# OF SUCCESSIVE gsubs.  THEY DEPEND ON EACH OTHER, IN A DAIZY-CHAIN.  (cos)→(c)→(r)→(fpp)  THEY EXIST DUE TO SECTIONAL REPETITION.
-    gsubs               = {r='((n)/(fpp))',c='cos(2*PI*(r))',s='sin(2*PI*(r))',m='mod(floor(r)\\,2)',cos='(c)',sin='(s)',mod='(m)',t,n,on,fpp,random} , --SUBSTITUTIONS.  ENCLOSING BRACKETS () ARE ADDED & REQUIRED, IN EFFECT.  fpp=fps_mask*period=FRAMES-PER-PERIOD IS DERIVED.  EXAMPLE: USE n=5 FOR STATIONARY SPECTACLES (FREEZE FRAME).  (t),(n),(on) = (TIME),(FRAME#),(FRAMEOUT#)  (r)=(n OR t AS RATIO TO PERIOD)=(TIME AS A RATIO).  (random) IS A RANDOM # BTWN 0 & 1, FOR UNIQUE MASK @file-loaded (FINAL gsub).  (r) COULD BE RENAMED (nr) OR (np) OR (nt).
+    gsubs_passes        =      4 ,  --# OF SUCCESSIVE gsubs.  THEY DEPEND ON EACH OTHER, IN A DAIZY-CHAIN.  (cos)→(c)→(np)→(fpp)  THEY EXIST DUE TO SECTIONAL REPETITION.
+    gsubs               = {np='((n)/(fpp))',c='cos(2*PI*(np))',s='sin(2*PI*(np))',m='mod(floor(np)\\,2)',cos='(c)',sin='(s)',mod='(m)',rand='(random)',t,n,on,},  --SUBSTITUTIONS.  ENCLOSING BRACKETS () ARE ADDED & REQUIRED, IN EFFECT.  fpp=fps_mask*period=FRAMES-PER-PERIOD IS DERIVED.  EXAMPLE: USE n=5 FOR STATIONARY SPECTACLES (FREEZE FRAME).  (t),(n),(on) = (TIME),(FRAME#),(FRAMEOUT#)  (np)=(n AS RATIO TO PERIOD)=(FRAME#, OR TIME, AS A RATIO).  (random) IS A RANDOM # BTWN 0 & 1, FOR UNIQUE MASK @file-loaded (FINAL gsub). 
     geq=            'lum=255*lt(hypot(X-W/2\\,Y-H/2)\\,W/2)',  --GENERIC-EQUATION=LUMINANCE.  SET TO 255 FOR SQUARES.  W=H FOR INITIAL SQUARE CANVAS.  lt,hypot = LESS-THAN,HYPOTENUSE   DRAWS [1] FRAME ONLY.  ARGUABLY EACH SECTION SHOULD HAVE ITS OWN geq (ANOTHER LONG string).
     scales              = '                iw*1.1:ih/2       iw*.6:ih*.5 oh:ih         oh:ih/2         oh:ih/8 ',  --iw,ih   = INPUT_WIDTH,INPUT_HEIGHT  AUTO-GENERATES IF ABSENT. BASED ON display CANVAS. DEFAULT ELLIPTICITY=0 (CIRCLE/SQUARE)  REMOVE THIS & x & y TO AUTO-GENERATE SECTIONS.  PUPILS SHOULD BE CIRCLE WHEN SEEN THROUGH SPECTACLES. EYELIDS COVERING INNER PUPIL IS SQUINTING.
     x                   = '                -W/64*(s)         0           W/16*((c)+1)  W/32*(c)        W/64    ',  --(c),(s) = (cos),(sin) WAVES IN FRAME#. overlay COORDS FROM CENTER.                      W,w=BIG,LITTLE SECTIONS.
     y                   = '                -H*((c)/16+1/6)   H/16        H/32*(s)      H/32*((c)+1)/2  H/64    ',  --DEFAULT CENTERS.  DOWNWARD: NEGATIVE MEANS UP.  x & y AREN'T COMBINED DUE TO CENTERING. H,h=BIG,LITTLE SECTIONS.
     crops               = '                iw:ih*.8:0:ih-oh  iw*.98:ih:0   ',  --DEFAULT NO CROPS. NO TIME-DEPENDENCE ALLOWED.  SPECTACLE-TOP & RED-EYE CROPS. CLEARS MASK'S TOP & MIDDLE.  oh=OUTPUT-HEIGHT
     rotations           = ' PI/16*(s)*(m)  PI/32*(c)         PI/32*(c)     ',  --RADIANS CLOCKWISE.  0 FOR NO ROTATIONS.  (m)=(mod) 0,1 SWITCH  PI/32=.1RADS=6° (QUITE A LOT)  SPECIFIES ROTATION OF EACH SECTION, RELATIVE TO THE LAST, AFTER crop, EXCEPT THE FIRST (0TH) ROTATION WHICH APPLIES TO ENTIRE DUAL.  A FUTURE VERSION COULD ALSO FILL THE 0TH LEVEL GAPS, ENABLING DUAL ASYMMETRY.
-    zoompan=          'z=1+.2*(1-cos(2*PI*((r)-.2)))*mod(floor((r)-.2)\\,2)',  --USE 1 FOR NO ZOOMING .  (r)=("TIME"-RATIO BTWN 0 & periods).  20% zoom FOR RIGHT PUPIL TO PASS SCREEN EDGE. 20% PHASE OFFSET IS LIKE A BASEBALL BAT'S ROTATIVE WIND UP.  REPLACE .2 WITH (random) TO RANDOMIZE.
-    negate_enable       = '1-between((r)\\,.5\\,1.5)',  --INVERTER     SWITCH.   USE 0 FOR NO BLINKING.  r BTWN 0 & periods.  TIMELINE SWITCH FOR INVERTING INSIDE/OUTSIDE (BLINKER SWITCH). TO START OPPOSITE, USE "1-...". 
-    lut0_enable         =                         '0',  --INVISIBILITY TIMELINE SWITCH.   USE '1-between((r)\\,.5\\,1.5)' FOR INVISIBILITY.  AN ALTERNATIVE graph COULD PLACE THIS BEFORE THE INVERTER, SO INVISIBILITY ITSELF IS INVERTED.
+    zoompan=          'z=1+.2*(1-cos(2*PI*((np)-.2)))*mod(floor((np)-.2)\\,2)',  --USE 1 FOR NO ZOOMING .  (np)=("TIME"-RATIO BTWN 0 & periods).  20% zoom FOR RIGHT PUPIL TO PASS SCREEN EDGE. 20% PHASE OFFSET IS LIKE A BASEBALL BAT'S ROTATIVE WIND UP.  REPLACE .2 WITH (random) TO RANDOMIZE.
+    negate_enable       = '1-between((np)\\,.5\\,1.5)',  --INVERTER     SWITCH.   USE 0 FOR NO BLINKING.   np BTWN 0 & periods.  TIMELINE SWITCH FOR INVERTING INSIDE/OUTSIDE (BLINKER SWITCH). TO START OPPOSITE, USE "1-...". 
+    lut0_enable         =                          '0',  --INVISIBILITY TIMELINE SWITCH.   USE '1-between((np)\\,.5\\,1.5)' FOR INVISIBILITY.  AN ALTERNATIVE graph COULD PLACE THIS BEFORE THE INVERTER, SO INVISIBILITY ITSELF IS INVERTED.
     toggle_expr         =              '%s',  --%s=string=LINEAR-IN-TIME-EXPRESSION  DOMAIN & RANGE BOTH [0,1].  FOR CUSTOMIZED TRANSITION BTWN BRIGHTNESSES.
     -- toggle_expr      =    'sin(PI/2*%s)',  --UNCOMMENT FOR NON-LINEAR SINUSOIDAL TRANSITION (QUARTER-WAVE). LINEAR MAY BE SUPERIOR BECAUSE A SINE WAVE IS 57% FASTER @MAX GRADIENT (PI/2=1.57).
     osd_par_multiplier  =                 1,  --DISPLAY-PAR=osd-par*osd_par_multiplier  osd-par=ON-SCREEN-DISPLAY-PIXEL-ASPECT-RATIO  CAN MEASURE display TO DETERMINE ITS TRUE par.  osd-par NEEDED TO DRAW PERFECT CIRCLES ON ANY WINDOW.  video-out-params/par ACTUALLY MEANS VIDEO-IN-2DISPLAY (par OF ORIGINAL FILM).  
     video_out_params    = {w,h,pixelformat},  --OVERRIDES.  DEFAULT w,h = display-width,display-height  OR  width,height.  EMBEDDED MPV MAY HAVE display-width=nil.  EXAMPLE: {w=1680,h=1050}  USING [vo] SCALE WOULD REQUIRE DELAYED TRIGGER & USE MORE CPU.  DEFAULT pixelformat=yuva420p OR yuv420p, DEPENDING.
     options             = {
         'keepaspect    no','geometry            50%',  --keepaspect=no FOR ANDROID. FREE-SIZE IF MPV HAS ITS OWN WINDOW.  geometry ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.
-        'hwdec         no','vd-lavc-threads     0  ',  --HARDWARE-DECODER BUGS OUT ON ANDROID.  VIDEO-DECODER-LIBRARY-AUDIO-VIDEO-threads OVERRIDES SMPLAYER OR ELSE MAY FAIL TESTING.  
+        'hwdec         no','vd-lavc-threads     0  ',  --HARDWARE-DECODER MAY PERFORM BADLY, & BUGS OUT ON ANDROID.  VIDEO-DECODER-LIBRARY-AUDIO-VIDEO-threads OVERRIDES SMPLAYER OR ELSE MAY FAIL TESTING.  
         'sub           no','sub-create-cc-track yes',  --DEFAULTS=auto,no.  SUBTITLE CLOSED-CAPTIONS CREATE BLANK TRACK FOR double_sid_timeout (BEST TOGGLE).  JPEG VALID, BUT NOT RAW MP3.  UNFORTUNATELY YOUTUBE USUALLY BUGS OUT UNLESS sub=no.  sid=1 LATER @playback-restart. 
-        'osd-font-size 16',  --DEFAULT=55  MAY NOT FIT osd_on_toggle. 
+        'osd-font-size 16','osd-bold            yes','osd-font "COURIER NEW"',  --DEFAULTS=55,no,sans-serif  55p MAY NOT FIT osd.  COURIER NEW NEEDS bold (FANCY).  CONSOLAS PROPRIETARY & INVALID ON MACOS.
     },
-    windows = {}, linux = {}, darwin = {},  --platform OVERRIDES.
-    android = {      
-                       SECTIONS= 1,DUAL=false,crops='',x='',y='',zoompan='1',scales='oh:ih'             ,rotations='0',fps_mask='0',res_safety=1,  --FAST-LOAD MONACLE FOR ANDROID.
-    },
-    ----13 EXAMPLES BELOW:  UNCOMMENT A LINE TO ACTIVATE IT.  ALL options CAN BE COMBINED ONTO 1 LINE (WITH TITLE), & COPIED. DON'T FORGET COMMAS!  MONACLE & PENTAGON ARE FAST. SPEED MAY BE AN ISSUE FOR SMARTPHONES.  INCREASE SECTIONS>1 FOR TELESCOPIC. 
-    -- NO_MASK       , SECTIONS= 0,period='0',  --NULL OVERRIDE FOR FAST CALIBRATION.  LENS WITHOUT FRAME. TOGGLES STILL-FRAMES.  CAN CHECK A FEW THINGS: 1) BROWN SUN, NOT BLACK.  2) BRIGHT CLOTHING OF MARCHING ARMY (CREASES IN PANTS).  3) BROWN HAMMER & SICKLE.
-    -- MONACLE       , SECTIONS= 1,DUAL=false,crops='',x='',y='',zoompan='1',scales='oh:ih'             ,rotations='0',fps_mask='0',res_safety=1, --INVERTING MONACLE.  geq='255', FOR SQUARE.  SECTIONS>1 FOR CONCENTRIC DISCS.  MONACLE MAY BE THE BEST OVERALL.  
-    -- BINACLES      , SECTIONS= 1,           crops='',x='',y='',zoompan='1',scales='iw:ow'             ,
-    -- PENTAGON_HOUSE, SECTIONS= 1,DUAL=false,crops='',x='',y='',zoompan='1',scales='oh:ih+2'           ,rotations='0',fps_mask='0',res_safety=1,res_multiplier=1,geq='255*lt(abs(X-W/2)\\,Y)',  --+2 TO REACH THE BOTTOM/TOP. WIDTH=SCREEN_HEIGHT. TRIANGLE_HEIGHT=HALF_SCREEN.  BOTH THIS & MONACLE CAN BE LOADED SIMULTANEOUSLY (CTRL+M & ALT+M keybinds), & MAY STILL LOAD FASTER THAN ANIMATION.  THE PENTAGON HAS PERFECT LR SYMMETRY, BUT IT MAY NOT APPEAR TO.
-    -- SQUARES_SPIN  , SECTIONS= 8,DUAL=false,crops='',x='',y='',zoompan='1',scales='oh:ih/sqrt(2)'     ,rotations='2*PI*(r)/4' ,geq='255',  --DIAGONALS GRAZE TOP & BOTTOM OF SCREEN.  COULD ALSO OSCILLATE LEFT & RIGHT.
-    -- TRIANGLE_SPIN , SECTIONS= 1,DUAL=false,crops='',x='',y='',zoompan='1',scales='oh:ih'             ,rotations='2*PI*(r)/3' ,geq='255*lt(Y\\,H*3/4)*lt(abs(X-W/2)\\,Y/sqrt(3))',  --SPINNING EQUILATERAL TRIANGLE, GRAZING TOP & BOTTOM OF SCREEN.  HYPOTENUSE=87% OF HEIGHT (sqrt(3)/2) OF FULLSCREEN DISPLAY.  EQUIVALENT TO ISOSCELES SHRUNK TO 'ih*3/4'.
-    -- BUTTERFLY_SWIM, periods = 1,period='3',negate_enable='0',y='-(H+h/2)*((r)-1/2) H/16 0 H/64 H/64',rotations='-PI/32*cos(2*PI*(t)) PI/32*cos(2*PI*(t)) -PI/32*cos(2*PI*(t))',res_multiplier=1,res_safety=1.3,  --UPWARDS EVERY 3 SECONDS, WHILE TWIRLING 1 ROUND-PER-SECOND.  THE ROTATION IS OPPOSITE WHEN SWIMMING (VS TREADING). 
-    -- TWIRLS2SKIP   , periods = 3,periods_skipped=1            ,zoompan='1',negate_enable='gte((r)\\,1)',y='-H*((c)/16+1/16) H/16 H/32*(s) H/32*((c)+1)/2 H/64',  --DOUBLE-TWIRL & SKIP 
-    -- DISCS_20_ZOOM , SECTIONS=10,           crops='',x='',y=''            ,scales='',negate_enable='0',  --10*ZOOMY CONCENTRIC DISCS.  geq='255'  FOR SQUARES.
-    -- VISOR_ELLIPSE , SECTIONS= 1,DUAL=false,crops='',x='',y='-H/8'        ,scales='iw*2:ih/2',  --DANCING ELLIPTICAL VISOR: HORIZONTAL.
-    -- VISOR_VERTICAL, SECTIONS= 1,DUAL=false,crops='',geq='255',zoompan='1',scales='iw/4:ih'  ,rotations='0',periods=1,period='2',res_multiplier=.5,negate_enable='0',y='',x='(W+w)*((r)-1/2)',  --SCANNING @2 SECONDS SIDEWAYS.
-    -- VISOR_HORIZONT, SECTIONS= 1,DUAL=false,crops='',geq='255',zoompan='1',scales='iw/1:ih/3',rotations='0',periods=1,period='2',res_multiplier=.5,negate_enable='0',x='',y='(H+h)*((r)-1/2)',  --FALLING  @2 SECONDS.  A THIRD TALL, INSTEAD OF A QUARTER.
-    -- VISOR_BOUNCE  , SECTIONS= 1,DUAL=false,crops='',geq='255',rotations='0', --OSCILLATING VISOR.
-    -- DIAMOND_EYES  , geq='255*lt(abs(X-W/2)+abs(Y-H/2)\\,W/2)',           --AN IMPROVED VERSION COULD GIVE EACH SECTION ITS OWN geq.  SPIKED EYES MAY ALSO BE POSSIBLE.
+    windows     = {}, linux = {}, darwin = {},  --platform OVERRIDES.
+    android     = {      
+        options = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"'}, --options ARE SPECIAL & APPEND, NOT REPLACE.
+        unpause_on_toggle=.2,vf_command_t_delay=.2,                              --MORE FRAMES ARE DRAWN IN ADVANCE.
+        MONACLE      ; SECTIONS= 1,DUAL=false,crops='',x='',y='',zoompan='1',scales='min(iw\\,ih):ow'  ,fps_mask='0',res_safety=1,  --FAST-LOAD MONACLE.  iw,ih=PORTRAIT,LANDSCAPE IS TAKEN INTO ACCOUNT, FOR SMARTPHONE.  MONACLE MAY BE THE BEST OVERALL.  
+    }, 
+    ----13 EXAMPLES BELOW:  UNCOMMENT A LINE TO ACTIVATE IT.  ALL options CAN BE COMBINED ONTO 1 LINE (WITH TITLE), & COPIED. DON'T FORGET COMMAS!  MONACLE & PENTAGON ARE FAST. SPEED MAY BE AN ISSUE FOR SMARTPHONES.  INCREASE SECTIONS>1 FOR TELESCOPIC.  FUTURE VERSION SHOULD TAKE PORTRAIT/LANDSCAPE INTO ACCOUNT FOR *ALL* EXAMPLES!
+    -- NO_MASK       ; SECTIONS= 0,period='0',  --NULL OVERRIDE FOR FAST CALIBRATION.  LENS WITHOUT FRAME. TOGGLES STILL-FRAMES.  CAN CHECK A FEW THINGS: 1) BROWN SUN, NOT BLACK.  2) BRIGHT CLOTHING OF MARCHING ARMY (CREASES IN PANTS).  3) BROWN HAMMER & SICKLE.
+    -- MONACLE       ; SECTIONS= 1,DUAL=false,crops='',x='',y='',zoompan='1',scales='min(iw\\,ih):ow'   ,fps_mask='0',res_safety=1, --INVERTING MONACLE.  geq='255', FOR SQUARE.  SECTIONS>1 FOR CONCENTRIC DISCS.  
+    -- BINACLES      ; SECTIONS= 1,           crops='',x='',y='',zoompan='1',scales='min(iw\\,ih):ow'   ,
+    -- PENTAGON_HOUSE; SECTIONS= 1,DUAL=false,crops='',x='',y='',zoompan='1',scales='oh:ih+2'           ,rotations='0',fps_mask='0',res_safety=1,res_multiplier=1,geq='255*lt(abs(X-W/2)\\,Y)',  --+2 TO REACH THE BOTTOM/TOP. WIDTH=SCREEN_HEIGHT. TRIANGLE_HEIGHT=HALF_SCREEN.  BOTH THIS & MONACLE CAN BE LOADED SIMULTANEOUSLY (CTRL+M & ALT+M keybinds), & MAY STILL LOAD FASTER THAN ANIMATION.  THE PENTAGON HAS PERFECT LR SYMMETRY, BUT IT MAY NOT APPEAR TO.
+    -- SQUARES_SPIN  ; SECTIONS= 8,DUAL=false,crops='',x='',y='',zoompan='1',scales='oh:ih/sqrt(2)'     ,rotations='2*PI*(np)/4' ,geq='255',  --DIAGONALS GRAZE TOP & BOTTOM OF SCREEN.  COULD ALSO OSCILLATE LEFT & RIGHT.
+    -- TRIANGLE_SPIN ; SECTIONS= 1,DUAL=false,crops='',x='',y='',zoompan='1',scales='oh:ih'             ,rotations='2*PI*(np)/3' ,geq='255*lt(Y\\,H*3/4)*lt(abs(X-W/2)\\,Y/sqrt(3))',  --SPINNING EQUILATERAL TRIANGLE, GRAZING TOP & BOTTOM OF SCREEN.  HYPOTENUSE=87% OF HEIGHT (sqrt(3)/2) OF FULLSCREEN DISPLAY.  EQUIVALENT TO ISOSCELES SHRUNK TO 'ih*3/4'.
+    -- BUTTERFLY_SWIM; periods = 1,period='3',negate_enable='0',y='-(H+h/2)*((np)-1/2) H/16 0 H/64 H/64',rotations='-PI/32*cos(2*PI*(t)) PI/32*cos(2*PI*(t)) -PI/32*cos(2*PI*(t))',res_multiplier=1,res_safety=1.3,  --UPWARDS EVERY 3 SECONDS, WHILE TWIRLING 1 ROUND-PER-SECOND.  THE ROTATION IS OPPOSITE WHEN SWIMMING (VS TREADING). 
+    -- TWIRLS2SKIP   ; periods = 3,periods_skipped=1            ,zoompan='1',negate_enable='gte((np)\\,1)',y='-H*((c)/16+1/16) H/16 H/32*(s) H/32*((c)+1)/2 H/64',  --DOUBLE-TWIRL & SKIP 
+    -- DISCS_20_ZOOM ; SECTIONS=10,           crops='',x='',y=''            ,scales='',negate_enable='0',  --10*ZOOMY CONCENTRIC DISCS.  geq='255'  FOR SQUARES.
+    -- VISOR_ELLIPSE ; SECTIONS= 1,DUAL=false,crops='',x='',y='-H/8'        ,scales='iw*2:ih/2',  --DANCING ELLIPTICAL VISOR: HORIZONTAL.
+    -- VISOR_VERTICAL; SECTIONS= 1,DUAL=false,crops='',geq='255',zoompan='1',scales='iw/4:ih'  ,rotations='0',periods=1,period='2',res_multiplier=.5,negate_enable='0',y='',x='(W+w)*((np)-1/2)',  --SCANNING @2 SECONDS SIDEWAYS.
+    -- VISOR_HORIZONT; SECTIONS= 1,DUAL=false,crops='',geq='255',zoompan='1',scales='iw/1:ih/3',rotations='0',periods=1,period='2',res_multiplier=.5,negate_enable='0',x='',y='(H+h)*((np)-1/2)',  --FALLING  @2 SECONDS.  A THIRD TALL, INSTEAD OF A QUARTER.
+    -- VISOR_BOUNCE  ; SECTIONS= 1,DUAL=false,crops='',geq='255',rotations='0', --OSCILLATING VISOR.
+    -- DIAMOND_EYES  ; geq='255*lt(abs(X-W/2)+abs(Y-H/2)\\,W/2)',           --AN IMPROVED VERSION COULD GIVE EACH SECTION ITS OWN geq.  SPIKED EYES MAY ALSO BE POSSIBLE.
 }
-o,o2,m,p,timers = options,{},{},{},{} --TABLES.  p=PROPERTIES  m=MEMORY={graph,brightness,osd_par,time_pos}  timers={mute,aid,sid,pause}
-for opt,val in pairs(o)               --o2=oCLONE
-do o2[opt] = val end 
+o,p,m,timers = {},{},{},{}    --o,p=options,PROPERTIES  m=MEMORY={graph,brightness,osd_par,time_pos}  timers={mute,aid,sid,playback_restart,pause}
 
-require 'mp.options'.read_options(o)  --mp=MEDIA_PLAYER  READS IN STRINGS.
+function  gp(property)  --ALSO @file-loaded & @apply_eq.  GET PROPERTY.
+    p       [property]=mp.get_property_native(property)  --mp=MEDIA_PLAYER
+    return p[property]
+end
+math.randomseed(gp('pid'))  --UNIQUE EACH LOAD.
+
+function round(N,D)  --ALSO @file-loaded.  N & D ARE number/string/nil.  FFMPEG SUPPORTS round, BUT NOT LUA.  ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1).
+    D = D or 1
+    return N and math.floor(.5+N/D)*D  --round(N)=math.floor(.5+N)
+end
+
+function clip(N,min,max)  --@apply_eq.  N, min & max ARE number/nil.  FFMPEG SUPPORTS clip BUT NOT LUA.
+    return N and min and max and math.min(math.max(N,min),max)  --MIN MAX MIN MAX
+end
+
+for  opt,val in pairs(options) --TYPES CLONE.
+do o[opt] = val end 
+require 'mp.options'.read_options(o)  --yes/no=true/false BUT OTHER TYPES DON'T AUTO-CAST.
 for  opt,val in pairs(o)
-do o[opt]  = type(val)=='string' and type(o2[opt])~='string' and loadstring('return '..val)() or val end  --NATIVE TYPECAST.  load INVALID ON MPV.APP.  o SHOULD AVOID NATIVE TYPES, DUE TO THIS LINE.  ULTIMATELY SETTINGS FROM GUI ARE STRINGS, NOT NUMBERS.
-gp,label   = mp.get_property_native,mp.get_script_name()  --automask
-p.platform = gp('platform')
+do o[opt]  = type(val)~=type(options[opt]) and loadstring('return '..val)() or val end  --NATIVE TYPECAST.  load INVALID ON MPV.APP.  NATIVES PREFERRED, EXCEPT FOR GRAPH INSERTS.  
 
-for _,opt in pairs((o[p.platform] or {}).options or {}) do table.insert(o.options,opt) end  --CAN APPEND TO o.options.
-for _,opt in pairs(o.options)
+for _,opt in pairs((o[gp('platform')] or {}).options or {}) do table.insert(o.options,opt) end  --platform OVERRIDE CAN APPEND TO o.options.
+for _,opt in pairs(o.options)                                                                   --ALL SETS IN 1.
 do command = ('%s no-osd set %s;'):format(command or '',opt) end
-command    = command and mp.command(command)  --ALL SETS IN 1.
-for opt,val in pairs(o[p.platform] or {})     --platform OVERRIDE. 
+command    = command and mp.command(command)  
+for opt,val in pairs(o[p.platform] or {})  --platform OVERRIDE. 
 do o[opt]  = val end  
 
-function round(N,D)  --ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1). N & D MAY ALSO BE STRINGS OR nil.  PRECISION LIMITER.
-    D = D or 1
-    return N and math.floor(.5+N/D)*D  --FFMPEG SUPPORTS round, BUT NOT LUA.  math.round(N)=math.floor(.5+N)
-end
-function clip(N,min,max) return N and min and max and math.min(math.max(N,min),max) end  --N,min,max ARE NUMBERS OR nil.  FFMPEG SUPPORTS clip BUT NOT LUA.  math.clip(#,min,max)=math.min(math.max(#,min),max)  FOR RAPID TOGGLE CORRECTIONS.
-math.randomseed(mp.get_time())  --UNIQUE EACH LOAD.
-
+label                     = mp.get_script_name()              --automask
 no_mask                   = o.period..''=='0' or o.periods==0 --..'' CONVERTS→string.  POSSIBLE no_mask BECAUSE NO TIME DEPENDENCE (fpp=1). HOWEVER MAYBE SECTIONS>1
-if no_mask then o.periods,o.period,o.fps_mask = 1,'1','0' end     --periods=1.  period>0 CAN BE ANYTHING (fpp=1).
+if no_mask then o.periods,o.period,o.fps_mask = 1,'1','0' end --periods=1.  period>0 CAN BE ANYTHING (fpp=1).
 fpp                       = loadstring(('return round(%s*%s)'):format(o.fps_mask,o.period))() --FRAMES-PER-PERIOD=number  loadstring EVALUATES round, AS DEFINED, TO DETERMINE number FROM string.
 fpp                       = fpp>0 and fpp or 1                                                --FUTURE VERSION MIGHT ALSO SET 1 FOR is1frame.
 frames_skipped,total_size = fpp*o.periods_skipped,fpp*o.periods 
 periods_looped            = math.max(0,o.periods-o.periods_skipped-1) --periods_skipped=periods VALID (DISCARDS PRIMARY loop, EXCEPT FOR LEAD FRAME).
-o.fps_mask                = ('%s/(%s)'):format   (fpp,o.period)       --number→string TO AVOID RECURRING DECIMALS.  DEFAULT 1 FRAME/PERIOD (fpp=1).
+o.fps_mask                = ('%s/(%s)'):format(   fpp,o.period)       --number→string TO AVOID RECURRING DECIMALS.  DEFAULT 1 FRAME/PERIOD (fpp=1).
 o.gsubs.fpp               = o.gsubs.fpp   or '('..fpp..')'
 for   opt in ('filterchain scales x y rotations zoompan negate_enable lut0_enable'):gmatch('[^ ]+') --options WHICH NEED gsubs.  BLINKER SWITCH, INVISIBILITY, ETC.  filterchain (LENS) OPTIONAL.  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON MPV.APP (SAME _VERSION, DIFFERENT BUILD).
 do  o[opt]                =   o[opt]..''
@@ -169,46 +179,45 @@ graph = no_mask and o.filterchain or ( --NULL OVERRIDE FOR SAME-FRAME TOGGLE/FAS
 
 
 function file_loaded()  --ALSO @property_handler
-    for  property in ('width height lavfi-complex'):gmatch('[^ ]+')  --NUMBERS string nil 
-    do p[property]   = gp(property) end 
-    v                = gp('current-tracks/video') or {}
-    if not (v.id or p.width and p.height)  --return CONDITIONS REQUIRE EITHER track OR PARAMATERS.  OTHERWISE COULD SET W,H=2,2 BUT THAT'S MORE COMPLICATED DUE TO RELOAD REQUIREMENTS.  height=nil COULD OCCUR.
-    then insta_pause = insta_pause and mp.set_property_bool('pause',nil) and nil  --UNPAUSE FOR AUDIO.
-        return end  
-    insta_pause      = insta_pause or not p.pause     and mp.set_property_bool('pause',1)     --IMPROVES RELIABILITY & PREVENTS EMBEDDED MPV FROM SNAPPING.
-    alpha            = gp('video-params/alpha')       or  v.image                 or  not v.id --MPV REQUIRES EXTRA ~.1s TO DETECT alpha, SO GUESS FOR image & ~v.id.
-    W                = o.video_out_params.w           or  gp('display-width' )    or  p.width   or  v['demux-w']  --OVERRIDE  OR  display  OR  PARAMETERS  OR  TRACK.  width=nil SOMETIMES @file-loaded.  FUTURE VERSION SHOULD USE W=osd-width IF FULLSCREEN & display-width=nil & osd-width>width, FOR ANDROID. android-surface-size?
-    H                = o.video_out_params.h           or  gp('display-height')    or  p.height  or  v['demux-h'] 
-    format           = o.video_out_params.pixelformat or  gp('current-vo')=='shm' and 'yuv420p' or alpha and 'yuva420p' or 'yuv420p'  --OVERRIDE  OR  SHARED-MEMORY  OR  TRANSPARENT  OR  NORMAL.  FORCING yuv420p OR yuva420p IS MORE RELIABLE.  SMPLAYER.APP AUTOCONVERTS. MPV.APP COMPATIBLE WITH TRANSPARENCY.  overlay FORCES yuva420p, BUT alpha ON FILM MAY BE BAD FOR OTHER SCRIPTS.
-    is1frame         = v.albumart and p['lavfi-complex']=='' or      no_mask  --albumart & NULL OVERRIDE ARE is1frame RELATIVE TO on_toggle.  MP4TAG & MP3TAG ARE BOTH albumart.  DON'T loop WITHOUT lavfi-complex.  FUTURE VERSION MIGHT ALSO INSERT fpp=1 FOR is1frame (SPEED-LOAD).
-    loop             = v.image    and p['lavfi-complex']=='' and not no_mask  --ALSO REQUIRED FOR is1frame, FOR graph SIMPLICITY.
-    vf_toggle        = is1frame   and OFF     --TOGGLE OFF INSTANTLY.  brightness FOR FURTHER TOGGLING.
-    m.brightness     = is1frame   and 0 or -1 --FILM STARTS OFF.  IF STARTING OR seeking PAUSED, IT TAKES A FEW FRAMES FOR THE MASK TO APPEAR.
-    m.osd_par        = osd_par
-    m.graph          = graph: format(W,H,format,m.osd_par,W,H,m.brightness,format):gsub('%(random%)','('..math.random()..')') --W,H REPEAT FOR scale & zoompan.  format REPEATS FOR EFFICIENCY.  A DIFFERENT VERSION COULD RE-RANDOMIZE @seek. AN automask CAN BE UNIQUE & VARY MORE EASILY THAN A .GIF.
-    mp.commandv('vf','append',('@%s:lavfi=[%s]'):format(label,m.graph))                                                     --commandv FOR graph BYTECODE.  
+    v                    =  gp('current-tracks/video') or {}
+    if not (gp('width') and gp('height') or v.id) then return end                --return CONDITIONS: REQUIRE EITHER PARAMATERS OR track.  OTHERWISE COULD SET W,H=2,2 BUT THAT'S MORE COMPLICATED DUE TO RELOAD REQUIREMENTS.  height=nil COULD OCCUR.
+    android_surface_size = (p['android-surface-size']     or ''):gmatch('[^x]+') --OBSERVED IN ADVANCE.  nil IN WINDOWS, 1600x900 IN BLUESTACKS.  display MAY MEAN SOMETHING ELSE TO A SMARTPHONE.
+    android_surface_size = {w=android_surface_size(),h=android_surface_size()}   --{} IN WINDOWS.  W,H MAY BE STRINGS TOO!  
+    W                    = o.video_out_params.w           or gp('display-width' )    or  android_surface_size.w or  p.width    or v['demux-w'] --OVERRIDE  OR  display  OR  android  OR  PARAMETERS  OR  TRACK.  width=nil SOMETIMES @file-loaded.  p.width MAY BE VARIABLE DUE TO lavfi-complex.
+    H                    = o.video_out_params.h           or gp('display-height')    or  android_surface_size.h or  p.height   or v['demux-h']
+    alpha                = gp('video-params/alpha')       or v.image                 or  not v.id                                              --MPV REQUIRES EXTRA ~.1s TO DETECT alpha, SO GUESS FOR image & ~v.id.
+    format               = o.video_out_params.pixelformat or gp('current-vo')=='shm' and 'yuv420p' or alpha and 'yuva420p' or 'yuv420p'  --OVERRIDE  OR  SHARED-MEMORY  OR  TRANSPARENT  OR  NORMAL.  FORCING yuv420p OR yuva420p IS MORE RELIABLE.  SMPLAYER.APP AUTOCONVERTS. MPV.APP COMPATIBLE WITH TRANSPARENCY.  overlay FORCES yuva420p, BUT alpha ON FILM MAY BE BAD FOR OTHER SCRIPTS.  FUTURE VERSION SHOULD SEPARATE THIS INTO A NEW function apply_format, FOR MORE EFFICIENT RELOADS.
+    loop                 = v.image     and gp('lavfi-complex')=='' and not no_mask  --ALSO REQUIRED FOR is1frame, FOR graph SIMPLICITY.
+    is1frame             = v.albumart  and  p['lavfi-complex']=='' or      no_mask  --albumart & NULL OVERRIDE ARE is1frame RELATIVE TO on_toggle.  MP4TAG & MP3TAG ARE BOTH albumart.  DON'T loop WITHOUT lavfi-complex.  FUTURE VERSION MIGHT ALSO INSERT fpp=1 FOR is1frame (SPEED-LOAD).
+    vf_toggle            = is1frame    and OFF     --TOGGLE OFF INSTANTLY.  brightness FOR FURTHER TOGGLING.
+    m.brightness         = is1frame    and 0 or -1 --FILM STARTS OFF.  IF STARTING OR seeking PAUSED, IT TAKES A FEW FRAMES FOR THE MASK TO APPEAR.
+    m.graph              = graph: format(W,H,format,osd_par,W,H,m.brightness,format):gsub('%(random%)','('..math.random()..')')  --W,H REPEAT FOR scale & zoompan.  format REPEATS FOR EFFICIENCY.  A DIFFERENT VERSION COULD RE-RANDOMIZE @seek. AN automask CAN BE UNIQUE & VARY MORE EASILY THAN A .GIF.
+    insta_pause          = not p.pause and mp.set_property_bool('pause',1) --IMPROVES RELIABILITY & PREVENTS EMBEDDED MPV FROM SNAPPING.
+    mp.commandv('vf','append',('@%s:lavfi=[%s]'):format(label,m.graph))    --commandv FOR graph BYTECODE.  
     
-    p['time-pos'],remove_loop = round(gp('time-pos'),.001),nil --start_time, NEAREST MILLISECOND.
-    for _,vf in pairs(gp('vf'))            --CHECK FOR @loop.  COULD BE THERE DUE TO OTHER vid OR SCRIPT/S.  FETCH vf LAST.
-    do remove_loop = remove_loop    or vf.label=='loop' end 
+    p['time-pos'],m.osd_par,remove_loop = round(gp('time-pos'),.001),osd_par,nil --start_time, NEAREST MILLISECOND.
+    for _,vf in pairs(gp('vf'))                                                  --CHECK FOR @loop.  COULD BE THERE DUE TO OTHER vid OR SCRIPT/S.  FETCH vf LAST.
+    do remove_loop = remove_loop or vf.label=='loop' end 
     command        = ''
-                     ..(  vf_toggle and 'no-osd vf  toggle @%s;'                               or ''):format(label)
+                     ..(  vf_toggle and 'no-osd vf  toggle @%s  ;'                             or ''):format(label)
                      ..(remove_loop and 'no-osd vf  remove @loop;'                             or '')
-                     ..(       loop and 'no-osd vf  pre    @loop:lavfi=[loop=-1:1,fps=%s:%s];' or ''):format(o.fps,p['time-pos']) --ALL MASKS CAN REPLACE @loop. 
-                     ..(insta_pause and        'set pause   no;'                               or '')
+                     ..(       loop and 'no-osd vf  pre    @loop:lavfi=[loop=-1:1,fps=%s:%s];' or ''):format(o.fps,p['time-pos']) --ALL MASKS CAN REPLACE @loop.  FUTURE VERSION SHOULD SEPARATE THIS FROM file-loaded (MORE ELEGANT).
+                     ..(insta_pause and        'set pause  no   ;'                             or '')
     command        = ''~=command    and mp.command(command)
     insta_pause    = nil
 end
 mp.register_event('file-loaded',file_loaded)
-mp.register_event( 'start-file',function() insta_pause = not p.pause and mp.command('set pause yes;no-osd vf pre @loop:loop=-1:1;') end)  --INSTA-loop OF LEAD-FRAME IMPROVES RELIABILITY FOR JPEG (HOOKS IN TIMESTAMPS).  video-latency-hacks ALSO RESOLVES THIS ISSUE.
-mp.register_event(   'end-file',function() v,W         = nil  end)  --CLEAR SWITCHES.
-mp.register_event(       'seek',function() on_seek     = loop and not is1frame and mp.command(('no-osd vf pre @loop:lavfi=[loop=-1:1,fps=%s:%s]'):format(o.fps,round(gp('time-pos'),.001))) end)  --FOR JPEG PRECISE seeking: RESET STARTPTS.  PTS MAY GO NEGATIVE!  is1frame UNNECESSARY (OTHERWISE CAUSES INFINITE CYCLE IN VIRTUALBOX).  A FUTURE VERSION MIGHT USE A DIFFERENT TECHNIQUE, LIKE A NULL AUDIO STREAM.  ARGUABLY seek SHOULD playlist-next OR playlist-prev IN JPEG-PLAYLIST.
+mp.register_event( 'start-file',function() start_file = mp.command('no-osd vf pre @loop:loop=-1:1') end)  --INSTA-loop OF LEAD-FRAME IMPROVES RELIABILITY FOR JPEG (HOOKS IN TIMESTAMPS).  video-latency-hacks ALSO RESOLVES THIS ISSUE.  DON'T insta_pause DURING YOUTUBE LOAD.
+mp.register_event(   'end-file',function() v,W,playback_restarted = nil  end)  --CLEAR SWITCHES.
+mp.register_event(       'seek',function() on_seek = loop and not is1frame and mp.command(('no-osd vf pre @loop:lavfi=[loop=-1:1,fps=%s:%s]'):format(o.fps,round(gp('time-pos'),.001))) end)  --FOR JPEG PRECISE seeking: RESET STARTPTS.  PTS MAY GO NEGATIVE!  is1frame UNNECESSARY (OTHERWISE CAUSES INFINITE CYCLE IN VIRTUALBOX).  A FUTURE VERSION MIGHT USE A DIFFERENT TECHNIQUE, LIKE A NULL AUDIO STREAM.  IMPRECISE-seek TRIGGERS playlist-next OR playlist-prev IN JPEG-PLAYLIST.
 
-function playback_restart()         --GRAPH STATE RESETS, UNLESS is1frame.
-    m.brightness,p.seeking = -1,nil --FOR Dbrightness.  IRRELEVANT IF is1frame.  seeking OBSERVATIONS LAG THIS TRIGGER.
-    apply_eq()                      --AFTER seeking.
+function playback_restart()          --GRAPH STATE RESETS, UNLESS is1frame.
+    m.brightness,p.seeking = -1,nil  --FOR Dbrightness.  IRRELEVANT IF is1frame.  seeking OBSERVATIONS LAG THIS TRIGGER.
+    apply_eq()                       --AFTER seeking.
+    timers.playback_restart:resume() --UNBLOCKS TOGGLE-TIMERS.
 end 
 mp.register_event('playback-restart',playback_restart)      
+timers.playback_restart = mp.add_periodic_timer(.01,function() playback_restarted=true end)  --playback-restart CAN TRIGGER BEFORE aid, BY LIKE 1ms, FOR albumart.
 
 function on_toggle()  --@key_binding & @property_handler.
     OFF             = not OFF 
@@ -219,33 +228,33 @@ function on_toggle()  --@key_binding & @property_handler.
     command         = ''
                       ..(is1frame           and 'no-osd vf  toggle   @%s;' or (apply_eq() or 1) and ''):format(label)  --no_mask & albumart  OVERRIDE  OR ELSE NORMAL.  PRESERVES FILTER ORDER (BEFORE PADDING).  HOWEVER vf toggle SNAPS EMBEDDED MPV.
                       ..(insta_unpause      and 'no-osd set terminal no;set pause no;'          or  '')  
-                      ..(o.osd_on_toggle~=0 and 'show-text                         "'
+                      ..(o.osd_on_toggle==0 and '' or  'show-text                  "'
                           ..'_VERSION       = %s                                  \n'  --Lua 5.1  5.2
                           ..'mpv-version    = ${mpv-version}                      \n'  --mpv 0.38.0  →  0.34.0
                           ..'ffmpeg-version = ${ffmpeg-version}                   \n'
                           ..'libass-version = ${libass-version}                   \n'
                           ..'media-title    = ${media-title}                      \n' 
-                          ..'platform       = ${platform}                         \n'  --windows  linux  darwin     android     nil
-                          ..'current-ao,current-vo = ${current-ao},${current-vo}\n\n'  --wasapi   pulse  coreaudio  audiotrack  nil  ,  gpu  gpu-next  direct3d  libmpv  shm
+                          ..'platform       = ${platform}                         \n'  --nil  windows  linux  darwin     android     
+                          ..'current-ao,current-vo = ${current-ao},${current-vo}\n\n'  --nil  wasapi   pulse  coreaudio  audiotrack  ,  gpu  gpu-next  direct3d  libmpv  shm
                           ..'lavfi-complex  = \n${lavfi-complex}                \n\n'
                           ..'Audio filters:   \n${af}                           \n\n'
                           ..'Video filters:   \n${vf}                           \n\n'
-                          ..'video-out-params = \n${video-out-params}"           %d;' or ''
-                      ):format(_VERSION,o.osd_on_toggle)
+                          ..'video-out-params = \n${video-out-params}"           %d;'  --pixelformat...
+                        ):format(_VERSION,o.osd_on_toggle)
+                      ..o.toggle_command
     command         = command~='' and mp.command(command) 
 end
 for key in o.key_bindings: gmatch('[^ ]+') do mp.add_key_binding(key,'toggle_mask_'..key,on_toggle) end
 timers.pause = mp.add_periodic_timer(o.unpause_on_toggle,function() insta_unpause,return_terminal = mp.command('set pause yes;'..(return_terminal and 'no-osd set terminal yes' or '')) and nil end)  --pause TIMER PAUSES, BUT MUST ALSO return_terminal.
 
 function apply_eq(brightness)  --@on_toggle &  @playback-restart.  UTILITY SEPARATE FROM ITS TOGGLE. EQUALIZER ACTUALLY REQUIRES ITS OWN fps.
-    p['time-pos']   = gp('time-pos') 
     brightness      = brightness or OFF and -1 or 0  --0,-1 = ON,OFF
     Dbrightness     = brightness-m.brightness                                                                      --Δ INVALID ON MPV.APP.
-    if Dbrightness == 0 or is1frame or not (p['video-params'] and p['time-pos']) or p.seeking then return end      --return CONDITIONS.  Dbrightness PREVENTS EXCESSIVE vf-command (LAG).  is1frame USES GRAPH REPLACEMENT.  video-params REQUIRED FOR target ACQUISITION (PERMANENT OP).  time-pos=nil AFTER end-file, @playback-restart.  seeking INVALID.  
+    if Dbrightness == 0 or is1frame or not (p['video-params'] and gp('time-pos')) or p.seeking then return end      --return CONDITIONS.  Dbrightness PREVENTS EXCESSIVE vf-command (LAG).  is1frame USES GRAPH REPLACEMENT.  video-params REQUIRED FOR target ACQUISITION (PERMANENT OP).  time-pos=nil AFTER end-file, @playback-restart.  seeking INVALID.  
     time_pos        = p['time-pos'] + o.vf_command_t_delay                                                         --BUG: BACKWARDS-seek NEEDS MUCH LARGER vf_command_t_delay (.5s).  revert-seek TOO SLOW, BUT CAN RUN TIMER WHO CHECKS time-pos EVERY FEW SECONDS. 
     time_pos        = time_pos-(m.time_pos and clip(toggle_duration-(time_pos-m.time_pos),0,toggle_duration) or 0) --REMAINING_DURATION_OF_PRIOR_TOGGLE=LAST_DURATION-TIME_SINCE_LAST_TOGGLE  (SUBTRACT REMAINING_DURATION).  CAN clip THE TIME DIFFERENCE TO BTWN 0 & DURATION.  RAPID TOGGLING USES PRIOR DURATION - IT COULD BE 0 WHEN PAUSED.
-    toggle_duration = insta_unpause  and 0 or o.toggle_duration 
-    toggle_expr     = toggle_duration==0 and 1 or ('clip((t-%s)/(%s),0,1)'):format(time_pos,toggle_duration)
+    toggle_duration = insta_unpause        and 0 or o.toggle_duration 
+    toggle_expr     = toggle_duration==0   and 1 or ('clip((t-%s)/(%s),0,1)'):format(time_pos,toggle_duration)
     toggle_expr     = o.toggle_expr: gsub('%%s',toggle_expr)  --NON-LINEAR clip. 
     target          = target or mp.command(('vf-command %s brightness %d eq'):format(label,m.brightness)) and 'eq' or ''  --NEW MPV OR OLD. v0.37.0+ SUPPORTS TARGETED COMMANDS.  command RETURNS true IF SUCCESSFUL. MORE RELIABLE THAN VERSION NUMBERS BECAUSE THOSE CAN BE ANYTHING.  SCALERS DON'T UNDERSTAND brightness.  
     
@@ -255,19 +264,22 @@ end
 
 function property_handler(property,val)
     p[property] = val
-    for key in ('mute aid sid'):gmatch('[^ ]+')  --current-tracks/audio/selected & current-tracks/sub/selected ARE STRONGER ALT-CONDITIONS REQUIRING PROPER SWITCHING OFF/ON (AS OPPOSED TO ID#).  current-ao ALSO DOES WHAT current-tracks/audio/selected DOES, BUT SAFER @playlist-next.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).  
-    do toggle   = W and property==key                          and (not timers[key]:is_enabled() and (timers[key]:resume() or 1) or on_toggle()) end  --W BLOCKS RAW AUDIO.
     osd_par     =       property=='osd-par'                    and (val>0 and val or 1)*o.osd_par_multiplier or osd_par --0,1 = AUTO,SQUARE  0@load-script, 0@file-loaded, & 1@playback-restart. MAYBE ~1 ON EXPENSIVE SYSTEM.  THEN zoompan SQUISHES THE CIRCLES INTO ELLIPSES, WHICH ARE THEN VIEWED AS PERFECT CIRCLES.
-    reload      = v and (nil    --5 CONDITIONS: @NEW-vo, @is1frame, @alpha, @image & @osd_par.
+    reload      = v and (nil    --6 RELOAD CONDITIONS: @NEW-vo, @is1frame, @alpha, @image, @osd_par & @android-surface-size.
                     or  property=='video-params'               and val    and (not W or is1frame or val.alpha and not alpha)  --NEW vo, OR Δalbumart, OR TRY SWITCH TO TRANSPARENCY.  is1frame MUST BE RE-DRAWN.  TRANSPARENCY TAKES TIME TO DETECT. DELAYED TRIGGER BAD!  SWITCHING BACK TO yuv420p UNNECESSARY.
                     or  property=='current-tracks/video/image' and val    ~=v.image         --RELOAD IF SWITCHING BTWN MP4 & MP4TAG.  UNFORTUNATELY EMBEDDED MPV SNAPS.  albumart DISTINCTION IS IRRELEVANT. vid ALSO IRRELEVANT.
                     or  property=='osd-par'                    and osd_par~=m.osd_par and W --UNTESTED.
+                    or  property=='android-surface-size'                                    --SMARTPHONE ROTATION!
                   ) and file_loaded()
+    
+    if not (W and playback_restarted) then return end --TOGGLES BELOW.  W BLOCKS RAW AUDIO.  
+    for key in ('mute aid sid'):gmatch('[^ ]+')       --current-tracks/audio/selected(double_ao_timeout) & current-tracks/sub/selected(double_sub_timeout) ARE STRONGER ALT-CONDITIONS REQUIRING OFF/ON, AS OPPOSED TO ID#.  current-ao ALSO DOES WHAT current-tracks/audio/selected DOES, BUT SAFER @playlist-next.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).  
+    do toggle = property==key and (not timers[key]:is_enabled() and (timers[key]:resume() or 1) or on_toggle()) end
 end 
-for property in ('current-tracks/video/image seeking pause terminal mute aid sid osd-par video-params'):gmatch('[^ ]+')  --BOOLEANS NUMBERS table nil
+for property in ('current-tracks/video/image seeking pause terminal mute aid sid osd-par android-surface-size video-params'):gmatch('[^ ]+')  --BOOLEANS NUMBERS string table nil
 do mp.observe_property(property,'native',property_handler) end
 
-for key in ('mute aid sid'):gmatch('[^ ]+')  --NULL-OP MECHANISMS.
+for key in ('mute aid sid'):gmatch('[^ ]+')  --NULL-OP MECHANISMS.  double_pause_timeout=0 (p&p DOUBLE-TAP) ALSO SIMPLE TO IMPLEMENT.
 do    timers[key]   = mp.add_periodic_timer(o['double_'..key..'_timeout'], function()end ) end
 for _,timer in pairs(timers) 
 do    timer.oneshot = 1  --ALL 1SHOT.
@@ -281,11 +293,7 @@ do    timer.oneshot = 1  --ALL 1SHOT.
 ----PLATFORMS  windows linux darwin(Lua 5.1) android(Lua 5.2) ALL TESTED.  WIN-10 MACOS-11 LINUX-DEBIAN-MATE ANDROID-7-x86. 
 ----SMPLAYER-v24.5, RELEASES .7z .exe .dmg .AppImage .flatpak .snap win32  &  .deb-v23.12  ALL TESTED.
 
-----BUG: PERFECT CIRCLES AREN'T WORKING IN ANDROID, WITHOUT o.video_out_params. A FUTURE VERSION SHOULD USE osd-width,osd-height OR android-surface-size. BUT THIS COULD CAUSE STUTTERED RELOAD.
-----BUG: RARELY MASK STARTS UP IN OFF STATE. MYSTERY.
-----FUTURE VERSION MAY HAVE IMPROVED ANDROID MECHANISM.  double_mute REQUIRES AN AUDIO-TRACK (BUG).
-----FUTURE VERSION MAY HAVE MONACLE FOR ANDROID, BY DEFAULT (o.android).
-
+----BUG: RELOADS WHEN MINIMIZED IN ANDROID.  RELOAD SHOULD BE BLOCKED.
 ----SCRIPT WRITTEN TO TRIGGER AN INPUT ERROR ON OLD MPV (<=0.36). MORE RELIABLE THAN VERSION NUMBERS. 
 ----EACH mask REQUIRES EXTRA ~450MB RAM.  CAN PREDICT 296MB=1680*1050*2^2*22*2/1024^2=display*o.res_multiplier^2*22FRAMES*2periods/1MB  
 ----A DIFFERENT VERSION COULD FADE OUT 1s NEAR end-file (FINALE).

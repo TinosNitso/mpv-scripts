@@ -1,6 +1,6 @@
 ----WINDOWS    :  --script=.                                  IN SMPLAYER'S ADVANCED mpv PREFERENCES.  PLACE ALL scripts WITH smplayer.exe
 ----LINUX/MACOS:  --script=~/Desktop/mpv-scripts/             IN SMPLAYER.  PLACE mpv-scripts ON Desktop.  LINUX snap: --script=/home/user/Desktop/mpv-scripts/
-----ANDROID    :    script=/sdcard/Android/media/is.xyz.mpv/  IN ADVANCED SETTING Edit mpv.conf.  PLACE ALL SCRIPTS IN THIS EXACT FOLDER IN INTERNAL MAIN STORAGE. OTHER FOLDERS DON'T WORK IN ANDROID-v11+.  ENABLE MPV MEDIA-ACCESS USING ITS FILE-PICKER.  'sdcard'~='SD card'(EXTERNAL)  CAN ALSO INSTALL cx-file-explorer & 920 (.APK).  920 CAN HANDLE WORDWRAP & WHITESPACE.
+----ANDROID    :    script=/sdcard/Android/media/is.xyz.mpv/  IN ADVANCED SETTING Edit mpv.conf.  PLACE ALL SCRIPTS IN THIS EXACT FOLDER IN INTERNAL MAIN STORAGE. OTHER FOLDERS DON'T WORK IN ANDROID-11.  ENABLE MPV MEDIA-ACCESS USING ITS FILE-PICKER.  'sdcard'~='SD card'(EXTERNAL)  CAN ALSO INSTALL cx-file-explorer & 920 (.APK).  920 CAN HANDLE WORDWRAP & WHITESPACE.
 ----https://GITHUB.COM/yt-dlp/yt-dlp/releases/tag/2024.03.10  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY & REDTUBE ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  twitter.com/i/... WORKS WITHOUT seeking & autocomplex.lua.
 
 options     = {                
@@ -16,10 +16,10 @@ options     = {
         "yt-dlp_linux", --CASE SENSITIVE.  sudo apt remove yt-dlp  TO REMOVE OLD VERSION.  REMOVE THESE TO SHORTEN script-opts.  
         "yt-dlp_macos", 
     },
-    options = {                                                         --COULD BE RENAMED config.
-        'ytdl-format     bv[height<1080]+ba/best','profile       fast', --bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  fast FOR MPV.APP (COLORED TRANSPARENCY).  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://YOUTU.BE/8cor7ygb1ms?t=60
-        'sub-border-size  2','sub-font-size   32',  --DEFAULTS auto,3,55   sub=sid=auto BEFORE YOUTUBE LOADS.  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
-        'osd-level        0','osd-bar         no','osd-border-size  1','osd-duration  5000','osd-font "COURIER NEW"','osd-bold yes',  --DEFAULTS 3,yes,3,1000,sans-serif,no   osd-level=0 PREVENTS UNWANTED MESSAGES @load-script.  SMPLAYER ALREADY HAS bar. READABLE FONT ON SMALL WINDOW. 1p BORDER FOR LITTLE TEXT.  1000 MILLISECONDS ISN'T ENOUGH TO READ/SCREENSHOT osd.  COURIER NEW NEEDS bold (FANCY).  CONSOLAS IS PROPRIETARY & INVALID ON MACOS.
+    options = {                                                     --COULD BE RENAMED config.
+        'ytdl-format  bv[height<1080]+ba/best','profile fast     ', --bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  fast FOR MPV.APP (COLORED TRANSPARENCY).  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://YOUTU.BE/8cor7ygb1ms?t=60
+        'osd-border-size 1','osd-level      0','osd-duration 5000','osd-bar no',  --DEFAULTS 3,3,1000,yes   border=1p FOR LITTLE TEXT.  osd-level=0 PREVENTS UNWANTED MESSAGES @load-script.  1000 MILLISECONDS ISN'T ENOUGH TO READ/SCREENSHOT osd.  SMPLAYER ALREADY HAS A BAR. 
+        'sub-border-size 2','sub-font-size 32',  --DEFAULTS=3,55  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
     },
     title             = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,b1,fs##,bord# = \,BOLD,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
     title_duration    =  5 , --SECONDS.
@@ -27,43 +27,45 @@ options     = {
     options_delay     = .3 , --SECONDS, FROM playback_start. title ON SAME DELAY.
     options_delayed   = {    --@playback_started+options_delay, FOR EVERY FILE.
         'osd-level 1',       --DEFAULT=3.  RETURN osd-level. 
-        -- 'sid    1','secondary-sid 1',  --UNCOMMENT FOR SUBTITLE TRACK ID OVERRIDE.  USEFUL FOR YOUTUBE + lavfi-complex. sid=1 BUGS OUT DUE TO sub-create-cc-track.
+        -- 'sid    1','secondary-sid 1',  --UNCOMMENT FOR SUBTITLE-TRACK-ID OVERRIDE.  USEFUL FOR YOUTUBE + sub-create-cc-track. sid=1 BUGS OUT @file-loaded.
     },
-    android     = {  
-        options = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"'},  --options ARE SPECIAL & APPEND, NOT REPLACE.
-    },
-    windows     = {}, linux = {}, darwin = {},  --platform OVERRIDES.
+    android = {}, windows = {}, linux = {}, darwin = {},  --platform OVERRIDES.
 }
-o,o2,p,timers = options,{},{},{} --TABLES.  p=PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file
-for opt,val in pairs(o)          --o2=oCLONE  LUA DOESN'T SUPPORT COPYING TABLES.
-do o2[opt] = val end 
-require 'mp.options'.read_options(o)  --mp=MEDIA_PLAYER  READS IN STRINGS, SUCH AS FROM GUI INTERFACE. USER MAY ENTER 1+1 INSTEAD OF 2, ETC.
+o,p,timers = {},{},{} --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file
 
+function  gp(property)  --ALSO @playback-restart.  GET PROPERTY.
+    p       [property]=mp.get_property_native(property)  --mp=MEDIA_PLAYER
+    return p[property]
+end
+
+for  opt,val in pairs(options) --TYPES CLONE.  LUA HAS NO METHOD FOR THIS.  
+do o[opt]  = val end 
+require 'mp.options'.read_options(o)  --yes/no=true/false BUT OTHER TYPES DON'T AUTO-CAST.  GUI USER MAY ENTER RAW TABLES & 420+42 INSTEAD OF 462, ETC.
 for  opt,val in pairs(o)
-do o[opt]      = type(val)=='string' and type(o2[opt])~='string' and loadstring('return '..val)() or val end  --NATIVE TYPECAST.  load INVALID ON MPV.APP.  NATIVES PREFERRED, EXCEPT FOR GRAPH INSERTS.  ALTERNATIVE loadstring('return {%s}') CAN DO THEM ALL IN 1 table.
-gp             = mp.get_property_native
-for  property in ('platform scripts script-opts'):gmatch('[^ ]+') --string TABLES.  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON MPV.APP (SAME LUA _VERSION, DIFFERENT BUILD).
-do p[property] = gp(property) end
+do o[opt] = type(val)~=type(options[opt]) and loadstring('return '..val)() or val end  --NATIVE TYPECAST ENFORCES ORIGINAL TYPES.  load INVALID ON MPV.APP.  NATIVES PREFERRED, EXCEPT FOR GRAPH INSERTS.  
 
-for _,opt in pairs((o[p.platform] or {}).options or {}) do table.insert(o.options,opt) end  --APPEND TO o.options.
-for _,opt in pairs(o.options)
-do  command                   = ('%s no-osd set %s;'):format(command or '',opt) end
-command                       = command and mp.command(command) --ALL SETS IN 1.
-for opt,val in pairs(o[p.platform] or {})                       --platform OVERRIDE.
-do o[opt]                     = val end
-directory                     = require 'mp.utils'.split_path(p.scripts[1]) --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  UTILITIES CAN BE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
+for _,opt in pairs((o[gp('platform')]  or {}).options or {}) do table.insert(o.options,opt) end  --platform OVERRIDE CAN APPEND TO o.options (SPECIAL & DON'T REPLACE).
+for _,opt in pairs( o.options)                                                                   --ALL SETS IN 1.
+do  command = ('%s no-osd set %s;'):format(command or '',opt) end
+command     = command and mp.command(command)
+for opt,val in pairs(o[p.platform] or {})  --platform OVERRIDE.  o[nil] FOR OLD MPV.
+do o[opt]   = val end
+
+directory = require 'mp.utils'.split_path(gp('scripts')[1]) --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  UTILITIES CAN BE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
 for _,script  in pairs(o.scripts) 
 do script_lower,script_loaded = script:lower(),nil
     for _,val in pairs(p.scripts) 
-    do script_loaded          =     script_loaded or  val:lower()==script_lower end  --SEARCH NOT CASE SENSITIVE.  CODE NOT FULLY RIGOROUS.
-    commandv                  = not script_loaded and mp.commandv('load-script',('%s/%s'):format(directory,script)) and table.insert(p.scripts,script) end  --commandv FOR FILENAMES. '/' FOR windows & UNIX.
-mp.set_property_native('scripts',p.scripts)  --DECLARE scripts (OPTIONAL)
-directory,title               = mp.command_native({'expand-path',directory}),mp.create_osd_overlay('ass-events') --command_native EXPANDS '~/' FOR yt-dlp.  ass-events IS THE ONLY FORMAT. title GETS ITS OWN osd.
-COLON                         = p.platform=='windows' and ';' or ':' --FILE LIST SEPARATOR.  windows=;  UNIX=:
-opt                           = 'ytdl_hook-ytdl_path'                --ABBREV.
+    do script_loaded =     script_loaded or  val:lower()==script_lower end  --SEARCH NOT CASE SENSITIVE.  CODE NOT FULLY RIGOROUS.
+    commandv         = not script_loaded and mp.commandv('load-script',('%s/%s'):format(directory,script)) and table.insert(p.scripts,script) end  --commandv FOR FILENAMES. '/' FOR windows & UNIX.
+mp.set_property_native('scripts',p.scripts)  --OPTIONAL: DECLARE scripts.
+gp('script-opts')
+
+directory,title           = mp.command_native({'expand-path',directory}),mp.create_osd_overlay('ass-events') --command_native EXPANDS '~/' FOR yt-dlp.  ass-events IS THE ONLY FORMAT. title GETS ITS OWN osd.
+COLON                     = p.platform=='windows' and ';' or ':' --FILE LIST SEPARATOR.  windows=;  UNIX=:
+opt                       = 'ytdl_hook-ytdl_path'                --ABBREV.
 for _,ytdl in pairs(o.ytdl) 
-do  ytdl                      = directory..'/'..ytdl                                                     --'/' FOR WINDOWS & UNIX.
-    p['script-opts'][opt]     = p['script-opts'][opt] and p['script-opts'][opt]..COLON..ytdl or ytdl end --APPEND ALL ytdl AFTER SMPLAYER'S!
+do  ytdl                  = directory..'/'..ytdl                                                     --'/' FOR WINDOWS & UNIX.
+    p['script-opts'][opt] = p['script-opts'][opt] and p['script-opts'][opt]..COLON..ytdl or ytdl end --APPEND ALL ytdl AFTER SMPLAYER'S!
 mp.set_property_native('script-opts',p['script-opts'])                                                   --EMPLACE ALL ytdl.
 
 function playback_restart()  --ALSO @on_pause
