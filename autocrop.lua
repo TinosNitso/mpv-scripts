@@ -1,12 +1,11 @@
 ----FOR MPV & SMPLAYER. CROPS IN BOTH SPACE & TIME (SUB-CLIPS). CROPS BLACKBARS OFF JPEG, PNG, BMP, GIF, MP3 TAGS, AVI, WEBM, MP4 & YOUTUBE. CAN CHANGE vid TRACK (MP3TAG) & crop ON THE FLY. CROPS RAW AUDIO TO START & END limits.  .TIFF 1-LAYER ONLY, NO WEBP OR PDF.
-----DOUBLE-mute TOGGLES BOTH crop & PADDING, ON SMARTPHONE TOO. CAN MAINTAIN CENTER IN HORIZONTAL/VERTICAL, WITH INSTANTANEOUS TOLERANCE VALUES. SUPPORTS BOTH cropdetect & bbox FFMPEG-FILTERS. 
+----DOUBLE-mute TOGGLES BOTH crop & PADDING, ON SMARTPHONE TOO. CAN MAINTAIN CENTER IN HORIZONTAL/VERTICAL, WITH INSTANTANEOUS TOLERANCE VALUES. SUPPORTS BOTH cropdetect & bbox FFMPEG-FILTERS.  IN SMPLAYER AN ADVANCED PREFERENCE IS TO RUN action=aspect_none (SET KEYBOARD SHORTCUT=Tab) FOR ALL FILES. IT HAS SOME FINAL GPU OVERRIDE.
 ----THIS VERSION HAS PROPER aspect TOGGLE (EXTRA PAIR OF BLACK BARS), SMOOTH-pad, BUT NOT SMOOTH-CROP.  BASED ON https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua  BUT WITHOUT video-crop BECAUSE THAT CROPS automask.lua TOO. IT ALWAYS MAINTAINS PERFECT ASPECT (NO SCALING).
-----SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS.  IN SMPLAYER AN ADVANCED PREFERENCE IS TO RUN action=aspect_none (SET KEYBOARD SHORTCUT=Tab) FOR ALL FILES. IT HAS SOME FINAL GPU OVERRIDE.
 
 options                    = { 
     auto                   = true ,  --IF REMOVED, CROPS OCCUR ONLY @on_toggle & @playback-restart (BUT ~@UNPAUSE). 
     auto_delay             =   .5 ,  --ORIGINALLY 4 SECONDS.  
-    detect_limit           =  '24',  --ORIGINALLY "24/255".  INTEGER FOR bbox (ALT-DETECTOR).  SET TO 0 FOR NO CROPPING.  CAN INCREASE FOR VARIOUS TRACKS.
+    detect_limit           =  '24',  --ORIGINALLY "24/255".  INTEGER FOR bbox.  SET TO 0 FOR NO CROPPING.  CAN INCREASE FOR VARIOUS TRACKS.
     detect_round           =    1 ,  --ORIGINALLY 2.  DEFAULT=16.
     detect_min_ratio       =  .25 ,  --ORIGINALLY 0.5.
     suppress_osd           = true ,  --ORIGINALLY false.
@@ -19,7 +18,7 @@ options                    = {
     unpause_on_toggle      =        .12 ,  --SECONDS TO UNPAUSE FOR TOGGLE, LIKE FRAME-STEPPING.      SET TO 0 TO DISABLE.  A FEW FRAMES ARE ALREADY DRAWN IN ADVANCE.  is1frame IRRELEVANT. 
     vf_command_t_delay     =        .12 ,  --SECONDS.  RAPID TOGGLING HAS ~.1s LAG DUE TO A FEW FRAMES WHICH AREN'T REDRAWN FAST ENOUGH.  IT TAKES NEARLY AS LONG AS SENDING MESSAGES TO THE OPPOSITE SIDE OF THE EARTH!  BACKWARDS-seeking ADDS .5s.
     toggle_command         =         '' ,  --EXECUTES on_toggle, UNLESS BLANK.  'show-text ""' CLEARS THE OSD.  CAN DISPLAY ${vf} ${lavfi-complex} ${video-out-params}.
-    toggle_expr            =   '(expr)' ,  --(expr)=LINEAR-IN-TIME-EXPRESSION  DOMAIN & RANGE BOTH [0,1].  FOR CUSTOMIZED TRANSITION BTWN aspect RATIOS.  EXAMPLE='(1-cos(PI*%s))/2', FOR NON-LINEAR SINUSOIDAL TRANSITION (HALF-WAVE).  A SINE WAVE IS 57% FASTER @MAX-SPEED (PI/2=1.57), HENCE TOO FAST.
+    toggle_expr            =   '(expr)' ,  --(expr)=LINEAR-IN-TIME-EXPRESSION  DOMAIN & RANGE BOTH [0,1].  FOR CUSTOMIZED TRANSITION BTWN aspect RATIOS.  EXAMPLE='(1-cos(PI*(expr)))/2', FOR NON-LINEAR SINUSOIDAL TRANSITION (HALF-WAVE). THIS RUBBER-BAND EFFECT WORKS BETTER WITH TRUE SMOOTH-CROPPING.  A SINE WAVE IS 57% FASTER @MAX-SPEED (PI/2=1.57), SO .5s DURATION INSTEAD OF .3s. 
     detector               = 'cropdetect=limit=%s:round=%s:reset=1',  --DEFAULT='cropdetect=limit=%s:round=%s:reset=1'  %s:%s=detect_limit:detect_round  reset>0.  SETS TO 'bbox=%s' FOR JPEG & alpha.
     detect_min_ratio_image =            .1 ,  --OVERRIDE FOR JPEG.
     TOLERANCE              = {.05,time=10} ,  --INSTANTANEOUS TOLERANCE.  {0} DEACTIVATES THIS.  5% BLACK BARS ARE TOLERATED FOR UP TO time=10 SECONDS. A BIG crop IS INSTANT, BUT NOT LITTLE CROPS, OTHERWISE AN IMAGE MAY KEEP FIDGETING BY A PIXEL OR TWO.
@@ -30,7 +29,7 @@ options                    = {
     pad_scale_flags        =    'bilinear' ,  --DEFAULT bicubic ('').  BUT bilinear WAS ONCE DEFAULT IN OLD FFMPEG & IS FASTER @frame DOWN-SCALING. bicubic IS BETTER QUALITY.  BUT THIS IS FOR THE PADDING DOWN-SCALER.  
     pad_color              =            '' ,  --DEFAULT BLACK   ('').  'BLACK@0'  FOR TRANSPARENCY.  MAROON, PURPLE, DARKBLUE, DARKGREEN, DARKGRAY, PINK & WHITE ARE ALSO NICE.  THIS COULD BE REPLACED WITH EXTRA x:y OPTIONS, LIKE WHETHER TO pad FROM THE CENTER OR TOP.
     osd_par_multiplier     =       1       ,  --DISPLAY-PAR=osd-par*osd_par_multiplier  osd-par=ON-SCREEN-DISPLAY-PIXEL-ASPECT-RATIO  CAN MEASURE display TO DETERMINE ITS TRUE par.  video-out-params/par ACTUALLY MEANS VIDEO-IN-2DISPLAY (par OF ORIGINAL FILM)!  THE pad-TOGGLE USES THIS OVERRIDE ON EXOTIC DISPLAYS.
-    video_out_params       =  {par=1,w,h,pixelformat},  --OVERRIDES.  DEFAULT par=1.  USE {par=1,pixelformat='yuva420p'} FOR TRANSPARENT PADDING.  THIS SCRIPT OVERRIDES FILM par USING ITS OWN MATH.  DEFAULT w=display-width  BUT THAT'S nil FOR LINUX SMPLAYER. THEN CAN SET {par=1,w=1680,h=1050}.  OVERRIDING par USES MORE CPU BY FAKING MEGAPIXELS. THE SOURCE STREAM par/sar COULD ALSO BE VARIABLE!
+    video_out_params       =  {par=1,w,h,pixelformat},  --OVERRIDES.  DEFAULT par=1.  USE {par=1,pixelformat='yuva420p'} FOR TRANSPARENT PADDING.  THIS SCRIPT OVERRIDES FILM par USING ITS OWN MATH.  DEFAULT w=display-width.  BUT THAT'S nil FOR LINUX SMPLAYER (CAN SET {par=1,w=1680,h=1050}).  OVERRIDING par USES MORE CPU BY FAKING MEGAPIXELS. THE SOURCE STREAM par/sar COULD ALSO BE VARIABLE!
     options                =  {
         'msg-level     ffmpeg/demuxer=error,autocrop=fatal                  ',  --{no,fatal,error,warn,info}  TYPOS ARE OFTEN fatal.  USE script_name HERE.  OVERRIDES SMPLAYER, FOR SIMPLICITY.
         'keepaspect    no','keepaspect-window   no ','geometry 50%          ',  --keepaspect=no FOR ANDROID. keepaspect-window=no FOR MPV.APP.  FREE-SIZE IF MPV HAS ITS OWN WINDOW.  geometry ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW. 
@@ -73,9 +72,9 @@ for  opt,val in pairs(options)  --TYPES CLONE.
 do o[opt] = val end 
 require 'mp.options'.read_options(o)  --yes/no=true/false BUT OTHER TYPES DON'T AUTO-CAST.
 for  opt,val in pairs(o)
-do o[opt]     = type(val)~=type(options[opt]) and loadstring('return '..val)() or val end  --NATIVE TYPECAST.  load INVALID ON MPV.APP.  NATIVES PREFERRED, EXCEPT FOR GRAPH INSERTS.  
-p  .platform  =  gp('platform') or os.getenv('OS') and 'windows' or 'linux'  --platform=nil FOR OLD MPV.  OS=Windows_NT/nil.  SMPLAYER STILL RELEASED WITH OLD MPV.
-o[p.platform] = o[p. platform ] or {}  --DEFAULT={}
+do o[opt]     = type(val)=='string' and type(options[opt])~='string' and loadstring('return '..val)() or val end  --NATIVE TYPECAST.  load INVALID ON MPV.APP.  NATIVES PREFERRED, EXCEPT FOR GRAPH INSERTS.  
+p  .platform  =  gp('platform') or os.getenv('OS') and 'windows' or 'linux' --platform=nil FOR OLD MPV.  OS=Windows_NT/nil.  SMPLAYER STILL RELEASED WITH OLD MPV.
+o[p.platform] = o[p. platform ] or {}                                       --DEFAULT={}
 
 for _,opt in pairs((o[p.platform] or {}).options or {}) do table.insert(o.options,opt) end  --platform OVERRIDE APPENDS TO o.options.
 for _,opt in pairs(o.options)                                                                   
@@ -120,7 +119,7 @@ function file_loaded()  --ALSO @property_handler.
     auto                 = not is1frame and o.auto                  --~auto FOR is1frame, OR AUDIO GLITCHES.
     detect_min_ratio     = v.image      and o.detect_min_ratio_image or o.detect_min_ratio
     keep_center          = loop         and {}                       or o.keep_center                            --RAW JPEG CAN MOVE CENTER. 
-    detector             = (alpha       and 'bbox=%s'                or o.detector):format(limit,o.detect_round) --bbox FOR alpha (& JPEG).
+    detector             = (alpha       and 'bbox=%s'              or o.detector):format(limit,o.detect_round) --bbox FOR alpha (& JPEG).
     p['time-pos']        = round(gp('time-pos'),.001)                                                            --start_time FOR JPEG, NEAREST MILLISECOND.  
     
     if not detect_format then gp('msg-level')  --detect_format=nil MEANS ONCE ONLY, EVER.  @file-loaded BECAUSE OLD FFMPEG BUGS OUT SOONER.
@@ -283,7 +282,7 @@ function apply_crop(meta)  --@detect_crop & @on_toggle.
     
     command      = is1frame           and  ''  --is1frame OVERRIDE
                        ..(p.pause     and  '' or '   set pause yes;')  --insta_pause MORE RELIABLE DUE TO INTERFERENCE FROM OTHER SCRIPT/S.
-                       ..(                       '%s vf  pre @%s-crop:lavfi=[crop=min(iw\\,%d):min(ih\\,%d):%d:%d:1:1];'):format(command_prefix,label,meta.w,meta.h,meta.x,meta.y)  --lavfi ENABLES min EXPRESSION, WHICH SOLVES INSTA-ERROR @vid DUE TO DELAYED RELOAD (DIMENSIONS CHANGE).
+                       ..(                       "%s vf  pre @%s-crop:lavfi=[crop='min(iw,%d):min(ih,%d):%d:%d:1:1'];"):format(command_prefix,label,meta.w,meta.h,meta.x,meta.y)  --lavfi ENABLES min EXPRESSION, WHICH SOLVES INSTA-ERROR @vid DUE TO DELAYED RELOAD (DIMENSIONS CHANGE).
                        ..(p.pause     and  '' or '   set pause no ;')
                    or                      ''  --NORMAL VIDEO.
                        ..(m.w==meta.w and  '' or 'vf-command %s-crop w %d;'):format(label,meta.w)  --w=out_w  EXCESSIVE vf-command CAUSES LAG.  
@@ -303,25 +302,25 @@ function detect_crop()  --@timers.auto_delay, @playback-restart & @on_toggle.
     then   meta.min_w,meta.min_h = p.width*detect_min_ratio,p.height*detect_min_ratio end  --RESET @property_handler.
     meta       .max_w,meta.max_h = p.width                 ,p.height
     
-    show_text   = o.meta_osd and mp.command(('show-text                      "'
-                      ..'media-title           = ${media-title}             \n'  --ALSO metadata.
-                      ..'_VERSION              = %s                         \n'  --Lua 5.1  5.2
-                      ..'mpv-version           = ${mpv-version}             \n'  --mpv 0.38.0  →  0.34.0
-                      ..'ffmpeg-version        = ${ffmpeg-version}          \n'  
-                      ..'libass-version        = ${libass-version}          \n'  
-                      ..'platform              = ${platform}                \n'  --nil  windows  linux  darwin     android     
-                      ..'current-ao,current-vo = ${current-ao},${current-vo}\n'  --nil  wasapi   pulse  coreaudio  audiotrack  ,  gpu  gpu-next  direct3d  libmpv  shm
-                      ..'video-params/alpha    = ${video-params/alpha}      \n'  --nil  straight
-                      ..'osd-width,osd-height  = ${osd-width},${osd-height} \n'
-                      ..'   pad_iw,pad_ih      = %d,%d                      \n'  --1680,944
-                      ..'   pad_ow,pad_oh      = %d,%d                      \n'  --1680,1050
-                      ..'    max_w,max_h       = ${width},${height}         \n'  --1920,1080
-                      ..'    min_w,min_h       = %d,%d                      \n'  --480,270
-                      ..'        w,h           = %d,%d                      \n'
-                      ..'        x,y           = %d,%d                    \n\n'
-                      ..'vf-metadata/%s = \n${vf-metadata/%s}                "'            
-                  ):format(_VERSION,pad_iw,pad_ih,W2,H2,meta.min_w,meta.min_h,m.w,m.h,m.x,m.y,label,label))  --nil INVALID ON MPV.APP.
+    show_text = o.meta_osd and mp.command(('show-text                      "'
+                    ..'media-title           = ${media-title}             \n'  --ALSO metadata.
+                    ..'_VERSION              = %s                         \n'  --Lua 5.1  5.2
+                    ..'mpv-version           = ${mpv-version}             \n'  --mpv 0.38.0  →  0.34.0
+                    ..'ffmpeg-version        = ${ffmpeg-version}          \n'  
+                    ..'libass-version        = ${libass-version}          \n'  
+                    ..'platform              = ${platform}                \n'  --nil  windows  linux  darwin     android     
+                    ..'current-ao,current-vo = ${current-ao},${current-vo}\n'  --nil  wasapi   pulse  coreaudio  audiotrack  ,  gpu  gpu-next  direct3d  libmpv  shm
+                    ..'video-params/alpha    = ${video-params/alpha}      \n'  --nil  straight
+                    ..'osd-width,osd-height  = ${osd-width},${osd-height} \n'  --840,525
+                    ..'   pad_iw,pad_ih      = %d,%d                      \n'  --1680,944
+                    ..'   pad_ow,pad_oh      = %d,%d                      \n'  --1680,1050
+                    ..'    max_w,max_h       = ${width},${height}         \n'  --1920,1080
+                    ..'    min_w,min_h       = %d,%d                      \n'  --480,270
+                    ..'        w:h:x:y       = %d:%d:%d:%d              \n\n'  --1396,1066,263,7
+                    ..'vf-metadata/%s = \n${vf-metadata/%s}                "'            
+                ):format(_VERSION,pad_iw,pad_ih,W2,H2,meta.min_w,meta.min_h,m.w,m.h,m.x,m.y,label,label))  --nil INVALID ON MPV.APP.
     if OFF then return end
+    
     vf_metadata = gp('vf-metadata/'..label)                                  --Get the metadata.
     if not vf_metadata then mp.msg.error('No crop metadata.'               ) --Verify the existence of metadata.
         mp.msg.info('Was the cropdetect filter successfully inserted?'     )
@@ -364,15 +363,15 @@ function property_handler(property,val)
     do toggle   =     property==key and playback_restarted   and W    and  (not timers[key]:is_enabled() and (timers[key]:resume() or 1) or on_toggle()) end  --W2 BLOCKS RAW AUDIO.  TOGGLERS AWAIT playback_restarted.
     rescale     =     property=='osd-dimensions/aspect'      and OFF2 and  apply_scale()  --CHANGING WINDOW SIZE!  NEW aspects REQUIRED FIRST.  WHEN PAUSED MUST FRAME-STEP OR UNPAUSE.  UNFORTUNATELY is1frame AUDIO GLITCHES (MORE RIGOROUS ALTERNATIVE COULD USE A NEW TIMER).
     reload      = (nil  --5 RELOAD CONDITIONS: @android-surface-size, @image, @NEW-vo, @is1frame & @alpha.
-                   or property=='android-surface-size'       and W and p.fullscreen  --RELOAD @fullscreen ROTATION.
-                   or property=='current-tracks/video/image' and W and val~=v.image  --RELOAD IF SWITCHING BTWN MP4 & MP4TAG.  UNFORTUNATELY EMBEDDED MPV SNAPS.  albumart DISTINCTION IS IRRELEVANT.
+                   or property=='android-surface-size'       and W and gp('fs')     --RELOAD @fullscreen ROTATION.  BETTER CODE SHOULD RELOAD IF EITHER W OR H INCREASES.
+                   or property=='current-tracks/video/image' and W and val~=v.image --RELOAD IF SWITCHING BTWN MP4 & MP4TAG.  UNFORTUNATELY EMBEDDED MPV SNAPS.  albumart DISTINCTION IS IRRELEVANT.
                    or property=='video-params'               and val and (not W or is1frame or val.alpha and not alpha)  --NEW vo, OR Δalbumart, OR TRY SWITCH TO TRANSPARENCY.  is1frame MUST BE RE-DRAWN.  TRANSPARENCY TAKES TIME TO DETECT, BUT DELAYED TRIGGERS ARE BAD.
     ) and file_loaded() 
 end 
-for property in ('current-tracks/video/image fullscreen seeking pause terminal mute aid sid width height osd-dimensions/aspect android-surface-size video-params'):gmatch('[^ ]+')  --BOOLEANS NUMBERS string table nil
+for property in ('current-tracks/video/image seeking pause terminal mute aid sid width height osd-dimensions/aspect android-surface-size video-params'):gmatch('[^ ]+')  --BOOLEANS NUMBERS string table nil
 do mp.observe_property(property,'native',property_handler) end  --TRIGGER AFTER load-script.
 
-for key in ('mute aid sid'):gmatch('[^ ]+')  --1SHOT NULL-OP DOUBLE-TAPS.  double_pause_timeout=0 (p&p DOUBLE-TAP) ALSO SIMPLE TO IMPLEMENT.  current-tracks/audio/selected(double_ao_timeout) & current-tracks/sub/selected(double_sub_timeout) ARE STRONGER ALT-CONDITIONS REQUIRING OFF/ON, AS OPPOSED TO ID#.  current-ao ALSO DOES WHAT current-tracks/audio/selected DOES, BUT SAFER @playlist-next.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).  
+for key in ('mute aid sid'):gmatch('[^ ]+')  --1SHOT NULL-OP DOUBLE-TAPS.  current-tracks/audio/selected(double_ao_timeout) & current-tracks/sub/selected(double_sub_timeout) ARE STRONGER ALT-CONDITIONS REQUIRING OFF/ON, AS OPPOSED TO ID#.  current-ao ALSO DOES WHAT current-tracks/audio/selected DOES, BUT SAFER @playlist-next.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).  
 do  timers[key]         = mp.add_periodic_timer(o['double_'..key..'_timeout'], function()end ) 
     timers[key].oneshot = 1 end 
 for _,timer in pairs(timers) do timer:kill() end
@@ -387,8 +386,10 @@ for _,timer in pairs(timers) do timer:kill() end
 
 ----FUTURE VERSION SHOULD OPERATE 1fps IN is1frame MODE, FOR FRAME-BY-FRAME GIFs.  vf-command DOESN'T REDRAW CURRENT FRAME.  BUT AUDIO COULD GLITCH...
 ----FUTURE VERSION SHOULD BE CAPABLE OF SMOOTH-CROPPING BY REPLACING BLACK BARS WITH BLACK PADS, & THEN SMOOTH-UNPAD. BECAUSE SMOOTH-PADDING IS EASY.  EFFICIENT TRUE SMOOTH-crop IS IMPOSSIBLE WITH FFMPEG-v6.
+----FUTURE VERSION SHOULD HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED!
 ----FUTURE VERSION SHOULD HAVE o.keep_aspect, TO MAINTAIN TRUE ASPECT @ALL TIMES.
 ----COULD BE RENAMED autocrop-mod.lua.  WITHOUT SCALING THIS SCRIPT WOULDN'T EXIST, SO autocropscale.lua MAKES SENSE. BUT IT HAS PADDING TOO!  MY LONGEST SCRIPT - LIKE 2.5 SCRIPTS IN 1 (autocrop, autopad & start/end PLAYLIST MANAGER).  A CROP IS A PAD-REMOVAL, SO THE FULL COMBO IS MORE INTUITIVE!
+----SCRIPT DIFFICULT TO READ/EDIT WITH WORD-WRAP.  
 ----RARE BUG: JPEG FAILS TO SCALE.
 
 ----ALTERNATIVE FILTERS:

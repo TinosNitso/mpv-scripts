@@ -8,8 +8,8 @@ options     = {
         "aspeed.lua"            , --EXTRA AUDIO DEVICES SPEED RANDOMIZATION, + SYNCED CLOCKS. INSTA-TOGGLE (DOUBLE-MUTE).  CAN CONVERT MONO TO (RANDOMIZED) SURROUND SOUND, FOR 10 HOURS.  MY FAVOURITE OVERALL. CONVERTS SPEAKERS INTO METAPHORICAL MOCKING-BIRDS.  NOT FULLY ANDROID-COMPATIBLE.
         "autocrop.lua"          , --CROPS BLACK BARS. TOGGLES FOR BOTH CROPPING & EXTRA PADDING (SMOOTHLY). DOUBLE-MUTE TOGGLES.  ALSO SUPPORTS start & end TIME-CROP SUBCLIPS, & CROPS IMAGES & THROUGH TRANSPARENCY.  ITS meta_osd DISPLAYS ALL version PROPERTIES
         -- "autocrop-smooth.lua", --SMOOTH CROPPING & PADDING. NOT UP TO DATE & NOT FOR ANDROID.  DISABLE autocomplex.lua DUE TO EXCESSIVE CPU USAGE. INCOMPATIBLE WITH .AppImage (FFMPEG-v4.2).
-        "autocomplex.lua"       , --NOT FOR SMARTPHONE (LAG).  ANIMATED AUDIO SPECTRUMS, VOLUME BARS, FPS LIMITER. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE CAN BE LIKE WINGS OF BIRD).  TWITTER INCOMPATIBLE.
-        "automask.lua"          , --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE (DOUBLE-MUTE).  CAN SPEED-LOAD MONACLE/PENTAGON ON SMARTPHONE.  LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE TRIANGLE_SPIN=automask2.lua, 500MB RAM EACH, +UNIQUE KEYBINDS).
+        "autocomplex.lua"       , --NOT FOR SMARTPHONE (LAG).  ANIMATED AUDIO SPECTRUMS, VOLUME BARS, FPS LIMITER. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE CAN BE LIKE WINGS OF BIRD).  TWITTER INCOMPATIBLE. ALSO DISABLE TO seek THROUGH SOME YOUTUBE VIDEOS.
+        "automask.lua"          , --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE (DOUBLE-MUTE).  CAN SPEED-LOAD MONACLE/PENTAGON ON SMARTPHONE.  LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE SPINNING_TRIANGLE=automask2.lua, 500MB RAM EACH, +UNIQUE KEYBINDS).
     },
     ytdl = {            --YOUTUBE DOWNLOAD. PLACE EXECUTABLE WITH main.lua.  LIST ALL POSSIBLE FILENAMES TO HOOK, IN PREFERRED ORDER. NO ";" ALLOWED.  CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto.  NOT FOR ANDROID.
         "yt-dlp"      , --.exe
@@ -37,7 +37,7 @@ options     = {
 }
 o,p,timers = {},{},{} --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file
 
-function  gp(property)  --ALSO @playback-restart.  GET PROPERTY.
+function  gp(property)  --ALSO @playback-restart.             GET   PROPERTY
     p       [property]=mp.get_property_native(property)  --mp=MEDIA-PLAYER
     return p[property]
 end
@@ -46,9 +46,9 @@ for  opt,val in pairs(options) --TYPES CLONE.  LUA HAS NO METHOD FOR THIS.
 do o[opt]  = val end 
 require 'mp.options'.read_options(o)  --yes/no=true/false BUT OTHER TYPES DON'T AUTO-CAST.  GUI USER MAY ENTER RAW TABLES & 1+1 INSTEAD OF 2, ETC.
 for  opt,val in pairs(o)
-do o[opt]     = type(val)~=type(options[opt]) and loadstring('return '..val)() or val end  --NATIVE TYPECAST ENFORCES ORIGINAL TYPES.  load INVALID ON MPV.APP.  NATIVES PREFERRED, EXCEPT FOR GRAPH INSERTS.  
+do o[opt]     = type(val)=='string' and type(options[opt])~='string' and loadstring('return '..val)() or val end  --NATIVE TYPECAST ENFORCES ORIGINAL TYPES.  load INVALID ON MPV.APP.
 p  .platform  = gp('platform') or os.getenv('OS') and 'windows' or 'linux' --platform=nil FOR OLD MPV.  OS=Windows_NT/nil.  SMPLAYER STILL RELEASED WITH OLD MPV.
-o[p.platform] = o[p.platform]  or {}  --DEFAULT={}
+o[p.platform] = o[p.platform]  or {}                                       --DEFAULT={}
 
 for _,opt in pairs(o[p.platform].options or {}) do table.insert(o.options,opt) end  --platform OVERRIDE APPENDS TO o.options.
 for _,opt in pairs(o.options)
@@ -64,13 +64,13 @@ do script_lower,script_loaded = script:lower(),nil
     do script_loaded          =     script_loaded or  val:lower()==script_lower end  --SEARCH NOT CASE SENSITIVE.  CODE NOT FULLY RIGOROUS.
     commandv                  = not script_loaded and mp.commandv('load-script',('%s/%s'):format(directory,script)) and table.insert(p.scripts,script) end  --commandv FOR FILENAMES. '/' FOR windows & UNIX.
 mp.set_property_native('scripts',p.scripts)  --OPTIONAL: DECLARE scripts.
-directory                     = mp.command_native({'expand-path',directory}) --command_native EXPANDS '~/' FOR yt-dlp.  
-COLON                         = p.platform=='windows' and ';' or ':'         --windows=;  UNIX=:  FILE LIST SEPARATOR.  
-for _,ytdl in pairs(o.ytdl)
-do ytdl_path                  = (ytdl_path or '')..directory..'/'..ytdl..COLON end        --'/' FOR WINDOWS & UNIX.  TRAILING COLON ALLOWED.
+directory                     = mp.command_native({'expand-path',directory})              --command_native EXPANDS '~/' FOR yt-dlp.  
+COLON                         = p.platform=='windows' and ';' or ':'                      --windows=;  UNIX=:  FILE LIST SEPARATOR.  
 script_opt,title              = 'ytdl_hook-ytdl_path',mp.create_osd_overlay('ass-events') --ABBREV, & ass-events IS THE ONLY FORMAT. title GETS ITS OWN osd.
-gp('script-opts')[script_opt] = ytdl_path..(p['script-opts'][script_opt] or '') --APPEND EXISTING HOOK FROM SMPLAYER AS FALLBACK.  PREPENDING IT FAILED FOR .AppImage. 
-mp.set_property_native('script-opts',p['script-opts'])                          --EMPLACE ALL ytdl.
+for _,ytdl in pairs(o.ytdl)
+do    ytdl_path               = (ytdl_path or '')..directory..'/'..ytdl..COLON end --'/' FOR WINDOWS & UNIX.  TRAILING COLON ALLOWED.
+gp('script-opts')[script_opt] =  ytdl_path..(p['script-opts'][script_opt] or '')   --APPEND EXISTING HOOK FROM SMPLAYER AS FALLBACK.  PREPENDING IT FAILED FOR .AppImage. 
+mp.set_property_native('script-opts',p['script-opts'])                             --EMPLACE ALL ytdl.
 
 function playback_restart()  --ALSO @on_pause
     playback_restarted = true
@@ -125,13 +125,12 @@ do    timer.oneshot   = 1  --ALL 1SHOT.
 ----SMPLAYER : v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
 ----~100 LINES & ~2000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
-----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES). MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
+----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES).  correct-pts ESSENTIAL.  MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
 ----50%CPU+20%GPU USAGE (5%+15% WITHOUT scripts).  ~75%@30FPS (OR 55%@25FPS) WITHOUT GPU DRIVERS, @FULLSCREEN.  ARGUABLY SMOOTHER THAN VLC, DEPENDING (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER). FREE GPU IMPROVES MULTI-TASKING.
 ----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS.  ULTIMATELY TV FIRMWARE (1GB) COULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. 
-----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, & MULTI-LINE ALT-EDITING. AIDS RAPID GRAPH TESTING.  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK PRODUCES 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
+----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, & MULTI-LINE CTRL-EDITING. ENABLES QUICK GRAPH TESTING.  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK PRODUCES 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
 ----VIRTUALBOX: CAN INCREASE VRAMSize FROM 128→256 MB. MACOS LIMITED TO 3MB VIDEO MEMORY. CAN ALSO SWITCH AROUND Command & Control(^) MODIFIER KEYS.  BRACKETS FOR TEXT-EDITING (WORD-WRAP).  "C:\Program Files\Oracle\VirtualBox\VBoxManage" setextradata macOS_11 VBoxInternal/Devices/smc/0/Config/DeviceKey ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc
 ----DECLARING local VARIABLES MAY IMPROVE HIGHLIGHTING/COLORING, BUT UNNECESSARY.
-----correct-pts ESSENTIAL (SET BY SMPLAYER).
 
 ----BUG: MANY YT VIDEOS AREN'T seeking, LIKE TWITTER. EXAMPLE: https://YOUTU.BE/6MsF94LZmK4
 ----BUG: NO seeking WITH TWITTER.                     EXAMPLE: https://TWITTER.COM/i/status/1696643892253466712  X.COM NO STREAMING.  NO lavfi-complex.

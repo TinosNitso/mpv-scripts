@@ -1,6 +1,6 @@
 ----AUTO ANIMATED MASK GENERATOR & MERGE SCRIPT, FOR VIDEO & IMAGES, IN MPV & SMPLAYER, WITH SMOOTH DOUBLE-mute TOGGLE (m&m FOR MASK). COMES WITH A DOZEN MORE EXAMPLES INCLUDING MONACLE, BINACLES, VISORS, SPINNING TRIANGLE, & PENTAGON. MOVING POSITIONS, ROTATIONS & ZOOM. 2 MASKS CAN ALSO ANIMATE & FILTER SIMULTANEOUSLY BY RENAMING A COPY OF THE SCRIPT (WORKS ON JPEG TOO). GENERATOR CAN MAKE MANY DIFFERENT MASKS, WITHOUT BEING AS SPECIFIC AS A .GIF (A GIF IS HARDER TO MAKE). USERS CAN COPY/PASTE PLAIN TEXT INSTEAD. A DIFFERENT FORM OF MASK IS A GAME LIKE TETRIS, WHERE THE PIECES ARE LENSES. A GAMING CONSOLE COULD USE VIDEO-IN/OUT TO MASK ON-TOP.
 ----APPLIES FFMPEG FILTERCHAIN TO MASKED REGION, WITH INVERSION & INVISIBILITY. MASK MAY HELP DETECT DEFECTS, LIKE HAIR ON PASSPORT SCAN. FULLY PERIODIC FOR BEST RES & PERFORMANCE. IT'S LIKE OPTOMETRY FOR TELEVISION, BUT SOME MASKS ARE DECORATIVE.
-----WORKS WELL WITH JPG, PNG, BMP, GIF, MP3 albumart, AVI, 3GP, MP4, WEBM & YOUTUBE IN SMPLAYER & MPV (DRAG & DROP). albumart LEAD FRAME ONLY (WITHOUT lavfi-complex). .TIFF ONLY DISPLAYS 1 LAYER (BUG). NO WEBP OR PDF. LOAD TIME SLOW (LACK OF BACKGROUND BUFFERING). FULLY RE-BUILDS ON EVERY seek. CHANGING vid TRACKS (MP3TAG,MP4TAG) SUPPORTED. NO drawtext IN THIS mask. SCRIPT IMPOSSIBLE TO READ/EDIT WITH WORD WRAP, WHICH MAY BE A PROBLEM ON MACOS (A BIBLE HAS NO SCROLLBAR). 
+----WORKS WELL WITH JPG, PNG, BMP, GIF, MP3 albumart, AVI, 3GP, MP4, WEBM & YOUTUBE IN SMPLAYER & MPV (DRAG & DROP). albumart LEAD FRAME ONLY (WITHOUT lavfi-complex). .TIFF ONLY DISPLAYS 1 LAYER (BUG). NO WEBP OR PDF. LOAD TIME SLOW (LACK OF BACKGROUND BUFFERING). FULLY RE-BUILDS ON EVERY seek. CHANGING vid TRACKS (MP3TAG,MP4TAG) SUPPORTED.
 ----LENS lutyuv FORMULA USES A QUARTIC REDUCTION +- gauss CORRECTIONS FOR BLACK-IS-BLACK & WHITE-IS-WHITE. COLORS uv ALSO USE POWER LAW FOR 15% NON-LINEAR SATURATION (IN EXPONENT). A BIG-SCREEN NEGATIVE IS TOO BRIGHT, SO INSTEAD OF HALVING BRIGHTNESS A QUARTIC IS SHARPER.  gauss SIZES ARE APPROX minval*1.5, SHIFTED 1x, BUT TUNING EACH # SEEMS TOO DIFFICULT - TOO MANY VIDEOS TO CHECK. IT'S A STATISTICAL PROBLEM - HIT & MISS. IDEAL LENS ISN'T A TRUE NEGATER.
 
 options                 = {  
@@ -15,9 +15,9 @@ options                 = {
     toggle_expr         =          '(expr)',  --(expr)=LINEAR-IN-TIME-EXPRESSION  DOMAIN & RANGE BOTH [0,1].  FOR CUSTOMIZED TRANSITION BTWN BRIGHTNESSES.  EXAMPLE='sin(PI/2*(expr))',  FOR NON-LINEAR SINUSOIDAL TRANSITION (QUARTER-WAVE).  A SINE WAVE IS 57% FASTER @MAX-SPEED (PI/2=1.57), FOR SAME DURATION, HENCE TOO FAST.
     filterchain         =             'null,'                   --CAN REPLACE null WITH OTHER FILTERS, LIKE pp (POSTPROCESSING).   TIMELINE SWITCHES ALSO POSSIBLE (FILTER1→FILTER2→ETC).  
     -- ..'convolution=0m=0 -1 0 -1 7 -1 0 -1 0:0rdiv=1/(7-4),'  --UNCOMMENT FOR 33% SHARPEN, USING A 3x3 MATRIX. INCREASE THE 7 & 7 FOR LESS%.  ALTERNATIVELY CAN SHARPEN COLORS ONLY (1m & 2m), INSTEAD OF BRIGHTNESS 0m.
-       ..      'lutyuv=y=255*((1-val/255)^4*(1+.6*.15)+.15*(2.5*gauss((255-val)/(255-maxval)/1.7-1.5)-1*gauss(val/minval/1.5-1))/gauss(0)+.005*sin(2*PI*val/minval))'  --+.5% SINE WAVE ADDS RIPPLE TO CHANGING DEPTH, BUT COULD ALSO CAUSE FACE WRINKLES. FORMS PART OF lutyuv GLOW-LENS.  15% DROP ON WHITE-IS-WHITE (TOO MUCH MIXES GRAYS).  1*gauss MAY MEAN 1 ROUND.  A SIMPLE NEGATIVE IS JUST negval.  USE (random) TO RANDOMIZE.
-       ..            ':u=128*(1+abs(val/128-1)^.85*clip(val-128\\,-1\\,1))'  --COLORS.  clip IS EQUIVALENT TO sgn, WHICH IS INVALID ON FFMPEG-v4.  LINEAR SATURATION (eq) OVER-SATURATES TOO EASILY.  SATURATING TRUE COLORS TENDS TO REVEAL THEIR PIGMENTS.
-       ..            ':v=128*(1+abs(val/128-1)^.85*clip(val-128\\,-1\\,1))', --A DIFFERENT POWER FOR v MAY BE BETTER.  USE (random) TO RANDOMIZE.
+       ..   'lutyuv=\':y=255*((1-val/255)^4*(1+.6*.15)+.15*(2.5*gauss((255-val)/(255-maxval)/1.7-1.5)-1*gauss(val/minval/1.5-1))/gauss(0)+.005*sin(2*PI*val/minval))'  --+.5% SINE WAVE ADDS RIPPLE TO CHANGING DEPTH, BUT COULD ALSO CAUSE FACE WRINKLES. FORMS PART OF lutyuv GLOW-LENS.  15% DROP ON WHITE-IS-WHITE (TOO MUCH MIXES GRAYS).  1*gauss MAY MEAN 1 ROUND.  A SIMPLE NEGATIVE IS JUST negval.  USE (random) TO RANDOMIZE.
+       ..            ':u=128*(1+abs(val/128-1)^.85*clip(val-128,-1,1))'    --COLORS.  clip IS EQUIVALENT TO sgn, WHICH IS INVALID ON FFMPEG-v4.  LINEAR SATURATION (eq) OVER-SATURATES TOO EASILY. 
+       ..            ':v=128*(1+abs(val/128-1)^.85*clip(val-128,-1,1))\'', --A DIFFERENT POWER FOR v MAY BE BETTER.  USE (random) TO RANDOMIZE.
     fps                 =    '30',  --FRAMES-PER-SECOND FOR UNDERLYING STREAM.  MASK LOOKS CHOPPY IF PRODUCED @30fps BUT DISPLAYED @25fps.
     fps_mask            =    '30',  --0 IMPLIES 1/period (MINIMUM fpp=1).  REDUCE FOR MUCH FASTER LOAD/seek TIMES.  LARGE period MUST USE LESS fps_mask.  SET TO 0 FOR MONACLE.
     lead_time           = '-1/30',  --SECONDS. +-LEAD TIME OF MASK RELATIVE TO OTHER GRAPHS. USE fps_mask RATIO (TRIAL & ERROR).
@@ -27,20 +27,20 @@ options                 = {
     res_multiplier      =      2 ,  --SAME FOR X & Y. RESOLUTION MULTIPLIER BASED ON display. REDUCE FOR FASTER seeking (LOAD TIME).  DOESN'T APPLY TO FINAL zoompan.  HD*2 FOR SMOOTH EDGE rotations.  AT LEAST .6 FOR SIXTH SECTION.
     res_safety          =   1.15 ,  --≥1.  PREVENTS PRIMARY rotation FROM CLIPPING, BY DIMINISHING res_multiplier. SAME FOR X & Y.  REDUCE TO 1.1 TO SEE CLIPPING.  +10%+2% FOR iw*1.1 & W/64 (PRIMARY width & x). HOWEVER 1.12 ISN'T ENOUGH (1/.88=1.14?).  HALF EXCESS IS LOST IF DUAL. NEEDED FOR ~DUAL TOO.  FUTURE VERSION SHOULD SUBTRACT 1.
     SECTIONS            =      6 ,  --DEFAULT=#scales.  0 FOR BLINKING FULL SCREEN.  LIMITS NUMBER OF DISCS (BEFORE FLIP & STACK). AUTO-GENERATES IF scales ARE MISSING.  SECTIONS: 1=SPECTACLE,2=EYELID,3=EYE,4=PUPIL,5=NERVE,6=INNER-NERVE.  TOO MANY SECTIONS CHOPS VIDEO TOO MUCH.
-    DUAL                =   true ,  --REMOVE FOR ONE SERIES OF SECTIONS, ONLY.  true ENABLES hstack WITH LEFT→RIGHT hflip, & HALVES INITIAL iw (display CANVAS).
+    DUAL                =   true ,  --DOUBLES SECTIONS.  REMOVE FOR ONE SERIES OF SECTIONS, ONLY.  true ENABLES hstack WITH LEFT→RIGHT hflip, & HALVES INITIAL iw (display CANVAS).
     gsubs_passes        =      4 ,  --# OF SUCCESSIVE gsubs.  THEY DEPEND ON EACH OTHER, IN A DAIZY-CHAIN.  (cos)→(c)→(np)→(fpp)  THEY EXIST DUE TO SECTIONAL REPETITION.
-    gsubs               = {np='((n)/(fpp))',c='cos(2*PI*(np))',s='sin(2*PI*(np))',m='mod(floor(np)\\,2)',cos='(c)',sin='(s)',mod='(m)',rand='(random)',t,n,on,},  --SUBSTITUTIONS.  ENCLOSING BRACKETS () ARE ADDED & REQUIRED, IN EFFECT.  fpp=fps_mask*period=FRAMES-PER-PERIOD IS DERIVED.  EXAMPLE: USE n=5 FOR STATIONARY SPECTACLES (FREEZE FRAME).  (t),(n),(on) = (TIME),(FRAME#),(FRAMEOUT#)  (np)=(FRAME#, OR TIME, AS A RATIO TO PERIOD).  (random) IS A RANDOM # BTWN 0 & 1, FOR UNIQUE MASK @file-loaded (FINAL gsub). 
-    geq=            'lum=255*lt(hypot(X-W/2\\,Y-H/2)\\,W/2)',  --GENERIC-EQUATION=LUMINANCE.  SET TO 255 FOR SQUARES.  W=H FOR INITIAL SQUARE CANVAS.  lt,hypot = LESS-THAN,HYPOTENUSE   DRAWS [1] FRAME ONLY.  ARGUABLY EACH SECTION SHOULD HAVE ITS OWN geq (ANOTHER LONG string).
+    gsubs               = {np='((n)/(fpp))',c='cos(2*PI*(np))',s='sin(2*PI*(np))',m='mod(floor(np),2)',cos='(c)',sin='(s)',mod='(m)',rand='(random)',t,n,on,},  --SUBSTITUTIONS.  ENCLOSING BRACKETS () ARE ADDED & REQUIRED, IN EFFECT.  (fpp)=(fps_mask*period)=(FRAMES-PER-PERIOD) IS DERIVED.  EXAMPLE: USE n=5 FOR STATIONARY SPECTACLES (FREEZE FRAME).  (t),(n),(on) = (TIME),(FRAME#),(FRAMEOUT#)  (np)=(FRAME#, OR TIME, AS A RATIO TO PERIOD).  (random) IS A RANDOM # BTWN 0 & 1, FOR UNIQUE MASK @file-loaded & @RELOAD (FINAL gsub).  (fpp) COULD ALSO BE NAMED (npp).
+    geq=            'lum=255*lt(hypot(X-W/2,Y-H/2),W/2)',  --GENERIC-EQUATION=LUMINANCE.  SET TO 255 FOR SQUARES.  W=H FOR INITIAL SQUARE CANVAS.  lt,hypot = LESS-THAN,HYPOTENUSE   DRAWS [1] FRAME ONLY.  ARGUABLY EACH SECTION SHOULD HAVE ITS OWN geq (ANOTHER LONG string).
     scales              = '                iw*1.1:ih/2       iw*.6:ih*.5 oh:ih         oh:ih/2         oh:ih/8 ',  --iw,ih   = INPUT_WIDTH,INPUT_HEIGHT  AUTO-GENERATES IF ABSENT. BASED ON display CANVAS. DEFAULT ELLIPTICITY=0 (CIRCLE/SQUARE)  REMOVE THIS & x & y TO AUTO-GENERATE SECTIONS.  PUPILS SHOULD BE CIRCLE WHEN SEEN THROUGH SPECTACLES. EYELIDS COVERING INNER PUPIL IS SQUINTING.
     x                   = '                -W/64*(s)         0           W/16*((c)+1)  W/32*(c)        W/64    ',  --(c),(s) = (cos),(sin) WAVES IN FRAME#. overlay COORDS FROM CENTER.                      W,w=BIG,LITTLE SECTIONS.
     y                   = '                -H*((c)/16+1/6)   H/16        H/32*(s)      H/32*((c)+1)/2  H/64    ',  --DEFAULT CENTERS.  DOWNWARD: NEGATIVE MEANS UP.  x & y AREN'T COMBINED DUE TO CENTERING. H,h=BIG,LITTLE SECTIONS.
-    crops               = '                iw:ih*.8:0:ih-oh  iw*.98:ih:0   ',  --DEFAULT NO CROPS. NO TIME-DEPENDENCE ALLOWED.  SPECTACLE-TOP & RED-EYE CROPS. CLEARS MASK'S TOP & MIDDLE.  oh=OUTPUT-HEIGHT
+    crops               = '                iw:ih*.8:0:ih-oh  iw*.98:ih:0   ',  --DEFAULT NO CROPS. NO TIME-DEPENDENCE ALLOWED.  SPECTACLE-TOP & RED-EYE CROPS. CLEARS MASK'S TOP & MIDDLE.  ' ow:oh:x:y ...'
     rotations           = ' PI/16*(s)*(m)  PI/32*(c)         PI/32*(c)     ',  --RADIANS CLOCKWISE.  0 FOR NO ROTATIONS.  (m)=(mod) 0,1 SWITCH  PI/32=.1RADS=6° (QUITE A LOT)  SPECIFIES ROTATION OF EACH SECTION, RELATIVE TO THE LAST, AFTER crop, EXCEPT THE FIRST (0TH) ROTATION WHICH APPLIES TO ENTIRE DUAL.  A FUTURE VERSION COULD ALSO FILL THE 0TH LEVEL GAPS, ENABLING DUAL ASYMMETRY.
-    zoompan=          'z=1+.2*(1-cos(2*PI*((np)-.2)))*mod(floor((np)-.2)\\,2)',  --USE 1 FOR NO ZOOMING . (np)=("TIME"-RATIO BTWN 0 & periods).  20% zoom FOR RIGHT PUPIL TO PASS SCREEN EDGE. 20% PHASE OFFSET IS LIKE A BASEBALL BAT'S ROTATIVE WIND UP.  REPLACE .2 WITH (random) TO RANDOMIZE.
-    negate_enable       = '1-between((np)\\,.5\\,1.5)',  --INVERTER     SWITCH.   USE 0 FOR NO BLINKING.   np BTWN 0 & periods.  TIMELINE SWITCH FOR INVERTING INSIDE/OUTSIDE (BLINKER SWITCH). TO START OPPOSITE, USE "1-...". 
-    lut0_enable         =               '0',  --  INVISIBILITY TIMELINE SWITCH.   USE '1-between((np)\\,.5\\,1.5)' FOR INVISIBILITY.  AN ALTERNATIVE COULD PLACE THIS BEFORE THE INVERTER, SO INVISIBILITY ITSELF IS INVERTED.
+    zoompan=          'z=1+.2*(1-cos(2*PI*((np)-.2)))*mod(floor((np)-.2),2)',  --USE 1 FOR NO ZOOMING . (np)=("TIME"-RATIO BTWN 0 & periods).  20% zoom FOR RIGHT PUPIL TO PASS SCREEN EDGE. 20% PHASE OFFSET IS LIKE A BASEBALL BAT'S ROTATIVE WIND UP.  REPLACE .2 WITH (random) TO RANDOMIZE.
+    negate_enable       = '1-between((np),.5,1.49)',  --INVERTER     TIMELINE SWITCH.  USE 0 FOR NO BLINKING.  (np) BTWN 0 & periods.  between IS INCLUSIVE (CHECK SPINNING_SQUARES).  TIMELINE SWITCH FOR INVERTING INSIDE/OUTSIDE (BLINKER SWITCH).  TO START OPPOSITE, REMOVE "1-".        USE (random) TO RANDOMIZE.
+    lut0_enable         =                       '0',  --INVISIBILITY TIMELINE SWITCH.  USE '1-between((np),.5,1.49)' FOR INVISIBILITY.  AN ALTERNATIVE COULD PLACE THIS BEFORE THE INVERTER, SO INVISIBILITY ITSELF IS INVERTED.
     osd_par_multiplier  =                1 ,  --DISPLAY-PAR=osd-par*osd_par_multiplier  osd-par=ON-SCREEN-DISPLAY-PIXEL-ASPECT-RATIO  CAN MEASURE display TO DETERMINE ITS TRUE par.  osd-par NEEDED TO DRAW PERFECT CIRCLES ON ANY WINDOW.  video-out-params/par ACTUALLY MEANS VIDEO-IN-2DISPLAY (par OF ORIGINAL FILM).  
-    video_out_params    = {w,h,pixelformat},  --OVERRIDES.  DEFAULT pixelformat=yuva420p/yuv420p, DEPENDING.  DEFAULT w=display-width  BUT THAT'S nil FOR LINUX SMPLAYER.  THEN CAN SET {w=1680,h=1050}.
+    video_out_params    = {w,h,pixelformat},  --OVERRIDES.  DEFAULT pixelformat=yuva420p/yuv420p, DEPENDING.  DEFAULT w=display-width.  BUT THAT'S nil FOR LINUX SMPLAYER (CAN SET {w=1680,h=1050}).
     options             = {
         'keepaspect    no','geometry            50%',  --keepaspect=no FOR ANDROID. FREE-SIZE IF MPV HAS ITS OWN WINDOW.  geometry ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.
         'hwdec         no','vd-lavc-threads     0  ',  --HARDWARE-DECODER MAY PERFORM BADLY, & BUGS OUT ON ANDROID.  VIDEO-DECODER-LIBRARY-AUDIO-VIDEO-threads OVERRIDES SMPLAYER OR ELSE MAY FAIL TESTING.  
@@ -49,29 +49,29 @@ options                 = {
     windows              = {}, linux = {}, darwin = {},  --platform OVERRIDES.
     android              = {      
        unpause_on_toggle = .2, vf_command_t_delay = .2,  --MORE LAG.
-
-----14 EXAMPLES BELOW, STARTING WITH SMARTPHONE BINACLES.  UNCOMMENT A LINE TO ACTIVATE IT.  ALL options CAN BE COMBINED ONTO 1 LINE (WITH TITLE), & COPIED. DON'T FORGET COMMAS!  MONACLE, BINACLE/S & PENTAGON ARE FAST, FOR SMARTPHONE.  INCREASE SECTIONS>1 FOR TELESCOPIC.  min FUNCTION FOR SMARTPHONE COMPATIBILITY.  THESE EXAMPLES HELP CHECK LUA-SCRIPT IS VALID. A GUI COULD ADD MANY MORE GEOMETRIES USING --script-opts.
-       BINACLES              ; SECTIONS= 1,DUAL=true ,crops='',x='',y='',zoompan='1',scales='min(iw\\,ih):ow        ',rotations='0',fps_mask='0',res_safety=1,  --FAST-LOAD BINACLES (1 DUAL SECTION).  ow MEANS "SQUARE".  min(iw,ih)=iw(PORTRAIT),ih(LANDSCAPE)  SMARTPHONE-ORIENTATION (DISPLAY-ASPECT=2.2).
+       BINACLES             ; SECTIONS= 1,DUAL=true ,crops='',x='',y='',zoompan='1',scales='min(iw,ih):ow        ',rotations='0',fps_mask='0',res_safety=1,  --FAST-LOAD BINACLES (1 DUAL SECTION).  ow MEANS "SQUARE".  min(iw,ih)=iw(PORTRAIT),ih(LANDSCAPE)  SMARTPHONE-ORIENTATION (DISPLAY-ASPECT=2.2).
     }, 
-    -- NO_MASK               ; SECTIONS= 0,period='0',  --NULL OVERRIDE FOR LENS CALIBRATION.  LENS WITHOUT FRAME. TOGGLES STILL-FRAMES.  CAN CHECK A FEW THINGS: 1) BROWN SUN, NOT BLACK.  2) BRIGHT CLOTHING OF MARCHING ARMY (CREASES IN PANTS).  3) BROWN HAMMER & SICKLE.
-    -- MONACLE               ; SECTIONS= 1,DUAL=false,crops='',x='',y='',zoompan='1',scales='min(iw\\,ih):ow        ',rotations='0',fps_mask='0',res_safety=1,  --INVERTING MONACLE.  "geq='255'," FOR SQUARE.
-    -- BINACLES_x20          ; SECTIONS=10,           crops='',x='',y='',zoompan='1',scales='min(iw\\,ih):ow        ',rotations='0',fps_mask='0',res_safety=1,  --APPEND  geq='255',  FOR SQUARES.
-    -- PENTAGON_HOUSE        ; SECTIONS= 1,DUAL=false,crops='',x='',y='',zoompan='1',scales='min(iw\\,ih):ow        ',rotations='0',fps_mask='0',res_safety=1,geq='255*lt(abs(X-W/2)\\,Y)',     res_multiplier=1,  --THIS EXAMPLE & ABOVE SPEED-LOAD.   WIDTH=display-height (IN LANDSCAPE-MODE).  TRIANGLE-HEIGHT=display-height/2  BOTH THIS & MONACLE CAN BE SPEED-LOADED SIMULTANEOUSLY (M/N KEYBINDS).  THE PENTAGON HAS PERFECT LR SYMMETRY, BUT IT MAY NOT APPEAR TO.  A PENTAGON COUNTS AS BOTH TRIANGLE & SQUARE, BUT WITHOUT SPIN!
-    -- SPINNING_TRIANGLE     ; SECTIONS= 1,DUAL=false,crops='',x='',y='',zoompan='1',scales='min(iw\\,ih):ow        ',rotations=   '2*PI*(np)/3',res_safety=1,geq='255*lt(Y\\,H*3/4)*lt(abs(X-W/2)\\,Y/sqrt(3))',  --SPINNING EQUILATERAL TRIANGLE, GRAZING TOP & BOTTOM OF SCREEN.  HYPOTENUSE=87% OF display-height=sqrt(3)/2*H.  EQUIVALENT TO ISOSCELES SHRUNK TO 'ih*3/4'.
-    -- SPINNING_TRIANGLE_DUAL; SECTIONS= 1,           crops='',x='',y='',zoompan='1',scales='min(iw\\,ih):ow        ',rotations='0 -2*PI*(np)/3',res_safety=1,geq='255*lt(Y\\,H*3/4)*lt(abs(X-W/2)\\,Y/sqrt(3))',  --"/3" FOR LOOPING TERNARY-ROTATION.  OPPOSING TWIRLS.  NEGATIVE rotate DUE TO LEFT BEING PRIMARY (BY CONVENTION).  
-    -- SPINNING_SQUARES      ; SECTIONS= 5,DUAL=false,crops='',x='',y='',zoompan='1',scales='min(iw\\,ih)/sqrt(2):ow',rotations=   '2*PI*(np)/4'             ,geq='255',  --CORNERS GRAZE TOP & BOTTOM OF SCREEN.    "/4" FOR LOOPING QUARTER-ROTATION.  5 SECTIONS, LIKE 5 FINGERS, WITH THE THUMB IN THE MIDDLE.  A VARIATION COULD ALSO SLING LEFT & RIGHT.
-    -- SPINNING_SQUARES_DUAL ; SECTIONS= 5,           crops='',x='',y='',zoompan='1',scales='min(iw\\,ih)/sqrt(2):ow',rotations='0 -2*PI*(np)/4',res_safety=1,geq='255',  --LIKE 2 TWIRLING HANDS, L & R.
-    -- BUTTERFLY_SWIM        ; periods = 1,period='3',negate_enable='0' ,y='-(H+h/2)*((np)-1/2) H/16 0 H/64 H/64    ',rotations='-PI/32*cos(2*PI*(t)) PI/32*cos(2*PI*(t)) -PI/32*cos(2*PI*(t))',res_multiplier=1,res_safety=1.3,  --UPWARDS EVERY 3 SECONDS, WHILE TWIRLING 1 ROUND-PER-SECOND.  THE ROTATION IS OPPOSITE WHEN SWIMMING (VS TREADING). 
-    -- TWIRLS2SKIP           ; periods = 3,periods_skipped=1            ,zoompan='1'  ,negate_enable= 'gte((np)\\,1)',y='-H*((c)/16+1/16) H/16 H/32*(s) H/32*((c)+1)/2 H/64',  --DOUBLE-TWIRL & SKIP 
-    -- VISOR_ELLIPSE         ; SECTIONS= 1,DUAL=false,crops='',x=''     ,y='-H/8'     ,scales='iw*2:ih/2',          --DANCING ELLIPTICAL VISOR: HORIZONTAL.
-    -- VISOR_VERTICAL        ; SECTIONS= 1,DUAL=false,crops='',geq='255',rotations='0',scales='iw/4:ih  ',zoompan='1',periods=1,period='2',res_multiplier=.5,negate_enable='0',y='',x='(W+w)*((np)-1/2)',  --SCANNING @2 SECONDS SIDEWAYS.
-    -- VISOR_HORIZONT        ; SECTIONS= 1,DUAL=false,crops='',geq='255',rotations='0',scales='iw:ih/3  ',zoompan='1',periods=1,period='2',res_multiplier=.5,negate_enable='0',x='',y='(H+h)*((np)-1/2)',  --FALLING  @2 SECONDS.  A THIRD TALL, INSTEAD OF A QUARTER.
-    -- VISOR_BOUNCE          ; SECTIONS= 1,DUAL=false,crops='',geq='255',rotations='0', 
-    -- DIAMOND_EYES          ; geq='255*lt(abs(X-W/2)+abs(Y-H/2)\\,W/2)',  --AN IMPROVED VERSION COULD GIVE EACH SECTION ITS OWN geq.  SPIKED EYES MAY ALSO BE POSSIBLE.
+----14 EXAMPLES BELOW.  UNCOMMENT A LINE TO ACTIVATE IT.  ALL options CAN BE COMBINED ONTO 1 LINE (WITH TITLE), & COPIED. DON'T FORGET COMMAS!  MONACLE, BINACLES & PENTAGON ARE FAST, FOR SMARTPHONE.  INCREASE SECTIONS>1 FOR TELESCOPIC.  min FUNCTION FOR PORTRAIT-ORIENTATION.  THESE EXAMPLES HELP CHECK LUA-SCRIPT IS VALID. A GUI COULD ADD MANY MORE GEOMETRIES USING --script-opts.
+    -- NO_MASK              ; SECTIONS= 0,period='0',  --NULL OVERRIDE FOR LENS CALIBRATION.  LENS WITHOUT FRAME. TOGGLES STILL-FRAMES.  CAN CHECK A FEW THINGS: 1) BROWN SUN, NOT BLACK.  2) BRIGHT CLOTHING OF MARCHING ARMY (CREASES IN PANTS).  3) BROWN HAMMER & SICKLE.
+    -- MONACLE              ; SECTIONS= 1,DUAL=false,crops='',x='',y='',zoompan='1',scales='min(iw,ih):ow        ',rotations='0',fps_mask='0',res_safety=1,  --INVERTING MONACLE.  "geq='255'," FOR SQUARE.
+    -- BINACLES             ; SECTIONS= 1,DUAL=true ,crops='',x='',y='',zoompan='1',scales='min(iw,ih):ow        ',rotations='0',fps_mask='0',res_safety=1,  --FAST-LOAD BINACLES (1 DUAL SECTION).  ow MEANS "SQUARE".  min(iw,ih)=iw(PORTRAIT),ih(LANDSCAPE)  SMARTPHONE-ORIENTATION (DISPLAY-ASPECT=2.2).
+    -- BINACLES_x20         ; SECTIONS=10,           crops='',x='',y='',zoompan='1',scales='min(iw,ih):ow        ',rotations='0',fps_mask='0',res_safety=1,  --APPEND  geq='255',  FOR SQUARES.
+    -- PENTAGON_HOUSE       ; SECTIONS= 1,DUAL=false,crops='',x='',y='',zoompan='1',scales='min(iw,ih):ow        ',rotations='0',fps_mask='0',res_safety=1,geq='255*lt(abs(X-W/2),Y)',     res_multiplier=1,  --THIS EXAMPLE & ABOVE SPEED-LOAD.   WIDTH=display-height (IN LANDSCAPE-MODE).  TRIANGLE-HEIGHT=display-height/2  BOTH THIS & MONACLE CAN BE SPEED-LOADED SIMULTANEOUSLY (M/N KEYBINDS).  THE PENTAGON HAS PERFECT LR SYMMETRY, BUT IT MAY NOT APPEAR TO.  A PENTAGON COUNTS AS BOTH TRIANGLE & SQUARE, BUT WITHOUT SPIN!
+    -- SPINNING_TRIANGLE    ; SECTIONS= 1,DUAL=false,crops='',x='',y='',zoompan='1',scales='min(iw,ih):ow        ',rotations='0  2*PI*(np)/3',res_safety=1,geq='255*lt(Y,H*3/4)*lt(abs(X-W/2),Y/sqrt(3))',negate_enable='between((np), 0,.99)' ,  --CLOCKWISE SPINNING EQUILATERAL TRIANGLE, GRAZING TOP & BOTTOM OF display.  INVERTS @TIP-TOP.  HYPOTENUSE=87% OF display-height=sqrt(3)/2*H.  EQUIVALENT TO ISOSCELES SHRUNK TO 'ih*3/4'.
+    -- SPINNING_TRIANGLES   ; SECTIONS= 1,           crops='',x='',y='',zoompan='1',scales='min(iw,ih):ow        ',rotations='0 -2*PI*(np)/3',res_safety=1,geq='255*lt(Y,H*3/4)*lt(abs(X-W/2),Y/sqrt(3))',negate_enable='between((np),.2,1.2)',  --"/3" FOR LOOPING TERNARY-ROTATION.  OPPOSING TWIRLS.  NEGATIVE rotate DUE TO LEFT BEING PRIMARY (BY CONVENTION).  IT TICKS OVER AT A SIXTH (.17+1FRAME=.2).
+    -- SPINNING_SQUARES     ; SECTIONS= 5,DUAL=false,crops='',x='',y='',zoompan='1',scales='min(iw,ih)/sqrt(2):ow',rotations='0  2*PI*(np)/4',res_safety=1,geq='255',  --CORNERS GRAZE TOP & BOTTOM OF SCREEN.    "/4" FOR LOOPING QUARTER-ROTATION.  5 SECTIONS, LIKE 5 FINGERS, WITH THE THUMB IN THE MIDDLE.  A VARIATION COULD ALSO SLING LEFT & RIGHT.
+    -- SPINNING_SQUARES_DUAL; SECTIONS= 5,           crops='',x='',y='',zoompan='1',scales='min(iw,ih)/sqrt(2):ow',rotations='0 -2*PI*(np)/4',res_safety=1,geq='255',  --LR-REFLECTED TWIRLS.
+    -- BUTTERFLY_SWIM       ; periods = 1,period='3',negate_enable='0' ,y='-(H+h/2)*((np)-1/2) H/16 0 H/64 H/64  ',rotations='-PI/32*cos(2*PI*(t)) PI/32*cos(2*PI*(t)) -PI/32*cos(2*PI*(t))',res_multiplier=1,res_safety=1.3,  --UPWARDS EVERY 3 SECONDS, WHILE TWIRLING 1 ROUND-PER-SECOND.  THE ROTATION IS OPPOSITE WHEN SWIMMING (VS TREADING). 
+    -- TWIRLS2SKIP          ; periods = 3,periods_skipped=1            ,zoompan='1',y='-H*((c)/16+1/16) H/16 H/32*(s) H/32*((c)+1)/2 H/64'               ,negate_enable='gte((np),1)',  --DOUBLE-TWIRL & SKIP 
+    -- VISOR_ELLIPSE        ; SECTIONS= 1,DUAL=false,crops='',x=''     ,y   ='-H/8',scales='iw*2:ih/2',  --DANCING ELLIPTICAL VISOR: HORIZONTAL.
+    -- VISOR_VERTICAL       ; SECTIONS= 1,DUAL=false,crops='',geq='255',zoompan='1',scales='iw/4:ih',periods=1,rotations='0',period='2',res_multiplier=.5,negate_enable='0',y='',x='(W+w)*((np)-1/2)',  --SCANNING @2 SECONDS SIDEWAYS.
+    -- VISOR_HORIZONT       ; SECTIONS= 1,DUAL=false,crops='',geq='255',zoompan='1',scales='iw:ih/3',periods=1,rotations='0',period='2',res_multiplier=.5,negate_enable='0',x='',y='(H+h)*((np)-1/2)',  --FALLING  @2 SECONDS.  A THIRD TALL, INSTEAD OF A QUARTER.
+    -- VISOR_BOUNCE         ; SECTIONS= 1,DUAL=false,crops='',geq='255',rotations='0', 
+    -- DIAMOND_EYES         ; geq='255*lt(abs(X-W/2)+abs(Y-H/2),W/2)',  --AN IMPROVED VERSION COULD GIVE EACH SECTION ITS OWN geq.  SPIKED EYES MAY ALSO BE POSSIBLE.
 }
 o,p,m,timers = {},{},{},{}  --o,p=options,PROPERTIES  m=MEMORY={graph,brightness,osd_par,time_pos}  timers={mute,aid,sid,playback_restart,re_pause}  playback_restart BLOCKS THE PRIOR 3.
 
-function  gp(property)  --ALSO @file-loaded & @apply_eq.  GET PROPERTY.
+function  gp(property)  --ALSO @file-loaded & @apply_eq.      GET   PROPERTY
     p       [property]=mp.get_property_native(property)  --mp=MEDIA-PLAYER
     return p[property]
 end
@@ -89,9 +89,9 @@ for  opt,val in pairs(options) --TYPES CLONE.
 do o[opt] = val end 
 require 'mp.options'.read_options(o)  --yes/no=true/false BUT OTHER TYPES DON'T AUTO-CAST.
 for  opt,val in pairs(o)
-do o[opt]     = type(val)~=type(options[opt]) and loadstring('return '..val)() or val end  --NATIVE TYPECAST.  load INVALID ON MPV.APP.  NATIVES PREFERRED, EXCEPT FOR GRAPH INSERTS.
+do o[opt]     = type(val)=='string' and type(options[opt])~='string' and loadstring('return '..val)() or val end  --NATIVE TYPECAST.  load INVALID ON MPV.APP.  NATIVES PREFERRED, EXCEPT FOR GRAPH INSERTS.  
 p  .platform  =  gp('platform') or os.getenv('OS') and 'windows' or 'linux' --platform=nil FOR OLD MPV.  OS=Windows_NT/nil.  SMPLAYER STILL RELEASED WITH OLD MPV.
-o[p.platform] = o[p. platform ] or {}        --DEFAULT={}
+o[p.platform] = o[p. platform ] or {}                                       --DEFAULT={}
 
 for _,opt in pairs(o[p.platform].options or {}) do table.insert(o.options,opt) end  --platform OVERRIDE APPENDS TO o.options.
 for _,opt in pairs(o.options)                                                                   
@@ -102,56 +102,54 @@ do o[opt]                 = val end
 label                     = mp.get_script_name()              --automask
 no_mask                   = o.period..''=='0' or o.periods==0 --..'' CONVERTS→string.  POSSIBLE no_mask BECAUSE NO TIME DEPENDENCE (fpp=1). HOWEVER MAYBE SECTIONS>1
 if no_mask then o.periods,o.period,o.fps_mask = 1,'1','0' end --periods=1.  period>0 CAN BE ANYTHING (fpp=1).
-fpp                       = loadstring(('return round(%s*%s)'):format(o.fps_mask,o.period))() --FRAMES-PER-PERIOD=number  loadstring EVALUATES round, AS DEFINED, TO DETERMINE number FROM string.
-fpp                       = fpp>0 and fpp or 1                                                --FUTURE VERSION MIGHT ALSO SET 1 FOR is1frame.
+fpp                       = math.max(1,loadstring(('return round(%s*%s)'):format(o.fps_mask,o.period))()) --FRAMES-PER-PERIOD=number  loadstring EVALUATES round, AS DEFINED, TO DETERMINE number FROM string.  FUTURE VERSION MIGHT ALSO SET 1 FOR is1frame.
 frames_skipped,total_size = fpp*o.periods_skipped,fpp*o.periods 
 periods_looped            = math.max(0,o.periods-o.periods_skipped-1) --periods_skipped=periods VALID (DISCARDS PRIMARY loop, EXCEPT FOR LEAD FRAME).
-o.fps_mask                = ('%s/(%s)'):format(   fpp,o.period)       --number→string TO AVOID RECURRING DECIMALS.  DEFAULT 1 FRAME/PERIOD (fpp=1).
-o.gsubs.fpp               = o.gsubs.fpp   or '('..fpp..')'
+o.fps_mask                = ('%s/(%s)'):format( fpp,o.period)       --number→string TO AVOID RECURRING DECIMALS.  DEFAULT 1 FRAME/PERIOD (fpp=1).
+o.gsubs.fpp               = o.gsubs.fpp or '('..fpp..')'
 for   opt in ('filterchain scales x y rotations zoompan negate_enable lut0_enable'):gmatch('[^ ]+') --options WHICH NEED gsubs.  BLINKER SWITCH, INVISIBILITY, ETC.  filterchain (LENS) OPTIONAL.  gmatch=GLOBAL MATCH ITERATOR. '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON MPV.APP (SAME _VERSION, DIFFERENT BUILD).
 do  o[opt]                =   o[opt]..''
     for N                 = 1,o.gsubs_passes do for key,gsub in pairs(o.gsubs)            --gsubs DEPEND ON THE OTHERS.
         do o[opt]         =   o[opt]    :gsub('%('..key..'%)','('..gsub..')') end end end --() ARE MAGIC.
-o.zoompan                 =   o.zoompan :gsub('%(n%)','(on)')  --(n)→(on) FOR zoompan. SO (c),(s) gsubs ARE EFFECTIVE.
+o.zoompan                 =   o.zoompan :gsub('%(n%)','(on)')                             --(n)→(on) FOR zoompan. SO (c),(s) gsubs ARE EFFECTIVE.
 g                         = {scales='scales',x='x',y='y',crops='crops',rots='rotations',w='',h=''}  --g=GEOMETRY table. CONVERTS STRINGS→LISTS.  KEYS HAVE 1 SYLLABLE.  w,h DEDUCED FROM scales - THEY EXIST DUE TO ROUND-4 BUGFIX.
 for key,opt in pairs(g) 
 do g[key]                 = {}  --INITIALIZE w,h,x,y,...  LISTS.
-   for opt_n in (o[opt] or ''):gmatch('[^ ]+') do table.insert(g[key],opt_n) end end
-o.SECTIONS                = o.SECTIONS  or #g.scales     --COUNT SECTIONS, IF UNSPECIFIED.
-no_mask                   = no_mask    and o.SECTIONS<=0 --mask MAY STILL BE NEEDED FOR SECTIONS.
+   for opt_n in    (o[opt] or ''): gmatch('[^ ]+') do table.insert(g[key],opt_n) end end
+o.geq                     = o.geq: gmatch('[^ ]+')()    --REMOVE SPACES.  IN PRINCIPLE EACH SECTION COULD HAVE ITS OWN geq.
+o.SECTIONS                = o.SECTIONS or #g.scales     --COUNT SECTIONS, IF UNSPECIFIED.
+no_mask                   = no_mask   and o.SECTIONS<=0 --mask MAY STILL BE NEEDED FOR SECTIONS.
 if  o.SECTIONS           <= 0 then o.SECTIONS,o.geq,g.scales,g.crops,g.x,g.y,g.rots = 1,'255',{'iw:ih'},{},{},{},{} end  --DEFAULT TO (BLINKING) FULL SCREEN NEGATIVE.  
-g.scales[1]               = g.scales[1] or 'iw:ow'  --N=1 FULL-SIZE (SQUARE). THE GENERATOR FORMULA OTHERWISE REDUCES FROM CANVAS (THE BIGGER SECTION).  
-g.rots  [1]               = g.rots  [1] or '0'      --DUAL ROTATION SPECIAL & MUST BE DEFINED.
 for             N         = 1,o.SECTIONS 
-do  g.scales   [N]        = g.scales[N] or ('iw*%d/%d:ow'):format(1+o.SECTIONS-N,2+o.SECTIONS-N)  --EQUAL REDUCTION TO EVERY REMAINING SECTION.  w & h WELL-DEFINED.  h=ow SETS SQUARE ON FINAL DISPLAY.
+do  g.scales   [N]        = g.scales[N] or ('min(iw,ih)*%d/%d:ow'):format(1+o.SECTIONS-N,1+o.SECTIONS-N+(N>1 and 1 or 0))  --GENERATOR FORMULA.  N=1 FULL-SIZE (SQUARE).  EQUAL REDUCTION TO EVERY REMAINING SECTION.  h=ow SETS SQUARE ON FINAL DISPLAY.
     g.x[N],g.y [N]        = g.x     [N] or '',g.y[N] or ''  --x & y WELL-DEFINED.
-    for key in (N==1 and 'scales x y'   or ''):gmatch('[^ ]+') do for WH in ('iw ih W H'):gmatch('[^ ]+') --N=1 ONLY
-        do  g[key][1]     = g[key][1]:gsub(WH,('(%s/%s)'):format(WH,o.res_safety)) end end                --res_safety IS JUST A DIMINISHED SCALE IN whxy: W→(W/1.15), ETC. ALL ROTATIONS WITHOUT SHEAR & WITHOUT CLIPPING. x MAY DEPEND ON H, & y ON W, ETC.
+    for key in (N        == 1 and 'scales x y' or ''):gmatch('[^ ]+') do for WH in ('iw ih W H'):gmatch('[^ ]+')  --N=1 ONLY
+        do  g[key][1]     = g[key][1]:gsub(WH,('(%s/%s)'):format(WH,o.res_safety)) end end  --res_safety IS JUST A DIMINISHED SCALE IN whxy: W→(W/1.15), ETC. ALL ROTATIONS WITHOUT SHEAR & WITHOUT CLIPPING. x MAY DEPEND ON H, & y ON W, ETC.
     g.x[N],g.y[N]         = g.x[N]..'+(W-w)/2',g.y[N]..'+(H-h)/2' --AUTO-CENTER, OTHERWISE overlay SETS TOP-LEFT (0). THE W,H HERE NEVER GET DIMINISHED BY res_safety (TRUE CENTER).
-    gmatch                = g.scales[N]:gmatch('[^:x]+')           --w & h ARE SEPARATED DUE TO ROUND-4 overlay BUGFIX.
+    gmatch                = g.scales[N]:gmatch('[^:x]+')          --w & h ARE SEPARATED DUE TO ROUND-4 overlay BUGFIX.
     g.w[N],g.h[N]         = gmatch(),   gmatch()
     g.rots  [N+1]         = g.rots[N+1]~='0'     and g.rots[N+1] --NILLIFY 0.  [N+1] DUE TO DUAL (ZEROTH) ROTATION.  
     mask                  = (mask or 'null%s'):format(''         --null FOR N=1, BUT INSTEAD IT COULD BE 'split,alphamerge' INSTEAD OF N=2.
-                                ..(    N> 1      and (',split[%d],scale=floor((%s)/4)*4:floor((%s)/4)*4:eval=frame'):format(N-1,g.w[N],g.h[N])  --EACH SECTION (N>1) IS A SCALED NEGATIVE, RELATIVE TO [N-1].  floor MAKES LITTLE SECTIONS LOOK SHARPER, THAN round. USE MULTIPLES OF 4 DUE TO AN overlay BUG, OR ELSE FAILS PRECISION TESTING.  frame SCALING FOR DILATING PUPILS. BUT CLOSING THE EYELIDS MIGHT SHRINK THE PUPILS.
+                                ..(    N> 1      and (",split[%d],scale='floor((%s)/4)*4:floor((%s)/4)*4:eval=frame'"):format(N-1,g.w[N],g.h[N])  --EACH SECTION (N>1) IS A SCALED NEGATIVE, RELATIVE TO [N-1].  floor MAKES LITTLE SECTIONS LOOK SHARPER, THAN round. USE MULTIPLES OF 4 DUE TO AN overlay BUG, OR ELSE FAILS PRECISION TESTING.  frame SCALING FOR DILATING PUPILS. BUT CLOSING THE EYELIDS MIGHT SHRINK THE PUPILS.
                                     ..(N==2      and  ',split,alphamerge'  or '') --N=2 INTRODUCES TRANSPARENCY.
                                     ..                ',negate'            or '')
-                                ..                    '%s'                        --mask RECURSIVELY GENERATES USING %s. 
-                                ..(g.crops[N  ]  and  ',crop='..g.crops[N] or '') --crop, rotate & overlay.  
-                                ..(g.rots [N+1]  and  ',rotate=%s:ceil(max(iw\\,ih)*sqrt(2)/4)*4:ow:BLACK@0' or ''):format(g.rots[N+1])  --PADS SQUARE*sqrt(2) TO PREVENT CLIPPING.  PROOF: SPINNING_SQUARES_DUAL EXAMPLE (CEIL-4 NEEDED TO PREVENT CORNER-CLIP). 
-                                ..('[%d],[%d][%d]overlay=%s:%s'):format(N,N-1,N,g.x[N],g.y[N])
+                                ..                    '%s'  --mask RECURSIVELY GENERATES USING %s. 
+                                ..(g.crops[N  ]  and  ",crop='%s'"                                     or ''):format(g.crops[N]  )  --crop, rotate & overlay.  
+                                ..(g.rots [N+1]  and  ",rotate='%s:ceil(hypot(iw,ih)/4)*4:ow:BLACK@0'" or ''):format(g.rots [N+1])  --PADS USING PYTHAGORAS TO PREVENT CLIPPING.  PROOF: SPINNING_SQUARES_DUAL EXAMPLE (CEIL-4 ALSO NEEDED TO PREVENT CORNER-CLIP). 
+                                ..(               "[%d],[%d][%d]overlay='%s:%s'"                            ):format(N,N-1,N,g.x[N],g.y[N])
                             ) end 
 mask                      = mask: format('')..',format=y8'  --%s='' TERMINATES FORMATTING. REMOVE alpha AFTER FINAL overlay.
                             ..(o.DUAL and ',crop=iw*(1+1/(%s))/2:ow/a:0,split[L],hflip[R],[L][R]hstack' or ''):format(o.res_safety)  --MAINTAIN ASPECT RATIO a WHEN CROPPING EXCESS OFF RIGHT. SUBTRACT HALF res_safety FROM RIGHT, & A QUARTER FROM TOP & A QUARTER FROM BOTTOM: w=iw-(iw-iw/res_safety)/2  FFMPEG COMPUTES string OR ELSE INFINITE RECURRING IN LUA. MAINTAINS aspect BY EQUAL PERCENTAGE crop IN w & h. SOME EXCESS RESOLUTION IS LOST TO MAINTAIN TRUE CENTER. 
 o.res_safety              =    o.DUAL and 1+(o.res_safety-1)/2 or o.res_safety --res_safety NOW HALVED IF DUAL crop! (IN BOTH X & Y IT'S HALVED TOWARDS 1.)
 o.DUAL                    =    o.DUAL and 2                    or 1            --boolean→number
-math.randomseed(mp.get_time())  --~.010000 BUT UNIQUE EACH LOAD.
+math.randomseed(os.time()+mp.get_time())  --UNIQUE EACH LOAD.  os.time=INTEGER SECONDS FROM 1970.  mp.get_time=μs IS MORE RANDOM THAN os.clock=ms.
 
 
 graph = no_mask and o.filterchain or ( --NULL OVERRIDE FOR SAME-FRAME TOGGLE/FAST LOAD, OR...
-    'fps=%s,scale=%%d:%%d,format=%%s,split=3[vo][t0],%s[vf],nullsrc=1x1:%s:0.001,format=y8,lut=0,split[0][1],[0][vo]scale2ref=floor(oh*a*(%%s)/%d/4)*4:floor(ih*(%s)/4)*4[0][vo],[1][0]scale2ref=oh:ih[1][0],[1]geq=%s,loop=%d:1[1],[0]loop=%d:1[0],[1][0]scale2ref=floor((%s)/4)*4:floor((%s)/4)*4:eval=frame[1][0],[1]%s[m],[m][vo]scale2ref=oh*a:ih*(%s)[m][vo],[m]loop=%d:%d,loop=%d:1,rotate=%s:iw*oh/ih:ih/(%s),lut=val*gt(val\\,16),zoompan=%s:d=1:s=%%dx%%d:fps=%s,negate=enable=%s,lut=0:enable=%s,loop=-1:%d,setpts=PTS-%d/FRAME_RATE/TB[m],[t0]trim=end_frame=1,format=y8,setsar[t0],[t0][m]concat,trim=start_frame=1,setpts=PTS-(%s+1/(%s))/TB,fps=%s,eq=brightness=%%s:eval=frame[m],[vf][m]alphamerge[vf],[vo][vf]overlay=eof_action=endall,format=%%s'
+    "fps='%s',scale=%%d:%%d,format=%%s,split=3[vo][t0],%s[vf],nullsrc=1x1:%s:0.001,format=y8,lut=0,split[0][1],[0][vo]scale2ref=floor(oh*a*(%%s)/%d/4)*4:floor(ih*(%s)/4)*4[0][vo],[1][0]scale2ref=oh:ih[1][0],[1]geq='%s',loop=%d:1[1],[0]loop=%d:1[0],[1][0]scale2ref='floor((%s)/4)*4:floor((%s)/4)*4:eval=frame'[1][0],[1]%s[mask],[mask][vo]scale2ref=oh*a:ih*(%s)[mask][vo],[mask]loop=%d:%d,loop=%d:1,rotate='%s:iw/(%s):ih*ow/iw',lut='val*gt(val,16)',zoompan='%s:d=1:s=%%dx%%d:fps=%s',negate='enable=%s',lut='0:enable=%s',loop=-1:%d,setpts=PTS-%d/FRAME_RATE/TB[mask],[t0]trim=end_frame=1,format=y8,setsar[t0],[t0][mask]concat,trim=start_frame=1,setpts='PTS-(%s+1/(%s))/TB',fps='%s',eq=brightness=%%s:eval=frame[mask],[vf][mask]alphamerge[vf],[vo][vf]overlay=eof_action=endall,format=%%s"
 ):format(o.fps,o.filterchain,o.fps_mask,o.DUAL,o.res_multiplier,o.geq,fpp-1,fpp-1,g.w[1],g.h[1],mask,o.res_safety,periods_looped,fpp,frames_skipped,g.rots[1] or 0,o.res_safety,o.zoompan,o.fps_mask,o.negate_enable,o.lut0_enable,total_size,total_size,o.lead_time,o.fps_mask,o.fps)  --fps_mask REPEATS FOR nullsrc, zoompan & setpts.  fps REPEATS FOR [vo] & eq.  res_safety REPEATS FOR mask EXCESS & THEN rotate CROPS IT OFF.  fpp REPEATS FOR [0],[1] INITIALIZATION & periods_loop.  total_size REPEATS FOR INFINITE LOOP & FIRST LOOP REMOVAL.
 
-----lavfi           = [graph] [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTERGRAPH  [vo]=VIDEO-OUT [vf]=VIDEO-FILTERED [m]=MASK [t0]=STARTPTS-FRAME [0]=SEMI-CANVAS  [1][2]...[N] ARE SECTIONS.  SELECT FILTER NAME TO HIGHLIGHT IT. NO WORD-WRAP → SIDE-SCROLL PROGRAMMING, WITH HIGHLIGHTING ETC. %% SUBSTITUTIONS OCCUR @file-loaded. (%s) NEEDS BRACKETS FOR MATH. RE-USING LABELS IS SIMPLER.  [t0] SIMPLIFIES MATH BTWN VARIOUS GRAPHS, SO THEY ALL SCOOT AROUND TOGETHER.  "\\,"→"," POSSIBLE USING INVERTED COMMAS.
+----lavfi           = [graph] [vo]→[vo] LIBRARY-AUDIO-VIDEO-FILTERGRAPH  [vo]=VIDEO-OUT [vf]=VIDEO-FILTERED [t0]=STARTPTS-FRAME [0]=SEMI-CANVAS  [1][2]...[N] ARE SECTIONS → [mask].  SELECT FILTER NAME TO HIGHLIGHT IT. NO WORD-WRAP → SIDE-SCROLL PROGRAMMING, WITH HIGHLIGHTING & LINEDUPLICATE, ETC.  COMMAS REQUIRE EITHER INVERTED COMMAS OR \\ ESCAPES.  %% SUBS OCCUR @file-loaded. (%s) NEEDS BRACKETS FOR MATH. RE-USING LABELS IS SIMPLER.  [t0] SIMPLIFIES MATH BTWN VARIOUS GRAPHS, SO THEY ALL SCOOT AROUND TOGETHER.  
 ----fps             = fps:start_time (SECONDS)  DEFAULT=25  IS THE START.  start_time FOR image --start (FREE TIMESTAMP).  IMPLEMENTS o.fps.
 ----zoompan         = z:x:y:d:s:fps     (z>=1)  DEFAULT=1:0:0:...:hd720:25  d=1 (OR 0) FRAMES DURATION-OUT PER FRAME-IN.  INPUT-NUMBER=in=on=OUTPUT-NUMBER  zoompan OPTIMAL FOR ZOOMING.
 ----nullsrc         = s:r:d                     DEFAULT=320x240:25:-1  (size:rate=FPS:duration=SECONDS)  GENERATES 1x1 ATOMIC FRAME. MOST RELIABLE OVER MPV-v0.34→v0.38. A SINGLE ATOM IS CLONED OVER BOTH SPACE & TIME, IN THIS DESIGN.
@@ -161,13 +159,13 @@ graph = no_mask and o.filterchain or ( --NULL OVERRIDE FOR SAME-FRAME TOGGLE/FAS
 ----split           = outputs                   DEFAULT=2   CLONES VIDEO.
 ----setpts          = expr                      DEFAULT=PTS ZEROES OUT TIME FOR THE CANVAS, & IMPLEMENTS o.lead_time. SHOULD SUBTRACT 1/FRAME_RATE/TB FROM [t0].  ALSO SUBTRACTS FIRST TWIRL (CHOPPY LAG).
 ----lut,lutyuv      = c0,y:u:v         [0,255]  DEFAULT=val LOOK-UP-TABLE,BRIGHTNESS-UV  negval & clipval RANGE [minval,maxval]  val MAY GO BELOW minval & ABOVE maxval (DEAD-ZONES NEAR 0 & 255). lutyuv MORE EFFICIENT THAN lutrgb. lut FOR INVISIBILITY SWITCH, & BUGFIX FOR OLD FFMPEG 0<BLACK<16.  u=v=128=GREYSCALE CORRESPOND TO 0 IN CONVERSION FORMULAS (SIGNED 8-BIT).  COMPUTES TABLE IN ADVANCE SO EFFICIENT. NOT A 1-1 FUNCTION (THAT MAY BE DULL). BROWN=BLACK ALSO DEPENDS ON WHETHER SOMEONE IS LOOKING UP AT AN LCD, OR DOWN.     
-----geq             = lum    (GENERIC EQUATION) DEFAULT=lum(X\\,Y)  SLOW EXCEPT ON 1 FRAME. CAN DRAW ANY SHAPE, WHICH CAN THEN BE RECYCLED INDEFINITELY.  st,ld = STORE,LOAD  FUNCTIONS MAY SPEED UP ITS DRAWING.  IT CAN ALSO ACT SMOOTHLY ON TINY VIDEO.  
+----geq             = lum    (GENERIC EQUATION) DEFAULT='lum(X,Y)'  SLOW EXCEPT ON 1 FRAME. CAN DRAW ANY SHAPE, WHICH CAN THEN BE RECYCLED INDEFINITELY.  st,ld = STORE,LOAD  FUNCTIONS MAY SPEED UP ITS DRAWING.  IT CAN ALSO ACT SMOOTHLY ON TINY VIDEO.  
 ----eq              = ...:brightness:...:eval   DEFAULT=...:0:...:init  RANGES  [-1,1]:{init,frame}  EQUALIZER IS FINISH ON [m].  TIME-DEPENDENT CONTROLLER FOR SMOOTH-TOGGLE.  MAY ALSO BE USED IN filterchain, BUT TOGGLE WOULD INTERFERE WITH ITS brightness.
 ----overlay         = x:y:eof_action  →yuva420p DEFAULT=0:0:repeat  SINKS [vf] & EACH SECTION [N].  FFMPEG-v6 BUG: OFF-BY-1 IF W OR H ISN'T DIVISIBLE BY 4 (WILL FAIL PRECISION TESTING). MAYBE DUE TO COLOR HALF-PLANES (yuva420p).  HOWEVER W,H MAY NOT BE MULTIPLES OF 4.  CAN ALSO 'set end 100%' BUT THAT'S ANOTHER SUB-COMMAND & PERSISTS IN MPV PLAYLIST.  BY DEFAULT MPV LOOPS INDEFINITELY.
 ----trim            = ...:start_frame:end_frame DEFAULT start_frame=0  TRIMS OFF TIMESTAMP FRAME [t0] FOR ITS TIME.  CAN ALSO END MASK.
-----convolution     = 0m:1m:2m:3m:0rdiv:...     5x5 & 7x7 ALSO SUPPORTED. FOR SHARPENING [vf].  CAN ALSO SHARPEN COLORS & CHANGE PERCENTAGES USING 0rdiv ETC.
 ----loop            = loop:size  ( >=-1 : >0 )  ENABLES INFINITE loop SWITCH ON JPEG. ALSO LOOPS INITIAL CANVAS [0] & DISC [1], FOR period (BOTH SEPARATE). THEN LOOPS TWIRL FOR periods-periods_skipped-1, THEN loop LEAD FRAME FOR periods_skipped, & THEN loop INFINITE. LOOPED FRAMES GO FIRST.
 ----format          = pix_fmts                  IS THE FINISH ON [vo]. MAY BE BLANK.  {yuva420p,y8=gray,yuv420p}  overlay FORCES yuva420p, WHILE y8 IS PREFERRED WHENEVER POSSIBLE. ya8 (16-BIT) INCOMPATIBLE WITH rotate & overlay.  [t0] REQUIRES y8 IN FFMPEG-v4, TO shuffleplanes.
+----convolution     = 0m:1m:2m:3m:0rdiv:1rdiv:2rdiv:3rdiv  MATRICES ARE 3x3, 5x5 OR 7x7.  FOR SHARPENING [vf].  CAN ALSO SHARPEN COLORS & CHANGE PERCENTAGES USING 0rdiv:1rdiv ETC.  SHARPENING A FILM CAN BE DONE IN MANY DIFFERENT WAYS, USING A convolution LIST!
 ----setsar            SAMPLE ASPECT RATIO  IS WHAT MPV CALLS par, NOT sar.  FOR SAFE concat OF [t0], ZERO OUT ITS SAR, FOR SAR CONGRUENCE.  MASK TRUE ASPECT DOESN'T MATCH FILM - THE CIRCLES ARE ONLY CIRCLES IF aspect_none.  IT'S SAFER TO NOT MANUALLY FINALIZE [vo] DSIZE.
 ----null              PLACEHOLDER, IS THE START FOR BOTH filterchain & mask (LIKE A ZEROTH SECTION).
 ----negate            FOR INVERTER SWITCH, & EACH SECTION.
@@ -188,20 +186,20 @@ function file_loaded()  --ALSO @property_handler
     format               = o.video_out_params.pixelformat or gp('current-vo')=='shm' and 'yuv420p' or alpha and 'yuva420p' or 'yuv420p'  --OVERRIDE  OR  SHARED-MEMORY  OR  TRANSPARENT  OR  NORMAL.  FORCING yuv420p OR yuva420p IS MORE RELIABLE.  MPV.APP COMPATIBLE WITH TRANSPARENCY, BUT NOT SMPLAYER.APP.  overlay FORCES yuva420p.
     loop                 = v.image     and gp('lavfi-complex')=='' and not no_mask --ALSO REQUIRED FOR is1frame, FOR graph SIMPLICITY.
     is1frame             = v.albumart  and  p['lavfi-complex']=='' or      no_mask --albumart & NULL OVERRIDE ARE is1frame RELATIVE TO on_toggle.  MP4TAG & MP3TAG ARE BOTH albumart.  DON'T loop WITHOUT lavfi-complex.  FUTURE VERSION MIGHT ALSO INSERT fpp=1 FOR is1frame (SPEED-LOAD).
-    vf_toggle            = is1frame    and OFF                             --TOGGLE OFF INSTANTLY.  brightness FOR FURTHER TOGGLING.
+    vf_toggle            = is1frame    and OFF                             --TOGGLE OFF INSTANTLY.  brightness NEEDED FOR FURTHER TOGGLING.
     insta_pause          = not p.pause and mp.set_property_bool('pause',1) --IMPROVES RELIABILITY & PREVENTS EMBEDDED MPV FROM SNAPPING.
     m.brightness         = is1frame    and 0 or -1                         --FILM STARTS OFF.  IF STARTING OR seeking PAUSED, IT TAKES A FEW FRAMES FOR THE MASK TO APPEAR.
-    m.graph              = graph: format(W,H,format,osd_par,W,H,m.brightness,format):gsub('%(random%)','('..math.random()..')')  --W,H REPEAT FOR scale & zoompan.  format REPEATS FOR EFFICIENCY.  A DIFFERENT VERSION COULD RE-RANDOMIZE @seek. AN automask CAN BE UNIQUE & VARY MORE EASILY THAN A .GIF.
+    m.graph              = graph: format(W,H,format,osd_par,W,H,m.brightness,format):gsub('%(random%)','('..math.random()..')')  --W,H REPEAT FOR scale & zoompan.  format REPEATS FOR EFFICIENCY.  AN automask CAN BE UNIQUE & VARY MORE EASILY THAN A .GIF.
     mp.commandv('vf','append',('@%s:lavfi=[%s]'):format(label,m.graph))    --commandv FOR BYTECODE.  
     
     p['time-pos'],m.osd_par,remove_loop = round(gp('time-pos'),.001),osd_par,nil --start_time, NEAREST MILLISECOND.
     for _,vf in pairs(gp('vf'))                                                  --CHECK FOR @loop.  COULD BE THERE DUE TO OTHER vid OR SCRIPT/S.  FETCH vf LAST.
     do remove_loop = remove_loop or vf.label=='loop' end 
     command        = ''
-                     ..(  vf_toggle and 'no-osd vf  toggle @%s  ;'                             or ''):format(label)
-                     ..(remove_loop and 'no-osd vf  remove @loop;'                             or '')
-                     ..(       loop and 'no-osd vf  pre    @loop:lavfi=[loop=-1:1,fps=%s:%s];' or ''):format(o.fps,p['time-pos']) --ALL MASKS CAN REPLACE @loop.  FUTURE VERSION SHOULD SEPARATE THIS FROM file-loaded (MORE ELEGANT).
-                     ..(insta_pause and        'set pause  no   ;'                             or '')
+                     ..(  vf_toggle and 'no-osd vf  toggle @%s  ;'                               or ''):format(label)
+                     ..(remove_loop and 'no-osd vf  remove @loop;'                               or '')
+                     ..(       loop and "no-osd vf  pre    @loop:lavfi=[loop=-1:1,fps='%s:%s'];" or ''):format(o.fps,p['time-pos']) --ALL MASKS CAN REPLACE @loop.  FUTURE VERSION COULD SEPARATE THIS FROM file-loaded.
+                     ..(insta_pause and        'set pause  no   ;'                               or '')
     command        = ''~=command    and mp.command(command)
 end
 mp.register_event('file-loaded',file_loaded)
@@ -253,16 +251,16 @@ function property_handler(property,val)
     do toggle   =     property==key   and playback_restarted and W      and (not timers[key]:is_enabled() and (timers[key]:resume() or 1) or on_toggle()) end 
     osd_par     =     property=='osd-par'                    and (val>0 and val or 1)*o.osd_par_multiplier or osd_par  --0,1=AUTO,SQUARE  0@load-script, 0@file-loaded, & 1@playback-restart. MAYBE ~1 ON EXPENSIVE SYSTEM.  THEN zoompan SQUISHES THE CIRCLES INTO ELLIPSES, WHICH ARE THEN VIEWED AS PERFECT CIRCLES.
     reload      = (nil    --6 RELOAD CONDITIONS: @android-surface-size, @image, @NEW-vo, @is1frame, @alpha & @osd_par.
-                   or property=='android-surface-size'       and W   and p.fullscreen  --RELOAD @fullscreen ROTATION.
-                   or property=='current-tracks/video/image' and W   and val~=v.image  --RELOAD IF SWITCHING BTWN MP4 & MP4TAG.  UNFORTUNATELY EMBEDDED MPV SNAPS.  albumart DISTINCTION IS IRRELEVANT. vid ALSO IRRELEVANT.
+                   or property=='android-surface-size'       and W   and gp('fs')     --RELOAD @fullscreen ROTATION.  BETTER CODE SHOULD RELOAD IF EITHER W OR H INCREASES.
+                   or property=='current-tracks/video/image' and W   and val~=v.image --RELOAD IF SWITCHING BTWN MP4 & MP4TAG.  UNFORTUNATELY EMBEDDED MPV SNAPS.  albumart DISTINCTION IS IRRELEVANT. vid ALSO IRRELEVANT.
                    or property=='video-params'               and val and (not W or is1frame or val.alpha and not alpha)  --NEW vo, OR Δalbumart, OR TRY SWITCH TO TRANSPARENCY.  is1frame MUST BE RE-DRAWN.  TRANSPARENCY TAKES TIME TO DETECT. DELAYED TRIGGER BAD!  SWITCHING BACK TO yuv420p UNNECESSARY.
                    or property=='osd-par'                    and W   and osd_par~=m.osd_par --UNTESTED.
     ) and file_loaded()
 end 
-for property in ('current-tracks/video/image fullscreen seeking pause terminal mute aid sid osd-par android-surface-size video-params'):gmatch('[^ ]+')  --BOOLEANS NUMBERS string table nil
+for property in ('current-tracks/video/image seeking pause terminal mute aid sid osd-par android-surface-size video-params'):gmatch('[^ ]+')  --BOOLEANS NUMBERS string table nil
 do mp.observe_property(property,'native',property_handler) end
 
-for key in ('mute aid sid'):gmatch('[^ ]+')  --NULL-OP DOUBLE-TAPS.  double_pause_timeout=0 (p&p DOUBLE-TAP) ALSO SIMPLE TO IMPLEMENT.  current-tracks/audio/selected(double_ao_timeout) & current-tracks/sub/selected(double_sub_timeout) ARE STRONGER ALT-CONDITIONS REQUIRING OFF/ON, AS OPPOSED TO ID#.  current-ao ALSO DOES WHAT current-tracks/audio/selected DOES, BUT SAFER @playlist-next.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).  
+for key in ('mute aid sid'):gmatch('[^ ]+')  --NULL-OP DOUBLE-TAPS.  current-tracks/audio/selected(double_ao_timeout) & current-tracks/sub/selected(double_sub_timeout) ARE STRONGER ALT-CONDITIONS REQUIRING OFF/ON, AS OPPOSED TO ID#.  current-ao ALSO DOES WHAT current-tracks/audio/selected DOES, BUT SAFER @playlist-next.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).  
 do    timers[key]   = mp.add_periodic_timer(o['double_'..key..'_timeout'], function()end ) end
 for _,timer in pairs(timers) 
 do    timer.oneshot = 1  --ALL 1SHOT.
@@ -276,9 +274,10 @@ do    timer.oneshot = 1  --ALL 1SHOT.
 ----LUA      : v5.1     v5.2  TESTED.
 ----SMPLAYER : v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
-----BUG: RELOADS WHEN MINIMIZED IN ANDROID.  RELOAD SHOULD BE BLOCKED.
-----SCRIPT WRITTEN TO TRIGGER AN INPUT ERROR ON OLD MPV (<=0.36). MORE RELIABLE THAN VERSION NUMBERS. 
-----EACH mask REQUIRES EXTRA ~450MB RAM.  CAN PREDICT 296MB=1680*1050*2^2*22*2/1024^2=display*o.res_multiplier^2*22FRAMES*2periods/1MB  
+----FUTURE VERSION SHOULD HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED!
+----FUTURE VERSION SHOULD HAVE VERTICAL DUAL, TO ENABLE QUAD-SECTIONS (x4), & SMARTPHONE PORTRAIT.
+----SCRIPT DIFFICULT TO READ/EDIT WITH WORD-WRAP.  IT'S WRITTEN TO TRIGGER AN INPUT ERROR ON OLD MPV (<=0.36). MORE RELIABLE THAN VERSION NUMBERS. 
+----EACH automask REQUIRES EXTRA ~450MB RAM.  CAN PREDICT 296MB=1680*1050*2^2*22*2/1024^2=display*o.res_multiplier^2*22FRAMES*2periods/1MB  
 ----A DIFFERENT VERSION COULD FADE OUT 1s NEAR end-file (FINALE).
 
 ----ALTERNATIVE FILTERS:
@@ -290,7 +289,7 @@ do    timer.oneshot = 1  --ALL 1SHOT.
 ----lut2          = eof_action  [1][2]→[1]  CAN repeat OR endall ON [m] (INSTEAD OF trim_end).  CAN ALSO GEOMETRICALLY COMBINE avgblur CLOUDS USING ANY FORMULA. x*y/255 BEATS (x+y)/2 & sqrt(x*y), BY TRIAL & ERROR IN MANY SITUATIONS.
 ----shuffleplanes   ALTERNATIVE TO alphamerge.
 ----avgblur         (AVERAGE BLUR)  CAN SHARPEN A CIRCLE FROM BRIGHTNESS BY ACTING ON 4x4/8x8 SQUARE. ALTERNATIVES INCLUDE gblur & boxblur. LOOPED geq IS SUPERIOR.
-----maskedmerge     [vo][vf][m]→[vo]  WAS THE FINISH.  BUT IT'S TOO DIFFICULT TO USE ON COLORED HALF-PLANES uv!  (y8→yuva444p, ETC). IT FAILS WITHOUT MORE FILTERS WHICH MAY NOT BE EFFICIENT.  ALSO DOESN'T SUPPORT eof_action.  HOWEVER DOESN'T NEED MULTIPLES OF 4. 
+----maskedmerge     [vo][vf][m]→[vo]  WAS THE FINISH.  BUT IT'S TOO DIFFICULT TO USE ON COLORED HALF-PLANES uv!  (y8→yuva444p, ETC). IT FAILS WITHOUT ANOTHER FILTER WHICH MAY NOT BE DONE EFFICIENTLY.  ALSO DOESN'T SUPPORT eof_action.  HOWEVER DOESN'T NEED MULTIPLES OF 4. 
 
 ----ALTERNATIVE FILTERCHAINS:
 ----eq ONLY        filterchain='eq=-.5:0:1.1',  
@@ -304,6 +303,6 @@ do    timer.oneshot = 1  --ALL 1SHOT.
 ----QUAD-GAUSS     filterchain='lutyuv=.75*(negval-minval)+minval+100/gauss(0)*(1*gauss((255-val)/(255-maxval)/2-1)-.6*gauss((255-val)/(255-maxval)/2-2)-1*gauss(val/minval/1.7-1)+.6*gauss(val/minval/1.7-2)),eq=saturation=1.1',  -- .6=exp(-.5)
 ----TRIPLE GAUSS   filterchain='lutyuv=.75*(negval-minval)+minval+(64*gauss((255-val)/(255-maxval)/1.7-1)-64*gauss(val/minval/1.5-1)+32*gauss(val/minval/1.5-2))/gauss(0),eq=saturation=1.1',  -- .6=exp(-.5)
 
-----BUG: DILATING SECTIONS NOT WORKING FOR N>1. overlay MIGHT BE TRYING TO COMPUTE COORDS USING init w,W,h,H.  zoompan IS SAFE.
-----EXAMPLE, SECTIONS=1,DUAL=false,scales='oh:ih*(.5+.4*(s)) oh:ih/2',x='',y='',crops='',rotations='',zoompan='',
+----BUG: DILATING SECTIONS NOT WORKING FOR o.SECTIONS>1. overlay MIGHT BE TRYING TO COMPUTE COORDS USING init w,W,h,H.  zoompan IS SAFE.
+-- EXAMPLE; SECTIONS=1,scales='iw*(.5+.4*(s)):ow oh:ih/2',x='',y='',crops='',rotations='0',zoompan='1',
 
