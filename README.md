@@ -68,13 +68,15 @@ Lua versions 5.1 & 5.2 supported.
 Above scripts in `mpv-scripts.zip` haven't been properly released yet - more MacOS & smartphone testing needed.  There's a feedback glitch @YouTube load, too.
 - Added `o.android`, `o.windows`, `o.linux` & `o.darwin` platform overrides to all scripts.  Smartphones work better with different options, like binacles.
 - Added `o.toggle_command` to all scripts except main.  All toggles can activate any command. Replaces `o.osd_on_toggle`, for graph inspections.  
-- Added `o.double_aid_timeout` to aspeed, autocrop & automask. Double-aid is similar to double-mute, due to Android.  Laggy command trigger.  A new `playback_restarted` timer blocks all double-tap timers from misfiring. 
-- Added `o.double_sid_timeout` to all scripts except main. Best smartphone toggle mechanism: doesn't cause lag or glitch audio. `sid` to toggle is artificially added.
+- Added `o.double_aid_timeout` to aspeed, autocrop & automask. Double-aid is similar to double-mute, due to Android (laggy trigger).  A new `playback_restarted` timer blocks all double-tap timers from misfiring. 
+- Added `o.double_sid_timeout` to all scripts except main. Best smartphone toggle mechanism. `sub-create-cc-track` is artificially added.
 - `android-surface-area` W,H computation for automask, autocrop & autocomplex. Binacles are perfect circles on smartphone! Improved examples take portrait/landscape into account.  Graphs reload on fullscreen rotation.
-- automask.lua: Returned `o.fps`. If produced @30fps, film must also be 30fps.  Bugfix for examples (I broke half of them in the last release).  Added examples, `SPINNING_TRIANGLE_DUAL` & `SPINNING_SQUARES_DUAL` (opposing twirls). These required a rotate bugfix (expand spinning corners by `sqrt(2)`).
-- aspeed.lua: Removed `o.clocks.no_locales` flag.  Improved AbDays (more accurate, more lowercase).  No-Armenian override for Android.  Faster YouTube load by always loading path, then controller blocks JPEG using `block_path` switch.  Enabled `graph` randomization @file-loaded.
-- autocomplex.lua: Bugfix for aid on/off. It toggles off & on with only one click of aid.
 - Added `function gp` (Get Property) to all scripts.  All script-opt types now well-defined.  A GUI like SMPlayer could hook in various preferences using `--script-opts`.
-- main.lua: Improved `ytdl_path` code. More elegant codes. 
-- `insta_pause` removed from autocrop/automask `start-file` function, so can pause during YouTube load.  Improved JPEG reliability & `o.meta_osd` for autocrop.
+- automask.lua: Returned `o.fps`. If produced @30fps, film must also be 30fps.  Bugfix for examples (I broke half of them in the last release).  Added examples, `SPINNING_TRIANGLE_DUAL` & `SPINNING_SQUARES_DUAL` (opposing twirls). These required a rotate bugfix: `oh=ow=hypot(iw,ih)`.
+- aspeed.lua: Removed `o.clocks.no_locales` flag.  Improved AbDays (more accurate, more lowercase).  No-Armenian override for Android.  Faster YouTube load by always loading path - then the controller blocks JPEG using a `block_path` switch.  Enabled `graph` randomization @file-loaded.
+- autocomplex.lua: Bugfix for aid on/off. It toggles off & on with only one click of aid.
+- main.lua: Improved `ytdl_path` code. More elegant codes.
+- autocrop.lua: Improved JPEG reliability & `o.meta_osd`.
+- Removed `\\,` from all graphs.
+- autocrop/automask: `insta_pause` removed from `start-file` function, so can pause during YouTube load.
 
