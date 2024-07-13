@@ -1,7 +1,7 @@
 # mpv-scripts
 - [Installation](#installation)
-- [Standalone mpv](#standalone-mpv)
-- [App-Versions](#app-versions)
+- [Standalone mpv](#standalone-mpv-(`mpv.conf`))
+- [App Versions](#app-versions)
 - [Safety Inspection](#safety-inspection)
 - [Terminal Commands](#terminal-commands)
 - [Latest Updates](#latest-updates)
