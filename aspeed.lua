@@ -1,15 +1,16 @@
 ----ADD CLOCK TO VIDEO & JPEG, WITH DOUBLE-MUTE TOGGLE, + AUDIO AUTO SPEED SCRIPT. CLOCK TICKS WITH SYSTEM, & MAY BE COLORED & STYLED, ON SMARTPHONE TOO. RANDOMIZES SIMULTANEOUS STEREOS IN MPV & SMPLAYER. LAUNCHES A NEW MPV FOR EVERY SPEAKER (EXCEPT ON 1 PRIMARY DEVICE CHANNEL). ADDS AMBIENCE WITH RANDOMIZATION. VOLUME, PAUSE, PLAY, SEEK, MUTE, SPEED, STOP, PATH, AID & LAG APPLY TO ALL CHILDREN. A .txt FILE IS USED INSTEAD OF PIPES.
 ----A STEREO COULD BE SET LOUDER IF ONE CHANNEL RANDOMLY SPEEDS UP & DOWN. A SECOND STEREO CAN BE DISJOINT FROM THE FIRST (EXTRA VOLUME).  WORKS WELL WITH MP4, MP3, MP2, M4A, AVI, WAV, OGG, AC3, OPUS, WEBM & YOUTUBE.
-----CURRENT VERSION TREATS ALL DEVICES AS STEREO. UN/PLUGGING USB STEREO REQUIRES RESTARTING SMPLAYER.  IF THERE'S A BUG IN SMPLAYER TRY Audio→Send audio to→Default audio device.  A SMALLER STEREO ADDS MORE TREBLE (BIG CHEAP STEREOS HAVE TOO MUCH BASS).  USB→3.5mm SOUND CARDS COST AS LITTLE AS $3 ON EBAY & CAN BE TAPED TO A CABLE. EACH NEW USB STEREO CREATES 2*mpv.exe IN TASK MANAGER (2*2% CPU, + 50MB RAM).  EVERY SPEAKER BOX (EXCEPT PRIMARY) GETS ITS OWN YOUTUBE STREAM, ETC. ALSO FULLY WORKS IN VIRTUALBOX. 
+----CURRENT VERSION TREATS ALL DEVICES AS STEREO. UN/PLUGGING USB STEREO REQUIRES RESTARTING SMPLAYER.  A SMALLER STEREO ADDS MORE TREBLE (BIG CHEAP STEREOS HAVE TOO MUCH BASS).  USB→3.5mm SOUND CARDS COST AS LITTLE AS $3 ON EBAY & CAN BE TAPED TO A CABLE. EACH NEW USB STEREO CREATES 2*mpv.exe IN TASK MANAGER (2*2% CPU, + 50MB RAM).  EVERY SPEAKER BOX (EXCEPT PRIMARY) GETS ITS OWN YOUTUBE STREAM, ETC. ALSO FULLY WORKS IN VIRTUALBOX. 
+----IF THERE'S A BUG OR LAG IN SMPLAYER TRY Audio→Send audio to→Default audio device.  
 
 options                      = {             
-    key_bindings             = 'Ctrl+C F1',  --CASE SENSITIVE (Ctrl+Shift+c). DON'T WORK INSIDE SMPLAYER.  TOGGLE APPLIES TO clocks & speed, BUT NOT TO filterchain.  C IS autocrop.lua, NOT CLOCK.  Ctrl+c BREAKS.
-    double_mute_timeout      =         .5 ,  --SECONDS FOR DOUBLE-MUTE-TOGGLE        (m&m DOUBLE-TAP).  SET TO 0 TO DISABLE.  BEST SMPLAYER   TOGGLE.  REQUIRES AUDIO IN SMPLAYER.  VARIOUS SCRIPT/S CAN BE SIMULTANEOUSLY TOGGLED USING THESE 3 MECHANISMS. 
-    double_aid_timeout       =         .5 ,  --SECONDS FOR DOUBLE-AUDIO-ID-TOGGLE    (#&# DOUBLE-TAP).  SET TO 0 TO DISABLE.  ANDROID MUTES USING aid. REQUIRES AUDIO. 
-    double_sid_timeout       =         .5 ,  --SECONDS FOR DOUBLE-SUBTITLE-ID-TOGGLE (j&j DOUBLE-TAP).  SET TO 0 TO DISABLE.  BEST SMARTPHONE TOGGLE.  NEVER INTERRUPTS PLAYBACK OR AUDIO.  REQUIRES sid.
+    key_bindings             = 'Ctrl+C Alt+C Alt+c',  --CASE SENSITIVE (CTRL+C=CTRL+SHIFT+c). THESE DON'T WORK INSIDE SMPLAYER.  TOGGLE APPLIES TO clocks & speed, BUT NOT TO filterchain.  C IS autocrop.lua, NOT CLOCK.  CTRL+c BREAKS.
+    double_mute_timeout      =         .5 ,  --SECONDS FOR DOUBLE-MUTE-TOGGLE        (m&m DOUBLE-TAP).  SET TO 0 TO DISABLE.                    IDEAL FOR SMPLAYER.      REQUIRES AUDIO IN SMPLAYER.  VARIOUS SCRIPT/S CAN BE SIMULTANEOUSLY TOGGLED USING THESE 3 MECHANISMS. 
+    double_aid_timeout       =         .5 ,  --SECONDS FOR DOUBLE-AUDIO-ID-TOGGLE    (#&# DOUBLE-TAP).  SET TO 0 TO DISABLE.  BAD FOR YOUTUBE.  ANDROID MUTES USING aid. REQUIRES AUDIO. 
+    double_sid_timeout       =         .5 ,  --SECONDS FOR DOUBLE-SUBTITLE-ID-TOGGLE (j&j DOUBLE-TAP).  SET TO 0 TO DISABLE.  BAD FOR YOUTUBE.  IDEAL FOR SMARTPHONE.    REQUIRES sid (sub-create-cc-track FOR BLANK).
     extra_devices_index_list =         {} ,  --TRY {3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS.  1=auto  2=NORMAL DEVICE.  EITHER 1 OR 2 OVERLAPS ECHO-STYLE (AVOID).  EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS & STREAM.  INTERNAL PC SPEAKERS COUNT AS 2 (2 DOUBLE-MOUTHED CHILDREN).
     toggle_command           =         '' ,  --EXECUTES on_toggle, UNLESS BLANK.  'show-text ""' CLEARS THE OSD.  CAN DISPLAY ${media-title}, ${mpv-version}, ${ffmpeg-version}, ${libass-version}, ${platform}, ${current-ao}, ${af}, ${lavfi-complex}.  CAN ALSO 'show-text "'.._VERSION..'"'  OR  'set speed 1'.
-    speed                    = '${speed}' ,  --EXPRESSION FOR DYNAMIC speed CONTROL, set EVERY HALF-SECOND (IN FILM TIME).  CAN USE ANY MPV PROPERTY (LIKE ${percent-pos}) IN ANY LUA FORMULA.  '${speed}' IS A NULL-OP.  TOGGLES WITH DOUBLE-mute!
+    speed                    = '${speed}' ,  --EXPRESSION FOR DYNAMIC speed CONTROL, set EVERY HALF-SECOND (MEASURED IN STREAM TIME).  CAN USE ANY MPV PROPERTY (LIKE ${percent-pos}) IN ANY LUA FORMULA.  '${speed}' IS A NULL-OP.  TOGGLES WITH DOUBLE-mute!
     -- speed                 = '     ${speed}<1.2 and ${speed}+.01 or 1    ',  --UNCOMMENT TO CYCLE speed BTWN 1 & 1.2 OVER 9s=10s/1.1.  PRESS BACKSPACE TO RESET BACK TO 1.  REPLACE 1.2 & 1 FOR DIFFERENT BOUNDS.
     -- speed                 = 'clip(${speed}+math.random(-1,+1)/100,1,1.2)',  --UNCOMMENT TO RANDOMIZE VIDEO speed, USING A BOUNDED RANDOM WALK.  -1%,+0%,+1% EVERY HALF-SECOND, RECURSIVELY. +2% TO ADD DRIFT.
     suppress_osd             = true , --REMOVE TO VERIFY speed.
@@ -19,7 +20,7 @@ options                      = {
         "/Applications/mpv.app/Contents/MacOS/mpv"     , --     mpv.app     (MAY BE CASE-SENSITIVE.)
         "/Applications/SMPlayer.app/Contents/MacOS/mpv", --SMPlayer.app     (USING TERMINAL.)
     },
-    filterchain        = 'anull,dynaudnorm=g=5:p=1:m=100',  --DEFAULT=g=31:p=.95:m=10=DYNAMIC-AUDIO-NORMALIZER.  graph COMMENTARY HAS MORE DETAILS.  CAN REPLACE anull WITH EXTRA FILTERS, LIKE vibrato highpass aresample.  (random) IS A RANDOM # BTWN 0 & 1, @file-loaded.
+    filterchain        = 'anull,dynaudnorm=g=5:p=1:m=100:b=1',  --DEFAULT=g=31:p=.95:m=10:b=0=DYNAMIC-AUDIO-NORMALIZER.  graph COMMENTARY HAS MORE DETAILS.  b=0 SOUNDS BAD WITH SMARTPHONE BACKGROUND TOGGLE.  CAN REPLACE anull WITH EXTRA FILTERS, LIKE vibrato highpass aresample.  (random) IS A RANDOM # BTWN 0 & 1, @file-loaded.
     mutelr             = 'mutel', --mutel/muter  CONTROLLER ONLY.  PRIMARY CHANNEL HAS NORMAL SYNC TO VIDEO.  HARDWARE USUALLY HAS A PRIMARY, BUT IT'S 50/50 (HEADPHONES OPPOSITE TO SPEAKERS).
     resync_delay       =     30 , --SECONDS.  RESYNC WITH THIS DELAY.  CPU TIME GOES OFF WITH RANDOM LAG.  TOO DIFFICULT TO DETECT LAG FOR ALL PLAYERS (WEBSITES CAUSE DESYNC). 
     os_sync_delay      =    .01 , --SECONDS.  PRECISION FOR SYNC TO os.time.  OPERATING SYSTEM TIME IS CHECKED EVERY 10ms FOR THE NEXT TICK.  WIN10 CMD "TIME 0>NUL" GIVES 10ms PRECISION.
@@ -42,6 +43,7 @@ options                      = {
         'msg-level       all=error','priority abovenormal',  --DEFAULTS all=status,normal.  BY DEFAULT SMPLAYER LOGS ALL speed CHANGES VIA CHILD terminal.  priority ONLY VALID ON WINDOWS.  
         -- 'audio-pitch-correction  no',                    --DEFAULT  yes  UNCOMMENT FOR CHIPMUNK MODE (NO scaletempo# FILTER). WORKS OK WITH SPEECH & COMICAL MUSIC.  REDUCES CPU CONSUMPTION BY 5%=5*1%.  ACTIVE INDEPENDENT TEMPO SCALING FOR SEVERAL SPEAKERS USES CPU.
     },
+    windows     = {}, linux = {}, darwin = {}, --OPTIONAL: platform OVERRIDES.
     android     = { 
         options = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',},  --CONTROLLER ONLY.  options ARE SPECIAL & APPEND, NOT REPLACE. 
     },
@@ -82,7 +84,6 @@ options                      = {
 
     },
     params  = {N=0,pid},                   --params DECLARATION.  N=0 is_controller.  N=1 IS FIRST-CHILD & PROVIDES FEEDBACK.  PARENT PROCESS-ID DETERMINES txtfile THE CHILDREN READ FROM.  ALTERNATIVE IS TO DEFINE ENVIRONMENTAL VARIABLE/S FOR CHILDREN, BUT o.params IS SIMPLER.
-    windows = {}, linux = {}, darwin = {}, --OPTIONAL platform OVERRIDES.
 }
 o,p,m,timers = {},{},{},{}                         --o,p=options,PROPERTIES  m=MEMORY={map,graph}  timers={mute,aid,sid,playback_restart,auto,os_sync,osd}  playback_restart BLOCKS THE PRIOR 3.
 txt,devices,clocks,abdays,LOCALES = {},{},{},{},{} --txtfile IS WRITTEN FROM txt.  devices=LIST OF DEVICES WHICH WILL ACTIVATE, STARTING WITH EXISTING audio-device.  LOCALES IS LIST OF SUB-TABLES, FOR LOTE. NEVER USED BY CHILDREN (UNLESS THEY ALSO HAVE A clock TOO).  os.setlocale('RUSSIAN') LITERALLY BLUE-SCREENS (MPV HAS ITS OWN BSOD).
@@ -97,14 +98,14 @@ function round(N,D)  --@property_handler & @clock_update.  N & D ARE number/stri
     return N and math.floor(.5+N/D)*D  --round(N)=math.floor(.5+N)
 end
 
-function clip(N,min,max)  --@property_handler.  N, min & max ARE number/nil.  FFMPEG SUPPORTS clip BUT NOT LUA.
+function clip(N,min,max)  --@property_handler.  N, min & max ARE number/nil.  FFMPEG SUPPORTS clip, BUT NOT LUA.
     return N and min and max and math.min(math.max(N,min),max)  --MIN MAX MIN MAX
 end
 
 p  .platform  = gp('platform') or os.getenv('OS') and 'windows' or 'linux' --platform=nil FOR OLD MPV.  OS=Windows_NT/nil.  SMPLAYER STILL RELEASED WITH OLD MPV.
 o[p.platform] = {}                                                         --DEFAULT={}
 for  opt,val in pairs(options) 
-do o[opt]     = val end 
+do o[opt]     = val end               --CLONE
 require 'mp.options'.read_options(o)  --yes/no=true/false BUT OTHER TYPES DON'T AUTO-CAST.
 for  opt,val in pairs(o)
 do o[opt] = type(val)=='string' and type(options[opt])~='string' and loadstring('return '..val)() or val end  --NATIVE TYPECAST.  load INVALID ON MPV.APP.  NATIVES PREFERRED, EXCEPT FOR GRAPH INSERTS.  
@@ -114,8 +115,8 @@ for _,opt in pairs(o[p.platform].options or {}) do table.insert(o.options,opt) e
 for _,opt in pairs(N==0  and o.options   or o.options_children)                                   
 do  command    = ('%s no-osd set %s;'):format(command or '',opt) end  --ALL SETS IN 1.
 command        = command and mp.command (command)
-for opt,val in pairs(o[p.platform])  --platform OVERRIDE.
-do o[opt]      = val end                                     
+for opt,val in pairs(o[p.platform])  
+do o[opt]      = val end --platform OVERRIDE.
 label          = mp.get_script_name()  --aspeed FILENAME MUSTN'T HAVE SPACES, BUT ITS DIRECTORY CAN. 
 command_prefix = o.suppress_osd  and 'no-osd' or ''
 
@@ -123,7 +124,7 @@ for abday in ('Sun Mon Tue Wed Thu Fri Sat'):gmatch('[^ ]+') do table.insert(abd
 for      _,clock in pairs(o.clocks) 
 do if type(clock)        == 'string'                                                                        --STRINGS ONLY.  SPLITTING THE STRINGS IN HALVES OR THIRDS (IN options) WOULD BE MORE COMPLICATED.
     then   clock          = (p.platform=='android' and clock: find('ր') and clock: gsub('%%a','') or clock) --NO-ARMENIAN OVERRIDE FOR ANDROID.  η EXISTS BUT NOT BACK-TO-FRONT-η.  ARMENIA GOOD, ARMENIAN BAD.
-                            :gsub('◙','\\N'):gsub('♪','%%n')                                                --◙,♪=\N,%n ARE PREFERRED. ♪ RETURNS TO TOP-LEFT.  
+                            :gsub('◙','\\N'):gsub('♪','%%n')                                                --◙,♪ = \N,%n  ARE PREFERRED. ♪ RETURNS TO TOP-LEFT.  
          LOCALE,gmatch    = {},(clock: gmatch('%[.*%]')() or ''):gmatch('[^%[ %]]+')                        --LOCALE HAS ABDAYS AS KEYS.  ABDAY ITERATOR.  '.' IS EVERYTHING.  '*' MEANS LONGEST MATCH OR NOTHING.  "[]()-" ARE MAGIC.
          for _,abday in pairs(abdays) 
          do LOCALE[abday] = (gmatch() or abday):gsub('%-%-','‎ ‎'):gsub('%-','{\\fscx50}‎ ‎{\\fscx100}') end --LOCALE OR DEFAULT.  "-"=HALF-SPACE.  EACH SPACE HAS LRM ON EITHER SIDE FOR PROPER ALIGNMENT.
@@ -143,9 +144,10 @@ directory            = require 'mp.utils'.split_path(gp('scripts')[1]) --ASSUME 
 script               = ('%s/%s.lua'):format(directory,label)           --"/" FOR WINDOWS & UNIX. .lua COULD BE .js FOR JAVASCRIPT.  
 directory            = mp.command_native({'expand-path',directory})    --command_native EXPANDS '~/', REQUIRED BY io.open.
 txtpath              = ('%s/%s-pid%d.txt'):format(directory,label,o.params.pid or gp('pid'))  --txtfile INSTEAD OF PIPES.
-if N==0 then clock   = clocks[1] and mp.create_osd_overlay('ass-events')    --AT LEAST 1.  ass-events IS THE ONLY VALID OPTION.   COULD ALSO SET res_x & res_y FOR BETTER THAN 720p FONT QUALITY.
-    p['script-opts'],o.auto_delay = mp.get_property('script-opts'),.5       --string FOR SPAWNING; MAY BE BLANK.  ytdl_hook OPTS POTENTIALLY UNSAFE.  CONTROLLER auto_delay EXISTS ONLY TO STOP timeout. 
-    p['script-opts'] = p['script-opts']=='' and '' or p['script-opts']..',' --APPEND ','.  LEADING ',' DISALLOWED.  EXISTING opts GO FIRST.
+if N==0 then clock   = clocks[1] and mp.create_osd_overlay('ass-events')  --AT LEAST 1.  ass-events IS THE ONLY VALID OPTION.   COULD ALSO SET res_x & res_y FOR BETTER THAN 720p FONT QUALITY.
+    o.auto_delay     = .5                             --CONTROLLER auto_delay EXISTS ONLY TO STOP timeout. 
+    p['script-opts'] = mp.get_property('script-opts') --string FOR SPAWNING; MAY BE BLANK.  ytdl_hook OPTS POTENTIALLY UNSAFE.  
+    p['script-opts'] = p['script-opts']=='' and '' or p['script-opts']..','  --APPEND ','.  LEADING ',' DISALLOWED.  EXISTING opts GO FIRST.
     
     table.insert   (devices,   gp('audio-device'     )) --"wasapi/" (WINDOWS AUDIO SESSION APP. PROGRAM. INTERFACE) OR "pulse/alsa" (LINUX) OR "coreaudio/" (MACOS).
     for _,index in pairs(o.extra_devices_index_list)    --ESTABLISHES devices WHICH ACTIVATE (IF mpv).  DUPLICATES ALLOWED.  WOULDN'T MAKE SENSE FOR CHILDREN.
@@ -164,14 +166,14 @@ graph=('stereotools,astats=.5:1,%s,asplit[0],stereotools=%s=1[1],[0][1]astreamse
 
 ----lavfi         = [graph] [ao]→[ao] LIBRARY-AUDIO-VIDEO-FILTERGRAPH.  aspeed IS LIKE A MASK FOR audio, WHICH DISJOINTS IT. 
 ----stereotools   = ...:mutel:muter DEFAULT=...:0:0  (BOOLS)  IS THE START.  MAY BE SUPERIOR @CONVERSION→stereo FROM mono & SURROUND-SOUND. astats MAY NEED STEREO FOR RELIABILITY. ALSO MUTES EITHER SIDE. FFMPEG-v4 INCOMPATIBLE WITH softclip.
-----dynaudnorm    = ...:g:p:m       DEFAULT=...:31:.95:10  ...:GAUSSIAN_WIN_SIZE(ODD>1):PEAK_TARGET[0,1]:MAX_GAIN[1,100]  DYNAMIC AUDIO NORMALIZER OUTPUTS A BUFFERED STREAM WITH TB=1/SAMPLE_RATE & FORMAT=doublep.  INSERTS BEFORE asplit DUE TO INSTA-TOGGLE FRAME-TIMING. IT MAY SLOW DOWN YOUTUBE, BY PRE-LOADING MANY FRAME-LENGTHS (g=31).  ALTERNATIVES INCLUDE loudnorm & acompressor, BUT dynaudnorm IS BEST. IT'S USED SEVERAL TIMES SIMULTANEOUSLY: EACH SPEAKER + VARIOUS GRAPHICS (lavfi-complex).  IT CAN BE TESTED WITH VARIOUS FILTERS BEFORE IT.
+----dynaudnorm    = ...:g:p:m:...:b DEFAULT=...:31:.95:10:...:0  ...:GAUSSIAN_WIN_SIZE(ODD>1):PEAK_TARGET[0,1]:MAX_GAIN[1,100]:...:BOUNDARY_MODE[0/1]  DYNAMIC AUDIO NORMALIZER OUTPUTS A BUFFERED STREAM WITH TB=1/SAMPLE_RATE & FORMAT=doublep.  b=NO_FADE. INSERTS BEFORE asplit DUE TO INSTA-TOGGLE FRAME-TIMING. IT MAY SLOW DOWN YOUTUBE, BY PRE-LOADING MANY FRAME-LENGTHS (g=31).  ALTERNATIVES INCLUDE loudnorm & acompressor, BUT dynaudnorm IS BEST. IT'S USED SEVERAL TIMES SIMULTANEOUSLY: EACH SPEAKER + VARIOUS GRAPHICS (lavfi-complex).  IT CAN BE TESTED WITH VARIOUS FILTERS BEFORE IT.
 ----astats        = length:metadata (SECONDS:BOOL)  CONTINUAL SAMPLE COUNT WAS BASIS FOR 10 HOUR SYNC. TESTED @OVER 1 BILLION. ~0% CPU USAGE. ALL PRECEDING FILTERS MUST BE FULLY DETERMINISTIC OVER 10 HRS, BUT NOT FILTERS FOLLOWING. MPV-v0.38 CAN SYNC ON ITS OWN WITHOUT astats (BUT NOT v0.36).
 ----astreamselect = inputs:map      IS THE FINISH.  ENABLES INSTA-TOGGLE. "af-command" NOT "af toggle". DOUBLE REPLACING GRAPH OR FULL TOGGLE CAUSES CONTROLLER GLITCH. SHOULD BE PLACED LAST BECAUSE SOME FILTERS (dynaudnorm) DON'T INSTANTLY KNOW WHICH STREAM TO FILTER, BECAUSE THAT'S DETERMINED BY af-command (0 OR 1). ON=1 BY DEFAULT.
 ----anull           PLACEHOLDER.
 ----asplit          [ao]→[0][1]=[no-mutelr][mutelr]
 
 
-function file_loaded() --ALSO @seek.
+function file_loaded() --ALSO @seek & @property_handler.
     block_path      = true
     for _,track in pairs(gp('track-list'))  
     do block_path   = block_path and track.type~='audio' end --CONTROLLER BLOCKS JPEG.  LOOP OVER ALL TRACKS TO CHECK AUDIO EXISTS.  THE CHILDREN *CAN'T* BLOCK JPEG - IT'S INDISTINGUISHABLE FROM FAILED YOUTUBE, & MUST KEEP RELOADING ASAP.
@@ -209,6 +211,8 @@ function on_toggle() --@key_binding & @property_handler.  ALSO DURING YOUTUBE LO
     
     clock_update()  --INSTA-clock_update.
     apply_astreamselect()
+    
+    resync  = not OFF              and os_sync()  --OPTIONAL
     command = o.toggle_command~='' and mp.command(command_prefix..' '..o.toggle_command)
 end
 for key in o.key_bindings: gmatch('[^ ]+') do mp.add_key_binding(key,'toggle_aspeed_'..key,on_toggle)  end 
@@ -239,17 +243,17 @@ timers.os_sync=mp.add_periodic_timer(o.os_sync_delay,os_sync)
 
 function property_handler(property,val) --ALSO @timers.auto.  txtfile INPUT/OUTPUT.  ONLY EVER pcall, FOR RELIABLE INSTANT write & SIMULTANEOUS io.remove.
     p[property or ''] = val             --p['']=nil  DUE TO IDLER.
-    seeking           = (p.seeking or p.pause or not p['audio-params/samplerate']) and 'yes' or 'no'  --IF FIRST-CHILD seeking/PAUSED, PARENT MUST UNMUTE.  ALSO samplerate=nil OCCURS AS YOUTUBE LOADS.  (AGGRESSIVELY UNMUTE.)
-    if not mp2os_time     or      property=='speed' and set_speed                       --4* return CONDITIONS.  1) AWAIT SYNC.  2) set_speed OBSERVATION ENDS HERE. 
-        or N         ~= 0 and     property          and property~='af-metadata/'..label --3) CHILD OBSERVATION ENDS HERE, EXCEPT ON astats TRIGGER. CONTROLLER PROCEEDS.
-        or N         == 0 and not property          and seeking =='no'                  --4) CONTROLLER  IDLER ENDS HERE, UNLESS JPEG OR PAUSED/seeking. IT DOES write OBSERVATIONS.  seeking SAVES YOUTUBE LOAD.  AN ISSUE WITH MANY DIRECT LINKS TO 1 function IS COMPLICATED RETURNS.
+    seeking           = (p.seeking or not p['audio-params/samplerate'] or p.pause) and 'yes' or 'no'  --IF FIRST-CHILD seeking/PAUSED, PARENT MUST UNMUTE.  ALSO samplerate=nil OCCURS AS YOUTUBE LOADS.  (AGGRESSIVELY UNMUTE.)  COULD BE RENAMED not_playing.
+    if not mp2os_time     or      property=='speed' and set_speed                         --4* return CONDITIONS.  1) AWAIT SYNC.  2) set_speed OBSERVATION ENDS HERE. 
+        or N         ~= 0 and     property          and property ~= 'af-metadata/'..label --3) CHILD OBSERVATION ENDS HERE, EXCEPT ON astats TRIGGER. CONTROLLER PROCEEDS.
+        or N         == 0 and not property          and seeking  == 'no'                  --4) CONTROLLER IDLER  ENDS HERE, UNLESS JPEG OR PAUSED/seeking. IT DOES write OBSERVATIONS.  seeking SAVES YOUTUBE LOAD.  AN ISSUE WITH MANY DIRECT LINKS TO 1 function IS COMPLICATED RETURNS.
     then return end  
-    os_time           =  mp2os_time+mp.get_time()  --os_time=TIMEFROM1970 PRECISE TO 10ms.
+    os_time           =  mp2os_time+mp.get_time()  --TIMEFROM1970 PRECISE TO 10ms.
     samples_time      =  property=='af-metadata/'..label   and val['lavfi.astats.Overall.Number_of_samples']/p['audio-params/samplerate']  --ALWAYS A HALF INTEGER, OR nil.  TIME=sample#/samplerate  (SOURCE SAMPLERATE) 
     target            =  target or playback_restarted      and (mp.command(('af-command %s map %d astreamselect'):format(label,m.map)) and 'astreamselect' or '')  --NEW MPV OR OLD. v0.37.0+ SUPPORTS TARGETED COMMANDS.  command RETURNS true IF SUCCESSFUL. MORE RELIABLE THAN VERSION NUMBERS BECAUSE THOSE CAN BE ANYTHING.  TARGETED COMMANDS WERE INTRODUCED WITH time-pos BUGFIX.  astreamselect ONLY WORKS AFTER samples_time.
     resync            = (property=='frame-drop-count'      or  os_time-sync_time>o.resync_delay) and os_sync() --ON_LAG & EVERY MINUTE.  ON_LAG COULD MULTI-RESYNC (LINK TO playback_restart).
-    initial_time_pos  =  property~='frame-drop-count'      and initial_time_pos or target=='' and samples_time  and samples_time>20 and gp('time-pos')-samples_time  --FOR OLD MPV.  EXCESSIVE LAG RESETS SAMPLE COUNT.  v0.36 CAN'T SYNC WITHOUT astats. BOTH MP4 & MP3 LAGGED BEHIND THE CHILDREN. time-pos, playback-time & audio-pts WORKED WELL OVER 1 MINUTE, BUT NOT 1 HOUR.  SAMPLE COUNT STABILIZES WITHIN 20s (YOUTUBE+lavfi-complex). IT'S ALWAYS A HALF-INTEGER @MEASUREMENT.  initial_time_pos=initial_time_pos_relative_to_samples_time  THIS # STAYS THE SAME FOR THE NEXT 10 HOURS. 
-    p['time-pos']     =  initial_time_pos and samples_time and initial_time_pos+samples_time  or gp('time-pos') or 0  --0 DURING YOUTUBE LOAD TO STOP timeout.  OLD MPV USES ALT-METRIC WHOSE CHANGE IS BASED ON astats (METRIC SWITCH). 
+    initial_time_pos  =  property~='frame-drop-count'      and initial_time_pos or target==''    and samples_time  and samples_time>20 and gp('time-pos')-samples_time  --FOR OLD MPV.  EXCESSIVE LAG RESETS SAMPLE COUNT.  v0.36 CAN'T SYNC WITHOUT astats. BOTH MP4 & MP3 LAGGED BEHIND THE CHILDREN. time-pos, playback-time & audio-pts WORKED WELL OVER 1 MINUTE, BUT NOT 1 HOUR.  SAMPLE COUNT STABILIZES WITHIN 20s (YOUTUBE+lavfi-complex). IT'S ALWAYS A HALF-INTEGER @MEASUREMENT.  initial_time_pos=initial_time_pos_relative_to_samples_time  THIS # STAYS THE SAME FOR THE NEXT 10 HOURS. 
+    p['time-pos']     =  initial_time_pos and samples_time and initial_time_pos+samples_time     or gp('time-pos') or 0  --0 DURING YOUTUBE LOAD TO STOP timeout.  OLD MPV USES ALT-METRIC WHOSE CHANGE IS BASED ON astats (METRIC SWITCH). 
     txtfile           = io.open(txtpath)  --MODES r/r+ WORK.  ALTERNATIVE io.lines RAISES ERROR.  CONTROLLER READS TOO, FOR FEEDBACK. 
     if txtfile        
     then lines        = txtfile: lines()  --ITERATOR RETURNS 0 OR 7 LINES, AS function. 
@@ -272,15 +276,15 @@ function property_handler(property,val) --ALSO @timers.auto.  txtfile INPUT/OUTP
     then txt.seeking =      N==1 and seeking or  txt.seeking or seeking --LINE7 OF txtfile CONTROLLED BY FIRST-BORN.  CONTROLLER seeking SETS txt.speed=0.  
         write        = ''
         for line in ('path aid volume speed os_time time_pos seeking'):gmatch('[^ ]+') 
-        do write     = write..txt[line]..'\n' end
-        txtfile      = io.open(txtpath,'w') --MODES w/w+ WORK.  MPV.APP REQUIRES txtfile BE WELL-DEFINED.
-        txtfile: write(write)               --A PRECAUTION: NO ARBITRARY COMMANDS OR SETS (property NAMES). A set COULD HOOK AN UNSAFE EXECUTABLE, SIMILAR TO PIPING TO A SOCKET. DIFFERENT LINES MIGHT REQUIRE SECURITY OVERRIDES.
-        txtfile: close() end                --EITHER flush() OR close().
+        do write     = write..txt[line]..'\n' end --NO RETURN BYTE \r.
+        txtfile      = io.open(txtpath,'w')       --MODES w/w+ WORK.  MPV.APP REQUIRES txtfile BE WELL-DEFINED.
+        txtfile: write(write)                     --A PRECAUTION: NO ARBITRARY COMMANDS OR SETS (property NAMES). A set COULD HOOK AN UNSAFE EXECUTABLE, SIMILAR TO PIPING TO A SOCKET. DIFFERENT LINES MIGHT REQUIRE SECURITY OVERRIDES.
+        txtfile: close() end                      --EITHER flush() OR close().
     
     txt.os_time     = txt.os_time  or os_time        --INITIALIZE TIME_OF_WRITE=txt.os_time. CHILDREN ALL quit IF txtfile NEVER COMES INTO EXISTENCE.
     time_from_write =     os_time-txt.os_time        --Δos_time  Δ INVALID ON MPV.APP.
     quit            = time_from_write>o.quit_timeout --SOMETIMES txtpath IS INACCESSIBLE, SO AWAIT timeout.  txtfile DOESN'T ORDER A quit BECAUSE A TIMEOUT IS STILL NEEDED ANYWAY, IN CASE SOME OTHER CHILD REMOVES txtfile.
-    set_pause       = time_from_write>o.pause_timeout or N>0 and not txtfile  --EITHER CONTROLLER STOPPED OR FILE INACCESSIBLE.
+    set_pause       = time_from_write>o.pause_timeout or N~=0 and not txtfile  --EITHER CONTROLLER STOPPED OR FILE INACCESSIBLE.
     set_speed       = N==0              and p.speed~=speed                                        
     command         = nil
                       or quit           and  '   quit         '  
@@ -317,6 +321,21 @@ for key in ('mute aid sid'):gmatch('[^ ]+')  --1SHOT NULL-OP DOUBLE-TAPS.  curre
 do  timers[key]         = mp.add_periodic_timer(o['double_'..key..'_timeout'], function()end ) 
     timers[key].oneshot = 1
     timers[key]:kill() end
+reload                  = gp('time-pos') and file_loaded()  --FILE ALREADY LOADED. TRIGGER NOW.
+
+function exit()  --ALSO @cleanup.  'script-message-to aspeed exit' ENABLES LIVE SCRIPT-RELOAD DURING PLAYBACK, VIA GUI, WITH NEW script-opts & SAME NAME.
+    gp('msg-level')[label] = 'no'  --HIDES error.
+    mp.set_property_native('msg-level',p['msg-level']) 
+    error()  --ALSO REMOVES clock, SIMILAR TO assert(nil).  THROWING AN error IS MORE RELIABLE THAN unregister_event, unregister_script_message, unobserve_property, remove_key_binding, KILLING timers, ETC. 
+end 
+
+function cleanup()  --OPTIONAL.  ASSUME ORIGINAL speed=1.
+    mp.command(('%s af remove @%s'..(p.speed~=1 and '%s set speed 1;' or '')):format(command_prefix,label,command_prefix))
+    os.remove(txtpath)
+    exit()  
+end 
+for name,fn in pairs({exit=exit,cleanup=cleanup,toggle=on_toggle,apply_astreamselect=apply_astreamselect,resync=os_sync})  --SCRIPT CONTROLS.
+do mp.register_script_message(name,fn) end
 
 
 ----~300 LINES & ~7000 WORDS.  SPACE-COMMAS FOR SMARTPHONE.  5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END. ALSO BLURBS ON WEB.  CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
@@ -326,11 +345,15 @@ do  timers[key]         = mp.add_periodic_timer(o['double_'..key..'_timeout'], f
 ----LUA      : v5.1     v5.2  TESTED.
 ----SMPLAYER : v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
-----BUG: astreamselect af-command CAUSES A double_mute COMBO-BUG WHEN COMBINED WITH autocrop.lua+is1frame(albumart).  MPV FAST-FORWARDS A FEW SECONDS (GLITCH).  REPLACING astreamselect COULD FIX IT.
-----FUTURE VERSION SHOULD HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED!
+----FUTURE VERSION SHOULD HAVE A reload SCRIPT MESSAGE. THE INTRODUCTORY SECTION CAN ITSELF BE function reload.
+----FUTURE VERSION SHOULD HAVE o.msg_level.
+----FUTURE VERSION SHOULD HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED.  NEEDED FOR android albumart.
+----FUTURE VERSION SHOULD REMOVE astats FOR NEW MPV, SO o.speed IS SET EVERY HALF-SECOND IN REAL-TIME.
 ----FUTURE VERSION MAY REPLACE astreamselect WITH volume & amix.  astreamselect WAS A BAD DESIGN CHOICE. IT ENABLES MORE COMPLEX INSTA-SWITCHES.
 ----FUTURE VERSION MAY HAVE SMOOTH TOGGLE. txtfile COULD HAVE ANOTHER LINE FOR SMOOTH TOGGLE (SMOOTH-MUTE USING t-DEPENDENT af-command).
 ----FOR SURROUND SOUND, THE CONTROLLER COULD INSTA-SWITCH THROUGH ALL DEVICES TO COUNT CHANNELS.  THERE'S A RISK OF RIGHT CHANNEL ON BACK-LEFT, ETC.  CODING FOR A SURROUND SOUND SOURCE SIGNAL IS MORE COMPLICATED. 
+----A DIFFERENT VERSION COULD VARY extra_devices_index_list DURING PLAYBACK, USING mp.register_script_message.  extra_devices_index_list WOULD REQUIRE A NEW LINE IN txtfile.  A GUI COULD SMOOTHLY ACTIVATE A WHOLE NEW STEREO WITHOUT INTERRUPTING PLAYBACK.
+----BUG: astreamselect af-command CAUSES A DOUBLE-MUTE COMBO-BUG WHEN COMBINED WITH autocrop.lua+is1frame(albumart).  MPV FAST-FORWARDS A FEW SECONDS (GLITCH).  REPLACING astreamselect COULD FIX IT.
 
 ----ANDROID HAS o.clocks, o.speed & o.filterchain, BUT NO CHILD-SPAWN & NO YOUTUBE.  SOMEONE COULD PUBLISH mpv-android2 (is.xyz.mpv2), A CLONE.  ANDROID APPS ARE SINGLETONS.  (LISTENING TO SOME MUSIC ON PHONE IS LIKE MONO.)  A MORE DIFFICULT BUT ELEGANT SOLUTION WOULD BE TO TRANSFORM mpv-android INTO A CONTAINER FOR MULTIPLE AUDIO-ONLY INSTANCES (A NEW spawn COMMAND).
 ----SCRIPT DIFFICULT TO READ/EDIT WITH WORD-WRAP.  IT'S WRITTEN TO TRIGGER AN INPUT ERROR ON OLD MPV (<=0.36). MORE RELIABLE THAN VERSION NUMBERS. 

@@ -1,6 +1,6 @@
-----WINDOWS    :  --script=.                       IN SMPLAYER  &/OR  script=../                     IN mpv.conf.  PLACE ALL scripts WITH smplayer.exe & SET ITS ADVANCED mpv PREFERENCES.  CAN ALSO EDIT mpv\mpv\mpv.conf, INSIDE smplayer-portable.  IF NOT PORTABLE CAN USE --script=~/Desktop/mpv-scripts/  mpv.conf ENABLES DRAG & DROP OF YOUTUBE URL, IN LINUX/MACOS TOO.
+----WINDOWS    :  --script=.                       IN SMPLAYER  &/OR  script=../                     IN mpv.conf.  PLACE ALL scripts WITH smplayer.exe & ENTER ITS ADVANCED mpv PREFERENCES.  CAN ALSO CREATE 1-LINE TEXT-FILE  mpv\mpv\mpv.conf  INSIDE smplayer-portable.  mpv.conf ENABLES DOUBLE-CLICKING mpv.exe & DRAG & DROP OF FILES & YOUTUBE URL, IN LINUX/MACOS TOO.  IF NOT PORTABLE, SET-UP IS LIKE FOR LINUX: --script=~/Desktop/mpv-scripts/  
 ----LINUX/MACOS:  --script=~/Desktop/mpv-scripts/  IN SMPLAYER  &/OR  script=~/Desktop/mpv-scripts/  IN mpv.conf.  PLACE mpv-scripts ON Desktop.  EDIT ~/.config/mpv/mpv.conf TO DRAG & DROP DIRECTLY ONTO MPV.  LINUX snap: --script=/home/user/Desktop/mpv-scripts/
-----ANDROID    :    script=/sdcard/Android/media/is.xyz.mpv/              IN ADVANCED SETTINGS  Edit mpv.conf.  PLACE ALL SCRIPTS IN THIS EXACT FOLDER IN INTERNAL MAIN STORAGE. OTHER FOLDERS DON'T WORK IN ANDROID-11.  ENABLE MPV MEDIA-ACCESS USING ITS FILE-PICKER.  'sdcard'~='SD card'(EXTERNAL)  CAN ALSO INSTALL cx-file-explorer & 920 (.APK).  920 CAN HANDLE WORDWRAP & WHITESPACE.
+----ANDROID    :    script=/sdcard/Android/media/is.xyz.mpv/                IN ADVANCED SETTINGS:  Edit mpv.conf.  PLACE ALL SCRIPTS IN THIS EXACT FOLDER IN INTERNAL MAIN STORAGE. OTHER FOLDERS DON'T WORK IN ANDROID-11.  ENABLE MPV MEDIA-ACCESS USING ITS FILE-PICKER.  'sdcard'~='SD card'(EXTERNAL)  CAN ALSO INSTALL cx-file-explorer & 920 (.APK).  920 CAN HANDLE WORDWRAP & WHITESPACE.  https://SNAPDROP.NET CAN TRANSFER scripts TO /sdcard/Android/media/is.xyz.mpv/
 ----https://GITHUB.COM/yt-dlp/yt-dlp/releases  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY & REDTUBE ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  DON'T FORGET TO UPDATE yt-dlp FOR THE NEWEST YT VIDEOS.  X.COM NOT seeking.
 
 options     = {                
@@ -11,7 +11,7 @@ options     = {
         "autocomplex.lua"       , --NOT FOR SMARTPHONE (LAG).  ANIMATED AUDIO SPECTRUMS, VOLUME BARS, FPS LIMITER. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE CAN BE LIKE WINGS OF BIRD).  TWITTER INCOMPATIBLE. ALSO DISABLE TO seek THROUGH SOME YOUTUBE VIDEOS.
         "automask.lua"          , --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE (DOUBLE-MUTE).  CAN SPEED-LOAD MONACLE/PENTAGON ON SMARTPHONE.  LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE SPINNING_TRIANGLE=automask2.lua, 500MB RAM EACH, +UNIQUE KEYBINDS).
     },
-    ytdl = {            --YOUTUBE DOWNLOAD. PLACE EXECUTABLE WITH main.lua.  LIST ALL POSSIBLE FILENAMES TO HOOK, IN PREFERRED ORDER. NO ";" ALLOWED.  CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto.  NOT FOR ANDROID.
+    ytdl = {            --YOUTUBE DOWNLOAD. PLACE EXECUTABLE WITH main.lua.  LIST ALL POSSIBLE FILENAMES TO HOOK, IN PREFERRED ORDER, BEFORE EXISTING HOOK. NO ";" ALLOWED.  CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto.  NOT FOR ANDROID.
         "yt-dlp"      , --.exe
         "yt-dlp_x86"  , --win32  REMOVE THESE TO SHORTEN script-opts.  WILDCARDS INVALID.  
         "yt-dlp_linux", --CASE SENSITIVE.  sudo apt remove yt-dlp TO REMOVE OLD VERSION.  
@@ -22,18 +22,21 @@ options     = {
         'osd-border-size 1','osd-font-size 16','osd-level 0   ','osd-duration 5000','osd-bar no','osd-bold yes','osd-font "COURIER NEW"',  --DEFAULTS 3,55,3,1000,yes,no,sans-serif   border=1p FOR LITTLE TEXT.  osd-level=0 PREVENTS UNWANTED MESSAGES @load-script.  1000 MILLISECONDS ISN'T ENOUGH TO READ/SCREENSHOT osd.  SMPLAYER ALREADY HAS A BAR.  55p MAY NOT FIT GRAPHS.  COURIER NEW IS MONOSPACE & NEEDS bold (FANCY).  CONSOLAS PROPRIETARY & INVALID ON MACOS.
         'sub-border-size 2','sub-font-size 32',  --DEFAULTS=3,55  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
     },
-    title             = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,b1,fs##,bord# = \,BOLD,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
-    title_duration    =  5 , --SECONDS.
-    autoloop_duration = 10 , --SECONDS.  0 MEANS NO AUTO-loop.  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://GITHUB.COM/zc62/mpv-scripts/blob/master/autoloop.lua
-    options_delay     = .3 , --SECONDS, FROM playback_start. title ON SAME DELAY.
-    options_delayed   = {    --@playback_started+options_delay, FOR EVERY FILE.
+    msg_level              = {  --['module']='level'  OVERRIDES FOR msg-level.
+        ['ffmpeg/demuxer'] = 'error',
+    },
+    title                  = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,b1,fs##,bord# = \,BOLD,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
+    title_duration         =  5 , --SECONDS.
+    autoloop_duration      = 10 , --SECONDS.  0 MEANS NO AUTO-loop.  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://GITHUB.COM/zc62/mpv-scripts/blob/master/autoloop.lua
+    options_delay          = .3 , --SECONDS, FROM playback_start. title ON SAME DELAY.
+    options_delayed        = {    --@playback_started+options_delay, FOR EVERY FILE.
         'osd-level 1',       --DEFAULT=3.  RETURN osd-level. 
         -- 'sid    1','secondary-sid 1',  --UNCOMMENT FOR SUBTITLE-TRACK-ID OVERRIDE.  USEFUL FOR YOUTUBE + sub-create-cc-track. sid=1 BUGS OUT @file-loaded.
     },
-    android      = {                                                             
-        options  = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',}, --options ARE SPECIAL & APPEND, NOT REPLACE. 
+    windows     = {}, linux = {}, darwin = {},  --OPTIONAL: platform OVERRIDES.
+    android     = {                                                             
+        options = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',}, --options ARE SPECIAL & APPEND, NOT REPLACE. 
     },
-    windows      = {}, linux = {}, darwin = {},  --OPTIONAL platform OVERRIDES.
 }
 o,p,timers = {},{},{} --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file
 
@@ -44,8 +47,8 @@ end
 
 p  .platform  = gp('platform') or os.getenv('OS') and 'windows' or 'linux' --platform=nil FOR OLD MPV.  OS=Windows_NT/nil.  SMPLAYER STILL RELEASED WITH OLD MPV.
 o[p.platform] = {}                                                         --DEFAULT={}
-for  opt,val in pairs(options)
-do o[opt]     = val end 
+for  opt,val in pairs(options)                                             
+do o[opt]     = val end               --CLONE
 require 'mp.options'.read_options(o)  --yes/no=true/false BUT OTHER TYPES DON'T AUTO-CAST.  GUI USER MAY ENTER RAW TABLES & 1+1 INSTEAD OF 2, ETC.
 for  opt,val in pairs(o)
 do o[opt] = type(val)=='string' and type(options[opt])~='string' and loadstring('return '..val)() or val end  --NATIVE TYPECAST ENFORCES ORIGINAL TYPES.  load INVALID ON MPV.APP.
@@ -54,17 +57,21 @@ for _,opt in pairs(o[p.platform].options or {}) do table.insert(o.options,opt) e
 for _,opt in pairs(o.options)
 do  command = ('%s no-osd set %s;'):format(command or '',opt) end  --ALL SETS IN 1.
 command     = command and mp.command(command)
-for opt,val in pairs(o[p.platform])  --platform OVERRIDE.  
-do o[opt]   = val end
-directory   = require 'mp.utils'.split_path(gp('scripts')[1]) --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  UTILITIES CAN BE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
+for opt,val in pairs(o[p.platform]) 
+do o[opt]   = val end  --platform OVERRIDE.  
 
+gp('msg-level')
+for module,level in pairs(o.msg_level)
+do p['msg-level'][module]     = level end  --msg-level BEFORE scripts.
+mp.set_property_native('msg-level',p['msg-level']) 
+directory                     = require 'mp.utils'.split_path(gp('scripts')[1]) --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  UTILITIES CAN BE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
 for _,script  in pairs(o.scripts) 
-do script_lower,script_loaded = script:lower(),nil
+do script_lower,script_loaded = script:lower(),nil  --SEARCH NOT CASE SENSITIVE. 
     for _,val in pairs(p.scripts) 
-    do script_loaded          =     script_loaded or  val:lower()==script_lower end  --SEARCH NOT CASE SENSITIVE.  CODE NOT FULLY RIGOROUS.
+    do script_loaded          =     script_loaded or  val:lower()==script_lower end  
     commandv                  = not script_loaded and mp.commandv('load-script',('%s/%s'):format(directory,script)) and table.insert(p.scripts,script) end  --commandv FOR FILENAMES. '/' FOR windows & UNIX.
 mp.set_property_native('scripts',p.scripts)  --OPTIONAL: DECLARE scripts.
-directory                     = mp.command_native({'expand-path',directory})              --command_native EXPANDS '~/' FOR yt-dlp.  
+directory                     = mp.command_native({'expand-path',directory})              --command_native EXPANDS '~/' FOR ytdl_hook.  
 COLON                         = p.platform=='windows' and ';' or ':'                      --windows=;  UNIX=:  FILE LIST SEPARATOR.  
 script_opt,title              = 'ytdl_hook-ytdl_path',mp.create_osd_overlay('ass-events') --ABBREV, & ass-events IS THE ONLY FORMAT. title GETS ITS OWN osd.
 for _,ytdl in pairs(o.ytdl)
@@ -79,8 +86,8 @@ function playback_restart()  --ALSO @on_pause
     set_loop           = gp('duration')>0 and p.duration<o.autoloop_duration and mp.set_property('loop','inf') --autoloop BEFORE DELAY.
     timers.playback_start:resume()
 end
-mp.register_event('end-file',function() playback_restarted,playback_started = set_loop and mp.set_property('loop','no' ) and nil end) --CLEAR SWITCHES FOR NEXT FILE.  UNDO-set_loop.
-mp.register_event('playback-restart',playback_restart)  --AT LEAST 4 STAGES: load-script start-file file-loaded playback-restart  
+mp.register_event('playback-restart',   playback_restart)  
+mp.register_event('end-file',function() playback_restarted,playback_started = set_loop and mp.set_property('loop','no') and nil end)  --CLEAR SWITCHES FOR NEXT FILE.  UNDO-set_loop.
 
 function on_pause(_,  paused)                
     p.pause     =     paused
@@ -104,20 +111,29 @@ timers.title          = mp.add_periodic_timer(o.title_duration,function()title:r
 for _,timer in pairs(timers) 
 do    timer.oneshot   = 1  --ALL 1SHOT.
       timer:kill() end
+restart               = gp('time-pos') and playback_restart()  --SCRIPT-RELOAD (FILE ALREADY LOADED).
+
+function exit()  --ALSO @cleanup.  'script-message-to _ exit' ENABLES LIVE SCRIPT-RELOAD DURING PLAYBACK, VIA GUI, WITH NEW script-opts & SAME NAME.
+    gp('msg-level')[label] = 'no'  --HIDES error.
+    mp.set_property_native('msg-level',p['msg-level']) 
+    error()  --ALSO REMOVES title, SIMILAR TO assert(nil).  THROWING AN error IS MORE RELIABLE THAN unregister_event, unregister_script_message, unobserve_property, remove_key_binding, KILLING timers, ETC. 
+end 
+for message,fn in pairs({exit=exit,cleanup=exit,title_update=title_update})  --SCRIPT CONTROLS.
+do mp.register_script_message(message,fn) end
 
 
 ----mpv TERMINAL COMMANDS:
-----WINDOWS   CMD:  MPV\MPV --script=. TEST.MP4  (PLACE scripts & TEST.MP4 INSIDE smplayer.exe FOLDER. THEN COPY/PASTE COMMAND INTO NOTEPAD & SAVE AS TEST.CMD, & DOUBLE-CLICK IT.)
-----LINUX      sh:  mpv --script=~/Desktop/mpv-scripts/ "https://YOUTU.BE/5qm8PH4xAss"
-----MACOS MPV.APP:  /Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://YOUTU.BE/5qm8PH4xAss"  (DRAG & DROP mpv.app ONTO Applications.  MACOS MAY BE CASE-SENSITIVE.  URLs DRAG & DROP WITHOUT "")
+----WINDOWS   CMD:  MPV\MPV --no-config --script=. TEST.MP4    (PLACE scripts & TEST.MP4 INSIDE smplayer.exe FOLDER. THEN COPY/PASTE COMMAND INTO NOTEPAD & SAVE AS TEST.CMD, & DOUBLE-CLICK IT.)
+----LINUX      sh:  mpv --no-config --script=~/Desktop/mpv-scripts/ "https://YOUTU.BE/5qm8PH4xAss"
 ----SMPLAYER.APP :  /Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://YOUTU.BE/5qm8PH4xAss"      
+----MACOS MPV.APP:  /Applications/mpv.app/Contents/MacOS/mpv --no-config --script=~/Desktop/mpv-scripts/ "https://YOUTU.BE/5qm8PH4xAss"    (DRAG & DROP mpv.app ONTO Applications.  MACOS MAY BE CASE-SENSITIVE.  URLs DRAG & DROP WITHOUT "".)
 
 ----https://SOURCEFORGE.NET/projects/mpv-player-windows/files/release               FOR NEW MPV WINDOWS BUILDS. CAN REPLACE mpv.exe IN SMPLAYER.
 ----https://laboratory.STOLENDATA.NET/~djinn/mpv_osx                                FOR NEW MPV MACOS   BUILDS.  https://BRACKETS.IO FOR TEXT-EDITOR.  THESE BUILDS WORK FINE BUT '%g' (PATTERN) & Δ (GREEK) ARE INVALID.  
-----https://GITHUB.COM/mpv-android/mpv-android/releases                             FOR NEW MPV ANDROID BUILDS.  https://CXFILEEXPLORERAPK.NET  https://BROMITE.ORG (FOR CHROMIUM)
+----https://GITHUB.COM/mpv-android/mpv-android/releases                             FOR NEW MPV ANDROID BUILDS.  https://CXFILEEXPLORERAPK.NET  &  https://BROMITE.ORG FOR CHROMIUM.
 ----https://SMPLAYER.INFO/en/download-linux & https://apt.FRUIT.JE/ubuntu/jammy/mpv FOR LINUX SMPLAYER & MPV.   OFFLINE LINUX ALL-IN-ONE: SMPlayer-24.5.0-x86_64.AppImage  BUT IT HAS POOR PERFORMANCE (NO SMOOTH-PAD OR TRANSPARENCY).
 
-----SAFETY INSPECTION: LUA & JS SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path expand-text show-text seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* SAFE EXCEPT FOR script-opts WHICH MAY hook AN UNSAFE EXECUTABLE.
+----SAFETY INSPECTION: LUA SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path expand-text show-text seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* SAFE EXCEPT FOR script-opts WHICH MAY HOOK AN UNSAFE EXECUTABLE.
 ----MPV      : v0.38.0(.7z .exe v3 .apk)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)    ALL TESTED.
 ----FFMPEG   : v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4(mpv.app)  v5.1.2(SMPlayer.app)  v4.4.2(.snap)  v4.2.7(.AppImage)  ALL TESTED.  MPV IS STILL OFTEN BUILT WITH 3 VERSIONS OF FFMPEG: v4, v5 & v6.
 ----PLATFORMS: windows  linux  darwin  android  ALL TESTED.  WIN-10 MACOS-11 LINUX-DEBIAN-MATE ANDROID-11.  WON'T OPEN JPEG OR YOUTUBE ON ANDROID.
@@ -125,18 +141,22 @@ do    timer.oneshot   = 1  --ALL 1SHOT.
 ----SMPLAYER : v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
 ----~100 LINES & ~2000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
+----FUTURE VERSION SHOULD REMOVE QUOTES FROM URLs WHO ARE DRAG & DROPPED (PATH_HANDLER).
+----FUTURE VERSION SHOULD HAVE A reload SCRIPT MESSAGE. THE INTRODUCTORY SECTION CAN ITSELF BE function reload.
+
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES).  correct-pts ESSENTIAL.  MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
+----osc-* script-opts CAN BE SET BY COMMAND-LINE OR IN mpv.conf. THE osc DOESN'T KNOW HOW TO RELOAD.  EXAMPLE: --script-opts=osc-timetotal=yes,osc-timems=yes  (osc-fadeduration=0 INVALID!)
 ----DECLARING local VARIABLES MAY IMPROVE HIGHLIGHTING/COLORING, BUT UNNECESSARY.
-----FUTURE VERSION SHOULD REMOVE QUOTES FROM URLs WHO ARE DRAGGED & DROPPED (PATH_HANDLER).
 ----50%CPU+20%GPU USAGE (5%+15% WITHOUT scripts).  ~75%@30FPS (OR 55%@25FPS) WITHOUT GPU DRIVERS, @FULLSCREEN.  ARGUABLY SMOOTHER THAN VLC, DEPENDING (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER). FREE GPU IMPROVES MULTI-TASKING.
 ----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS.  ULTIMATELY TV FIRMWARE (1GB) COULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. 
-----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, & MULTI-LINE CTRL-EDITING. ENABLES QUICK GRAPH TESTING.  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK PRODUCES 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
-----VMWARE MACOS: CAN SWITCH AROUND Command(⌘) & Control(^) MODIFIER KEYS.  FOR DVORAK: Select All,Save,Undo,Cut,Copy,Paste = ⌥A,⌥O,⌥;,⌥J,⌥K,⌥Q  &  Redo,Open Recent... = ‎⌥⇧;,⌥⇧O‎  IN Keyboard→Shortcuts→App Shortcuts→All Applications→+.  VIRTUALBOX DOESN'T HAVE THIS PROBLEM (DIRECT HARDWARE CAPTURE).
+----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, TAB-L/R & MULTI-LINE CTRL-EDITING. ENABLES QUICK GRAPH TESTING.  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK PRODUCES 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
+----VMWARE MACOS: SWITCH  ‎Command(⌘) & Control(^)‎  MODIFIER KEYS.  FOR DVORAK IN BRACKETS SET:  Select All,Save,Undo,Cut,Copy,Paste = ‎⌥A,⌥O,⌥;,⌥J,⌥K,⌥Q‎  &  Redo,Open Recent... = ‎⌥⇧;,⌥⇧O‎  IN  Keyboard→Shortcuts→App Shortcuts→All Applications→+.  VIRTUALBOX DOESN'T HAVE THIS PROBLEM (DIRECT HARDWARE CAPTURE). BUT UNLOCKED VMWARE PERFORMS BETTER.
 
-----BUG: SOME YT VIDEOS GLITCH @START (PAUSING). EXAMPLE: https://YOUTU.BE/D22CenDEs40
-----BUG: RARE YT VIDEOS SUFFER no-vid.           EXAMPLE: https://YOUTU.BE/y9YhWjhhK-U
-----BUG: NO seeking OR lavfi-complex WITH X.     EXAMPLE: https://X.COM/i/status/1696643892253466712 
-----BUG: SMPlayer.app yuvj444p albumart NOT WORKING.  current-vo=shm (SHARED MEMORY).
+----BUG: mpv-android FAILS TO PLAY IN BACKGROUND IN AUTO.
+----BUG: SOME YT VIDEOS GLITCH/STUTTER @START (PAUSING). EXAMPLE: https://YOUTU.BE/D22CenDEs40
+----BUG: RARE YT VIDEOS SUFFER no-vid.                   EXAMPLE: https://YOUTU.BE/y9YhWjhhK-U
+----BUG: NO seeking OR lavfi-complex WITH X.COM.         EXAMPLE: https://X.COM/i/status/1696643892253466712 
+----BUG: SMPlayer.app yuvj444p albumart NOT WORKING.     current-vo=shm (SHARED MEMORY).
 
 ----flatpak run info.smplayer.SMPlayer  snap run smplayer  FOR flatpak & snap TESTING. 
 ----sudo apt install smplayer flatpak snapd mpv            FOR RELEVANT LINUX INSTALLS. 
