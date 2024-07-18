@@ -2,11 +2,11 @@
 - [Installation](#installation)
 - [Standalone mpv](#standalone-mpv-mpvconf)
 - [App Versions](#app-versions)
-- [Safety Inspection](#safety-inspection)
 - [Terminal Commands](#terminal-commands)
+- [Safety Inspection](#safety-inspection)
 - [Latest Updates](#latest-updates)
 
-Video clocks, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), animated mask generator ([automask](automask.lua)), dual animated spectrum ([autocomplex](autocomplex.lua)) & insta-cropping ([autocrop](autocrop.lua)) for [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! Newest scripts in `mpv-scripts.zip` on GitHub. Toggle them by double-clicking on mute (m&m). Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. The scripts can be opened & options edited in Notepad (no word wrap). [main](main.lua) has much more info, & options for which scripts & subtitles load, & ytdl. I use [Notepad++](https://notepad-plus-plus.org/downloads/) on Windows, & Brackets on MacOS.  All free for Windows, Linux, MacOS & Android. But Android has no extra-device randomization & no YouTube.
+Video clocks, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), animated mask generator ([automask](automask.lua)), dual animated spectrum ([autocomplex](autocomplex.lua)) & insta-cropping ([autocrop](autocrop.lua)) for [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! Newest scripts in `mpv-scripts.zip` on GitHub. Toggle them by double-clicking on mute (m&m). Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. The scripts can be opened & options edited in Notepad. Disable word-wrap for these scripts! [main](main.lua) has much more info, & options for which scripts & subtitles load, & ytdl. I use [Notepad++](https://notepad-plus-plus.org/downloads/) on Windows, & Brackets on MacOS.  All free for Windows, Linux, MacOS & Android. But Android has no extra-device randomization & no YouTube.
 
 To use on YouTube select Open→URL in SMPlayer. Rumble, Odyssey & RedTube also compatible. Double-clicking mute makes the mask smoothly vanish or re-appear, along with black-bars (smooth padding), & the audio switches btwn randomized & normal. aspeed.lua options can activate chipmunk mode on left-channel (in sync), as well as tri-color clocks! autocrop handles transparent input, too, along with a track-list with start & end times. mpv has instant zoom, but unfortunately no scroll bar (to pan around with mouse, etc). Keyboard shortcuts only work if mpv has its own window (SMPlayer preference).
 
@@ -34,13 +34,11 @@ Then copy scripts in to that exact folder, in internal main storage. However lea
 ![alt text](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
 
 ## Standalone mpv (`mpv.conf`)
-It's also possible to double-click on `mpv.exe` or `mpv.app` & then drag & drop files & URLs directly on it, with all scripts fully active! This requires editing `mpv.conf`, like with Android. In Linux edit `~/.config/mpv/mpv.conf`. In MacOS go mpv→Preferences... & use only 1 line:
+It's also possible to double-click on `mpv.exe` or `mpv.app` & then drag & drop files & URLs directly on mpv, with all scripts fully active! This requires editing `mpv.conf`, like with Android. In Linux edit `~/.config/mpv/mpv.conf`. In MacOS go mpv→Preferences... & use only 1 line:
 
 `script=~/Desktop/mpv-scripts/`
 
-In Windows + SMPlayer `script=../` works. Create New Text Document `smplayer-portable\mpv\mpv\mpv.conf` with Notepad, containing only the 1 line. Then double-click `smplayer-portable\mpv\mpv.exe` & drag/drop files. Simpler than terminal commands!
-
-On-Screen-Controller script-opts `osc-timetotal` & `osc-timems` can also be set this way. Some opts must be set before any script loads.
+In Windows + SMPlayer: Create New Text Document `smplayer-portable\mpv\mpv\mpv.conf` with Notepad, containing only the 1 line `script=../`. Then double-click `smplayer-portable\mpv\mpv.exe` & drag/drop files/URLs. Simpler than terminal commands!
 
 ## App Versions
 
@@ -51,9 +49,6 @@ SMPlayer-24.5.0 supported.  Releases tested include .7z .exe .app .AppImage .fla
 FFmpeg versions 6.1 (.deb), 6.0 (.exe .flatpak), 5.1.3, 5.1.2 (.app), 4.4.2 (.snap) & 4.3.2 (.AppImage) supported.
 
 Lua versions 5.1 & 5.2 supported.
-
-## Safety Inspection
-Before running scripts it's safer to first check them in Notepad++. Search for & highlight `os.execute` (operating system), `io.popen` (input output process) & `mp.command*` (media player). Safe commands include `expand-path` `show-text` `seek` `playlist-next` `playlist-play-index` `stop` `quit` `af*` `vf*`, but `load-script` `run` `subprocess*` may be unsafe. `set*` are safe except for `script-opts` which may hook an unsafe executable. To inspect a script check potentially unsafe commands. Ignore all comments (anything following `--`). 
 
 ## Terminal Commands
 To run in Windows from Command Prompt, create a New Text Document in SMPlayer folder & rename it `TEST.CMD`. Also copy in `TEST.MP4`. Then right-click on `TEST.CMD` & click `Edit`. In Notepad copy/paste:
@@ -74,24 +69,28 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 
 `/Applications/mpv.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"` 
 
+## Safety Inspection
+Before running scripts it's safer to first check them in Notepad++. Search for & highlight `os.execute` (operating system), `io.popen` (input output process) & `mp.command*` (media player). Safe commands include `expand-path` `expand-text` `show-text` `seek` `playlist-next` `playlist-play-index` `stop` `quit` `af*` `vf*`, but `load-script` `run` `subprocess*` may be unsafe. `set*` are safe except for `script-opts` which may hook an unsafe executable. To inspect a script check potentially unsafe commands. Ignore all comments (anything following `--`). 
+
 ## Latest Updates
-Above scripts in `mpv-scripts.zip` haven't been properly released yet.  I still have to test Linux standalone mpv, & smartphone rotation.
+Above scripts in `mpv-scripts.zip` haven't been properly released yet.  I still have to improve smartphone handling, & fix `script-message apply_crop {...}`.
 - Added `o.android`, `o.windows`, `o.linux` & `o.darwin` platform overrides to all scripts.  Smartphones work better with different options, like binacles.
 - Added `o.toggle_command` to all scripts except main.  All toggles can activate any command. Replaces `o.osd_on_toggle` for graph inspections.  
 - Added `o.double_aid_timeout` to aspeed, autocrop & automask. Double-aid is similar to double-mute, due to Android (laggy trigger).  A new `playback_restarted` timer blocks all double-tap timers from misfiring. 
 - Added `o.double_sid_timeout` to all scripts except main. Best smartphone toggle mechanism. `sub-create-cc-track` is artificially added.
 - Added `o.msg_level` to main & autocrop.
+- Added `o.script_opts` to main.lua, for `osc-` settings.  Also Improved `ytdl_path` code. More elegant codes.
 - Added `function gp` (Get Property) to all scripts.  All script-opt types now well-defined.  A GUI like SMPlayer could hook in various preferences using `--script-opts`.
-- Added `function event_handler` to autocomplex & automask.
-- Added `function exit()` to all scripts.
-- Added `function cleanup()` to all scripts except main.
-- Added script-messages to all scripts, to control them via GUI. There's `exit cleanup toggle toggle_pad title_update resync apply_astreamselect apply_crop apply_scale apply_eq`.
+- Added `function event_handler` to all scripts except main.
+- Added `function cleanup()` to all scripts.
+- Added `function re_pause()` to autocrop/automask.
+- Added script-messages to all scripts, to control them via console/GUI. Every control comes with native type-casting, & an example. There's `cleanup toggle toggle_pad title_remove title resync apply_astreamselect detect_crop apply_crop apply_pad apply_scale apply_eq`.
 - `android-surface-area` W,H computation for automask, autocrop & autocomplex. Binacles are perfect circles on smartphone! Improved examples take portrait/landscape into account.  Graphs all reload on fullscreen rotation.
 - Removed `\\,` from all graphs.
+- All scripts may now `load` *after* `file-loaded`.
 - autocrop.lua: `o.limits` now searches `media-title` as well as `path`.  Replaced `o.pad_color` with `o.pad_options` (`x:y:color`). Improved JPEG reliability & `o.meta_osd`.  Removed `function start_file` - now uses `seek` instead of `set start`.
 - automask.lua: Returned `o.fps`. If produced @30fps, film must also be 30fps.  Improved `o.rotations` padding.  Bugfix for examples (I broke half of them in the last release).  Added examples, `SPINNING_TRIANGLES` & `SPINNING_SQUARES_DUAL` (opposing twirls). Removed use of `between`.  More examples which load fast.
 - aspeed.lua: `--no-config` bugfix for standalone mpv. Removed `o.clocks.no_locales` flag.  Improved AbDays (more accurate, more lowercase).  No-Armenian override for Android.  Faster YouTube load by always loading path - then the controller blocks JPEG using a `block_path` switch.  Enabled `graph` randomization @file-loaded. Improved feedback reliability by checking `samplerate`.  Resync `on_toggle`.
 - autocomplex.lua: Bugfix for `aid` off/on. It toggles off & on with only one `aid`-click.
-- main.lua: Improved `ytdl_path` code. More elegant codes.
 - autocrop/automask: `insta_pause` removed from `start-file` function, so can pause during YouTube load.
 
