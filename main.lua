@@ -1,45 +1,53 @@
+----NO-WORD-WRAP FOR THIS SCRIPT.  https://GITHUB.COM/yt-dlp/yt-dlp/releases  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY & REDTUBE ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  DON'T FORGET TO UPDATE yt-dlp FOR THE NEWEST YT VIDEOS.  X.COM NOT seeking.
 ----WINDOWS    :  --script=.                       IN SMPLAYER  &/OR  script=../                     IN mpv.conf.  PLACE ALL scripts WITH smplayer.exe & ENTER ITS ADVANCED mpv PREFERENCES.  CAN ALSO CREATE 1-LINE TEXT-FILE  mpv\mpv\mpv.conf  INSIDE smplayer-portable.  mpv.conf ENABLES DOUBLE-CLICKING mpv.exe & DRAG & DROP OF FILES & YOUTUBE URL, IN LINUX/MACOS TOO.  IF NOT PORTABLE, SET-UP IS LIKE FOR LINUX: --script=~/Desktop/mpv-scripts/  
 ----LINUX/MACOS:  --script=~/Desktop/mpv-scripts/  IN SMPLAYER  &/OR  script=~/Desktop/mpv-scripts/  IN mpv.conf.  PLACE mpv-scripts ON Desktop.  EDIT ~/.config/mpv/mpv.conf TO DRAG & DROP DIRECTLY ONTO MPV.  LINUX snap: --script=/home/user/Desktop/mpv-scripts/
 ----ANDROID    :    script=/sdcard/Android/media/is.xyz.mpv/                IN ADVANCED SETTINGS:  Edit mpv.conf.  PLACE ALL SCRIPTS IN THIS EXACT FOLDER IN INTERNAL MAIN STORAGE. OTHER FOLDERS DON'T WORK IN ANDROID-11.  ENABLE MPV MEDIA-ACCESS USING ITS FILE-PICKER.  'sdcard'~='SD card'(EXTERNAL)  CAN ALSO INSTALL cx-file-explorer & 920 (.APK).  920 CAN HANDLE WORDWRAP & WHITESPACE.  https://SNAPDROP.NET CAN TRANSFER scripts TO /sdcard/Android/media/is.xyz.mpv/
-----https://GITHUB.COM/yt-dlp/yt-dlp/releases  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY & REDTUBE ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  DON'T FORGET TO UPDATE yt-dlp FOR THE NEWEST YT VIDEOS.  X.COM NOT seeking.
 
 options     = {                
     scripts = {                   --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE.  CAN TOGGLE THEM USING TYPOS/RENAME.  REPETITION BLOCKED.  SPACES & '' ALLOWED.
         "aspeed.lua"            , --EXTRA AUDIO DEVICES SPEED RANDOMIZATION, + SYNCED CLOCKS. INSTA-TOGGLE (DOUBLE-MUTE).  CAN CONVERT MONO TO (RANDOMIZED) SURROUND SOUND, FOR 10 HOURS.  MY FAVOURITE OVERALL. CONVERTS SPEAKERS INTO METAPHORICAL MOCKING-BIRDS.  NOT FULLY ANDROID-COMPATIBLE.
         "autocrop.lua"          , --CROPS BLACK BARS. TOGGLES FOR BOTH CROPPING & EXTRA PADDING (SMOOTHLY). DOUBLE-MUTE TOGGLES.  ALSO SUPPORTS start & end TIME-CROP SUBCLIPS, & CROPS IMAGES & THROUGH TRANSPARENCY.  ITS meta_osd DISPLAYS ALL version PROPERTIES
         -- "autocrop-smooth.lua", --SMOOTH CROPPING & PADDING. NOT UP TO DATE & NOT FOR ANDROID.  DISABLE autocomplex.lua DUE TO EXCESSIVE CPU USAGE. INCOMPATIBLE WITH .AppImage (FFMPEG-v4.2).
-        "autocomplex.lua"       , --NOT FOR SMARTPHONE (LAG).  ANIMATED AUDIO SPECTRUMS, VOLUME BARS, FPS LIMITER. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE CAN BE LIKE WINGS OF BIRD).  TWITTER INCOMPATIBLE. ALSO DISABLE TO seek THROUGH SOME YOUTUBE VIDEOS.
+        "autocomplex.lua"       , --NOT FOR CHEAP SMARTPHONE.  ANIMATED AUDIO SPECTRUMS, VOLUME BARS, FPS LIMITER. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE CAN BE LIKE WINGS OF BIRD).  DISABLE FOR TWITTER, & SOMETIMES TO seek THROUGH YOUTUBE VIDEOS.
         "automask.lua"          , --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE (DOUBLE-MUTE).  CAN SPEED-LOAD MONACLE/PENTAGON ON SMARTPHONE.  LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE SPINNING_TRIANGLE=automask2.lua, 500MB RAM EACH, +UNIQUE KEYBINDS).
     },
-    ytdl = {            --YOUTUBE DOWNLOAD. PLACE EXECUTABLE WITH main.lua.  LIST ALL POSSIBLE FILENAMES TO HOOK, IN PREFERRED ORDER, BEFORE EXISTING HOOK. NO ";" ALLOWED.  CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto.  NOT FOR ANDROID.
+    ytdl = {            --YOUTUBE DOWNLOAD. PLACE EXECUTABLE WITH main.lua.  LIST ALL POSSIBLE FILENAMES TO HOOK, IN PREFERRED ORDER.  EXISTING HOOK APPENDS. NO ";" ALLOWED.  CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto.  NOT FOR ANDROID.
         "yt-dlp"      , --.exe
         "yt-dlp_x86"  , --win32  REMOVE THESE TO SHORTEN script-opts.  WILDCARDS INVALID.  
         "yt-dlp_linux", --CASE SENSITIVE.  sudo apt remove yt-dlp TO REMOVE OLD VERSION.  
         "yt-dlp_macos", 
     },
-    options = {                                                  --COULD BE RENAMED config.
-        'ytdl-format  bv[height<1080]+ba/best','profile   fast', --bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  fast FOR MPV.APP (COLORED TRANSPARENCY).  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://YOUTU.BE/8cor7ygb1ms?t=60
-        'osd-border-size 1','osd-font-size 16','osd-level 0   ','osd-duration 5000','osd-bar no','osd-bold yes','osd-font "COURIER NEW"',  --DEFAULTS 3,55,3,1000,yes,no,sans-serif   border=1p FOR LITTLE TEXT.  osd-level=0 PREVENTS UNWANTED MESSAGES @load-script.  1000 MILLISECONDS ISN'T ENOUGH TO READ/SCREENSHOT osd.  SMPLAYER ALREADY HAS A BAR.  55p MAY NOT FIT GRAPHS.  COURIER NEW IS MONOSPACE & NEEDS bold (FANCY).  CONSOLAS PROPRIETARY & INVALID ON MACOS.
-        'sub-border-size 2','sub-font-size 32',  --DEFAULTS=3,55  SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
+    script_opts              = {  --THESE APPEND TO EXISTING script-opts.
+    ----['script-opt'      ] =  'val',
+        ['osc-timetotal'   ] =  'yes',  --DEFAULT=no      (ON-SCREEN-CONTROLLER SETTINGS. DISABLED INSIDE SMPLAYER.)
+        ['osc-timems'      ] =  'yes',  --DEFAULT=no
+        ['osc-fadeduration'] =    '0',  --DEFAULT=200 ms
     },
-    msg_level              = {  --['module']='level'  OVERRIDES FOR msg-level.
-        ['ffmpeg/demuxer'] = 'error',
+    msg_level                = {  --THESE APPEND TO EXISTING msg-level.
+    ----['module'        ]   = 'level',  
+        ['ffmpeg/demuxer']   = 'error',  --DEFAULT=status
+    },
+    options = {                                                  --COULD BE RENAMED config.
+        'ytdl-format  bv[height<1080]+ba/best','profile      fast', --bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  fast FOR MPV.APP (COLORED TRANSPARENCY).  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://YOUTU.BE/8cor7ygb1ms?t=60
+        'osd-border-size 1','osd-font-size 16','osd-duration 5000','osd-bar no','osd-bold yes','osd-font "COURIER NEW"',  --DEFAULTS 3,55,1000,yes,no,sans-serif   border=1p FOR LITTLE TEXT.  1000 MILLISECONDS ISN'T ENOUGH TO READ/SCREENSHOT osd.  SMPLAYER ALREADY HAS A BAR.  55p MAY NOT FIT GRAPHS.  COURIER NEW IS MONOSPACE & NEEDS bold (FANCY).  CONSOLAS PROPRIETARY & INVALID ON MACOS.
+        'sub-border-size 2','sub-font-size 32',  --DEFAULTS=3,55   SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
+        'osd-level       0','osc           no',  --DEFAULTS=3,yes  osd-level=0 PREVENTS UNWANTED MESSAGES @load-script.  osc AWAITS ITS CONFIG.
     },
     title                  = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,b1,fs##,bord# = \,BOLD,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
     title_duration         =  5 , --SECONDS.
     autoloop_duration      = 10 , --SECONDS.  0 MEANS NO AUTO-loop.  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://GITHUB.COM/zc62/mpv-scripts/blob/master/autoloop.lua
-    options_delay          = .3 , --SECONDS, FROM playback_start. title ON SAME DELAY.
+    options_delay          = .3 , --SECONDS, FROM playback_start.  title ALSO TRIGGERS THEN.
     options_delayed        = {    --@playback_started+options_delay, FOR EVERY FILE.
-        'osd-level 1',       --DEFAULT=3.  RETURN osd-level. 
-        -- 'sid    1','secondary-sid 1',  --UNCOMMENT FOR SUBTITLE-TRACK-ID OVERRIDE.  USEFUL FOR YOUTUBE + sub-create-cc-track. sid=1 BUGS OUT @file-loaded.
+        'osd-level 1','osc yes',          --RETURN osd-level & osc.
+        'sid    1','secondary-sid 1',  --UNCOMMENT FOR SUBTITLE-TRACK-ID OVERRIDE.  USEFUL FOR YOUTUBE + sub-create-cc-track. sid=1 BUGS OUT @file-loaded.
     },
     windows     = {}, linux = {}, darwin = {},  --OPTIONAL: platform OVERRIDES.
     android     = {                                                             
         options = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',}, --options ARE SPECIAL & APPEND, NOT REPLACE. 
     },
 }
-o,p,timers = {},{},{} --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file
 
+o,p,timers = {},{},{} --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file
 function  gp(property)  --ALSO @playback-restart.             GET   PROPERTY
     p       [property]=mp.get_property_native(property)  --mp=MEDIA-PLAYER
     return p[property]
@@ -55,29 +63,32 @@ do o[opt] = type(val)=='string' and type(options[opt])~='string' and loadstring(
 
 for _,opt in pairs(o[p.platform].options or {}) do table.insert(o.options,opt) end  --platform OVERRIDE APPENDS TO o.options.
 for _,opt in pairs(o.options)
-do  command = ('%s no-osd set %s;'):format(command or '',opt) end  --ALL SETS IN 1.
-command     = command and mp.command(command)
+do  command                   = ('%s no-osd set %s;'):format(command or '',opt) end  --ALL SETS IN 1.
+command                       = command and mp.command(command)
 for opt,val in pairs(o[p.platform]) 
-do o[opt]   = val end  --platform OVERRIDE.  
+do o[opt]                     = val end  --platform OVERRIDE.  
+directory                     = require 'mp.utils'.split_path(gp('scripts')[1]) --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  UTILITIES CAN BE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
+directory_expanded            = mp.command_native({'expand-path',directory})    --command_native EXPANDS '~/' FOR ytdl_hook.  
+COLON                         = p.platform=='windows' and ';' or ':'            --windows=;  UNIX=:  FILE LIST SEPARATOR.  
+for _,ytdl in pairs(o.ytdl)   
+do    ytdl_path               = ('%s%s/%s%s'):format(ytdl_path or '',directory_expanded,ytdl,COLON) end --'/' FOR WINDOWS & UNIX.  TRAILING COLON ALLOWED.
+script_opt,title              = 'ytdl_hook-ytdl_path',mp.create_osd_overlay('ass-events')   --ABBREV, & ass-events IS THE ONLY FORMAT. title GETS ITS OWN osd.
+gp('script-opts')[script_opt] =  ytdl_path..(p['script-opts'][script_opt] or '')            --APPEND EXISTING HOOK FROM SMPLAYER AS FALLBACK.  PREPENDING IT FAILED FOR .AppImage. 
+for opt,val in pairs(o.script_opts)
+do p['script-opts'][opt]      = val end 
+mp.set_property_native('script-opts',p['script-opts'])
 
 gp('msg-level')
 for module,level in pairs(o.msg_level)
-do p['msg-level'][module]     = level end  --msg-level BEFORE scripts.
+do p['msg-level'][module] = level end  --msg-level BEFORE scripts.
 mp.set_property_native('msg-level',p['msg-level']) 
-directory                     = require 'mp.utils'.split_path(gp('scripts')[1]) --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  UTILITIES CAN BE AVOIDED, BUT CODING A split WHICH ALWAYS WORKS ON EVERY SYSTEM MAY BE TEDIOUS. mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
+
 for _,script  in pairs(o.scripts) 
 do script_lower,script_loaded = script:lower(),nil  --SEARCH NOT CASE SENSITIVE. 
     for _,val in pairs(p.scripts) 
     do script_loaded          =     script_loaded or  val:lower()==script_lower end  
     commandv                  = not script_loaded and mp.commandv('load-script',('%s/%s'):format(directory,script)) and table.insert(p.scripts,script) end  --commandv FOR FILENAMES. '/' FOR windows & UNIX.
 mp.set_property_native('scripts',p.scripts)  --OPTIONAL: DECLARE scripts.
-directory                     = mp.command_native({'expand-path',directory})              --command_native EXPANDS '~/' FOR ytdl_hook.  
-COLON                         = p.platform=='windows' and ';' or ':'                      --windows=;  UNIX=:  FILE LIST SEPARATOR.  
-script_opt,title              = 'ytdl_hook-ytdl_path',mp.create_osd_overlay('ass-events') --ABBREV, & ass-events IS THE ONLY FORMAT. title GETS ITS OWN osd.
-for _,ytdl in pairs(o.ytdl)
-do    ytdl_path               = (ytdl_path or '')..directory..'/'..ytdl..COLON end --'/' FOR WINDOWS & UNIX.  TRAILING COLON ALLOWED.
-gp('script-opts')[script_opt] =  ytdl_path..(p['script-opts'][script_opt] or '')   --APPEND EXISTING HOOK FROM SMPLAYER AS FALLBACK.  PREPENDING IT FAILED FOR .AppImage. 
-mp.set_property_native('script-opts',p['script-opts'])                             --EMPLACE ALL ytdl.
 
 function playback_restart()  --ALSO @on_pause
     playback_restarted = true
@@ -95,34 +106,37 @@ function on_pause(_,  paused)
 end 
 mp.observe_property('pause','bool',on_pause)
 
-function title_update()  --@timers.playback_start  DELAY REQUIRED TO SUPPRESS UNWANTED MESSAGES DUE TO SMPLAYER.
-    command    = ''
-    for _,opt in pairs(o.options_delayed)  --PLAYBACK OVERRIDES.
-    do command = ('%s no-osd set %s;'):format(command,opt) end
-    command    = command~=''   and mp.command(command)
-    title.data = mp.command_native({'expand-text',o.title}) 
-    
+function title_update(data,title_duration)  --@script-message & @timers.playback_start.  DELAY REQUIRED TO SUPPRESS UNWANTED MESSAGES DUE TO SMPLAYER.
+    command              = ''
+    for _,opt in pairs(o.options_delayed)  --PLAYBACK (TITULAR) OVERRIDES.  osc RE-ACTIVATES HERE.
+    do command           = ('%s no-osd set %s;'):format(command,opt) end
+    command              = command~='' and mp.command(command)
+    timers.title.timeout = loadstring('return '..(title_duration or o.title_duration))()  --NATIVE TYPECAST.
+    title.data           = mp.command_native({'expand-text',data or o.title})
     title:update()  --AWAITS UNPAUSE (PLAYING MESSAGE).  ALSO AWAITS TIMEOUT, OR ELSE OLD MPV COULD HANG UNDER EXCESSIVE LAG.
+    timers.title:kill()
     timers.title:resume()
 end 
+function title_remove() title:remove() end  --@script-message & @timers.title.
 
-timers.playback_start = mp.add_periodic_timer(o.options_delay ,          title_update     )
-timers.title          = mp.add_periodic_timer(o.title_duration,function()title:remove()end)
+timers.playback_start = mp.add_periodic_timer(o.options_delay,title_update)
+timers.title          = mp.add_periodic_timer(0              ,title_remove)  --timeout CONTROLLED LATER.
 for _,timer in pairs(timers) 
-do    timer.oneshot   = 1  --ALL 1SHOT.
-      timer:kill() end
-restart               = gp('time-pos') and playback_restart()  --SCRIPT-RELOAD (FILE ALREADY LOADED).
+do    timer.oneshot   = 1 --ALL 1SHOT.
+      timer:kill() end    --FOR OLD MPV. IT CAN'T START timers DISABLED.
+restart               = gp('time-pos') and playback_restart()  --file-loaded: TRIGGER NOW.
 
-function exit()  --ALSO @cleanup.  'script-message-to _ exit' ENABLES LIVE SCRIPT-RELOAD DURING PLAYBACK, VIA GUI, WITH NEW script-opts & SAME NAME.
-    gp('msg-level')[label] = 'no'  --HIDES error.
-    mp.set_property_native('msg-level',p['msg-level']) 
-    error()  --ALSO REMOVES title, SIMILAR TO assert(nil).  THROWING AN error IS MORE RELIABLE THAN unregister_event, unregister_script_message, unobserve_property, remove_key_binding, KILLING timers, ETC. 
-end 
-for message,fn in pairs({exit=exit,cleanup=exit,title_update=title_update})  --SCRIPT CONTROLS.
+function cleanup() mp.keep_running = false end  --ENABLES SCRIPT-RELOAD WITH NEW script-opts.
+for message,fn in pairs({cleanup=cleanup,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.  
 do mp.register_script_message(message,fn) end
 
 
-----mpv TERMINAL COMMANDS:
+----CONSOLE/GUI COMMAND EXAMPLES (main=_):
+----script-message-to _ cleanup
+----script-message      title_remove
+----script-message      title TEST 1+1
+
+----mpv TERMINAL COMMAND EXAMPLES:
 ----WINDOWS   CMD:  MPV\MPV --no-config --script=. TEST.MP4    (PLACE scripts & TEST.MP4 INSIDE smplayer.exe FOLDER. THEN COPY/PASTE COMMAND INTO NOTEPAD & SAVE AS TEST.CMD, & DOUBLE-CLICK IT.)
 ----LINUX      sh:  mpv --no-config --script=~/Desktop/mpv-scripts/ "https://YOUTU.BE/5qm8PH4xAss"
 ----SMPLAYER.APP :  /Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://YOUTU.BE/5qm8PH4xAss"      
@@ -140,12 +154,12 @@ do mp.register_script_message(message,fn) end
 ----LUA      : v5.1     v5.2  TESTED.
 ----SMPLAYER : v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
-----~100 LINES & ~2000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
+----~200 LINES & ~2000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
 ----FUTURE VERSION SHOULD REMOVE QUOTES FROM URLs WHO ARE DRAG & DROPPED (PATH_HANDLER).
-----FUTURE VERSION SHOULD HAVE A reload SCRIPT MESSAGE. THE INTRODUCTORY SECTION CAN ITSELF BE function reload.
+----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts - function on_update.
 
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES).  correct-pts ESSENTIAL.  MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
-----osc-* script-opts CAN BE SET BY COMMAND-LINE OR IN mpv.conf. THE osc DOESN'T KNOW HOW TO RELOAD.  EXAMPLE: --script-opts=osc-timetotal=yes,osc-timems=yes  (osc-fadeduration=0 INVALID!)
+------script-opts=osc-timetotal=yes,osc-timems=yes  (osc-fadeduration=0 INVALID!)
 ----DECLARING local VARIABLES MAY IMPROVE HIGHLIGHTING/COLORING, BUT UNNECESSARY.
 ----50%CPU+20%GPU USAGE (5%+15% WITHOUT scripts).  ~75%@30FPS (OR 55%@25FPS) WITHOUT GPU DRIVERS, @FULLSCREEN.  ARGUABLY SMOOTHER THAN VLC, DEPENDING (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER). FREE GPU IMPROVES MULTI-TASKING.
 ----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS.  ULTIMATELY TV FIRMWARE (1GB) COULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. 

@@ -1,6 +1,6 @@
+----NO-WORD-WRAP FOR THIS SCRIPT.  UNACCEPTABLE PERFORMANCE ON CHEAP SMARTPHONE, BUT FINE IN BLUESTACKS (DIFFERENT ANDROID BUILDS). 
 ----lavfi-complex SCRIPT WHICH OVERLAYS STEREO FREQUENCY SPECTRUM + VOLUME BARS (AUDIO VISUALS) ONTO MP4, AVI, 3GP, MP3 (RAW & albumart), MP2, M4A, WAV, OGG, AC3, OPUS, WEBM & YOUTUBE. IT ALSO LOOPS albumart. 
 ----CAN USE DOUBLE-mute TO TOGGLE. ACCURATE 100Hz GRID (LEFT 1kHz TO RIGHT 1kHz). ARBITRARY sine_mix CAN BE ADDED FOR CALIBRATION. COMPLEX MOVES & ROTATES WITH TIME.  INSTEAD OF EVERY SCRIPT SETTING ITS OWN lavfi-complex, THEY MAY RELY ON THIS SCRIPT. EXAMPLE: automask.lua albumart ANIMATION.
-----UNACCEPTABLE ON CHEAP SMARTPHONE, BUT FINE IN BLUESTACKS (DIFFERENT ANDROID BUILDS).  SCRIPT DIFFICULT TO READ/EDIT WITH WORD-WRAP. 
 
 options                 = {
     key_bindings        =     'F1',  --CASE SENSITIVE. THESE DON'T WORK INSIDE SMPLAYER.  C=CROP (autocrop.lua) & CTRL+C=CLOCK (aspeed.lua). ALT+C AVAILABLE.  RE-RANDOMIZES, BUT INTERRUPTS PLAYBACK.  DOESN'T TOGGLE af_chain!
@@ -152,7 +152,7 @@ function file_loaded()  --ALSO @property_handler, @on_toggle & @timers.seek.
     p.start                   = p.start and mp.set_property('start','none') and nil            --start DUE TO INSTA-stop @property_handler.  PERSISTS OTHERWISE.  ALTERNATIVELY CAN seek.  playback-restarted MAY TRIGGER TOO SOON FOR MP4TAG.
     a_id,v                    = gp('current-tracks/audio/id'),gp('current-tracks/video') or {} --aid (number/string/false) IS A SETTING FOR a_id (number/nil). aid,a_id = false,1 CAN OCCUR @vid RELOAD.  p.aid & a_id ARE KEPT SEPARATE TO HANDLE EVERY CIRCUMSTANCE.
     gmatch                    = (gp('android-surface-size') or ''):gmatch('[^x]+')  
-    m['android-surface-size'] =   p['android-surface-size']  --'960x444',nil=SMARTN12-LANDSCAPE,WINDOWS.  display MAY MEAN SOMETHING ELSE TO A SMARTPHONE.
+    m['android-surface-size'] =   p['android-surface-size']  --string: '960x444',nil=SMARTN12-LANDSCAPE,WINDOWS.  display MAY MEAN SOMETHING ELSE TO A SMARTPHONE.
     android_surface_size      = {w=gmatch(),h=gmatch()}
     W                         = o.video_params.w           or gp('display-width' )    or android_surface_size.w or gp('width' ) or v['demux-w'] or 1280  --number/string.  OVERRIDE  OR  display  OR  android  OR  PARAMETERS  OR  TRACK  OR  (FALLBACK FOR RAW MP3 IN VIRTUALBOX).  width=nil SOMETIMES @file-loaded, & MAY BE MUCH LARGER THAN display SINCE MEMORY IS CHEAP.  
     H                         = o.video_params.h           or gp('display-height')    or android_surface_size.h or gp('height') or v['demux-h'] or 720
@@ -178,7 +178,7 @@ function file_loaded()  --ALSO @property_handler, @on_toggle & @timers.seek.
     mp.set_property('lavfi-complex',m.graph)  --FOR graph BYTECODE.  
 end 
 
-function on_toggle()  --@key_binding, @property_handler & @file-loaded.  REMOVES THE SPECTRUM FROM THE lavfi-complex, OR ELSE RELOADS.  DOESN'T UNLOCK aid & vid.
+function on_toggle()  --@script-message, @key_binding, @property_handler, & @file-loaded.  REMOVES THE SPECTRUM FROM THE lavfi-complex, OR ELSE RELOADS.  DOESN'T UNLOCK aid & vid.
     OFF        = not OFF                                               --OFF SWITCH.  
     if not W then return end                                           --LOGIC STATE ONLY BTWN FILES.
     start_time = OFF        and v.image and round(gp('time-pos'),.001) --NEEDED @seek.
@@ -194,15 +194,17 @@ function on_toggle()  --@key_binding, @property_handler & @file-loaded.  REMOVES
     OFF        = a_id and OFF                                                       --FORGET OFF STATE IF ARTIFICIALLY OFF (NO AUDIO).  playlist-next SHOULD SWITCH ON IF NEEDED (.GIF→.MP4).
     command    = a_id and o.toggle_command~='' and mp.command(o.toggle_command)     
 end
-for key in o.key_bindings: gmatch('[^ ]+') do mp.add_key_binding(key,'toggle_complex_'..key,on_toggle) end  --script-binding toggle_complex_F1
+for key in o.key_bindings: gmatch('[^ ]+') 
+do binding_name = 'toggle_complex'..(binding_name and '_'..key or '')  --'script-binding toggle_complex'  THE FIRST key IS SPECIAL.
+    mp.add_key_binding(key,binding_name,on_toggle) end  
 
-function   event_handler(event)  --SIMPLIFIES cleanup.
-    event= event.event
-    if     event=='start-file'       then mp.set_property('lavfi-complex','nullsrc,nullsink')  --UNLOCKS STREAMS & WARNS OTHER SCRIPTS THERE WILL BE A lavfi-complex.  PRIOR lavfi-complex MAY HANG IF [vid2] SUDDENLY DOESN'T EXIST.
-    elseif event=='file-loaded'      then file_loaded()   
-    elseif event=='end-file'         then W,playback_restarted = nil  --CLEAR SWITCHES.
-    elseif event=='seek'             then on_seek = gp('time-remaining')==0 and mp.command('playlist-next force') or timers.seek:resume()  --SKIP-10 BUGFIX FOR seek PASSED end-file.  playlist-next FOR MPV PLAYLIST. force FOR SMPLAYER PLAYLIST.  A CONVENIENT WAY TO SKIP NEXT TRACK IN SMPLAYER IS TO SKIP 10 MINUTES, PASSED end-file.
-    elseif event=='playback-restart' then timers.playback_restart:resume() end  --UNBLOCKS TOGGLE-TIMERS.
+function    event_handler(event)
+    event = event.event
+    if      event=='start-file'  then mp.set_property('lavfi-complex','nullsrc,nullsink')  --UNLOCKS STREAMS & WARNS OTHER SCRIPTS THERE WILL BE A lavfi-complex.  PRIOR lavfi-complex MAY HANG IF [vid2] SUDDENLY DOESN'T EXIST.
+    elseif  event=='file-loaded' then file_loaded()   
+    elseif  event=='end-file'    then W,playback_restarted = nil  --CLEAR SWITCHES.
+    elseif  event=='seek'        then on_seek = gp('time-remaining')==0 and mp.command('playlist-next force') or timers.seek:resume()  --SKIP-10 BUGFIX FOR seek PASSED end-file.  playlist-next FOR MPV PLAYLIST. force FOR SMPLAYER PLAYLIST.  A CONVENIENT WAY TO SKIP NEXT TRACK IN SMPLAYER IS TO SKIP 10 MINUTES, PASSED end-file.
+    else    timers.playback_restart:resume() end  --UNBLOCKS TOGGLE-TIMERS.
 end 
 for event in ('start-file file-loaded end-file seek playback-restart'):gmatch('[^ ]+') 
 do mp.register_event(event,event_handler) end
@@ -234,44 +236,42 @@ function property_handler(property,val)
                 ..'       playlist-play-index        current;'
     ):format(p.start,property,val))
 end 
-for property in ('fs mute sid aid vid android-surface-size'):gmatch('[^ ]+')  --BOOLEANS NUMBERS string nil  
+for property in ('fs mute sid aid vid android-surface-size'):gmatch('[^ ]+')  --BOOLEANS NUMBERS string
 do mp.observe_property(property,'native',property_handler) end
 
-for key in ('mute sid'):gmatch('[^ ]+')  --NULL-OP DOUBLE-TAPS.  current-tracks/sub/selected(double_sub_timeout) IS ALT-TOGGLE REQUIRING OFF/ON, AS OPPOSED TO ID#.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).  
-do    timers[key]   = mp.add_periodic_timer(o['double_'..key..'_timeout'], function()end ) end
+for          property in ('mute sid'):gmatch('[^ ]+')  --NULL-OP DOUBLE-TAPS.  current-tracks/sub/selected(double_sub_timeout) IS ALT-TOGGLE REQUIRING OFF/ON, AS OPPOSED TO ID#.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).  
+do    timers[property] = mp.add_periodic_timer(o[('double_%s_timeout'):format(property)],function()end) end
 for _,timer in pairs(timers) 
-do    timer.oneshot = 1  --ALL 1SHOT.
-      timer:kill() end
-reload              = gp('time-pos') and file_loaded()  --SCRIPT-RELOAD (FILE ALREADY LOADED).
+do    timer.oneshot    = 1 --ALL 1SHOT.
+      timer:kill() end  --FOR OLD MPV. IT CAN'T START timers DISABLED.
+reload                 = gp('time-pos') and file_loaded() --file-loaded: TRIGGER NOW.
 
-function exit()  --ALSO @cleanup.  'script-message-to autocomplex exit' ENABLES LIVE SCRIPT-RELOAD DURING PLAYBACK, VIA GUI, WITH NEW script-opts & SAME NAME.
-    gp('msg-level')[label] = 'no'  --HIDES error.
-    mp.set_property_native('msg-level',p['msg-level']) 
-    error()  --SIMILAR TO assert(nil).  THROWING AN error IS MORE RELIABLE THAN unregister_event, unregister_script_message, unobserve_property, remove_key_binding, KILLING timers, ETC. 
+function cleanup()                            --ENABLES SCRIPT-RELOAD WITH NEW script-opts.
+    OFF             = OFF or on_toggle() or 1 --FORCE TOGGLE OFF.  AN ALTERNATIVE COULD INSTA-stop, BUT THEN start=time-pos PERSISTS.
+    mp.keep_running = false 
 end 
-
-function cleanup()                   --OPTIONAL
-    toggle = not OFF and on_toggle() --FORCE TOGGLE OFF.  ALTERNATIVE COULD INSTA-stop, BUT THEN start=time-pos PERSISTS.
-    exit()
-end 
-for message,fn in pairs({exit=exit,cleanup=cleanup,toggle=on_toggle})  --SCRIPT CONTROLS.
+for message,fn in pairs({cleanup=cleanup,toggle=on_toggle})  --SCRIPT CONTROLS.
 do mp.register_script_message(message,fn) end
 
 
-----~300 LINES & ~6000 WORDS.  5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS (& 3 CASES), LINE TOGGLES (options), MIDDLE (graph SPECS), & END. ALSO BLURBS ON WEB.  CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
+----CONSOLE/GUI COMMAND EXAMPLES:
+----script-message-to autocomplex cleanup
+----script-message-to autocomplex toggle
+
+----APP VERSIONS:
 ----MPV      : v0.38.0(.7z .exe v3 .apk)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)    ALL TESTED.  v0.34 INCOMPATIBLE WITH BOTH yt-dlp_x86 & THIS SCRIPT.
 ----FFMPEG   : v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4(mpv.app)  v5.1.2(SMPlayer.app)  v4.4.2(.snap)  v4.2.7(.AppImage)  ALL TESTED.  MPV IS STILL OFTEN BUILT WITH 3 VERSIONS OF FFMPEG: v4, v5 & v6.
 ----PLATFORMS:  windows  linux  darwin  android  ALL TESTED.  WIN-10 MACOS-11 LINUX-DEBIAN-MATE ANDROID-11.  WON'T OPEN JPEG ON ANDROID.
 ----LUA      : v5.1     v5.2  TESTED.
 ----SMPLAYER : v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
-----ISSUE: graph SHOULD BE OPTIMIZED SOMEHOW (extractplanes).  COMBINING 12.5, 25 & 30 FPS MAYBE SHOULD BE AVOIDED (15, 30 & 30 FPS ONLY!).
-----FUTURE VERSION SHOULD HAVE A reload SCRIPT MESSAGE. THE INTRODUCTORY SECTION CAN ITSELF BE function reload.
-----FUTURE VERSION SHOULD HAVE o.msg_level.
+----~300 LINES & ~6000 WORDS.  5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS (& 3 CASES), LINE TOGGLES (options), MIDDLE (graph SPECS), & END. ALSO BLURBS ON WEB.  CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
+----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts - function on_update.
 ----FUTURE VERSION SHOULD HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED.  NEEDED FOR android albumart.
-----FUTURE VERSION SHOULD IMPROVE IMPLEMENTATION OF o.dual_scale TO {number/string} NOT JUST {number}.
-----A DIFFERENT DESIGN COULD COMPRESS 1→10kHz INTO AN ELEVENTH TICKMARK.  ALSO, AN UGLY SMOOTH-TOGGLE COULD WORK BY DUPLICATING THE VIDEO (split,vstack) & THEN COMMANDING AN EQUALIZER OVERLAYING THE TOP ATOP THE BOTTOM.
-----SCRIPT WRITTEN TO TRIGGER A FFMPEG ERROR ON OLD FFMPEG (v4 & OLDER). MORE RELIABLE THAN VERSION NUMBERS. 
+----FUTURE VERSION SHOULD IMPROVE IMPLEMENTATION OF o.dual_scale TO {number/string}, NOT JUST {number}.
+----ISSUE: graph SHOULD BE OPTIMIZED SOMEHOW (extractplanes). 
+----A DIFFERENT DESIGN COULD COMPRESS 1→10kHz INTO AN ELEVENTH TICKMARK, USING A SECONDARY showfreqs.  ALSO, A SMOOTH-TOGGLE COULD WORK BY OUTPUTTING THE OVERLAY SEPARATE TO [vo], USING vstack, & THEN COMMANDING AN EQUALIZER OVERLAYING THE TOP ATOP THE BOTTOM. NOT WORTH THE EXTRA CPU USAGE, BUT WOULD WORK.
+----SCRIPT WRITTEN TO TRIGGER AN FFMPEG ERROR ON OLD FFMPEG (v4 & OLDER). MORE RELIABLE THAN VERSION NUMBERS. 
 
 ----ALTERNATIVE FILTERS:
 ----afftfilt          = real:imag:win_size:win_func:overlap  DEFAULT=1|1:1|1:4096:hann:0.75  (AUDIO FAST FOURIER TRANSFORM FILTER) overlap<1 CAUSES BUG. MAY HELP WITH o.volume_af_chain.
