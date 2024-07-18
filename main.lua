@@ -29,7 +29,7 @@ options     = {
     },
     options = {                                                  --COULD BE RENAMED config.
         'ytdl-format  bv[height<1080]+ba/best','profile      fast', --bv,ba = bestvideo,bestaudio  "/best" FOR RUMBLE.  fast FOR MPV.APP (COLORED TRANSPARENCY).  720p SEEKS BETTER SOMETIMES. EXAMPLE: https://YOUTU.BE/8cor7ygb1ms?t=60
-        'osd-border-size 1','osd-font-size 16','osd-duration 5000','osd-bar no','osd-bold yes','osd-font "COURIER NEW"',  --DEFAULTS 3,55,1000,yes,no,sans-serif   border=1p FOR LITTLE TEXT.  1000 MILLISECONDS ISN'T ENOUGH TO READ/SCREENSHOT osd.  SMPLAYER ALREADY HAS A BAR.  55p MAY NOT FIT GRAPHS.  COURIER NEW IS MONOSPACE & NEEDS bold (FANCY).  CONSOLAS PROPRIETARY & INVALID ON MACOS.
+        'osd-border-size 1','osd-font-size 16','osd-duration 5000','osd-bar no','osd-bold yes','osd-font "COURIER NEW"',  --DEFAULTS 3,55,1000,yes,no,sans-serif   border=1p FOR LITTLE TEXT.  1000 MILLISECONDS ISN'T ENOUGH TO READ ON-SCREEN-DISPLAY.  SMPLAYER ALREADY HAS A BAR.  55p MAY NOT FIT GRAPHS.  COURIER NEW IS MONOSPACE & NEEDS bold (FANCY).  CONSOLAS PROPRIETARY & INVALID ON MACOS.
         'sub-border-size 2','sub-font-size 32',  --DEFAULTS=3,55   SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
         'osd-level       0','osc           no',  --DEFAULTS=3,yes  osd-level=0 PREVENTS UNWANTED MESSAGES @load-script.  osc AWAITS ITS CONFIG.
     },
@@ -38,8 +38,8 @@ options     = {
     autoloop_duration      = 10 , --SECONDS.  0 MEANS NO AUTO-loop.  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://GITHUB.COM/zc62/mpv-scripts/blob/master/autoloop.lua
     options_delay          = .3 , --SECONDS, FROM playback_start.  title ALSO TRIGGERS THEN.
     options_delayed        = {    --@playback_started+options_delay, FOR EVERY FILE.
-        'osd-level 1','osc yes',          --RETURN osd-level & osc.
-        'sid    1','secondary-sid 1',  --UNCOMMENT FOR SUBTITLE-TRACK-ID OVERRIDE.  USEFUL FOR YOUTUBE + sub-create-cc-track. sid=1 BUGS OUT @file-loaded.
+        'osd-level       1','osc          yes',  --RETURN osd & osc.
+        -- 'sid          1','secondary-sid  1',  --UNCOMMENT FOR SUBTITLE-TRACK-ID OVERRIDE.  USEFUL FOR YOUTUBE + sub-create-cc-track. sid=1 BUGS OUT @file-loaded.
     },
     windows     = {}, linux = {}, darwin = {},  --OPTIONAL: platform OVERRIDES.
     android     = {                                                             
