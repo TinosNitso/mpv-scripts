@@ -58,7 +58,7 @@ options                 = {
 }
 o,p,m,timers = {},{},{},{}    --o,p=options,PROPERTIES  m=MEMORY={graph,'android-surface-size'}  timers={mute,sid,playback_restart,seek}  playback_restart BLOCKS THE PRIOR 2.
 
-function  gp(property)  --ALSO @file-loaded, @on_toggle & @property_handler.  GET PROPERTY.
+function  gp(property)  --ALSO @file-loaded, @on_toggle & @property_handler.  GET-PROPERTY.
     p       [property]=mp.get_property_native(property)  --mp=MEDIA-PLAYER
     return p[property]
 end
@@ -109,13 +109,13 @@ o.overlay_scale[2] =     o.overlay_scale[2] or   o.overlay_scale[1]
 o.   dual_scale[2] =     o.   dual_scale[1] and (o.   dual_scale[2] or o.dual_scale[1])*o.freqs_clip_h*2  --CLIP HEIGHT FOR (PADDED) TOP & BOTTOM (*2). RATIO RELATIVE TO display-height.  
 dual               = not o.   dual_scale[1] and ''  --NO dual. OR ELSE dual BELOW.
                      or (",[ov]split[ov],%s[dual],[dual][vo]scale2ref=round(iw*(%s)/4)*4:round(ih*(%s)/4)*4[dual][vo],[vo][dual]overlay='%s'[vo]"):format(o.dual_filterchain,o.dual_scale[1],o.dual_scale[2],o.dual_overlay)  --APPLY FILTERCHAIN FIRST BECAUSE [ov] IS ONLY ~1K, NOT 4K LIKE [vo].
-math.randomseed(os.time()+mp.get_time())  --UNIQUE EACH LOAD.  os.time=INTEGER SECONDS FROM 1970.  mp.get_time=μs IS MORE RANDOM THAN os.clock=ms.  os.getenv('RANDOM')=nil  BUT COULD ECHO BACK %RANDOM% OR $RANDOM USING A subprocess. 
+math.randomseed(os.time()+mp.get_time())  --UNIQUE EACH LOAD.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil
 
 
 graph=("[aid%%d]%s%s,asplit[ao],stereotools,%s,apad,asplit[freqs],aformat=s16,showvolume='%s:0:128:8:t=0:v=0:o=v:%s',format=gbrap,shuffleplanes=1:0,lutrgb='g=0:a=val*(%s)',split=3[vol][BAR],crop='iw/2*3/4:ih*(%s):(iw-ow)/2:(ih-oh)*(1-(%s))',lutrgb='%s',pad=iw*4/3:ih+(ow-iw)/a:(ow-iw)/2:oh-ih:%s,split,hstack,split[feet0],shuffleplanes=0:2:1[feet],[vol][feet0]vstack[vol],[BAR][feet]vstack,lutrgb='a=val*(%s)',split[RGRID],crop=iw/2:ih:0,pad='iw/(%s):0:0:0:BLACK@0',split=10,hstack=10,crop=iw-4:ih:iw-ow,pad=iw+4:0:0:0:BLACK@0[LGRID],[RGRID]crop=iw/2:ih:iw/2,pad='iw/(%s):0:ow-iw:0:BLACK@0',split=10,hstack=10,crop=iw-4:ih:0,pad=iw+4:0:ow-iw:0:BLACK@0[RGRID],[LGRID][RGRID]hstack,pad='0:ih*(%s)/(%s):0:oh-ih:BLACK@0'[grid],[freqs]aformat=s16:2100,asetpts='max(0,PTS-(%s)/TB)',dynaudnorm=%s,aformat=s16,showfreqs='%s:colors=BLUE|RED:%%s',fps='%%s',crop='iw/1.05:ih*(%s)/(%s):0:ih-oh',format=gbrp,scale=iw*2:-1,avgblur=1:2^2+2^1,lutrgb='255*gt(val,140):0:255*gt(val,140)',avgblur=2:2^2+2^1,lutrgb='r=255*gt(val,90):b=255*gt(val,90)',framerate=%%s,format=gbrap,split[R],shuffleplanes=0:0:1:1,hflip[L],[R]shuffleplanes=0:0:2:2[R],[grid][L]scale2ref=iw*2-2:ih,overlay[grid+L],[grid+L][R]overlay=W-w,scale=ceil(iw/4)*4:ceil(ih/4)*4,split=3[LHI][RHI],crop=iw/2[MIDDLE],[LHI]crop=iw/4:ih:0,shuffleplanes=0:2:1[LHI],[RHI]crop=iw/4:ih:iw-ow,shuffleplanes=0:2:1[RHI],[LHI][MIDDLE][RHI]hstack=3[ov],[vol][ov]scale2ref='round(iw*(%s)/4)*4:round(ih*(%s)/(%s)/4)*4'[vol][ov],[ov][vol]overlay=(W-w)/2:H-h,format=bgra,format=gbrap,%s[ov],%%sfps=%s,format=yuva420p,scale=%%d:%%d,format=yuva420p,split=3[vo][t0],crop=1:1:0:0:1:1,fps='%s',lutyuv=0:128:128:0[to]%s,[to][ov]scale2ref,overlay,setpts=PTS-STARTPTS,rotate='%s:c=BLACK@0',pad='iw/(%s):ih/(%s):(ow-iw)/2:(oh-ih)/2:BLACK@0',zoompan='%s:d=1:s=%%dx%%d:fps=%s'[ov],[vo]setpts=PTS-STARTPTS[vo],[vo][ov]overlay='%s'[vo],[t0]trim=end_frame=1[t0],[t0][vo]concat,trim=end=%%s:start_frame=1,fps='%s',setpts=PTS-1/FRAME_RATE/TB,format=%%s[vo]"
 ):format(o.af_chain,amix,o.volume_af_chain,o.volume_fps,o.volume_opts,o.volume_alpha,o.feet_height,o.feet_activation,o.feet_lutrgb,o.shoe_color,o.grid_alpha,o.grid_thickness,o.grid_thickness,o.freqs_clip_h,o.grid_height,o.freqs_lead_time,o.freqs_dynaudnorm,o.freqs_opts,o.freqs_clip_h,o.freqs_scale_h,o.volume_scale[1],o.volume_scale[2],o.freqs_clip_h,vstack,o.fps,o.volume_fps,dual,o.rotate,o.overlay_scale[1],o.overlay_scale[2],o.zoompan,o.volume_fps,o.overlay,o.fps)  --volume_fps REPEATS FOR volume, TIME-STREAM [to] & zoompan.  fps REPEATS FOR [vo] & AFTER concat.  freqs_clip_h CROPS freqs & PADS volume & [grid].  grid_thickness REPEATS FOR [LGRID] & [RGRID].
 
-----lavfi             LIBRARY-AUDIO-VIDEO-FILTERGRAPH:  [vid#]=VIDEO-IN [aid#]=AUDIO-IN [vo]=VIDEO-OUT [ao]=AUDIO-OUT [ov]=OVERLAY(SPECTRUM) [freqs]=AUDIO-FREQS [to]=TIME-OUT(1x1) [t0]=STARTPTS-FRAME [L]=LEFT [R]=RIGHT [vol]=VOLUME [grid]=VOL-BARS  ALSO [LGRID][RGRID][LHI][RHI].  SELECT FILTER NAME OR LABEL TO HIGHLIGHT IT. NO WORD-WRAP → SIDE-SCROLL PROGRAMMING, WITH LINEDUPLICATE ETC.  COMMAS REQUIRE EITHER INVERTED COMMAS OR \\ ESCAPES.  %% SUBS OCCUR LATER. (%s) BRACKETS FOR MATH.  lavfi-complex MAY COMBINE MANY [aid#] & [vid#] INPUTS. IT'S LIKE DNA & CAN CREATE VARIOUS CREATURES. SEE FFMPEG-FILTERS MANUAL.  EACH FOOT HAS A STEREO INSIDE IT. [feet0] (SHOES) ARE THE CENTER-PIECE.  [to] & [t0] CODES ALWAYS VALID, EVEN ON YOUTUBE & FOR MP4 SUBCLIPS WITH OFF TIMESTAMPS. IMPOSSIBLE TO ALWAYS CORRECTLY ENTER NUMBERS LIKE time-pos OR audio-pts. CANVAS [to] SWITCHES OUT [ao]→[vo] TIMESTAMPS (IT'S ACTUALLY [time-vo]).
+----lavfi             LIBRARY-AUDIO-VIDEO-FILTERGRAPH:  [vid#]=VIDEO-IN [aid#]=AUDIO-IN [vo]=VIDEO-OUT [ao]=AUDIO-OUT [ov]=OVERLAY(SPECTRUM) [freqs]=AUDIO-FREQS [to]=TIME-OUT(1x1) [t0]=STARTPTS-FRAME [L]=LEFT [R]=RIGHT [vol]=VOLUME [grid]=VOL-BARS  ALSO [LGRID][RGRID][LHI][RHI].  SELECT FILTER NAME OR LABEL TO HIGHLIGHT IT. SIDE-SCROLL PROGRAMMING, WITH LINEDUPLICATE ETC.  %% SUBS OCCUR LATER.  (%s) FOR MATH.  '%s' BLOCKS STRINGS FROM SPLITTING.  lavfi-complex MAY COMBINE MANY [aid#] & [vid#] INPUTS. IT'S LIKE DNA & CAN CREATE VARIOUS CREATURES. SEE FFMPEG-FILTERS MANUAL.  EACH FOOT HAS A STEREO INSIDE IT. [feet0] (SHOES) ARE THE CENTER-PIECE.  [to] & [t0] CODES ALWAYS VALID, EVEN ON YOUTUBE & FOR MP4 SUBCLIPS WITH OFF TIMESTAMPS. IMPOSSIBLE TO ALWAYS CORRECTLY ENTER NUMBERS LIKE time-pos OR audio-pts. CANVAS [to] SWITCHES OUT [ao]→[vo] TIMESTAMPS (IT'S ACTUALLY [time-vo]).
 ----showvolume      = r:b:w:h:f:...:t:v:o:...:dm:dmc                                       DEFAULT=25:1:400:20:0.95:...:t=1:v=1:o=h:...:dm=0:dmc=orange  →rgba  rate:CHANNEL_GAP:LENGTH:THICKNESS/2:FADE:...:CHANNELVALUES:VOLUMEVALUES:ORIENTATION:...:DISPLAYMAX:DISPLAYMAXCOLOR  LENGTH MINIMUM ~100. t & v ARE TEXT & SHOULD BE DISABLED.  THERE'S SOME TINY BLACK LINE DEFECT, WHICH BLUE COVERS UP.
 ----showfreqs       = size:rate:mode:ascale:fscale:win_size:win_func:...:averaging:colors  DEFAULT=1024x512:25:bar:log:lin:2048:hanning:...:1            →rgba  rate INCOMPATIBLE WITH FFMPEG-v4. size SHOULD HAVE ASPECT APPROX 3x5 FOR HEALTHY CURVE TO BE EQUALLY THICK IN HORIZONTAL & VERTICAL (300x300 & 300x700 ARE OFF).  win_size BTWN 256 & 2048.  cmode=separate WOULD REQUIRE TWICE AS MANY PIXELS.
 ----dynaudnorm      = ...:g:p:m:...:b           DEFAULT=...:31:.95:10:...:0  ...:GAUSSIAN_WIN_SIZE(ODD>1):PEAK_TARGET[0,1]:MAX_GAIN[1,100]:...:BOUNDARY_MODE[0/1]  IS THE START.  DYNAMIC AUDIO NORMALIZER OUTPUTS A BUFFERED STREAM WITH TB=1/SAMPLE_RATE & FORMAT=doublep.  MAY BE BLANK.  b=NO_FADE (FADE NOT FOR SPECTRUM). IT MAY SLOW DOWN YOUTUBE, BY PRE-LOADING MANY FRAME-LENGTHS (g=31). LOWER g MAY GIVE FASTER RESPONSE. ALTERNATIVES INCLUDE loudnorm & acompressor, BUT dynaudnorm IS BEST. 
@@ -152,7 +152,7 @@ function file_loaded()  --ALSO @property_handler, @on_toggle & @timers.seek.
     p.start                   = p.start and mp.set_property('start','none') and nil            --start DUE TO INSTA-stop @property_handler.  PERSISTS OTHERWISE.  ALTERNATIVELY CAN seek.  playback-restarted MAY TRIGGER TOO SOON FOR MP4TAG.
     a_id,v                    = gp('current-tracks/audio/id'),gp('current-tracks/video') or {} --aid (number/string/false) IS A SETTING FOR a_id (number/nil). aid,a_id = false,1 CAN OCCUR @vid RELOAD.  p.aid & a_id ARE KEPT SEPARATE TO HANDLE EVERY CIRCUMSTANCE.
     gmatch                    = (gp('android-surface-size') or ''):gmatch('[^x]+')  
-    m['android-surface-size'] =   p['android-surface-size']  --string: '960x444',nil=SMARTN12-LANDSCAPE,WINDOWS.  display MAY MEAN SOMETHING ELSE TO A SMARTPHONE.
+    m['android-surface-size'] =   p['android-surface-size']  --'960x444'=SMARTN12-LANDSCAPE.  nil=WINDOWS.  display MAY MEAN SOMETHING ELSE TO A SMARTPHONE.
     android_surface_size      = {w=gmatch(),h=gmatch()}
     W                         = o.video_params.w           or gp('display-width' )    or android_surface_size.w or gp('width' ) or v['demux-w'] or 1280  --number/string.  OVERRIDE  OR  display  OR  android  OR  PARAMETERS  OR  TRACK  OR  (FALLBACK FOR RAW MP3 IN VIRTUALBOX).  width=nil SOMETIMES @file-loaded, & MAY BE MUCH LARGER THAN display SINCE MEMORY IS CHEAP.  
     H                         = o.video_params.h           or gp('display-height')    or android_surface_size.h or gp('height') or v['demux-h'] or 720
@@ -178,7 +178,7 @@ function file_loaded()  --ALSO @property_handler, @on_toggle & @timers.seek.
     mp.set_property('lavfi-complex',m.graph)  --FOR graph BYTECODE.  
 end 
 
-function on_toggle()  --@script-message, @key_binding, @property_handler, & @file-loaded.  REMOVES THE SPECTRUM FROM THE lavfi-complex, OR ELSE RELOADS.  DOESN'T UNLOCK aid & vid.
+function on_toggle()  --@script-message, @script-binding, @property_handler, & @file-loaded.  REMOVES THE SPECTRUM FROM THE lavfi-complex, OR ELSE RELOADS.  DOESN'T UNLOCK aid & vid.
     OFF        = not OFF                                               --OFF SWITCH.  
     if not W then return end                                           --LOGIC STATE ONLY BTWN FILES.
     start_time = OFF        and v.image and round(gp('time-pos'),.001) --NEEDED @seek.
@@ -195,7 +195,7 @@ function on_toggle()  --@script-message, @key_binding, @property_handler, & @fil
     command    = a_id and o.toggle_command~='' and mp.command(o.toggle_command)     
 end
 for key in o.key_bindings: gmatch('[^ ]+') 
-do binding_name = 'toggle_complex'..(binding_name and '_'..key or '')  --'script-binding toggle_complex'  THE FIRST key IS SPECIAL.
+do binding_name = 'toggle_complex'..(binding_name and '_'..key or '')  --THE FIRST key IS SPECIAL.
     mp.add_key_binding(key,binding_name,on_toggle) end  
 
 function    event_handler(event)
@@ -246,17 +246,17 @@ do    timer.oneshot    = 1 --ALL 1SHOT.
       timer:kill() end  --FOR OLD MPV. IT CAN'T START timers DISABLED.
 reload                 = gp('time-pos') and file_loaded() --file-loaded: TRIGGER NOW.
 
-function cleanup()                            --ENABLES SCRIPT-RELOAD WITH NEW script-opts.
-    OFF             = OFF or on_toggle() or 1 --FORCE TOGGLE OFF.  AN ALTERNATIVE COULD INSTA-stop, BUT THEN start=time-pos PERSISTS.
-    mp.keep_running = false 
+function cleanup()  --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-opts.
+    OFF             = OFF or on_toggle() or true --FORCE TOGGLE OFF.  AN ALTERNATIVE COULD INSTA-stop, BUT THEN start=time-pos PERSISTS.
+    mp.keep_running = false                      --false FLAG EXIT: COMBINES remove_key_binding, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
 end 
 for message,fn in pairs({cleanup=cleanup,toggle=on_toggle})  --SCRIPT CONTROLS.
 do mp.register_script_message(message,fn) end
 
-
 ----CONSOLE/GUI COMMAND EXAMPLES:
-----script-message-to autocomplex cleanup
+----script-binding                toggle_complex
 ----script-message-to autocomplex toggle
+----script-message-to autocomplex cleanup
 
 ----APP VERSIONS:
 ----MPV      : v0.38.0(.7z .exe v3 .apk)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)    ALL TESTED.  v0.34 INCOMPATIBLE WITH BOTH yt-dlp_x86 & THIS SCRIPT.
@@ -265,12 +265,15 @@ do mp.register_script_message(message,fn) end
 ----LUA      : v5.1     v5.2  TESTED.
 ----SMPLAYER : v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
-----~300 LINES & ~6000 WORDS.  5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS (& 3 CASES), LINE TOGGLES (options), MIDDLE (graph SPECS), & END. ALSO BLURBS ON WEB.  CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
-----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts - function on_update.
-----FUTURE VERSION SHOULD HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED.  NEEDED FOR android albumart.
+
+----~300 LINES & ~6000 WORDS.  5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (graph SPECS), & END (CONSOLE COMMANDS). ALSO BLURBS ON WEB.  CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
+----FUTURE VERSION SHOULD MOVE o.double_mute_timeout, o.double_aid_timeout & o.toggle_command TO main.lua. ALL SCRIPTS SHOULD HAVE THESE, UNLESS main OPERATES ALL DOUBLE-TAPS.
+----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts; function on_update.
 ----FUTURE VERSION SHOULD IMPROVE IMPLEMENTATION OF o.dual_scale TO {number/string}, NOT JUST {number}.
-----ISSUE: graph SHOULD BE OPTIMIZED SOMEHOW (extractplanes). 
-----A DIFFERENT DESIGN COULD COMPRESS 1→10kHz INTO AN ELEVENTH TICKMARK, USING A SECONDARY showfreqs.  ALSO, A SMOOTH-TOGGLE COULD WORK BY OUTPUTTING THE OVERLAY SEPARATE TO [vo], USING vstack, & THEN COMMANDING AN EQUALIZER OVERLAYING THE TOP ATOP THE BOTTOM. NOT WORTH THE EXTRA CPU USAGE, BUT WOULD WORK.
+----ISSUE: graph SHOULD BE OPTIMIZED SOMEHOW (extractplanes?). 
+
+----A DIFFERENT DESIGN COULD COMPRESS 1→10kHz INTO AN ELEVENTH TICKMARK, USING A SECONDARY showfreqs.  
+----A SMOOTH-TOGGLE COULD WORK BY VSTACKING THE COMPLEX ATOP FILM, & THEN COMMANDING AN EQUALIZER OVERLAYING THE TOP ATOP THE BOTTOM. NOT WORTH THE EXTRA CPU USAGE, BUT WOULD WORK.
 ----SCRIPT WRITTEN TO TRIGGER AN FFMPEG ERROR ON OLD FFMPEG (v4 & OLDER). MORE RELIABLE THAN VERSION NUMBERS. 
 
 ----ALTERNATIVE FILTERS:
