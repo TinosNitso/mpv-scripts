@@ -163,7 +163,7 @@ function file_loaded()  --ALSO @property_handler, @on_toggle & @timers.seek.
          on_toggle()          
          return end  --ON BELOW.
     
-    ov_w,ov_h,p.duration = round(W,4),round(H*o.freqs_clip_h*2,4),round(gp('duration'),.001) --PRIMARY OVERLAY SCALE (w & h), FOR zoompan. vstack*2 FACTOR (ALSO VALID IF TOP-ONLY).  THE DUAL USES scale2ref.   duration NEAREST MILLISECOND.
+    ov_w,ov_h,p.duration = round(W,4),round(H*o.freqs_clip_h*2,4),round(gp('duration'),.001) --PRIMARY OVERLAY SCALE (w & h), FOR zoompan. vstack*2 FACTOR (ALSO VALID IF TOP-ONLY).  THE DUAL USES scale2ref.   duration NEAREST MILLISECOND. ALTERNATIVE IS TO mp.add_hook('on_unload',...).
     freqs_fps       = (v.image or not v.id) and o.freqs_fps_albumart or o.freqs_fps          --freqs_fps MAY VARY on_vid. SOME ANIMATIONS (LIKE FRACTALS) CAN BE DONE SMOOTHER ON albumart.
     framerate       = o.freqs_interpolation and o.volume_fps         or   freqs_fps          --INTERPOLATION: freqs_fps→volume_fps
     error_showfreqs =     error_showfreqs   or  not freqs_rate and not mp.command(("no-osd af pre @%s:lavfi=[asplit[ao],showfreqs='rate=%s',nullsink]"):format(label,freqs_fps)) --~freqs_rate MEANS ONCE ONLY. command RETURNS true IF SUCCESSFUL.  ERROR ON FFMPEG-v4 (.AppImage)  FFMPEG-v4 OPERATES showfreqs @25fps (.AppImage & .snap). NEWER VERSIONS SUPPORT ANY fps.  NEW MPV MAY USE OLD FFMPEG COMPONENTS.  BUT ERROR MORE RELIABLE THAN VERSION NUMBERS BECAUSE THEY CAN BE ANYTHING.  THIS LINE ASSUMES AUDIO EXISTS, WHICH IS AN ISSUE FOR CASE 4.
@@ -244,7 +244,6 @@ do    timers[property] = mp.add_periodic_timer(o[('double_%s_timeout'):format(pr
 for _,timer in pairs(timers) 
 do    timer.oneshot    = 1 --ALL 1SHOT.
       timer:kill() end  --FOR OLD MPV. IT CAN'T START timers DISABLED.
-reload                 = gp('time-pos') and file_loaded() --file-loaded: TRIGGER NOW.
 
 function cleanup()  --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-opts.
     OFF             = OFF or on_toggle() or true --FORCE TOGGLE OFF.  AN ALTERNATIVE COULD INSTA-stop, BUT THEN start=time-pos PERSISTS.
@@ -252,8 +251,9 @@ function cleanup()  --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-op
 end 
 for message,fn in pairs({cleanup=cleanup,toggle=on_toggle})  --SCRIPT CONTROLS.
 do mp.register_script_message(message,fn) end
+reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.  SNAPS EMBEDDED MPV.
 
-----CONSOLE/GUI COMMAND EXAMPLES:
+----CONSOLE/GUI COMMANDS:
 ----script-binding                toggle_complex
 ----script-message-to autocomplex toggle
 ----script-message-to autocomplex cleanup
@@ -273,7 +273,7 @@ do mp.register_script_message(message,fn) end
 ----ISSUE: graph SHOULD BE OPTIMIZED SOMEHOW (extractplanes?). 
 
 ----A DIFFERENT DESIGN COULD COMPRESS 1→10kHz INTO AN ELEVENTH TICKMARK, USING A SECONDARY showfreqs.  
-----A SMOOTH-TOGGLE COULD WORK BY VSTACKING THE COMPLEX ATOP FILM, & THEN COMMANDING AN EQUALIZER OVERLAYING THE TOP ATOP THE BOTTOM. NOT WORTH THE EXTRA CPU USAGE, BUT WOULD WORK.
+----AN INEFFICIENT SMOOTH-TOGGLE COULD WORK BY VSTACKING THE COMPLEX ATOP FILM, & THEN COMMANDING AN EQUALIZER OVERLAYING THE TOP ATOP THE BOTTOM.  NOT WORTH THE EXTRA COMPLEXITY, RISK OF STARTING STUTTER, & CPU USAGE.
 ----SCRIPT WRITTEN TO TRIGGER AN FFMPEG ERROR ON OLD FFMPEG (v4 & OLDER). MORE RELIABLE THAN VERSION NUMBERS. 
 
 ----ALTERNATIVE FILTERS:

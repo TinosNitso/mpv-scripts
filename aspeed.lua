@@ -5,10 +5,10 @@
 
 options                      = {             
     key_bindings             = 'Ctrl+C Alt+C Alt+c',  --CASE SENSITIVE (CTRL+C=CTRL+SHIFT+c). THESE DON'T WORK INSIDE SMPLAYER.  TOGGLE APPLIES TO clocks & speed, BUT NOT TO filterchain.  C IS autocrop.lua, NOT CLOCK.  CTRL+c BREAKS.
-    double_mute_timeout      =         .5 ,  --SECONDS FOR DOUBLE-MUTE-TOGGLE        (m&m DOUBLE-TAP).  SET TO 0 TO DISABLE.                    IDEAL FOR SMPLAYER.      REQUIRES AUDIO IN SMPLAYER.  VARIOUS SCRIPT/S CAN BE SIMULTANEOUSLY TOGGLED USING THESE 3 MECHANISMS. 
+    double_mute_timeout      =         .5 ,  --SECONDS FOR DOUBLE-MUTE-TOGGLE        (m&m DOUBLE-TAP).  SET TO 0 TO DISABLE.                    IDEAL FOR SMPLAYER.      REQUIRES AUDIO IN SMPLAYER (OR ELSE USE j&j).  VARIOUS SCRIPT/S CAN BE SIMULTANEOUSLY TOGGLED USING THESE 3 MECHANISMS. 
     double_aid_timeout       =         .5 ,  --SECONDS FOR DOUBLE-AUDIO-ID-TOGGLE    (#&# DOUBLE-TAP).  SET TO 0 TO DISABLE.  BAD FOR YOUTUBE.  ANDROID MUTES USING aid. REQUIRES AUDIO. 
     double_sid_timeout       =         .5 ,  --SECONDS FOR DOUBLE-SUBTITLE-ID-TOGGLE (j&j DOUBLE-TAP).  SET TO 0 TO DISABLE.  BAD FOR YOUTUBE.  IDEAL FOR SMARTPHONE.    REQUIRES sid (sub-create-cc-track FOR BLANK).
-    extra_devices_index_list =         {} ,  --TRY {3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS.  1=auto  2=NORMAL DEVICE.  EITHER 1 OR 2 OVERLAPS ECHO-STYLE (AVOID).  EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS & STREAM.  INTERNAL PC SPEAKERS COUNT AS 2 (2 DOUBLE-MOUTHED CHILDREN).
+    extra_devices_index_list =         {} ,  --TRY {2,3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS.  1=auto  3=INTERNAL.  OVERLAP CAUSES INTERNAL ECHO (AVOID).  EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS & STREAM.  INTERNAL PC SPEAKERS COUNT AS 2 (2 DOUBLE-MOUTHED CHILDREN).
     toggle_command           =         '' ,  --EXECUTES on_toggle, UNLESS BLANK.  'show-text ""' CLEARS THE OSD.  CAN DISPLAY ${media-title}, ${mpv-version}, ${ffmpeg-version}, ${libass-version}, ${platform}, ${current-ao}, ${af}, ${lavfi-complex}.  CAN ALSO 'show-text "'.._VERSION..'"'  OR  'set speed 1'.
     speed                    = '${speed}' ,  --EXPRESSION FOR DYNAMIC speed CONTROL, set EVERY HALF-SECOND.  CAN USE ANY MPV PROPERTY (LIKE ${percent-pos}) IN ANY LUA FORMULA.  '${speed}' IS A NULL-OP.  TOGGLES WITH DOUBLE-mute!
     -- speed                 = '     ${speed}<1.2 and ${speed}+.01 or 1    ',  --UNCOMMENT TO CYCLE speed BTWN 1 & 1.2 OVER 10s.  PRESS BACKSPACE TO RESET BACK TO 1.  REPLACE 1.2 & 1 FOR DIFFERENT BOUNDS.
@@ -47,9 +47,9 @@ options                      = {
     android     = { 
         options = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',},  --options APPEND, NOT REPLACE. 
     },
-    clocks                  =    {   --TOGGLE LINES TO INCLUDE/EXCLUDE VARIOUS STYLES FROM THE LIST.  REPETITION VALID.  A SIMPLE LIST OF STRINGS IS EASY TO RE-ORDER & DUPLICATE, LIKE REPEATING Yemen FOR THE ARABIC.
-        duration            =    2 , --SECONDS, INTEGER.  0/nil MEANS NO CLOCK.  TIME PER CLOCK STYLE THROUGHOUT CYCLE.  STYLE TICKS OVER EVERY SECOND SECOND. (ON THE DOUBLE.)
-        offset              =    0 , --SECONDS, INTEGER. DEFAULT=0.  CHANGE STYLE ON EVENS OR ODDS? 0=EVEN.  ALL SMPLAYER INSTANCES HAVE SAME CLOCK @SAME TIME.
+    clocks                  = {      --TOGGLE LINES TO INCLUDE/EXCLUDE VARIOUS STYLES FROM THE LIST.  REPETITION VALID.  A SIMPLE LIST OF STRINGS IS EASY TO RE-ORDER & DUPLICATE, LIKE REPEATING Yemen FOR THE ARABIC.
+        duration            = 2    , --SECONDS, INTEGER.  0/nil MEANS NO CLOCK.  TIME PER CLOCK STYLE THROUGHOUT CYCLE.  STYLE TICKS OVER EVERY SECOND SECOND. (ON THE DOUBLE.)
+        offset              = 0    , --SECONDS, INTEGER. DEFAULT=0.  CHANGE STYLE ON EVENS OR ODDS? 0=EVEN.  ALL SMPLAYER INSTANCES HAVE SAME CLOCK @SAME TIME.
         DIRECTIVES_OVERRIDE = false, --SET true TO DISPLAY ALL os.date DIRECTIVE CODES & THEIR CURRENT VALUES (SPECIAL CLOCK). MAY DEPEND ON LUA VERSION.  EXAMPLES: %I,%M,%S,%a,%p,%H,%n = HRS(12),MINS,SECS,Day,A/PM,HRS,RETURN  
 
 ----    "         COUNTRY              HOUR     MINUTE   SECOND  POPULATION  [            AbDays             -=HALFSPACE  ]  {\\STYLE OVERRIDES}          \\N              ↓↓(CLOCK SIZE)                 %DIRECTIVES            ",  --"{" REQUIRED, & EVERYTHING BEFORE IT IS REMOVED.  {} ALONE REMOVES LEADING 0 FOLLOWING IT.  %n,\\N = ♪,◙ = \r,\n.  ♪ RETURNS TO TOP-LEFT, FOR NEW ALIGNMENT.  ABDAYS (ABBREVIATED-DAYS) START WITH Sun FOR ARABIC/ARMENIAN, BUT Mon FOR EUROPE.  AbDays CAN BE REPLACED WITH ANYTHING. 1 LOTE CAN BE COPIED OVER ALL THE OTHERS.  https://lh.2XLIBRE.NET/locales FOR LOCALES. ALL AbDays ARE VERIFIED INDIVIDUALLY USING GOOGLE TRANSLATE → ENGLISH/RUSSIAN.  HALF-SPACE IS BECAUSE CENTERING IS OFTEN 1-OFF, & AN EXTRA LETTER IS INVALID.  7 LETTERS MAY MEAN Sun→Sat, BUT EACH LETTER ON ITS OWN IS MEANINGLESS. HENCE SEMI-ABBREVIATED ABDAYS (SEMI-AbDays) ARE MORE VALID.  FOR VERTICAL SPELLING, USE Mon→M◙o◙n.  
@@ -184,10 +184,11 @@ function file_loaded()
 end
 
 function apply_astreamselect(map)  --@script-message, @playback-restart, @on_toggle & @property_handler.
-    map     =   map and loadstring('return '..map)()                              --NATIVE TYPECAST.
-                    or (N~=0 or not OFF and mpv and txt.seeking=='no') and 1 or 0 --DEDUCE INTENDED map.  1=MUTED INVALID WITHOUT CHILDREN, WHO ARE ALWAYS MUTE.  ALWAYS UNMUTE WHEN FIRST-BORN IS seeking.
-    if map == m.map and not af_observed or gp('seeking') then return end  --return CONDITIONS.  EXCESSIVE COMMANDS CAUSE LAG.  af-command FAILS WHEN seeking (audio-params=nil?).  
-    m .map,af_observed = map,nil
+    map    =  map and loadstring('return '..map)()                              --NATIVE TYPECAST.
+                  or (N~=0 or not OFF and mpv and txt.seeking=='no') and 1 or 0 --DEDUCE INTENDED map.  1=MUTED INVALID WITHOUT CHILDREN, WHO ARE ALWAYS MUTE.  ALWAYS UNMUTE WHEN FIRST-BORN IS seeking.
+    if map==m.map and not af_observed or gp('seeking') then return end          --return CONDITIONS.  EXCESSIVE af-COMMANDS CAUSE LAG. FAILS WHEN seeking (audio-params=nil?).  
+    
+    m .map,af_observed = map,nil 
     mp.command(('af-command %s map %d %s'):format(label,map,target or ''))  --target ACQUIRED @property_handler.  
 end
 
@@ -243,23 +244,21 @@ function    event_handler(event)
 end 
 for event in ('file-loaded end-file shutdown playback-restart'):gmatch('[^ ]+') 
 do mp.register_event(event,event_handler) end
-timers.playback_restart = mp.add_periodic_timer(.01,function() playback_restarted = true end,true)  --disabled=true  playback-restart CAN TRIGGER BEFORE aid, BY LIKE 1ms, FOR albumart.
+timers.playback_restart = mp.add_periodic_timer(.01,function() playback_restarted = true end)  --playback-restart CAN TRIGGER BEFORE aid, BY LIKE 1ms, FOR albumart.
 
 function property_handler(property,val) --ALSO @timers.auto.  txtfile INPUT/OUTPUT.  ONLY EVER pcall, FOR RELIABLE INSTANT write & SIMULTANEOUS io.remove.
     p[property or ''] = val             --p['']=nil  DUE TO IDLER.
     seeking           = (p.seeking or  not p['audio-params/samplerate'] or p.pause) and 'yes' or 'no'  --IF FIRST-CHILD seeking/PAUSED, PARENT MUST UNMUTE.  ALSO samplerate=nil OCCURS AS YOUTUBE LOADS.  (AGGRESSIVELY UNMUTE.)  COULD BE RENAMED not_playing_audio.
     speed             =       N==0     and not (property or OFF or p.pause) and loadstring('return '..mp.command_native({'expand-text',o.speed}))() or p.speed  --speed=p.speed UNLESS CONTROLLER SETS EVERY HALF-SECOND, UNLESS OFF OR PAUSED.  ~property MEANS IDLER SETS EVERY HALF-SECOND REAL-TIME, NOT FILM-TIME.
     set_speed         = p.speed~=speed and mp.command(('%s set speed %s'):format(command_prefix,speed))  --CONTROLLER TITULAR command.
-    samples_time      =  property=='af-metadata/'..label   and val['lavfi.astats.Overall.Number_of_samples']/p['audio-params/samplerate']  --ALWAYS A HALF INTEGER, OR nil.  TIME=SAMPLE#/samplerate  (SOURCE SAMPLERATE) 
-    if property      == 'af'  
-    then af_observed  = true  --af-command-OVERRIDE: RESET map.  af/vf OFTEN RESET GRAPH STATES, BUT WITHOUT TRIGGERING playback-restart!
-        return 
-    elseif not mp2os_time or      set_speed and property == 'speed' --4  MORE return CONDITIONS.  1) AWAIT SYNC.  2) set_speed OBSERVATION ENDS HERE. 
-        or         N == 0 and not property  and seeking  == 'no'    --4) CONTROLLER IDLER  ENDS HERE, UNLESS JPEG OR PAUSED/seeking. IT DOES write OBSERVATIONS.  seeking SAVES YOUTUBE LOAD.  AN ISSUE WITH MANY DIRECT LINKS TO 1 function IS COMPLICATED RETURNS.
-        or         N ~= 0 and     property  and not samples_time    --3) CHILD OBSERVATION ENDS HERE, EXCEPT ON astats TRIGGER. CONTROLLER PROCEEDS.
+    samples_time      =           property=='af-metadata/'..label and val['lavfi.astats.Overall.Number_of_samples']/p['audio-params/samplerate']  --ALWAYS A HALF INTEGER, OR nil.  TIME=SAMPLE#/samplerate  (SOURCE SAMPLERATE) 
+    af_observed       =           property=='af' or af_observed  --af-command-OVERRIDE.  af/vf OFTEN RESET GRAPH STATES, BUT WITHOUT TRIGGERING playback-restart!
+    if not mp2os_time or          property=='af' or set_speed and property=='speed'  --5  return CONDITIONS.  1) AWAIT SYNC.  2) af_observed.  3) set_speed OBSERVATION ENDS HERE. 
+        or N         == 0 and not property  and seeking  == 'no' --4) CONTROLLER IDLER  ENDS HERE, UNLESS JPEG OR PAUSED/seeking. IT DOES write OBSERVATIONS.  seeking SAVES YOUTUBE LOAD.  AN ISSUE WITH MANY DIRECT LINKS TO 1 function IS COMPLICATED RETURNS.
+        or N         ~= 0 and     property  and not samples_time --5) CHILD OBSERVATION ENDS HERE, EXCEPT ON astats TRIGGER. CONTROLLER PROCEEDS.
     then return end  
     os_time           =  mp2os_time+mp.get_time()  --TIMEFROM1970 PRECISE TO 10ms.
-    target            =  target or playback_restarted      and (mp.command(('af-command %s map %d astreamselect'):format(label,m.map)) and 'astreamselect' or '')  --NEW MPV OR OLD. v0.37.0+ SUPPORTS TARGETED COMMANDS.  command RETURNS true IF SUCCESSFUL. MORE RELIABLE THAN VERSION NUMBERS BECAUSE THOSE CAN BE ANYTHING.  TARGETED COMMANDS WERE INTRODUCED WITH time-pos BUGFIX.  astreamselect ONLY WORKS AFTER samples_time.
+    target            =  target or seeking=='no'           and (mp.command(('af-command %s map %d astreamselect'):format(label,m.map)) and 'astreamselect' or '')  --NEW MPV OR OLD. v0.37.0+ SUPPORTS TARGETED COMMANDS.  command RETURNS true IF SUCCESSFUL. MORE RELIABLE THAN VERSION NUMBERS BECAUSE THOSE CAN BE ANYTHING.  TARGETED COMMANDS WERE INTRODUCED WITH time-pos BUGFIX.  astreamselect ONLY WORKS AFTER samples_time.
     resync            = (property=='frame-drop-count'      or  os_time-sync_time>o.resync_delay) and os_sync() --ON_LAG & EVERY MINUTE.  ON_LAG COULD MULTI-RESYNC (LINK TO playback-restart).
     initial_time_pos  =  property~='frame-drop-count'      and initial_time_pos or target==''    and samples_time  and samples_time>20 and gp('time-pos')-samples_time  --FOR OLD MPV.  EXCESSIVE LAG RESETS SAMPLE COUNT.  v0.36 CAN'T SYNC WITHOUT astats. BOTH MP4 & MP3 LAGGED BEHIND THE CHILDREN. time-pos, playback-time & audio-pts WORKED WELL OVER 1 MINUTE, BUT NOT 1 HOUR.  SAMPLE COUNT STABILIZES WITHIN 20s (YOUTUBE+lavfi-complex). IT'S ALWAYS A HALF-INTEGER @MEASUREMENT.  initial_time_pos=initial_time_pos_relative_to_samples_time  THIS # STAYS THE SAME FOR THE NEXT 10 HOURS. 
     p['time-pos']     =  initial_time_pos and samples_time and initial_time_pos+samples_time     or gp('time-pos') or 0  --0 DURING YOUTUBE LOAD TO STOP timeout.  OLD MPV USES ALT-METRIC WHOSE CHANGE IS BASED ON astats (METRIC SWITCH). 
@@ -273,7 +272,7 @@ function property_handler(property,val) --ALSO @timers.auto.  txtfile INPUT/OUTP
         apply_astreamselect() end --BUGFIX FOR SLOW FIRST-CHILD, AUTO-DEDUCES map.  LONG YOUTUBE VIDEO-seeking TENDS TO GLITCH.  ALL FAMILY MEMBERS HAVE 2 MOUTHS - THE PARENT UNMUTES ONE OF ITS OWN IF THE FIRST-BORN IS SLOW.  FOR TESTING, GIVE CHILD1 ITS OWN VIDEO & THEN MAKE IT seek. 
     
     if  N           == 0 then for key in ('mute aid sid'):gmatch('[^ ]+')            
-        do toggle    = property==key  and playback_restarted and (not timers[key]:is_enabled() and (timers[key]:resume() or 1) or on_toggle()) end 
+        do toggle    = property== key and playback_restarted and (not timers[key]:is_enabled() and (timers[key]:resume() or 1) or on_toggle()) end 
         osd_message  = samples_time   and not OFF            and o.metadata_osd                and mp.osd_message(mp.get_property_osd('af-metadata/'..label):gsub('\n','    '))  --TAB EACH STAT (TOO MANY LINES), UNLESS OFF.
         txt.speed    = seeking=='yes' and   0     or speed    --seeking→pause FIXES PLAYLIST/YOUTUBE STARTING GLITCHES.
         txt.path     = not block_path and p.path  or ''       --BLANK @load-script & @JPEG.  ALWAYS RELAY path UNLESS block_path.  YOUTUBE SHOULD RELOAD FREELY & INSTANTLY, AFTER FAILURE.
@@ -300,7 +299,7 @@ function property_handler(property,val) --ALSO @timers.auto.  txtfile INPUT/OUTP
     if N           == 0 or not (txtfile and txt.path) then return end --CHILDREN BELOW.  BUT NOT IF BLANK txtfile (EITHER pause OR NOTHING).   
     target_pos      = txt.time_pos+time_from_write*txt.speed          --Δtime_pos=Δos_time*speed
     time_gained     = p['time-pos']-target_pos  
-    accurate_time   = target~=''    or samples_time  --FLAG FOR seek & set_speed.  REQUIRE NEW MPV OR ELSE astats TRIGGER.
+    accurate_time   = target~=''    or samples_time  --FLAG FOR seek/set_speed.  REQUIRE NEW MPV OR ELSE astats TRIGGER.
     seek            = math.abs(time_gained)>o.seek_limit and accurate_time      
     time_gained     = seek and 0    or time_gained                                             --seek→(time_gained=0)
     speed           =    (set_pause or txt.aid=='no' or txt.path=='') and 0                    --0 MEANS pause.  CHILDREN ALWAYS START PAUSED.  BLANK path FOR JPEG. 
@@ -328,8 +327,7 @@ for       property in ('mute aid sid'):gmatch('[^ ]+')  --1SHOT NULL-OP DOUBLE-T
 do timers[property]    = mp.add_periodic_timer(o[('double_%s_timeout'):format(property)],function()end) end
 for key in ('mute aid sid playback_restart'):gmatch('[^ ]+')  --1SHOTS
 do timers[key].oneshot = 1 
-   timers[key]:kill()    end                              --FOR OLD MPV. IT CAN'T START timers DISABLED.
-reload                 = gp('time-pos') and file_loaded() --file-loaded: TRIGGER NOW.
+   timers[key]:kill()    end  --FOR OLD MPV. IT CAN'T START timers DISABLED.
 
 function remove_filter() --@cleanup
     for _,af in pairs(p.af) do af_remove = af.label==label and mp.command(('%s af remove @%s'):format(command_prefix,label)) end  --CHECK FIRST.
@@ -343,14 +341,15 @@ function cleanup()  --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-op
 end 
 for message,fn in pairs({cleanup=cleanup,toggle=on_toggle,resync=os_sync,astreamselect=apply_astreamselect})  --SCRIPT CONTROLS.
 do mp.register_script_message(message,fn) end
+reload = gp('time-pos') and file_loaded() --TRIGGER NOW.
 
-----CONSOLE/GUI COMMANDS:
+----CONSOLE/GUI COMMANDS & EXAMPLE:
 ----script-binding           toggle_aspeed
 ----script-message-to aspeed toggle
 ----script-message-to aspeed cleanup
 ----script-message           resync
 ----script-message           astreamselect <map>
-----script-message           astreamselect  0
+----script-message           astreamselect 0
 
 ----APP VERSIONS:
 ----MPV      : v0.38.0(.7z .exe v3 .apk)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)    ALL TESTED.

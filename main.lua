@@ -127,18 +127,18 @@ timers.title          = mp.add_periodic_timer(0              ,title_remove)  --t
 for _,timer in pairs(timers) 
 do    timer.oneshot   = 1 --ALL 1SHOT.
       timer:kill() end    --FOR OLD MPV. IT CAN'T START timers DISABLED.
-restart               = gp('time-pos') and playback_restart()  --file-loaded: TRIGGER NOW.
 
 function cleanup()  --@script-message. ENABLES SCRIPT-RELOAD WITH NEW script-opts.
     mp.keep_running = false  --false FLAG EXIT: COMBINES overlay-remove, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
 end
 for message,fn in pairs({cleanup=cleanup,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.  
 do mp.register_script_message(message,fn) end
+restart = gp('time-pos') and playback_restart()  --TRIGGER NOW.
 
 ----CONSOLE/GUI COMMANDS (main=_):
 ----script-message-to _ cleanup
 ----script-message      title_remove
-----script-message      title  <data>       <title_duration>
+----script-message      title <data>        <title_duration>
 ----script-message      title ${media-title} 6*math.random()
 
 ----mpv TERMINAL COMMAND EXAMPLES:
@@ -161,7 +161,7 @@ do mp.register_script_message(message,fn) end
 ----SAFETY INSPECTION: LUA SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path expand-text show-text seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* SAFE EXCEPT FOR script-opts WHICH MAY HOOK AN UNSAFE EXECUTABLE.
 ----~200 LINES & ~2000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
 ----FUTURE VERSION SHOULD REMOVE QUOTES FROM URLs WHO ARE DRAG & DROPPED (PATH_HANDLER).
-----FUTURE VERSION SHOULD HAVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout & o.toggle_command. ALL SCRIPTS SHOULD HAVE THESE, UNLESS main OPERATES ALL DOUBLE-TAPS.
+----FUTURE VERSION SHOULD HAVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout & o.toggle_command.
 ----FUTURE VERSION SHOULD ALSO HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED.  NEEDED FOR android albumart.
 ----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts. function on_update.
 
