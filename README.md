@@ -77,20 +77,23 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 Give mpv its own window then press ` & then enter any of these commands (but with proper inputs). The bottom of every script has exact examples, like how to replace black pads with white pads.
 
 - `script-binding toggle_aspeed `
-- `script-binding toggle_crop   `
-- `script-binding toggle_pad    `
-- `script-binding toggle_mask   `
+- `script-binding toggle_crop`
+- `script-binding toggle_pad`
+- `script-binding toggle_mask`
 - `script-binding toggle_complex`
-- `script-message cleanup       `
-- `script-message astreamselect <map>      `
+- `script-message toggle`
+- `script-message cleanup`
+- `script-message title_remove`
+- `script-message title         <data> <title_duration>`
+- `script-message astreamselect <map>`
 - `script-message detect_crop   <show_text>`
-- `script-message apply_aspect  <aspect>   `
-- `script-message apply_crop    <meta>     `
-- `script-message apply_pad     <pad_options> <pad_scale_flags>`
+- `script-message apply_crop    <meta>`
+- `script-message apply_pad     <pad_options>       <pixelformat>   <pad_scale_flags> <aspect> <par>`
+- `script-message apply_aspect         <aspect>     <toggle_duration> <toggle_t_delay> <toggle_expr>`
 - `script-message-to automask apply_eq <brightness> <toggle_duration> <toggle_t_delay> <toggle_expr>`
 
 ## Latest Updates
-Above scripts in `mpv-scripts.zip` haven't been properly released yet.  I still have to test smartphone handling, & improve script-messaging.
+Above scripts in `mpv-scripts.zip` haven't been properly released yet.  I still have to test smartphone handling, & improve autocomplex default.
 - Added `o.android`, `o.windows`, `o.linux` & `o.darwin` platform overrides to all scripts.  Smartphones work better with different options, like binacles.
 - Added `o.toggle_command` to all scripts except main.  All toggles can activate any command. Replaces `o.osd_on_toggle` for graph inspections.  
 - Added `o.double_aid_timeout` to aspeed, autocrop & automask. Double-aid is similar to double-mute, due to Android (laggy trigger).  A new `playback_restarted` timer blocks all double-tap timers from misfiring. 
@@ -108,8 +111,8 @@ Above scripts in `mpv-scripts.zip` haven't been properly released yet.  I still 
 - Removed `\\,` from all graphs.
 - All scripts may now `load` *after* `file-loaded`.
 - autocrop.lua: `o.limits` now searches `media-title` as well as `path`.  Replaced `o.pad_color` with `o.pad_options` (`x:y:color`). Improved JPEG reliability & `o.meta_osd`.  Removed `function start_file` - now uses `seek` instead of `set start`.
-- automask.lua: Returned `o.fps`. If produced @30fps, film must also be 30fps.  Improved `o.rotations` padding.  Bugfix for examples (I broke half of them in the last release).  Added examples, `SPINNING_TRIANGLES` & `SPINNING_SQUARES_DUAL` (opposing twirls). Removed use of `between`.  More examples which load fast.
+- automask.lua: Added examples `SPINNING_TRIANGLES` (new default) & `SPINNING_SQUARES_DUAL` (opposing twirls). Returned `o.fps`. If produced @30fps, film should also be 30fps.  Improved `o.rotations` padding.  Bugfix for examples (I broke half of them in the last release).  Removed use of `between`.  More examples which load fast.
 - aspeed.lua: `o.speed` now set every half-second in real-time, not film-time.  `--no-config` bugfix for standalone mpv. Removed `o.clocks.no_locales` flag.  Improved AbDays (more accurate, more lowercase).  No-Armenian override for Android.  Faster YouTube load by always loading path - then the controller blocks JPEG using a `block_path` switch.  Enabled `graph` randomization @file-loaded. Improved feedback reliability by checking `samplerate`.  Resync `on_toggle`. Improved event-handling.
 - autocomplex.lua: Bugfix for `aid` off/on. It toggles off & on with only one `aid`-click.
-- autocrop/automask: `insta_pause` removed from `start-file` function, so can pause during YouTube load.
+- autocrop/automask: Bugfix for starting stutter.  `insta_pause` removed from `start-file` function, so can pause during YouTube load. 
 
