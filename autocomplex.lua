@@ -56,9 +56,10 @@ options                 = {
         dual_scale = {},rotate='0',zoompan='1',overlay='(W-w)/2:H*.50-h/2',filterchain='shuffleplanes=1,lutrgb=g=val/4',  --SIMPLE COMPLEX.
     },
 }
-o,p,m,timers = {},{},{},{}    --o,p=options,PROPERTIES  m=MEMORY={graph,'android-surface-size'}  timers={mute,sid,playback_restart,seek}  playback_restart BLOCKS THE PRIOR 2.
+o,p,m,timers         = {},{},{},{} --o,p=options,PROPERTIES  m=MEMORY={graph,'android-surface-size'}  timers={mute,sid,playback_restarted,seek}  playback_restarted BLOCKS THE PRIOR 2.
+android_surface_size = {}          --{w,h}
 
-function  gp(property)  --ALSO @file-loaded, @on_toggle & @property_handler.  GET-PROPERTY.
+function  gp(property)  --ALSO @file-loaded, @seek, @on_toggle & @property_handler.  GET-PROPERTY.
     p       [property]=mp.get_property_native(property)  --mp=MEDIA-PLAYER
     return p[property]
 end
@@ -68,6 +69,8 @@ function round(N,D)  --@file-loaded & @on_toggle.  N & D ARE number/string/nil. 
     return N and math.floor(.5+N/D)*D  --round(N)=math.floor(.5+N)
 end
 
+math.randomseed(os.time()+mp.get_time()) --UNIQUE EACH LOAD.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil
+random        = math.random 
 p  .platform  = gp('platform') or os.getenv('OS') and 'windows' or 'linux' --platform=nil FOR OLD MPV.  OS=Windows_NT/nil.  SMPLAYER STILL RELEASED WITH OLD MPV.
 o[p.platform] = {}                                                         --DEFAULT={}
 for  opt,val in pairs(options)
@@ -109,7 +112,6 @@ o.overlay_scale[2] =     o.overlay_scale[2] or   o.overlay_scale[1]
 o.   dual_scale[2] =     o.   dual_scale[1] and (o.   dual_scale[2] or o.dual_scale[1])*o.freqs_clip_h*2  --CLIP HEIGHT FOR (PADDED) TOP & BOTTOM (*2). RATIO RELATIVE TO display-height.  
 dual               = not o.   dual_scale[1] and ''  --NO dual. OR ELSE dual BELOW.
                      or (",[ov]split[ov],%s[dual],[dual][vo]scale2ref=round(iw*(%s)/4)*4:round(ih*(%s)/4)*4[dual][vo],[vo][dual]overlay='%s'[vo]"):format(o.dual_filterchain,o.dual_scale[1],o.dual_scale[2],o.dual_overlay)  --APPLY FILTERCHAIN FIRST BECAUSE [ov] IS ONLY ~1K, NOT 4K LIKE [vo].
-math.randomseed(os.time()+mp.get_time())  --UNIQUE EACH LOAD.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil
 
 
 graph=("[aid%%d]%s%s,asplit[ao],stereotools,%s,apad,asplit[freqs],aformat=s16,showvolume='%s:0:128:8:t=0:v=0:o=v:%s',format=gbrap,shuffleplanes=1:0,lutrgb='g=0:a=val*(%s)',split=3[vol][BAR],crop='iw/2*3/4:ih*(%s):(iw-ow)/2:(ih-oh)*(1-(%s))',lutrgb='%s',pad=iw*4/3:ih+(ow-iw)/a:(ow-iw)/2:oh-ih:%s,split,hstack,split[feet0],shuffleplanes=0:2:1[feet],[vol][feet0]vstack[vol],[BAR][feet]vstack,lutrgb='a=val*(%s)',split[RGRID],crop=iw/2:ih:0,pad='iw/(%s):0:0:0:BLACK@0',split=10,hstack=10,crop=iw-4:ih:iw-ow,pad=iw+4:0:0:0:BLACK@0[LGRID],[RGRID]crop=iw/2:ih:iw/2,pad='iw/(%s):0:ow-iw:0:BLACK@0',split=10,hstack=10,crop=iw-4:ih:0,pad=iw+4:0:ow-iw:0:BLACK@0[RGRID],[LGRID][RGRID]hstack,pad='0:ih*(%s)/(%s):0:oh-ih:BLACK@0'[grid],[freqs]aformat=s16:2100,asetpts='max(0,PTS-(%s)/TB)',dynaudnorm=%s,aformat=s16,showfreqs='%s:colors=BLUE|RED:%%s',fps='%%s',crop='iw/1.05:ih*(%s)/(%s):0:ih-oh',format=gbrp,scale=iw*2:-1,avgblur=1:2^2+2^1,lutrgb='255*gt(val,140):0:255*gt(val,140)',avgblur=2:2^2+2^1,lutrgb='r=255*gt(val,90):b=255*gt(val,90)',framerate=%%s,format=gbrap,split[R],shuffleplanes=0:0:1:1,hflip[L],[R]shuffleplanes=0:0:2:2[R],[grid][L]scale2ref=iw*2-2:ih,overlay[grid+L],[grid+L][R]overlay=W-w,scale=ceil(iw/4)*4:ceil(ih/4)*4,split=3[LHI][RHI],crop=iw/2[MIDDLE],[LHI]crop=iw/4:ih:0,shuffleplanes=0:2:1[LHI],[RHI]crop=iw/4:ih:iw-ow,shuffleplanes=0:2:1[RHI],[LHI][MIDDLE][RHI]hstack=3[ov],[vol][ov]scale2ref='round(iw*(%s)/4)*4:round(ih*(%s)/(%s)/4)*4'[vol][ov],[ov][vol]overlay=(W-w)/2:H-h,format=bgra,format=gbrap,%s[ov],%%sfps=%s,format=yuva420p,scale=%%d:%%d,format=yuva420p,split=3[vo][t0],crop=1:1:0:0:1:1,fps='%s',lutyuv=0:128:128:0[to]%s,[to][ov]scale2ref,overlay,setpts=PTS-STARTPTS,rotate='%s:c=BLACK@0',pad='iw/(%s):ih/(%s):(ow-iw)/2:(oh-ih)/2:BLACK@0',zoompan='%s:d=1:s=%%dx%%d:fps=%s'[ov],[vo]setpts=PTS-STARTPTS[vo],[vo][ov]overlay='%s'[vo],[t0]trim=end_frame=1[t0],[t0][vo]concat,trim=end=%%s:start_frame=1,fps='%s',setpts=PTS-1/FRAME_RATE/TB,format=%%s[vo]"
@@ -149,18 +151,16 @@ graph=("[aid%%d]%s%s,asplit[ao],stereotools,%s,apad,asplit[freqs],aformat=s16,sh
 
 
 function file_loaded()  --ALSO @property_handler, @on_toggle & @timers.seek.
-    p.start                   = p.start and mp.set_property('start','none') and nil            --start DUE TO INSTA-stop @property_handler.  PERSISTS OTHERWISE.  ALTERNATIVELY CAN seek.  playback-restarted MAY TRIGGER TOO SOON FOR MP4TAG.
-    a_id,v                    = gp('current-tracks/audio/id'),gp('current-tracks/video') or {} --aid (number/string/false) IS A SETTING FOR a_id (number/nil). aid,a_id = false,1 CAN OCCUR @vid RELOAD.  p.aid & a_id ARE KEPT SEPARATE TO HANDLE EVERY CIRCUMSTANCE.
-    gmatch                    = (gp('android-surface-size') or ''):gmatch('[^x]+')  
-    m['android-surface-size'] =   p['android-surface-size']  --'960x444'=SMARTN12-LANDSCAPE.  nil=WINDOWS.  display MAY MEAN SOMETHING ELSE TO A SMARTPHONE.
-    android_surface_size      = {w=gmatch(),h=gmatch()}
-    W                         = o.video_params.w           or gp('display-width' )    or android_surface_size.w or gp('width' ) or v['demux-w'] or 1280  --number/string.  OVERRIDE  OR  display  OR  android  OR  PARAMETERS  OR  TRACK  OR  (FALLBACK FOR RAW MP3 IN VIRTUALBOX).  width=nil SOMETIMES @file-loaded, & MAY BE MUCH LARGER THAN display SINCE MEMORY IS CHEAP.  
-    H                         = o.video_params.h           or gp('display-height')    or android_surface_size.h or gp('height') or v['demux-h'] or 720
-    alpha                     = gp('video-params/alpha')   or v.image                 or not v.id --MPV REQUIRES EXTRA ~.1s TO DETECT alpha, SO GUESS FOR image & ~v.id.
-    format                    = o.video_params.pixelformat or gp('current-vo')=='shm' and 'yuv420p' or alpha and 'yuva420p'  or 'yuv420p'  --OVERRIDE  OR  SHARED-MEMORY  OR  TRANSPARENT  OR  NORMAL.  FORCING yuv420p OR yuva420p IS MORE RELIABLE. MPV.APP COMPATIBLE WITH TRANSPARENCY, BUT NOT SMPLAYER.APP.  overlay FORCES yuva420p, BUT alpha ON FILM TRIGGERS BUG/S IN OTHER SCRIPT/S.  lavfi-complex CAN'T DETECT WHETHER alpha EVER EXISTED WITHOUT A DELAYED TRIGGER, BUT THE .1s DELAY CAN CAUSE STUTTER/LAG.
-    OFF                       = OFF or not a_id            or not vstack  --FORCE OFF.
-    if OFF then OFF           = nil  --FORCE TOGGLE OFF, IF OFF.  ALSO COVERS OFF CASES. EXAMPLE: JPEG=OFF-albumart.  SOMETIMES A file-loaded CAN BE JUST A TOGGLE OFF.
-         on_toggle()          
+    p.start   = p.start and mp.set_property('start','none') and nil            --REMOVE start; DUE TO INSTA-stop @property_handler.  PERSISTS OTHERWISE.  ALTERNATIVELY CAN seek.
+    a_id,v    = gp('current-tracks/audio/id'),gp('current-tracks/video') or {} --aid (number/string/false) IS A SETTING FOR a_id (number/nil). aid,a_id = false,1 CAN OCCUR @vid RELOAD.  p.aid & a_id ARE KEPT SEPARATE TO HANDLE EVERY CIRCUMSTANCE.
+    W         = o.video_params.w           or gp('display-width'       ) or android_surface_size.w or gp('width' ) or v['demux-w'] or 1280  --number/string.  OVERRIDE  OR  display  OR  android  OR  PARAMETERS  OR  TRACK  OR  (FALLBACK FOR RAW MP3 IN VIRTUALBOX).  width=nil SOMETIMES @file-loaded, & MAY BE MUCH LARGER THAN display SINCE MEMORY IS CHEAP.  
+    H         = o.video_params.h           or gp('display-height'      ) or android_surface_size.h or gp('height') or v['demux-h'] or 720
+    alpha     = gp('video-params/alpha')   or v.image                    or not v.id  --MPV REQUIRES EXTRA ~.1s TO DETECT alpha, SO GUESS FOR image & ~v.id.
+    format    = o.video_params.pixelformat or gp('current-vo')=='shm'    and 'yuv420p' or alpha and 'yuva420p' or 'yuv420p'  --OVERRIDE  OR  SHARED-MEMORY  OR  TRANSPARENT  OR  NORMAL.  FORCING yuv420p OR yuva420p IS MORE RELIABLE. MPV.APP COMPATIBLE WITH TRANSPARENCY, BUT NOT SMPLAYER.APP.  overlay FORCES yuva420p, BUT alpha ON FILM TRIGGERS BUG/S IN OTHER SCRIPT/S.  lavfi-complex CAN'T DETECT WHETHER alpha EVER EXISTED WITHOUT A DELAYED TRIGGER, BUT THE .1s DELAY CAN CAUSE STUTTER/LAG.
+    OFF       = OFF or not a_id            or not vstack  --FORCE OFF.
+    if OFF 
+    then OFF  = nil  --FORCE TOGGLE OFF, IF OFF.  ALSO COVERS OFF CASES. EXAMPLE: JPEG=OFF-albumart.  SOMETIMES A file-loaded CAN BE JUST A TOGGLE OFF.
+         on_toggle() 
          return end  --ON BELOW.
     
     ov_w,ov_h,p.duration = round(W,4),round(H*o.freqs_clip_h*2,4),round(gp('duration'),.001) --PRIMARY OVERLAY SCALE (w & h), FOR zoompan. vstack*2 FACTOR (ALSO VALID IF TOP-ONLY).  THE DUAL USES scale2ref.   duration NEAREST MILLISECOND. ALTERNATIVE IS TO mp.add_hook('on_unload',...).
@@ -174,7 +174,7 @@ function file_loaded()  --ALSO @property_handler, @on_toggle & @timers.seek.
                       or           v.image  and ('[vid%d]scale=%d:%d,format=yuva420p,loop=-1:1[vo],[ov]split[ov],trim=end_frame=1,crop=1:1:0:0:1:1,format=yuva420p,scale=%d:%d,setsar[t0],[t0][vo]concat,trim=start_frame=1,'):format(v.id,W,H,W,H)  --CASE 2 (albumart) IS THE MOST COMPLICATED. albumart IS LOOPED, WITH ATOMIC TIMESTAMP FRAME [t0] PREPENDED & TRIMMED, TO SUPPORT PROPER seeking.  ALTERNATIVE IS TO INSERT time-pos @seek BUT THAT CAUSED SOME LAG.
                       or                         '[ov]split[ov],crop=1:1:0:0:1:1,lutyuv=0:128:128:0,' --CASE 3  (RAW AUDIO)  underlay USES [ov] (SPECTRUM) INSTEAD OF [vid#], TO BUILD BLANK 1x1 SCALED UP AS THOUGH IT'S A FILM.
                       or                         ''                                                   --CASE 4 IS MISSING: ~a_id + o.sine_mix  IT NEEDS TOGGLE TOO, FOR sine_mix ON JPEG.  A VIDEO CAN HAVE AUDIO ADDED TO IT, LIKE AUDIO CAN HAVE VIDEO ADDED TO IT.
-    m.graph         = graph: format(a_id,freqs_rate,freqs_fps,framerate,underlay,W,H,ov_w,ov_h,p.duration,format):gsub('%(random%)','('..math.random()..')') 
+    m.graph         = graph: format(a_id,freqs_rate,freqs_fps,framerate,underlay,W,H,ov_w,ov_h,p.duration,format):gsub('%(random%)','('..random()..')') 
     mp.set_property('lavfi-complex',m.graph)  --FOR graph BYTECODE.  
 end 
 
@@ -204,24 +204,26 @@ function    event_handler(event)
     elseif  event=='file-loaded' then file_loaded()   
     elseif  event=='end-file'    then W,playback_restarted = nil  --CLEAR SWITCHES.
     elseif  event=='seek'        then on_seek = gp('time-remaining')==0 and mp.command('playlist-next force') or timers.seek:resume()  --SKIP-10 BUGFIX FOR seek PASSED end-file.  playlist-next FOR MPV PLAYLIST. force FOR SMPLAYER PLAYLIST.  A CONVENIENT WAY TO SKIP NEXT TRACK IN SMPLAYER IS TO SKIP 10 MINUTES, PASSED end-file.
-    else    timers.playback_restart:resume() end  --UNBLOCKS TOGGLE-TIMERS.
+    else    timers.playback_restarted:resume() end  --UNBLOCKS TOGGLE-TIMERS.
 end 
 for event in ('start-file file-loaded end-file seek playback-restart'):gmatch('[^ ]+') 
 do mp.register_event(event,event_handler) end
 
-timers.playback_restart = mp.add_periodic_timer(.01,function() playback_restarted = true end)  --playback-restart CAN TRIGGER BEFORE aid, BY LIKE 1ms, FOR albumart.  aid FULLY TOGGLES THIS SCRIPT, SO IT'S LIKE FATAL.
-timers.seek             = mp.add_periodic_timer(.5 ,function() reload             = start_time and math.abs(start_time-gp('time-pos'))>1 and file_loaded() end)  --JPEG PRECISE seeking (hr-seek).  TAKES <HALF A SECOND FOR ACCURATE time-pos.  IF STARTPTS CHANGES MORE THAN 1s IT SHOULD BE RESET (FOR OTHER SCRIPT/S).  A FUTURE VERSION COULD USE AUDIO TIME-STREAM INSTEAD.  IMPRECISE-seek TRIGGERS playlist-next OR playlist-prev IN JPEG-PLAYLIST.
+timers.playback_restarted = mp.add_periodic_timer(.01,function() playback_restarted = true end)  --playback-restart CAN TRIGGER BEFORE aid, BY LIKE 1ms, FOR albumart.  aid FULLY TOGGLES THIS SCRIPT, SO IT'S LIKE FATAL.
+timers.seek               = mp.add_periodic_timer(.5 ,function() reload             = start_time and math.abs(start_time-gp('time-pos'))>1 and file_loaded() end)  --JPEG PRECISE seeking (hr-seek).  TAKES <HALF A SECOND FOR ACCURATE time-pos.  IF STARTPTS CHANGES MORE THAN 1s IT SHOULD BE RESET (FOR OTHER SCRIPT/S).   MAYBE A NULL AUDIO STREAM COULD BE SIMPLER.  IMPRECISE seek TRIGGERS playlist-next OR playlist-prev.
 
 function property_handler(property,val)   
-    p[property] = val
+    p[property]              = val
+    if property             == 'android-surface-size'
+    then gmatch              = (val or ''):  gmatch('[^x]+')  --'960x444'=SMARTN12-LANDSCAPE.  nil=WINDOWS.  display MAY MEAN SOMETHING ELSE TO A SMARTPHONE.
+        android_surface_size = {w=gmatch(),h=gmatch()} end
     if not playback_restarted then return end  --PROCEED IF LOADED.
     
     for key in ('mute sid'):gmatch('[^ ]+')
-    do toggle =      property==key   and (not timers[key]:is_enabled() and (timers[key]:resume() or 1) or on_toggle()) end 
-    reload    = ( nil  --4 RELOAD CONDITIONS: @android-surface-size, @fs, @aid & @vid.
-                  or property=='android-surface-size'  --RELOAD @fullscreen ROTATION: LANDSCAPE/PORTRAIT.
-                  or property=='fs' 
-                ) and W              and  p.fs    and m['android-surface-size']~=p['android-surface-size'] and file_loaded()
+    do toggle = property==key        and (not timers[key]:is_enabled() and (timers[key]:resume() or 1) or on_toggle()) end 
+    ow        = o.video_params.w or p['display-width' ] or  android_surface_size.w or p.width  --NEW CANVAS SIZE.
+    oh        = o.video_params.h or p['display-height'] or  android_surface_size.h or p.height
+    reload    =               (W~=ow or H~=oh)          and (p.platform~='android' or p.fs) and file_loaded()  --RELOAD @NEW-CANVAS UNLESS ANDROID/HALF-SCREEN (IT'S SPECIAL).  COVERS SMARTPHONE ROTATION. 
     val       =   nil                                                 --TRACK CHANGE BELOW.
                   or property=='aid' and (a_id    and 'no' or 'auto') --DOESN'T SWITCH BTWN aid TRACKS.  THIS SCRIPT TOGGLES ON SINGLE-aid-TAP.
                   or property=='vid' and (v.id==1 and  2   or 'auto') --ONLY GOOD FOR SWITCHING BTWN 1 & 2.
@@ -236,7 +238,7 @@ function property_handler(property,val)
                 ..'       playlist-play-index        current;'
     ):format(p.start,property,val))
 end 
-for property in ('fs mute sid aid vid android-surface-size'):gmatch('[^ ]+')  --BOOLEANS NUMBERS string
+for property in ('fs mute sid aid vid display-width display-height width height android-surface-size'):gmatch('[^ ]+')  --BOOLEANS NUMBERS string
 do mp.observe_property(property,'native',property_handler) end
 
 for          property in ('mute sid'):gmatch('[^ ]+')  --NULL-OP DOUBLE-TAPS.  current-tracks/sub/selected(double_sub_timeout) IS ALT-TOGGLE REQUIRING OFF/ON, AS OPPOSED TO ID#.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).  
@@ -249,7 +251,9 @@ function cleanup()  --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-op
     OFF             = OFF or on_toggle() or true --FORCE TOGGLE OFF.  AN ALTERNATIVE COULD INSTA-stop, BUT THEN start=time-pos PERSISTS.
     mp.keep_running = false                      --false FLAG EXIT: COMBINES remove_key_binding, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
 end 
-for message,fn in pairs({cleanup=cleanup,toggle=on_toggle})  --SCRIPT CONTROLS.
+
+function callstring(string) loadstring(string)() end  --@script-message.  A 3RD PARTY CAN FORCE ALL SCRIPTS TO RECOMPUTE THEIR randomseed.
+for message,fn in pairs({   loadstring=callstring,cleanup=cleanup,toggle=on_toggle})  --SCRIPT CONTROLS.
 do mp.register_script_message(message,fn) end
 reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.  SNAPS EMBEDDED MPV.
 
@@ -257,6 +261,8 @@ reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.  SNAPS EM
 ----script-binding                toggle_complex
 ----script-message-to autocomplex toggle
 ----script-message-to autocomplex cleanup
+----script-message-to autocomplex loadstring <string>
+----script-message                loadstring math.randomseed(365)
 
 ----APP VERSIONS:
 ----MPV      : v0.38.0(.7z .exe v3 .apk)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)    ALL TESTED.  v0.34 INCOMPATIBLE WITH BOTH yt-dlp_x86 & THIS SCRIPT.
@@ -266,7 +272,7 @@ reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.  SNAPS EM
 ----SMPLAYER : v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
 
-----~300 LINES & ~6000 WORDS.  5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (graph SPECS), & END (CONSOLE COMMANDS). ALSO BLURBS ON WEB.  CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
+----~300 LINES & ~7000 WORDS.  5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (graph SPECS), & END (CONSOLE COMMANDS). ALSO BLURBS ON WEB.  CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
 ----FUTURE VERSION SHOULD MOVE o.double_mute_timeout, o.double_aid_timeout & o.toggle_command TO main.lua. ALL SCRIPTS SHOULD HAVE THESE, UNLESS main OPERATES ALL DOUBLE-TAPS.
 ----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts; function on_update.
 ----FUTURE VERSION SHOULD IMPROVE IMPLEMENTATION OF o.dual_scale TO {number/string}, NOT JUST {number}.

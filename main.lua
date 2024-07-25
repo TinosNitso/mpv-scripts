@@ -53,6 +53,8 @@ function  gp(property) --ALSO @playback-restart.                GET-PROPERTY
     return p[property]
 end
 
+math.randomseed(os.time()+mp.get_time()) --UNIQUE EACH LOAD.  os.time=INTEGER SECONDS FROM 1970.  mp.get_time=μs IS MORE RANDOM THAN os.clock=ms.  os.getenv('RANDOM')=nil  BUT COULD ECHO BACK %RANDOM% OR $RANDOM USING A subprocess. 
+random        = math.random              --MAY SIMPLIFY SCRIPT-MESSAGING.
 p  .platform  = gp('platform') or os.getenv('OS') and 'windows' or 'linux' --platform=nil FOR OLD MPV.  OS=Windows_NT/nil.  SMPLAYER STILL RELEASED WITH OLD MPV.
 o[p.platform] = {}                                                         --DEFAULT={}
 for  opt,val in pairs(options)                                             
@@ -91,7 +93,6 @@ do script_lower,script_loaded = script:lower(),nil --SEARCH NOT CASE SENSITIVE.
     script                    = ('%s/%s'):format(directory,script)  --'/' FOR windows & UNIX.  COULD SET './'=''.
     load_script               = not script_loaded and mp.commandv('load-script',script) and table.insert(p.scripts,script) end  --commandv FOR FILENAMES.
 mp.set_property_native('scripts',p.scripts) --OPTIONAL: DECLARE scripts.
-math.randomseed(os.time()+mp.get_time())    --UNIQUE EACH LOAD.  os.time=INTEGER SECONDS FROM 1970.  mp.get_time=μs IS MORE RANDOM THAN os.clock=ms.  os.getenv('RANDOM')=nil  BUT COULD ECHO BACK %RANDOM% OR $RANDOM USING A subprocess. 
 
 function playback_restart()  --ALSO @on_pause
     playback_restarted = true
@@ -128,18 +129,19 @@ for _,timer in pairs(timers)
 do    timer.oneshot   = 1 --ALL 1SHOT.
       timer:kill() end    --FOR OLD MPV. IT CAN'T START timers DISABLED.
 
-function cleanup()  --@script-message. ENABLES SCRIPT-RELOAD WITH NEW script-opts.
-    mp.keep_running = false  --false FLAG EXIT: COMBINES overlay-remove, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
-end
-for message,fn in pairs({cleanup=cleanup,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.  
-do mp.register_script_message(message,fn) end
-restart = gp('time-pos') and playback_restart()  --TRIGGER NOW.
+function cleanup() mp.keep_running = false       end  --@script-message.  false FLAG EXIT: COMBINES overlay-remove, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
+function callstring(string) loadstring(string)() end  --@script-message.  A 3RD PARTY CAN FORCE ALL SCRIPTS TO RECOMPUTE THEIR randomseed (FOR BETTOR OR WORSE).
+for message,fn in pairs({   loadstring=callstring,cleanup=cleanup,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.  
+do mp.register_script_message(message,fn)  end
+reload = gp('time-pos') and playback_restart()  --TRIGGER NOW.
 
 ----CONSOLE/GUI COMMANDS (main=_):
 ----script-message-to _ cleanup
+----script-message-to _ loadstring <string>
+----script-message      loadstring math.randomseed(365)
+----script-message      title      <data>          <title_duration>
+----script-message      title      ${media-title}   6*random()
 ----script-message      title_remove
-----script-message      title <data>        <title_duration>
-----script-message      title ${media-title} 6*math.random()
 
 ----mpv TERMINAL COMMAND EXAMPLES:
 ----WINDOWS   CMD:  MPV\MPV --no-config --script=. TEST.MP4    (PLACE scripts & TEST.MP4 INSIDE smplayer.exe FOLDER. THEN COPY/PASTE COMMAND INTO NOTEPAD & SAVE AS TEST.CMD, & DOUBLE-CLICK IT.)
@@ -159,7 +161,7 @@ restart = gp('time-pos') and playback_restart()  --TRIGGER NOW.
 ----SMPLAYER : v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
 ----SAFETY INSPECTION: LUA SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path expand-text show-text seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* SAFE EXCEPT FOR script-opts WHICH MAY HOOK AN UNSAFE EXECUTABLE.
-----~200 LINES & ~2000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
+----~200 LINES & ~3000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
 ----FUTURE VERSION SHOULD REMOVE QUOTES FROM URLs WHO ARE DRAG & DROPPED (PATH_HANDLER).
 ----FUTURE VERSION SHOULD HAVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout & o.toggle_command.
 ----FUTURE VERSION SHOULD ALSO HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED.  NEEDED FOR android albumart.

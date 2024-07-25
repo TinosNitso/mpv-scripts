@@ -8,7 +8,7 @@ options                      = {
     double_mute_timeout      =         .5 ,  --SECONDS FOR DOUBLE-MUTE-TOGGLE        (m&m DOUBLE-TAP).  SET TO 0 TO DISABLE.                    IDEAL FOR SMPLAYER.      REQUIRES AUDIO IN SMPLAYER (OR ELSE USE j&j).  VARIOUS SCRIPT/S CAN BE SIMULTANEOUSLY TOGGLED USING THESE 3 MECHANISMS. 
     double_aid_timeout       =         .5 ,  --SECONDS FOR DOUBLE-AUDIO-ID-TOGGLE    (#&# DOUBLE-TAP).  SET TO 0 TO DISABLE.  BAD FOR YOUTUBE.  ANDROID MUTES USING aid. REQUIRES AUDIO. 
     double_sid_timeout       =         .5 ,  --SECONDS FOR DOUBLE-SUBTITLE-ID-TOGGLE (j&j DOUBLE-TAP).  SET TO 0 TO DISABLE.  BAD FOR YOUTUBE.  IDEAL FOR SMARTPHONE.    REQUIRES sid (sub-create-cc-track FOR BLANK).
-    extra_devices_index_list =         {} ,  --TRY {2,3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS.  1=auto  3=INTERNAL.  OVERLAP CAUSES INTERNAL ECHO (AVOID).  EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS & STREAM.  INTERNAL PC SPEAKERS COUNT AS 2 (2 DOUBLE-MOUTHED CHILDREN).
+    extra_devices_index_list =         {} ,  --TRY {2,3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS.  1=auto  3=INTERNAL PC.  OVERLAP CAUSES INTERNAL ECHO (AVOID).  EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS & STREAM.  INTERNAL PC SPEAKERS COUNT AS 2 (2 DOUBLE-MOUTHED CHILDREN).
     toggle_command           =         '' ,  --EXECUTES on_toggle, UNLESS BLANK.  'show-text ""' CLEARS THE OSD.  CAN DISPLAY ${media-title}, ${mpv-version}, ${ffmpeg-version}, ${libass-version}, ${platform}, ${current-ao}, ${af}, ${lavfi-complex}.  CAN ALSO 'show-text "'.._VERSION..'"'  OR  'set speed 1'.
     speed                    = '${speed}' ,  --EXPRESSION FOR DYNAMIC speed CONTROL, set EVERY HALF-SECOND.  CAN USE ANY MPV PROPERTY (LIKE ${percent-pos}) IN ANY LUA FORMULA.  '${speed}' IS A NULL-OP.  TOGGLES WITH DOUBLE-mute!
     -- speed                 = '     ${speed}<1.2 and ${speed}+.01 or 1    ',  --UNCOMMENT TO CYCLE speed BTWN 1 & 1.2 OVER 10s.  PRESS BACKSPACE TO RESET BACK TO 1.  REPLACE 1.2 & 1 FOR DIFFERENT BOUNDS.
@@ -85,7 +85,7 @@ options                      = {
     },
     params  = {N=0,pid},                   --params DECLARATION.  N=0 is_controller.  N=1 IS FIRST-CHILD & PROVIDES FEEDBACK.  PARENT PROCESS-ID DETERMINES txtfile THE CHILDREN READ FROM.  ALTERNATIVE IS TO DEFINE ENVIRONMENTAL VARIABLE/S FOR CHILDREN, BUT o.params IS SIMPLER.
 }
-o,p,m,timers = {},{},{},{}                         --o,p=options,PROPERTIES  m=MEMORY={map,graph}  timers={mute,aid,sid,playback_restart,auto,os_sync,osd}  playback_restart BLOCKS THE PRIOR 3.
+o,p,m,timers = {},{},{},{}                         --o,p=options,PROPERTIES  m=MEMORY={map,graph}  timers={mute,aid,sid,playback_restarted,auto,os_sync,osd}  playback_restarted BLOCKS THE PRIOR 3.
 txt,devices,clocks,abdays,LOCALES = {},{},{},{},{} --txtfile IS WRITTEN FROM txt.  devices=LIST OF DEVICES WHICH WILL ACTIVATE, STARTING WITH EXISTING audio-device.  LOCALES IS LIST OF SUB-TABLES, FOR LOTE. NEVER USED BY CHILDREN (UNLESS THEY ALSO HAVE A clock TOO).  os.setlocale('RUSSIAN') LITERALLY BLUE-SCREENS (MPV HAS ITS OWN BSOD).
 
 function  gp(property)  --ALSO @property_handler.               GET-PROPERTY
@@ -102,6 +102,8 @@ function clip(N,min,max)  --@property_handler.  N, min & max ARE number/nil.  FF
     return N and min and max and math.min(math.max(N,min),max)  --MIN MAX MIN MAX
 end
 
+math.randomseed(os.time()+mp.get_time()) --UNIQUE EACH LOAD.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil
+random        = math.random              --MAY SIMPLIFY SCRIPT-MESSAGING.
 p  .platform  = gp('platform') or os.getenv('OS') and 'windows' or 'linux' --platform=nil FOR OLD MPV.  OS=Windows_NT/nil.  SMPLAYER STILL RELEASED WITH OLD MPV.
 o[p.platform] = {}                                                         --DEFAULT={}
 for  opt,val in pairs(options) 
@@ -160,7 +162,6 @@ if N==0 then clock   = clocks[1] and mp.create_osd_overlay('ass-events')  --AT L
     for mutelr in ('mutel muter'):gmatch('[^ ]+') 
         do  __script_opts = mpv and not (N==1 and mutelr==o.mutelr) and ('--script-opts=%s%s-mutelr=%s,%s-params={N=%d;pid=%d}'):format(p['script-opts'],label,mutelr,label,N,p.pid)  --ONLY IF mpv & NOT PRIMARY CHANNEL.  mutelr & audio-device VARY.  CHILDREN WITH 2 MOUTHS MAY BE MUTED LEFT OR RIGHT.
             run_mpv       = __script_opts     and mp.command_native({'run',mpv,'--idle','--no-config',__script,__script_opts,__audio_device}) end end end  --CHILD SPAWN.  command_native FOR SYMBOLS/nil.  idle/config MUST BE SET IN ADVANCE.  --no-config BLOCKS DOUBLE-LOADING.
-math.randomseed(os.time()+mp.get_time())    --UNIQUE EACH LOAD.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil
 
 
 graph=('stereotools,astats=.5:1,%s,asplit[0],stereotools=%s=1[1],[0][1]astreamselect=2:%%d'):format(o.filterchain,o.mutelr)
@@ -179,14 +180,14 @@ function file_loaded()
     for _,track in pairs(gp('track-list'))  
     do block_path   = block_path and track.type~='audio' end                          --CONTROLLER BLOCKS JPEG.  LOOP OVER ALL TRACKS TO CHECK AUDIO EXISTS.  THE CHILDREN *CAN'T* BLOCK JPEG - IT'S INDISTINGUISHABLE FROM FAILED YOUTUBE, & MUST KEEP RELOADING ASAP.
     m.map           = N~=0       and 1 or 0                                           --0,1=OFF,ON=NO-MUTE,MUTE  CHILDREN ALWAYS mutelr.
-    m.graph         = graph :format(m.map):gsub('%(random%)','('..math.random()..')')
+    m.graph         = graph: format(m.map):gsub('%(random%)','('..random()..')')
     mp.commandv('af','pre',('@%s:lavfi=[%s]'):format(label,m.graph))                  --commandv FOR BYTECODE.  
 end
 
 function apply_astreamselect(map)  --@script-message, @playback-restart, @on_toggle & @property_handler.
     map    =  map and loadstring('return '..map)()                              --NATIVE TYPECAST.
                   or (N~=0 or not OFF and mpv and txt.seeking=='no') and 1 or 0 --DEDUCE INTENDED map.  1=MUTED INVALID WITHOUT CHILDREN, WHO ARE ALWAYS MUTE.  ALWAYS UNMUTE WHEN FIRST-BORN IS seeking.
-    if map==m.map and not af_observed or gp('seeking') then return end          --return CONDITIONS.  EXCESSIVE af-COMMANDS CAUSE LAG. FAILS WHEN seeking (audio-params=nil?).  
+    if map==m.map and not af_observed or gp('seeking') then return end  --return CONDITIONS.  EXCESSIVE af-COMMANDS CAUSE LAG. FAILS WHEN seeking (audio-params=nil?).  
     
     m .map,af_observed = map,nil 
     mp.command(('af-command %s map %d %s'):format(label,map,target or ''))  --target ACQUIRED @property_handler.  
@@ -235,7 +236,7 @@ function    event_handler(event)
     if      event=='file-loaded' then file_loaded() 
     elseif  event=='end-file'    then playback_restarted,block_path = nil  --INSTA-BLOCKS TOGGLE-TIMERS.  ALSO COULD pause CHILDREN.  ~map_restart RE-RANDOMIZES.
     elseif  event=='shutdown'    then os.remove(txtpath) --NO RECYCLE BIN. DELETED EVEN IF CONTROLLER BUGS OUT. 
-    else    timers.playback_restart:resume()             --UNBLOCKS TOGGLE-TIMERS.
+    else    timers.playback_restarted:resume()             --UNBLOCKS TOGGLE-TIMERS.
             initial_time_pos = nil                       --RESET SAMPLE COUNT FOR OLD MPV.
             m.map            = N~=0 and 1 or 0           --RESTART VALUE. 
             apply_astreamselect()  
@@ -244,17 +245,17 @@ function    event_handler(event)
 end 
 for event in ('file-loaded end-file shutdown playback-restart'):gmatch('[^ ]+') 
 do mp.register_event(event,event_handler) end
-timers.playback_restart = mp.add_periodic_timer(.01,function() playback_restarted = true end)  --playback-restart CAN TRIGGER BEFORE aid, BY LIKE 1ms, FOR albumart.
+timers.playback_restarted = mp.add_periodic_timer(.01,function() playback_restarted = true end)  --playback-restart CAN TRIGGER BEFORE aid, BY LIKE 1ms, FOR albumart.
 
 function property_handler(property,val) --ALSO @timers.auto.  txtfile INPUT/OUTPUT.  ONLY EVER pcall, FOR RELIABLE INSTANT write & SIMULTANEOUS io.remove.
     p[property or ''] = val             --p['']=nil  DUE TO IDLER.
-    seeking           = (p.seeking or  not p['audio-params/samplerate'] or p.pause) and 'yes' or 'no'  --IF FIRST-CHILD seeking/PAUSED, PARENT MUST UNMUTE.  ALSO samplerate=nil OCCURS AS YOUTUBE LOADS.  (AGGRESSIVELY UNMUTE.)  COULD BE RENAMED not_playing_audio.
+    seeking           = (p.seeking or  not p['audio-params/samplerate'] or p.pause) and 'yes' or 'no' --COULD BE RENAMED not_playing_audio.  IF FIRST-CHILD seeking/PAUSED, PARENT MUST UNMUTE.  ALSO samplerate=nil OCCURS AS YOUTUBE LOADS.  (AGGRESSIVELY UNMUTE.)  
     speed             =       N==0     and not (property or OFF or p.pause) and loadstring('return '..mp.command_native({'expand-text',o.speed}))() or p.speed  --speed=p.speed UNLESS CONTROLLER SETS EVERY HALF-SECOND, UNLESS OFF OR PAUSED.  ~property MEANS IDLER SETS EVERY HALF-SECOND REAL-TIME, NOT FILM-TIME.
     set_speed         = p.speed~=speed and mp.command(('%s set speed %s'):format(command_prefix,speed))  --CONTROLLER TITULAR command.
     samples_time      =           property=='af-metadata/'..label and val['lavfi.astats.Overall.Number_of_samples']/p['audio-params/samplerate']  --ALWAYS A HALF INTEGER, OR nil.  TIME=SAMPLE#/samplerate  (SOURCE SAMPLERATE) 
     af_observed       =           property=='af' or af_observed  --af-command-OVERRIDE.  af/vf OFTEN RESET GRAPH STATES, BUT WITHOUT TRIGGERING playback-restart!
-    if not mp2os_time or          property=='af' or set_speed and property=='speed'  --5  return CONDITIONS.  1) AWAIT SYNC.  2) af_observed.  3) set_speed OBSERVATION ENDS HERE. 
-        or N         == 0 and not property  and seeking  == 'no' --4) CONTROLLER IDLER  ENDS HERE, UNLESS JPEG OR PAUSED/seeking. IT DOES write OBSERVATIONS.  seeking SAVES YOUTUBE LOAD.  AN ISSUE WITH MANY DIRECT LINKS TO 1 function IS COMPLICATED RETURNS.
+    if not mp2os_time or          property=='af' or set_speed and property=='speed'  --5 return CONDITIONS.  1) AWAIT SYNC.  2) af_observed.  3) set_speed OBSERVATION ENDS HERE. 
+        or N         == 0 and not property  and seeking=='no'    --4) CONTROLLER IDLER  ENDS HERE, UNLESS JPEG OR PAUSED/seeking. IT DOES write OBSERVATIONS.  seeking SAVES YOUTUBE LOAD.  AN ISSUE WITH MANY DIRECT LINKS TO 1 function IS COMPLICATED RETURNS.
         or N         ~= 0 and     property  and not samples_time --5) CHILD OBSERVATION ENDS HERE, EXCEPT ON astats TRIGGER. CONTROLLER PROCEEDS.
     then return end  
     os_time           =  mp2os_time+mp.get_time()  --TIMEFROM1970 PRECISE TO 10ms.
@@ -301,11 +302,11 @@ function property_handler(property,val) --ALSO @timers.auto.  txtfile INPUT/OUTP
     time_gained     = p['time-pos']-target_pos  
     accurate_time   = target~=''    or samples_time  --FLAG FOR seek/set_speed.  REQUIRE NEW MPV OR ELSE astats TRIGGER.
     seek            = math.abs(time_gained)>o.seek_limit and accurate_time      
-    time_gained     = seek and 0    or time_gained                                             --seek→(time_gained=0)
-    speed           =    (set_pause or txt.aid=='no' or txt.path=='') and 0                    --0 MEANS pause.  CHILDREN ALWAYS START PAUSED.  BLANK path FOR JPEG. 
-                      or clip(txt.speed*(1-time_gained/.5)                                     --time_gained→0 OVER NEXT .5 SECONDS (MEASURED IN time-pos, THE astats UPDATE TIME). 
-                              *(1+math.random(-o.max_random_percent,o.max_random_percent)/100) --random BOUNDS [.9,1.1] MAYBE SHOULD BE [.91,1.1]=[1/1.1,1.1].  1% SKEWED TOWARDS SLOWING IT DOWN EXCESSIVELY.
-                              ,txt.speed/o.max_speed_ratio,txt.speed*o.max_speed_ratio)        --speed LIMIT RELATIVE TO CONTROLLER.  15% EXTRA WHEN USER UNPAUSES (FOR CHILDREN TO CATCH UP).
+    time_gained     = seek and 0    or time_gained                                        --seek→(time_gained=0)
+    speed           =    (set_pause or txt.aid=='no' or txt.path=='') and 0               --0 MEANS pause.  CHILDREN ALWAYS START PAUSED.  BLANK path FOR JPEG. 
+                      or clip(txt.speed*(1-time_gained/.5)                                --time_gained→0 OVER NEXT .5 SECONDS (MEASURED IN time-pos, THE astats UPDATE TIME). 
+                              *(1+random(-o.max_random_percent,o.max_random_percent)/100) --random BOUNDS [.9,1.1] MAYBE SHOULD BE [.91,1.1]=[1/1.1,1.1].  1% SKEWED TOWARDS SLOWING IT DOWN EXCESSIVELY.
+                              ,txt.speed/o.max_speed_ratio,txt.speed*o.max_speed_ratio)   --speed LIMIT RELATIVE TO CONTROLLER.  15% EXTRA WHEN USER UNPAUSES (FOR CHILDREN TO CATCH UP).
     set_volume      = txt.volume~= p.volume..'' 
     set_aid         = txt.aid   ~=(p.aid   or 'no')..''    and txt.aid~='no'  --..'' CONVERTS→string.  txt.aid=auto/no/#.  NEVER set no, OR ELSE YOUTUBE TAKES LONGER TO LOAD (~WRONG).  no FOR JPEG.  
     set_pause       = speed>0   == p.pause and (speed ==0  and 'yes' or 'no') --txt.pause INFERRED.
@@ -325,7 +326,7 @@ timers.auto = mp.add_periodic_timer(o.auto_delay,function(            ) pcall(pr
 
 for       property in ('mute aid sid'):gmatch('[^ ]+')  --1SHOT NULL-OP DOUBLE-TAPS.  current-tracks/audio/selected(double_ao_timeout) & current-tracks/sub/selected(double_sub_timeout) ARE STRONGER ALT-CONDITIONS REQUIRING OFF/ON, AS OPPOSED TO ID#.  current-ao ALSO DOES WHAT current-tracks/audio/selected DOES, BUT SAFER @playlist-next.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).  
 do timers[property]    = mp.add_periodic_timer(o[('double_%s_timeout'):format(property)],function()end) end
-for key in ('mute aid sid playback_restart'):gmatch('[^ ]+')  --1SHOTS
+for key in ('mute aid sid playback_restarted'):gmatch('[^ ]+')  --1SHOTS
 do timers[key].oneshot = 1 
    timers[key]:kill()    end  --FOR OLD MPV. IT CAN'T START timers DISABLED.
 
@@ -339,17 +340,21 @@ function cleanup()  --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-op
     set_speed       = p.speed~=1 and mp.command(command_prefix..' set speed 1')  --cleanup_speed=1
     mp.keep_running = false  --false FLAG EXIT: COMBINES overlay-remove, remove_key_binding, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
 end 
-for message,fn in pairs({cleanup=cleanup,toggle=on_toggle,resync=os_sync,astreamselect=apply_astreamselect})  --SCRIPT CONTROLS.
-do mp.register_script_message(message,fn) end
-reload = gp('time-pos') and file_loaded() --TRIGGER NOW.
+
+function callstring(string) loadstring(string)() end  --@script-message.  A 3RD PARTY CAN FORCE ALL SCRIPTS TO RECOMPUTE THEIR randomseed.
+for message,fn in pairs({   loadstring=callstring,cleanup=cleanup,toggle=on_toggle,resync=os_sync,astreamselect=apply_astreamselect})  --SCRIPT CONTROLS.
+do mp.register_script_message(message,fn)  end
+reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.
 
 ----CONSOLE/GUI COMMANDS & EXAMPLE:
 ----script-binding           toggle_aspeed
 ----script-message-to aspeed toggle
 ----script-message-to aspeed cleanup
 ----script-message           resync
+----script-message-to aspeed loadstring    <string>
+----script-message           loadstring    math.randomseed(365)
 ----script-message           astreamselect <map>
-----script-message           astreamselect 0
+----script-message           astreamselect  0
 
 ----APP VERSIONS:
 ----MPV      : v0.38.0(.7z .exe v3 .apk)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)    ALL TESTED.
@@ -359,7 +364,7 @@ reload = gp('time-pos') and file_loaded() --TRIGGER NOW.
 ----SMPLAYER : v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
 
-----~300 LINES & ~7000 WORDS.  SPACE-COMMAS FOR SMARTPHONE.  5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END (CONSOLE COMMANDS). ALSO BLURBS ON WEB.  CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
+----~400 LINES & ~7000 WORDS.  SPACE-COMMAS FOR SMARTPHONE.  5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END (CONSOLE COMMANDS). ALSO BLURBS ON WEB.  CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
 ----FUTURE VERSION SHOULD MOVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout & o.toggle_command TO main.lua. ALL SCRIPTS SHOULD HAVE THESE, UNLESS main OPERATES ALL DOUBLE-TAPS.
 ----FUTURE VERSION SHOULD HAVE o.key_bindings_clock (on_toggle_clock), OR SEPARATE clock.lua.  RESYNCING THE EXACT TICK EVERY MINUTE USES 0% CPU.
 ----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts; function on_update.
