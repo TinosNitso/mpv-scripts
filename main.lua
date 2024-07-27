@@ -1,7 +1,7 @@
 ----NO-WORD-WRAP FOR THIS SCRIPT.  https://GITHUB.COM/yt-dlp/yt-dlp/releases  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY & REDTUBE ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  DON'T FORGET TO UPDATE yt-dlp FOR THE NEWEST YT VIDEOS.  X.COM NOT seeking.
 ----WINDOWS    :  --script=.                       IN SMPLAYER  &/OR  script=../                     IN mpv.conf.  PLACE ALL scripts WITH smplayer.exe & ENTER ITS ADVANCED mpv PREFERENCES.  CAN ALSO CREATE 1-LINE TEXT-FILE  mpv\mpv\mpv.conf  INSIDE smplayer-portable.  mpv.conf ENABLES DOUBLE-CLICKING mpv.exe & DRAG & DROP OF FILES & YOUTUBE URL, IN LINUX/MACOS TOO.  IF NOT PORTABLE, SET-UP IS LIKE FOR LINUX: --script=~/Desktop/mpv-scripts/  
-----LINUX/MACOS:  --script=~/Desktop/mpv-scripts/  IN SMPLAYER  &/OR  script=~/Desktop/mpv-scripts/  IN mpv.conf.  PLACE mpv-scripts ON Desktop.  EDIT ~/.config/mpv/mpv.conf TO DRAG & DROP DIRECTLY ONTO MPV.  LINUX snap: --script=/home/user/Desktop/mpv-scripts/
-----ANDROID    :    script=/sdcard/Android/media/is.xyz.mpv/                IN ADVANCED SETTINGS:  Edit mpv.conf.  PLACE ALL SCRIPTS IN THIS EXACT FOLDER IN INTERNAL MAIN STORAGE. OTHER FOLDERS DON'T WORK IN ANDROID-11.  ENABLE MPV MEDIA-ACCESS USING ITS FILE-PICKER.  'sdcard'~='SD card'(EXTERNAL)  CAN ALSO INSTALL cx-file-explorer & 920 (.APK).  920 CAN HANDLE WORDWRAP & WHITESPACE.  https://SNAPDROP.NET CAN TRANSFER scripts TO /sdcard/Android/media/is.xyz.mpv/
+----LINUX/MACOS:  --script=~/Desktop/mpv-scripts/  IN SMPLAYER  &/OR  script=~/Desktop/mpv-scripts/  IN mpv.conf.  PLACE mpv-scripts ON Desktop.  EDIT ~/.config/mpv/mpv.conf TO DRAG & DROP DIRECTLY ONTO MPV. IN LINUX CAN RIGHT-CLICK ON AN MP4 & OPEN-WITH-MPV.  LINUX snap: --script=/home/user/Desktop/mpv-scripts/
+----ANDROID    :    script=/sdcard/Android/media/is.xyz.mpv/          IN ADVANCED SETTINGS:        Edit mpv.conf.  PLACE ALL SCRIPTS IN THIS FOLDER IN INTERNAL MAIN STORAGE. OTHER FOLDERS DON'T WORK.  ENABLE MPV MEDIA-ACCESS USING ITS FILE-PICKER, & SET BACKGROUND-PLAYBACK TO ALWAYS (GENERAL SETTING).  'sdcard'~='SD card'(EXTERNAL)  CAN ALSO INSTALL cx-file-explorer & 920 (.APK).  920 CAN HANDLE WORDWRAP & WHITESPACE.  https://SNAPDROP.NET CAN TRANSFER TO /sdcard/Android/media/is.xyz.mpv/
 
 options     = {                
     scripts = {                   --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE.  CAN TOGGLE THEM USING TYPOS/RENAME.  REPETITION BLOCKED.  SPACES & '' ALLOWED.
@@ -46,8 +46,12 @@ options     = {
         options = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',}, --options APPEND, NOT REPLACE. 
     },
 }
-
 o,p,timers = {},{},{}  --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file
+
+function typecast(string)  --ALSO @script-message & @title_update.  string MAY NOT BE 'string', FOR SIMPLICITY.  load INVALID ON MPV.APP.  CONSOLE CAN USE THIS TO PIPE FROM WITHIN LUA.
+    return   type(string)=='string' and loadstring('return '..string)() or string
+end
+
 function  gp(property) --ALSO @playback-restart.                GET-PROPERTY
     p       [property]=mp.get_property_native(property)  --mp=MEDIA-PLAYER
     return p[property]
@@ -61,7 +65,7 @@ for  opt,val in pairs(options)
 do o[opt]     = val end               --CLONE
 require 'mp.options'.read_options(o)  --yes/no=true/false BUT OTHER TYPES DON'T AUTO-CAST.  GUI USER MAY ENTER RAW TABLES & 1+1 INSTEAD OF 2, ETC.
 for  opt,val in pairs(o)
-do o[opt] = type(val)=='string' and type(options[opt])~='string' and loadstring('return '..val)() or val end  --NATIVE TYPECAST ENFORCES ORIGINAL TYPES.  load INVALID ON MPV.APP.
+do o[opt] = type(options[opt])~='string' and typecast(val) or val end  --NATIVE TYPECAST ENFORCES ORIGINAL TYPES.
 
 for _,opt in pairs(o[p.platform].options or {}) do table.insert(o.options,opt) end  --platform OVERRIDE APPENDS TO o.options.
 for _,opt in pairs(o.options)
@@ -114,8 +118,8 @@ function title_update(data,title_duration)  --@script-message & @timers.playback
     command              = ''
     for _,opt in pairs(o.options_delayed)  --PLAYBACK (TITULAR) OVERRIDES.  osc RE-ACTIVATES HERE.
     do command           = ('%s no-osd set %s;'):format(command,opt) end
-    command              = command~='' and mp.command(command)
-    timers.title.timeout = title_duration and loadstring('return '..title_duration)() or o.title_duration  --NATIVE TYPECAST.
+    command              = command~='' and mp.  command(command)
+    timers.title.timeout = typecast(title_duration) or o.title_duration
     title.data           = mp.command_native({'expand-text',data or o.title})
     title:update()  --AWAITS UNPAUSE (PLAYING MESSAGE).  ALSO AWAITS TIMEOUT, OR ELSE OLD MPV COULD HANG UNDER EXCESSIVE LAG.
     timers.title:kill()
@@ -129,16 +133,15 @@ for _,timer in pairs(timers)
 do    timer.oneshot   = 1 --ALL 1SHOT.
       timer:kill() end    --FOR OLD MPV. IT CAN'T START timers DISABLED.
 
-function cleanup() mp.keep_running = false       end  --@script-message.  false FLAG EXIT: COMBINES overlay-remove, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
-function callstring(string) loadstring(string)() end  --@script-message.  A 3RD PARTY CAN FORCE ALL SCRIPTS TO RECOMPUTE THEIR randomseed (FOR BETTOR OR WORSE).
-for message,fn in pairs({   loadstring=callstring,cleanup=cleanup,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.  
+function cleanup() mp.keep_running = false end  --@script-message.  false FLAG EXIT: COMBINES overlay-remove, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
+for message,fn in pairs({cleanup=cleanup,loadstring=typecast,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.  
 do mp.register_script_message(message,fn)  end
 reload = gp('time-pos') and playback_restart()  --TRIGGER NOW.
 
-----CONSOLE/GUI COMMANDS (main=_):
+----CONSOLE/GUI COMMANDS & EXAMPLES (main=_):
 ----script-message-to _ cleanup
 ----script-message-to _ loadstring <string>
-----script-message      loadstring math.randomseed(365)
+----script-message      loadstring mp.osd_message(_VERSION)
 ----script-message      title      <data>          <title_duration>
 ----script-message      title      ${media-title}   6*random()
 ----script-message      title_remove
@@ -163,19 +166,18 @@ reload = gp('time-pos') and playback_restart()  --TRIGGER NOW.
 ----SAFETY INSPECTION: LUA SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path expand-text show-text seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* SAFE EXCEPT FOR script-opts WHICH MAY HOOK AN UNSAFE EXECUTABLE.
 ----~200 LINES & ~3000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
 ----FUTURE VERSION SHOULD REMOVE QUOTES FROM URLs WHO ARE DRAG & DROPPED (PATH_HANDLER).
-----FUTURE VERSION SHOULD HAVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout & o.toggle_command.
+----FUTURE VERSION SHOULD HAVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout & o.toggle_command (IN EFFECT).
 ----FUTURE VERSION SHOULD ALSO HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED.  NEEDED FOR android albumart.
 ----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts. function on_update.
 
 
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES).  correct-pts ESSENTIAL.  MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
 ----DECLARING local VARIABLES MAY IMPROVE HIGHLIGHTING/COLORING, BUT UNNECESSARY.
-----50%CPU+20%GPU USAGE (5%+15% WITHOUT scripts).  ~75%@30FPS (OR 55%@25FPS) WITHOUT GPU DRIVERS, @FULLSCREEN.  ARGUABLY SMOOTHER THAN VLC, DEPENDING (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER). FREE GPU IMPROVES MULTI-TASKING.
+----40%CPU+15%GPU USAGE (5%+15% WITHOUT scripts).  ARGUABLY SMOOTHER THAN VLC, DEPENDING (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER). FREE GPU IMPROVES MULTI-TASKING.
 ----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS.  ULTIMATELY TV FIRMWARE (1GB) COULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. 
 ----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, TAB-L/R & MULTI-LINE CTRL-EDITING. ENABLES QUICK GRAPH TESTING.  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK PRODUCES 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
 ----VMWARE MACOS: SWITCH  Command(⌘) & Control(^)‎  MODIFIER KEYS.  FOR DVORAK CAN SET:  Select All,Save,Undo,Cut,Copy,Paste = ‎⌥A,⌥O,⌥;,⌥J,⌥K,⌥Q‎  &  Redo,Open Recent... = ‎⌥⇧;,⌥⇧O‎  IN  Keyboard→Shortcuts→App Shortcuts→All Applications→+.  VIRTUALBOX DOESN'T HAVE THIS PROBLEM (DIRECT HARDWARE CAPTURE). BUT UNLOCKED VMWARE PERFORMS BETTER.
 
-----BUG: mpv-android FAILS TO PLAY IN BACKGROUND IN AUTO.
 ----BUG: SOME YT VIDEOS GLITCH/STUTTER @START (PAUSING). EXAMPLE: https://YOUTU.BE/D22CenDEs40
 ----BUG: RARE YT VIDEOS SUFFER no-vid.                   EXAMPLE: https://YOUTU.BE/y9YhWjhhK-U
 ----BUG: NO seeking OR lavfi-complex WITH X.COM.         EXAMPLE: https://X.COM/i/status/1696643892253466712 

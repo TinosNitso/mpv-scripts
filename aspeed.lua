@@ -88,6 +88,10 @@ options                      = {
 o,p,m,timers = {},{},{},{}                         --o,p=options,PROPERTIES  m=MEMORY={map,graph}  timers={mute,aid,sid,playback_restarted,auto,os_sync,osd}  playback_restarted BLOCKS THE PRIOR 3.
 txt,devices,clocks,abdays,LOCALES = {},{},{},{},{} --txtfile IS WRITTEN FROM txt.  devices=LIST OF DEVICES WHICH WILL ACTIVATE, STARTING WITH EXISTING audio-device.  LOCALES IS LIST OF SUB-TABLES, FOR LOTE. NEVER USED BY CHILDREN (UNLESS THEY ALSO HAVE A clock TOO).  os.setlocale('RUSSIAN') LITERALLY BLUE-SCREENS (MPV HAS ITS OWN BSOD).
 
+function typecast(string)  --ALSO @script-message, @apply_astreamselect & @property_handler.  string MAY NOT BE 'string', FOR SIMPLICITY.  load INVALID ON MPV.APP.  CONSOLE CAN USE THIS TO PIPE FROM WITHIN LUA.
+    return   type(string)=='string' and loadstring('return '..string)() or string
+end
+
 function  gp(property)  --ALSO @property_handler.               GET-PROPERTY
     p       [property]=mp.get_property_native(property)  --mp=MEDIA-PLAYER
     return p[property]
@@ -110,7 +114,7 @@ for  opt,val in pairs(options)
 do o[opt]     = val end               --CLONE
 require 'mp.options'.read_options(o)  --yes/no=true/false BUT OTHER TYPES DON'T AUTO-CAST.
 for  opt,val in pairs(o)
-do o[opt] = type(val)=='string' and type(options[opt])~='string' and loadstring('return '..val)() or val end  --NATIVE TYPECAST.  load INVALID ON MPV.APP.  NATIVES PREFERRED, EXCEPT FOR GRAPH INSERTS.  
+do o[opt] = type(options[opt])~='string' and typecast(val) or val end  --NATIVES PREFERRED, EXCEPT FOR GRAPH INSERTS.  
 N         = o.params.N  --N ABBREVIATES CHILD-PAIR# (0, 1, OR MORE COME IN PAIRS).
 
 for _,opt in pairs(o[p.platform].options or {}) do table.insert(o.options,opt) end  --platform OVERRIDE APPENDS TO o.options.
@@ -185,16 +189,15 @@ function file_loaded()
 end
 
 function apply_astreamselect(map)  --@script-message, @playback-restart, @on_toggle & @property_handler.
-    map    =  map and loadstring('return '..map)()                              --NATIVE TYPECAST.
-                  or (N~=0 or not OFF and mpv and txt.seeking=='no') and 1 or 0 --DEDUCE INTENDED map.  1=MUTED INVALID WITHOUT CHILDREN, WHO ARE ALWAYS MUTE.  ALWAYS UNMUTE WHEN FIRST-BORN IS seeking.
+    map    = typecast(map) or (N~=0 or not OFF and mpv and txt.seeking=='no') and 1 or 0 --DEDUCE INTENDED map.  1=MUTED INVALID WITHOUT CHILDREN, WHO ARE ALWAYS MUTE.  ALWAYS UNMUTE WHEN FIRST-BORN IS seeking.
     if map==m.map and not af_observed or gp('seeking') then return end  --return CONDITIONS.  EXCESSIVE af-COMMANDS CAUSE LAG. FAILS WHEN seeking (audio-params=nil?).  
     
     m .map,af_observed = map,nil 
     mp.command(('af-command %s map %d %s'):format(label,map,target or ''))  --target ACQUIRED @property_handler.  
 end
 
-function on_toggle() --@script-message, @script-binding & @property_handler.  ALSO DURING YOUTUBE LOAD & FOR JPEG.  INSTA-TOGGLE (SWITCH). CHILDREN MAINTAIN SYNC WHEN OFF.
-    OFF     = not OFF    --INSTANT UNMUTE IN txtfile.  
+function on_toggle()  --@script-message, @script-binding & @property_handler.  ALSO DURING YOUTUBE LOAD & FOR JPEG.  INSTA-TOGGLE (SWITCH). CHILDREN MAINTAIN SYNC WHEN OFF.
+    OFF     = not OFF --INSTANT UNMUTE IN txtfile.  
     mp.add_timeout(OFF and .4 or 0,function() txt.mute=OFF end)  --DELAYED MUTE ON, OR ELSE LEFT CHANNEL CUTS OUT A TINY BIT.  txtfile IS TOO QUICK FOR af-command!  ALTERNATIVE GRAPH REPLACEMENT INTERRUPTS PLAYBACK.  A FUTURE VERSION SHOULD REMOVE THIS, & NEVER USE astreamselect. volume SHOULD RESPOND FASTER.
     
     clock_update()  --INSTA-clock_update.
@@ -250,7 +253,7 @@ timers.playback_restarted = mp.add_periodic_timer(.01,function() playback_restar
 function property_handler(property,val) --ALSO @timers.auto.  txtfile INPUT/OUTPUT.  ONLY EVER pcall, FOR RELIABLE INSTANT write & SIMULTANEOUS io.remove.
     p[property or ''] = val             --p['']=nil  DUE TO IDLER.
     seeking           = (p.seeking or  not p['audio-params/samplerate'] or p.pause) and 'yes' or 'no' --COULD BE RENAMED not_playing_audio.  IF FIRST-CHILD seeking/PAUSED, PARENT MUST UNMUTE.  ALSO samplerate=nil OCCURS AS YOUTUBE LOADS.  (AGGRESSIVELY UNMUTE.)  
-    speed             =       N==0     and not (property or OFF or p.pause) and loadstring('return '..mp.command_native({'expand-text',o.speed}))() or p.speed  --speed=p.speed UNLESS CONTROLLER SETS EVERY HALF-SECOND, UNLESS OFF OR PAUSED.  ~property MEANS IDLER SETS EVERY HALF-SECOND REAL-TIME, NOT FILM-TIME.
+    speed             =       N==0     and not (property or OFF or p.pause) and typecast(mp.command_native({'expand-text',o.speed})) or p.speed  --~property MEANS IDLER.  speed=p.speed UNLESS CONTROLLER SETS EVERY HALF-SECOND, UNLESS OFF OR PAUSED.  
     set_speed         = p.speed~=speed and mp.command(('%s set speed %s'):format(command_prefix,speed))  --CONTROLLER TITULAR command.
     samples_time      =           property=='af-metadata/'..label and val['lavfi.astats.Overall.Number_of_samples']/p['audio-params/samplerate']  --ALWAYS A HALF INTEGER, OR nil.  TIME=SAMPLE#/samplerate  (SOURCE SAMPLERATE) 
     af_observed       =           property=='af' or af_observed  --af-command-OVERRIDE.  af/vf OFTEN RESET GRAPH STATES, BUT WITHOUT TRIGGERING playback-restart!
@@ -340,21 +343,19 @@ function cleanup()  --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-op
     set_speed       = p.speed~=1 and mp.command(command_prefix..' set speed 1')  --cleanup_speed=1
     mp.keep_running = false  --false FLAG EXIT: COMBINES overlay-remove, remove_key_binding, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
 end 
-
-function callstring(string) loadstring(string)() end  --@script-message.  A 3RD PARTY CAN FORCE ALL SCRIPTS TO RECOMPUTE THEIR randomseed.
-for message,fn in pairs({   loadstring=callstring,cleanup=cleanup,toggle=on_toggle,resync=os_sync,astreamselect=apply_astreamselect})  --SCRIPT CONTROLS.
+for message,fn in pairs({cleanup=cleanup,loadstring=typecast,toggle=on_toggle,resync=os_sync,astreamselect=apply_astreamselect})  --SCRIPT CONTROLS.
 do mp.register_script_message(message,fn)  end
 reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.
 
-----CONSOLE/GUI COMMANDS & EXAMPLE:
+----CONSOLE/GUI COMMANDS & EXAMPLES:
 ----script-binding           toggle_aspeed
 ----script-message-to aspeed toggle
 ----script-message-to aspeed cleanup
-----script-message           resync
 ----script-message-to aspeed loadstring    <string>
-----script-message           loadstring    math.randomseed(365)
+----script-message           loadstring    mp.osd_message(_VERSION)
 ----script-message           astreamselect <map>
 ----script-message           astreamselect  0
+----script-message           resync
 
 ----APP VERSIONS:
 ----MPV      : v0.38.0(.7z .exe v3 .apk)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)    ALL TESTED.
@@ -366,6 +367,7 @@ reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.
 
 ----~400 LINES & ~7000 WORDS.  SPACE-COMMAS FOR SMARTPHONE.  5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END (CONSOLE COMMANDS). ALSO BLURBS ON WEB.  CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
 ----FUTURE VERSION SHOULD MOVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout & o.toggle_command TO main.lua. ALL SCRIPTS SHOULD HAVE THESE, UNLESS main OPERATES ALL DOUBLE-TAPS.
+----FUTURE VERSION SHOULD REPLACE (random) WITH $RANDOM/%RANDOM%.
 ----FUTURE VERSION SHOULD HAVE o.key_bindings_clock (on_toggle_clock), OR SEPARATE clock.lua.  RESYNCING THE EXACT TICK EVERY MINUTE USES 0% CPU.
 ----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts; function on_update.
 ----FUTURE VERSION SHOULD REMOVE astats FOR NEW MPV, SO o.speed IS SET EVERY HALF-SECOND IN REAL-TIME.
