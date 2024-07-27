@@ -35,7 +35,7 @@ Then copy scripts in to that exact folder, in internal main storage. However lea
 ![](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
 
 ## Standalone mpv (`mpv.conf`)
-It's also possible to double-click on `mpv.exe` or `mpv.app` & then drag & drop files & URLs directly on mpv, with all scripts fully active! This requires editing `mpv.conf`, like with Android. In Linux edit `~/.config/mpv/mpv.conf`. In MacOS go mpv→Preferences... & use only 1 line:
+It's also possible to double-click on `mpv.exe` or `mpv.app` & then drag & drop files & URLs directly on mpv, with all scripts fully active! This requires editing `mpv.conf`, like with Android. In Linux edit `~/.config/mpv/mpv.conf` & then right-click on an MP4 & open-with-mpv. In MacOS go mpv→Preferences... & use only 1 line:
 
 `script=~/Desktop/mpv-scripts/`
 
@@ -94,7 +94,7 @@ Give mpv its own window then press ` & then enter any of these commands (but wit
 - `script-message-to automask apply_eq <brightness> <toggle_duration> <toggle_t_delay> <toggle_expr>`
 
 ## Latest Updates
-Above scripts in `mpv-scripts.zip` haven't been properly released yet.  I still have to test smartphone handling, & improve autocomplex default.
+Above scripts in `mpv-scripts.zip` haven't been properly released yet.  I want to re-write the automask defaults as spinning triangles. The last release is the head-banging mask, but triangles are simpler!
 - Added `o.android`, `o.windows`, `o.linux` & `o.darwin` platform overrides to all scripts.  Smartphones work better with different options, like binacles.
 - Added `o.toggle_command` to all scripts except main.  All toggles can activate any command. Replaces `o.osd_on_toggle` for graph inspections.  
 - Added `o.double_aid_timeout` to aspeed, autocrop & automask. Double-aid is similar to double-mute, due to Android (laggy trigger).  A new `playback_restarted` timer blocks all double-tap timers from misfiring. 
@@ -103,19 +103,19 @@ Above scripts in `mpv-scripts.zip` haven't been properly released yet.  I still 
 - Added `o.script_opts` to main.lua, for `osc-` settings.  Also Improved `ytdl_path` code. 
 - Added `function gp` (Get Property) to all scripts.  All script-opt types now well-defined.
 - Added `function cleanup()` to all scripts.
-- Added `function callstring` to all scripts.
+- Added `function typecast` to all scripts.
 - Added `function event_handler` to all scripts except main.
 - Added remove_filter/s functions to aspeed, autocrop & automask.
 - Added `function re_pause()` to autocrop/automask.
 - Added script-messages to all scripts, to control them via console/GUI. Every control comes with native type-casting, & an example.
 - Improved `script-binding` names for all scripts but main.
-- `android-surface-area` W,H computation for automask, autocrop & autocomplex. Binacles are perfect circles on smartphone! Improved examples take portrait/landscape into account.  Graphs all reload on fullscreen rotation.
-- Reload on change in display-width/height, for autocrop, autocomplex & automask.
+- `android-surface-area` W,H computation for automask, autocrop & autocomplex. Binacles are perfect circles on smartphone! Improved examples take portrait/landscape into account.
+- Graphs all reload on change in display-width/height.
 - Removed `\\,` from all graphs. More elegant codes.
 - All scripts can load *after* `file-loaded`.
 - autocrop.lua: `o.limits` now searches `media-title` as well as `path`.  Replaced `o.pad_color` with `o.pad_options` (`x:y:color`). Improved JPEG reliability & `o.meta_osd`.  Removed `function start_file` - now uses `seek` instead of `set start`.
 - automask.lua: Added examples `SPINNING_TRIANGLES` (new default) & `SPINNING_SQUARES_DUAL` (opposing twirls). Blue tinted lens (limited tint). Returned `o.fps`. If produced @30fps, film should also be 30fps.  Improved `o.rotations` padding.  Bugfix for examples (I broke half of them in the last release).  Removed use of `between`.  More examples which load fast. 
 - aspeed.lua: `o.speed` now set every half-second in real-time, not film-time.  `--no-config` bugfix for standalone mpv. Removed `o.clocks.no_locales` flag.  Improved AbDays (more accurate, more lowercase).  No-Armenian override for Android.  Faster YouTube load by always loading path - then the controller blocks JPEG using a `block_path` switch.  Enabled `graph` randomization @file-loaded. Improved feedback reliability by checking `samplerate`.  Resync `on_toggle`. Improved event-handling.
-- autocomplex.lua: Bugfix for `aid` off/on. It toggles off & on with only one `aid`-click.
+- autocomplex.lua: Simpler default with no dual (`o.freqs_fps=15`).  Bugfix for `aid` off/on. It toggles off & on with only one `aid`-click. Bugfix for changing vo (must insta-`stop`).
 - autocrop/automask: Bugfix for starting stutter.  `insta_pause` removed from `start-file` function, so can pause during YouTube load. 
 
