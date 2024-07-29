@@ -37,9 +37,9 @@ options                      = {
         'image-display-duration inf',  --DEFAULT=1  JPEG CLOCK USES inf.
         -- 'osd-border-color   0/.5',  --DEFAULT=#FF000000  UNCOMMENT FOR TRANSPARENT CLOCK FONT OUTLINE.  RED=1/0/0/1, BLUE=0/0/1/1, ETC
     },
-    options_children = {
-        'vid no', 'sid no'   ,'vo       null       ','ytdl-format ba/best',  --DEFAULT VIDEO-ID,SUBTITLE-ID=auto.  no REDUCES CPU CONSUMPTION.  VIDEO-OUT=null BLOCKS NEW WINDOWS.  ba=bestaudio  /best FOR RUMBLE.  ytdl-raw-options CAN SET username & password (WITHOUT ANNOUNCING THEM IN TASK MANAGER).  REMOVE THIS LINE TO SEE ALL CHILDREN. THIS SCRIPT OVERRIDES ANY ATTEMPT TO CONTROL THEM.
-        'keep-open yes      ','geometry 25%        ', --keep-open MORE EFFICIENT THAN RELOADING (BACKWARDS-seek NEAR end-file).  geometry LIMITS CHILDREN.
+    options_children  = {
+        'vid no', 'sid no   ','vo       null       ','ytdl-format ba/best',  --DEFAULT VIDEO-ID,SUBTITLE-ID=auto.  no REDUCES CPU CONSUMPTION.  VIDEO-OUT=null BLOCKS NEW WINDOWS.  ba=bestaudio  /best FOR RUMBLE.  ytdl-raw-options CAN SET username & password (WITHOUT ANNOUNCING THEM IN TASK MANAGER).  REMOVE THIS LINE TO SEE ALL CHILDREN. THIS SCRIPT OVERRIDES ANY ATTEMPT TO CONTROL THEM.
+        'keep-open     yes  ','geometry 25%        ', --keep-open MORE EFFICIENT THAN RELOADING (BACKWARDS-seek NEAR end-file).  geometry LIMITS CHILDREN.
         'msg-level all=error','priority abovenormal', --DEFAULTS all=status,normal.  BY DEFAULT SMPLAYER LOGS ALL speed CHANGES VIA CHILD terminal.  priority ONLY VALID ON WINDOWS.  
         -- 'audio-pitch-correction  no',              --DEFAULT  yes  UNCOMMENT FOR CHIPMUNK MODE (NO scaletempo# FILTER). WORKS OK WITH SPEECH & COMICAL MUSIC.  REDUCES CPU CONSUMPTION BY 5%=5*1%.  ACTIVE INDEPENDENT TEMPO SCALING FOR SEVERAL SPEAKERS USES CPU.
     },
@@ -83,13 +83,13 @@ options                      = {
 ----STYLE CODES: \\,N,an#,fs#,bord#,c######,fscx##,alpha##,b1,fn* = \,NEWLINE,ALIGNMENT-NUMPAD,FONT-SIZE(p),BORDER(p),COLOR,FONTSCALEX(%),TRANSPARENCY,BOLD,FONTNAME  (DEFAULT an0=an7=TOPLEFT)    MORE: shad#,be1,i1,u1,s1,fr##,fscy## = SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEY(%)  EXAMPLES: USE {\\alpha80} FOR TRANSPARENCY. USE {\\fscx130} FOR +30% IN HORIZONTAL.  A TRANSPARENT clock CAN BE BIGGER. be ACTS LIKE SEMI-BOLD.  IDEAL LATIN/CYRILLIC FONTS (fn*) MAYBE DIFFERENT.
 
     },
-    params  = {N=0,pid},                   --params DECLARATION.  N=0 is_controller.  N=1 IS FIRST-CHILD & PROVIDES FEEDBACK.  PARENT PROCESS-ID DETERMINES txtfile THE CHILDREN READ FROM.  ALTERNATIVE IS TO DEFINE ENVIRONMENTAL VARIABLE/S FOR CHILDREN, BUT o.params IS SIMPLER.
+    params = {N=0,pid},  --params DECLARATION.  N=0 is_controller.  N=1 IS FIRST-CHILD & PROVIDES FEEDBACK.  PARENT PROCESS-ID DETERMINES txtfile THE CHILDREN READ FROM.  ALTERNATIVE IS TO DEFINE ENVIRONMENTAL VARIABLE/S FOR CHILDREN, BUT o.params IS SIMPLER.
 }
 o,p,m,timers = {},{},{},{}                         --o,p=options,PROPERTIES  m=MEMORY={map,graph}  timers={mute,aid,sid,playback_restarted,auto,os_sync,osd}  playback_restarted BLOCKS THE PRIOR 3.
 txt,devices,clocks,abdays,LOCALES = {},{},{},{},{} --txtfile IS WRITTEN FROM txt.  devices=LIST OF DEVICES WHICH WILL ACTIVATE, STARTING WITH EXISTING audio-device.  LOCALES IS LIST OF SUB-TABLES, FOR LOTE. NEVER USED BY CHILDREN (UNLESS THEY ALSO HAVE A clock TOO).  os.setlocale('RUSSIAN') LITERALLY BLUE-SCREENS (MPV HAS ITS OWN BSOD).
 
-function typecast(string)  --ALSO @script-message, @apply_astreamselect & @property_handler.  string MAY NOT BE 'string', FOR SIMPLICITY.  load INVALID ON MPV.APP.  CONSOLE CAN USE THIS TO PIPE FROM WITHIN LUA.
-    return   type(string)=='string' and loadstring('return '..string)() or string
+function typecast(arg)  --ALSO @script-message, @apply_astreamselect & @property_handler.  load INVALID ON MPV.APP.  CONSOLE CAN USE THIS TO PIPE FROM WITHIN LUA.
+    return   type(arg)=='string' and loadstring('return '..arg)() or arg
 end
 
 function  gp(property)  --ALSO @property_handler.               GET-PROPERTY
@@ -207,7 +207,7 @@ function on_toggle()  --@script-message, @script-binding & @property_handler.  A
     command = o.toggle_command~='' and mp.command(command_prefix..' '..o.toggle_command)
 end
 for key in o.key_bindings: gmatch('[^ ]+') 
-do binding_name = 'toggle_aspeed'..(binding_name and '_'..key or '')  --THE FIRST key IS SPECIAL.
+do binding_name = label..(binding_name and '_'..key or '')  --THE FIRST key IS SPECIAL.
     mp.add_key_binding(key,binding_name,on_toggle) end  
 
 function clock_update()  --@os_sync & @on_toggle.
@@ -252,7 +252,7 @@ timers.playback_restarted = mp.add_periodic_timer(.01,function() playback_restar
 
 function property_handler(property,val) --ALSO @timers.auto.  txtfile INPUT/OUTPUT.  ONLY EVER pcall, FOR RELIABLE INSTANT write & SIMULTANEOUS io.remove.
     p[property or ''] = val             --p['']=nil  DUE TO IDLER.
-    seeking           = (p.seeking or  not p['audio-params/samplerate'] or p.pause) and 'yes' or 'no' --COULD BE RENAMED not_playing_audio.  IF FIRST-CHILD seeking/PAUSED, PARENT MUST UNMUTE.  ALSO samplerate=nil OCCURS AS YOUTUBE LOADS.  (AGGRESSIVELY UNMUTE.)  
+    seeking           = (p.seeking or  not p['audio-params/samplerate'] or p.pause) and 'yes' or 'no' --COULD BE RENAMED not_playing_audio, OR STALLED.  IF FIRST-CHILD seeking/PAUSED, PARENT MUST UNMUTE.  ALSO samplerate=nil OCCURS AS YOUTUBE LOADS.  (AGGRESSIVELY UNMUTE.)  
     speed             =       N==0     and not (property or OFF or p.pause) and typecast(mp.command_native({'expand-text',o.speed})) or p.speed  --~property MEANS IDLER.  speed=p.speed UNLESS CONTROLLER SETS EVERY HALF-SECOND, UNLESS OFF OR PAUSED.  
     set_speed         = p.speed~=speed and mp.command(('%s set speed %s'):format(command_prefix,speed))  --CONTROLLER TITULAR command.
     samples_time      =           property=='af-metadata/'..label and val['lavfi.astats.Overall.Number_of_samples']/p['audio-params/samplerate']  --ALWAYS A HALF INTEGER, OR nil.  TIME=SAMPLE#/samplerate  (SOURCE SAMPLERATE) 
@@ -348,11 +348,11 @@ do mp.register_script_message(message,fn)  end
 reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.
 
 ----CONSOLE/GUI COMMANDS & EXAMPLES:
-----script-binding           toggle_aspeed
+----script-binding           aspeed
 ----script-message-to aspeed toggle
 ----script-message-to aspeed cleanup
-----script-message-to aspeed loadstring    <string>
-----script-message           loadstring    mp.osd_message(_VERSION)
+----script-message-to aspeed loadstring    <arg>
+----script-message           loadstring    print(_VERSION)
 ----script-message           astreamselect <map>
 ----script-message           astreamselect  0
 ----script-message           resync

@@ -7,37 +7,34 @@ options                 = {
     double_mute_timeout =       0 ,  --SECONDS FOR DOUBLE-MUTE-TOGGLE        (m&m DOUBLE-TAP).  SET TO .5 TO ENABLE.  IDEAL FOR SMPLAYER. 
     double_sid_timeout  =       0 ,  --SECONDS FOR DOUBLE-SUBTITLE-ID-TOGGLE (j&j DOUBLE-TAP).  SET TO .5 TO ENABLE.  BAD FOR YOUTUBE.  REQUIRES sid.
     toggle_command      =       '',  --EXECUTES on_toggle, UNLESS BLANK.  'show-text ""' CLEARS THE OSD.  CAN DISPLAY ${media-title} ${mpv-version} ${ffmpeg-version} ${libass-version} ${platform} ${current-ao} ${current-vo} ${osd-dimensions} ${af} ${vf} ${lavfi-complex} ${video-out-params}.
-    overlay_scale       = {3/4,3/4},  --RATIOS {WIDTH<=1,HEIGHT<=1} (number/string).  CAN SHRINK PRIMARY_SCALE.  USES RECIPROCAL PADDING FOR SAFE zoompan.  3/4=(4/3)/(16/9) WHICH ALIGNS WITH ASPECT=4/3. 
     vflip_only          =     false,  --true TO REMOVE TOP HALF. ALSO REMOVE vflip_scale_h FOR NULL OVERRIDE (NO overlay).
     vflip_scale_h       =      '.5',  --REMOVE FOR NO BOTTOM HALF.  A DIFFERENT VERSION COULD SUPPORT BL & BR CHANNELS FOR BOTTOM.
-    fps                 =       30 ,  --FRAMES PER SECOND FOR [vo].  30fps (+automask.lua) USES ~15% MORE CPU THAN 25fps. SCRIPT ALSO LIMITS scale. 
-    period              =   '22/30',  --SECONDS.  USE fps RATIO.  20/30→90BPM (BEATS PER MINUTE). SET TO 0 FOR STATIONARY (~20% OFFSET DUE TO zoompan). UNLIKE A MASK, MOTION MAY NOT BE PERIODIC - COMPLEX FREE TO RANDOMLY FLOAT AROUND. IT ACTS LIKE A METRONOME.  (0 FORCES gsubs.r=0). 
+    fps                 =       30 ,  --FRAMES PER SECOND FOR [vo].  30fps CAN USE 15% MORE CPU THAN 25fps.  SCRIPT ALSO LIMITS scale. 
+    period              =      '.5',  --SECONDS.  SET TO 0 FOR STATIONARY (FORCES (np)=(0)).  UNLIKE A MASK, MOTION MAY NOT BE PERIODIC - COMPLEX FREE TO RANDOMLY FLOAT AROUND. IT ACTS LIKE A METRONOME.
     gsubs_passes        =        4 ,  --# OF SUCCESSIVE gsubs.  THEY DEPEND ON EACH OTHER, IN A DAIZY-CHAIN. LIKE (cos)→(c)→(np)→(fpp)  THEY DON'T APPLY TO filterchain.  THEY MAY HELP WITH MORE ADVANCED graph CHOREOGRAPHY.
-    gsubs               = {np='((n)/(fpp)+1/6)',c='cos(2*PI*(np))',s='sin(2*PI*(np))',m='mod(floor(np),2)',cos='(c)',sin='(s)',mod='(m)',rand='(random)',t,n,on,},  --SUBSTITUTIONS.  ENCLOSING BRACKETS () ARE ADDED & REQUIRED, IN EFFECT.  (fpp)=(fps*period)=(FRAMES-PER-PERIOD) IS DERIVED & DEPENDS ON FILTER.  EXAMPLE: USE n=5 FOR STATIONARY COMPLEX.  (t),(n),(on)=(TIME),(FRAME#),(FRAMEOUT#)  (np)=(n AS RATIO TO PERIOD)=("TIME" AS A RATIO).  (random) IS A RANDOM # BTWN 0 & 1, CHOSEN @file-loaded, @on_toggle & @RELOAD, BUT ~@seek.  (fpp), LIKE fps, COULD ALSO BE NAMED (npp).
-    rotate              = 'a=0',  --RADIANS CLOCKWISE.  APPEND :hypot(iw,ih):ow FOR LARGE AMOUNTS (HYPOTENUSE PREVENTS DIAGONAL CLIP BY PADDING).  MAY DEPEND ON TIME t & FRAME # n. 
-    zoompan             = 'z=1',  --SET z=1 FOR NO ZOOMING.  (np)=RATIO=(on)/(fpp)  WHERE on=OUTPUT-FRAME-NUMBER.  BEFORE SCOOTING RIGHT, IT MAY rotate (20% OFFSET).  20% zoom GETS MAGNIFIED BY autocrop, DEPENDING ON BLACK BARS. 
-    overlay             = 'x=(W-w)/2:y=(H-h)/2+.01*H*(s)'      ,  --TIME-DEPENDENCE SHOULD MATCH OTHER SCRIPT/S, LIKE automask. A BIG-SCREEN TV HELPS WITH POSITIONING. CONCEIVABLY A GAMEPAD COULD BE USED.  POSITIONING ATOP BLACK BARS MAY DRAW ATTENTION TO THEM (PPL COULD END UP STARING AT BLACK BARS).
-    filterchain         = 'shuffleplanes=map0=1,lutrgb=g=val*.25',  --MIXES IN 25% GREEN-IN-BLUE RATIO, BECAUSE PURE BLUE IS TOO DARK. DROPS alpha BY 30%.  PLANES ORDERED LIKE GreatBRitAin (gbrap). COULD BE RENAMED overlay_vf_chain.  SHUFFLE + DILUTION MUCH MORE EFFICIENT THAN colorchannelmixer (+10% CPU).  BLUE, DARKBLUE & BLACK ARE COMPATIBLE WITH cropdetect (autocrop).  STRIPES IS A DIFFERENT DESIGN (RED/BLUE/WHITE).  COLOR-BLINDNESS COULD BE AN ISSUE.
-    -- filterchain      = 'shuffleplanes=1:0   ,lutrgb=g=val*.7 ',  --UNCOMMENT FOR RED & GREEN, INSTEAD OF RED & BLUE (DEFAULT). THIS EXAMPLE DROPS GREEN 30% BECAUSE IT'S TOO BRIGHT.
-    dual_scale          =        {},  --RATIOS {WIDTH,HEIGHT} (NUMBERS) SHRINK DUAL.  BI-QUAD CONCEPT COMES FROM HOW RAW MP3 WORKS (SELF-OVERLAY).  IN A SYMPHONY A LITTLE DUAL COULD FLOAT TO VARIOUS INSTRUMENTS, VIOLINS ETC.  THIS DUAL USES THE SAME aid.  MAYBE ALSO POSSIBLE TO ADD A 3RD LITTLE COMPLEX ON TOP, LIKE A CIRCULAR REMAP (THIRD-EYE). 
-    -- dual_scale       = {3/4,3/4},  --UNCOMMENT FOR DUAL.
-    -- rotate           = 'a=PI/16*(s)*(m)',  --FOR DUAL THE PRIMARY CAN MOVE AROUND MORE.  PI/16=.2RADS=11°  mod ACTS AS ON/OFF SWITCH.  THIS EXAMPLE MOVES DOWN→UP→RIGHT→LEFT BY MODDING. 
-    -- overlay          = 'x=(W-w)/2:y=H*(.75+.05*(1-(c))*(1-(m)))-h/2',  --TIME-DEPENDENCE SHOULD MATCH OTHER SCRIPT/S, LIKE automask. A BIG-SCREEN TV HELPS WITH POSITIONING. CONCEIVABLY A GAMEPAD COULD BE USED.  POSITIONING ATOP BLACK BARS MAY DRAW ATTENTION TO THEM (PPL COULD END UP STARING AT BLACK BARS).
-    dual_overlay        = 'x=(W-w)/2:y=H*.9-h/2'                       ,   --DUAL CAN FLY AROUND TOO.
-    dual_filterchain    =             'format=yuva420p,lutyuv=a=val/.7',  --APPLIES AFTER PRIMARY filterchain.  yuva420p MAY BE MORE OPTIMAL THAN RGB FORMATS (bgra gbrap) OR yuva444p.  EXAMPLE: TO SEESAW IT, APPEND ",rotate=a=PI/32*sin(PI*(np)):c=BLACK@0"
-    af_chain            = 'anull,dynaudnorm=g=3:p=1:m=1',  --AUDIO FILTERCHAIN FOR [ao]. CAN REPLACE anull WITH OTHER FILTERS, LIKE vibrato.  DYNAMIC AUDIO NORMALIZER BUFFERS OUTPUT, FIXING AN FFMPEG ERROR.  IT'S A NULL-OP & A DIFFERENT FILTER COULD ALSO WORK - DETERMINISTIC FOR 10 HRS.
-    freqs_dynaudnorm    = 'g=5:p=1:m=100:b=1',  --DEFAULT=g=31:p=.95:m=10:b=0  THIS IS THE THIRD PASS. AFTER RESAMPLING TO 2.1kHz, & SHIFTING freqs_lead_time.  SPECTRUM SHOULD BE CLEAR EVEN FOR THE FAINTEST SOUNDS.
-    freqs_opts          = 's=300x500:mode=line:ascale=lin:win_size=512:win_func=parzen:averaging=2',  --EXTRA OPTIONS.  CAN ALSO SET overlap.  CAN'T CHANGE rate, fscale, colors & cmode (SEE graph SECTION).  INCREASE size FOR SHARPER CURVE (OR CHANGE ITS INTERNAL aspect).  mode={line,bar,dot}  win_func MAY ALSO BE poisson OR cauchy (PARZEN WAS AN AMERICAN STATISTICIAN).  win_size IS # OF DATA POINTS (LIKE TOO MANY PIANO KEYS).  FOR bar USE a=val*.25 IN filterchain.
+    gsubs               = {np='(((n)+0)/(fpp)+0)',c='cos(2*PI*(np))',s='sin(2*PI*(np))',m='mod(floor(np),2)',cos='(c)',sin='(s)',mod='(m)',t,n,on,random,},  --SUBSTITUTIONS.  ENCLOSING BRACKETS () ARE ADDED & REQUIRED, IN EFFECT.  (fpp)=(fps*period)=(FRAMES-PER-PERIOD) IS DERIVED & DEPENDS ON FILTER.  EXAMPLE: USE n=5 FOR STATIONARY COMPLEX.  (t),(n),(on)=(TIME),(FRAME#),(FRAMEOUT#)  (np)=(n AS RATIO TO PERIOD, +SHIFT)=("TIME" AS A RATIO).  (random) IS A RANDOM # BTWN 0 & 1, CHOSEN @file-loaded, @on_toggle & @RELOAD.  (fpp), LIKE fps, COULD ALSO BE NAMED (npp).  (n) CAN ALSO BE SHIFTED BY TRIAL & ERROR.
+    overlay_scale       = {3/4,3/4},  --RATIOS {WIDTH<=1,HEIGHT<=1} (number/string).  CAN SHRINK PRIMARY_SCALE.  USES RECIPROCAL PADDING FOR SAFE zoompan.  3/4=(4/3)/(16/9) WHICH ALIGNS WITH ASPECT=4/3. 
+    filterchain         = 'shuffleplanes=1  ,lutrgb=g=val*.25:a=val*1',  --a CAN DROP alpha.  MIXES IN 25% GREEN-IN-BLUE RATIO, BECAUSE PURE BLUE IS TOO DARK.  PLANES ORDERED LIKE GreatBRitAin (gbrap). COULD BE RENAMED overlay_vf_chain.  SHUFFLE + DILUTION MUCH MORE EFFICIENT THAN colorchannelmixer (+10% CPU).  BLUE, DARKBLUE & BLACK ARE COMPATIBLE WITH cropdetect.  STRIPES IS A DIFFERENT DESIGN (RED/BLUE/WHITE).  COLOR-BLINDNESS COULD BE AN ISSUE.
+    -- filterchain      = 'shuffleplanes=1:0,lutrgb=g=val*.7'         ,  --UNCOMMENT FOR RED & GREEN, INSTEAD OF RED & BLUE (DEFAULT). THIS EXAMPLE DROPS GREEN 30% BECAUSE IT'S TOO BRIGHT.
+    rotate              = 'a=PI/60*(s)*(m)'                      ,  --RADIANS CLOCKWISE.  PI/60=180°/60=3°  mod ACTS AS ON/OFF SWITCH.  LARGE AMOUNTS REQUIRE APPENDING ":ow:oh" TO PREVENT CLIPPING.  
+    zoompan             = 'z=1'                                  ,  --z=1 MEANS NO ZOOMING.  MAYBE NEEDED TO MOVE WITH OTHER GRAPHS.
+    overlay             = 'x=(W-w)/2:y=(H-h)/2-.01*H*(1-(c))*(m)',  --TIME-DEPENDENCE SHOULD MATCH OTHER SCRIPT/S, LIKE automask. A BIG-SCREEN TV HELPS WITH POSITIONING.  POSITIONING ATOP BLACK BARS MAY DRAW ATTENTION TO THEM.
+    dual_scale          = {nil,nil}                              ,  --RATIOS {WIDTH,HEIGHT}.  REPLACE nil WITH 1 FOR DUAL.  BI-QUAD CONCEPT COMES FROM HOW RAW MP3 WORKS (SELF-OVERLAY).  IN A SYMPHONY A LITTLE DUAL COULD FLOAT TO VARIOUS INSTRUMENTS, VIOLINS ETC.  THIS DUAL USES THE SAME aid.
+    dual_filterchain    = 'null'                                 ,  --APPLIES AFTER PRIMARY filterchain.  EXAMPLE: TO SEESAW IT, SET TO 'rotate=PI/60*(s):c=BLACK@0'
+    dual_overlay        = 'x=(W-w)/2:y=(H-h)/2+H/4'              ,  --DUAL CAN FLY AROUND TOO.
+    af_chain            = 'anull,dynaudnorm=g=3:p=1:m=1'         ,  --AUDIO FILTERCHAIN FOR [ao]. CAN REPLACE anull WITH OTHER FILTERS, LIKE vibrato.  DYNAMIC AUDIO NORMALIZER BUFFERS OUTPUT, FIXING AN FFMPEG ERROR.  IT'S A NULL-OP & A DIFFERENT FILTER COULD ALSO WORK - DETERMINISTIC FOR 10 HRS.
+    freqs_dynaudnorm    = 'g=5:p=1:m=100:b=1'                    ,  --DEFAULT=g=31:p=.95:m=10:b=0  THIS IS THE THIRD PASS. AFTER RESAMPLING TO 2.1kHz, & SHIFTING freqs_lead_time.  SPECTRUM SHOULD BE CLEAR EVEN FOR THE FAINTEST SOUNDS.
+    freqs_opts          = 's=300x500:mode=line:ascale=lin:win_size=512:win_func=parzen:averaging=3',  --EXTRA OPTIONS.  CAN ALSO SET overlap.  CAN'T CHANGE rate, fscale, colors & cmode (SEE graph SECTION).  INCREASE size FOR SHARPER CURVE (OR CHANGE ITS INTERNAL aspect).  mode={line,bar,dot}  win_func MAY ALSO BE poisson OR cauchy (PARZEN WAS AN AMERICAN STATISTICIAN).  win_size IS # OF DATA POINTS (LIKE TOO MANY PIANO KEYS).  FOR bar USE a=val*.25 IN filterchain.
     freqs_lead_time     =      '.2',  --SECONDS.  +-LEAD TIME FOR SPECTRUM. SUBJECTIVE TRIAL & ERROR (.0 .1 .2 .3 .4 ?). BACKDATES audio TIMESTAMPS. showfreqs HAS AT LEAST 1 FRAME LAG.  A CONDUCTOR'S BATON MAY MOVE AN EXTRA .1s BEFORE THE ORCHESTRA, OR IT'S LIKE HE'S TRYING TO KEEP UP.
-    freqs_fps           =        15,  --FOR PERFECTLY SMOOTH FILM ON CHEAP CPU.  25fps MAY CAUSE FILM TO STUTTER (graph SUB-OPTIMAL). freqs_clip_h ALSO IMPROVES PERFORMANCE.  TRY averaging=3 FOR MORE fps.
-    freqs_fps_albumart  =        30,  --FOR RAW MP3 ALSO. CAN EASILY DOUBLE freqs_fps.
+    freqs_fps           =      30/2,  --FOR PERFECTLY SMOOTH FILM ON CHEAP CPU.  MORE MAY CAUSE FILM TO STUTTER. freqs_clip_h ALSO IMPROVES PERFORMANCE.  USE MORE averaging FOR MORE freqs_fps.
+    freqs_fps_albumart  =      30  ,  --FOR RAW MP3 ALSO. CAN EASILY DOUBLE freqs_fps.
     freqs_scale_h       =     '1.2',  --CURVE HEIGHT MAGNIFICATION.  REDUCES CPU CONSUMPTION (LESS DATA IN EFFECT). BUT THE LIPS LOSE TRACTION.  L & R CHANNELS FORM LIKE A DUAL MOUTH (LIKE HOW HUMANS ARE BIPEDAL).  freqs_alpha OPTION UNNECESSARY (EQUIVALENT TO A no_freqs OPTION).
     freqs_clip_h        =      .25 ,  --MINIMUM=grid_height (CAN'T CLIP LOWER THAN grid, DUE TO RECIPROCAL CANVAS PADDING).  number NEEDED FOR scale COMPUTATIONS.  REDUCES CPU USAGE BY CLIPPING CURVE - CROPS THE TOP OFF SHARP SIGNAL.
     freqs_interpolation =     false,  --SET TO true TO INTERPOLATE FROM freqs_fps→volume_fps.  ADDS ~7% CPU USAGE. HOWEVER CAN REDUCE fps FROM 30→25 TO SUBTRACT 15% CPU USAGE.   CAN REDUCE freqs_fps_albumart, TO INTERPOLATE FROM IT.  NICE LIGHTNING EFFECT BUT LOOKS JITTERY & FILM MAY STUTTER @autocrop.
     volume_af_chain     = 'highpass=f=250,dynaudnorm=g=5:p=1:m=100:b=1',  --ALSO APPLIES TO freqs (volume GOES FIRST IN THIS MODEL).  250Hz highpass CLARIFIES SPECTRUM.  firequalizer IS AN ALTERNATIVE.
     volume_opts         =     'f=0',  --DEFAULT=1 FOR FADE.  CAN ALSO ENTER EXTRA OPTIONS, LIKE dm & dmc FOR DISPLAY-MAX-LINES.  EXAMPLE: "dm=1:dmc=RED"
     volume_scale        = {.04,.15},  --RATIOS {WIDTH,HEIGHT}; {number/string}.  RELATIVE TO overlay_scale, BEFORE STACKING feet, & BEFORE autocrop.lua.
-    volume_fps          =        30,  --PRIMARY ANIMATION fps. STREAM MAYBE 60fps BUT NOT THE EXTRA VISUALS.
+    volume_fps          =       30 ,  --PRIMARY ANIMATION fps. STREAM MAYBE 60fps BUT NOT THE EXTRA VISUALS.
     volume_alpha        =     '.25',  --0 REMOVES BARS (feet REMAIN). OPAQUENESS OF volume BARS.  DUAL volume TAKES CENTER STAGE.
     grid_alpha          =       '1',  --MULTIPLIER    RELATIVE TO volume_alpha. 0 REMOVES grid & feet.
     grid_thickness      =     '1/8',  --RATIO         RELATIVE TO grid SPACING.  SLIGHTLY THICKER THAN CURVE.
@@ -46,23 +43,23 @@ options                 = {
     feet_activation     =      '.5',  --RATIO         RELATIVE TO volume, FROM THE BOTTOM.  feet BLINK ON/OFF WHEN volume PASSES THIS THRESHOLD.
     feet_lutrgb         = 'r=192:b=255:a=val/.25',  --RELATIVE TO volume_alpha. a=val*0 TO REMOVE.  COLOR OF CENTRAL feet.  
     shoe_color          =              'BLACK@.5',  --@0 TO REMOVE.  A DIFFERENT VERSION COULD ALSO ADD o.grid_filterchain & o.grid_feet_lutrgb. (BLUE/RED OR RED/BLUE BARS?)  RED OUTER BARS SET OFF cropdetect.  
-    sine_mix            = {},  --{{   'f:b',volume},{f,volume},...,{'frequency(Hz):beep_factor',volume}}  b OPTIONAL (ONCE/SECOND).  sine WAVES FOR CALIBRATION MIX DIRECTLY INTO [ao].  BEEP ACTIVATES feet.  FUTURE VERSION SHOULD SUPPORT JPEG (CURRENTLY REQUIRES EXISTING AUDIO TO MIX WITH).
+    sine_mix            = {},  --{{'f:b',volume},{f,volume},...,{'frequency(Hz):beep_factor',volume}}  b OPTIONAL (ONCE/SECOND).  sine WAVES FOR CALIBRATION MIX DIRECTLY INTO [ao].  BEEP ACTIVATES feet.  FUTURE VERSION SHOULD SUPPORT JPEG (CURRENTLY REQUIRES EXISTING AUDIO TO MIX WITH).
     -- sine_mix         = {{100,1},{'200:1',1.1},{300,1},{'400:1',1.1},{500,1},{'600:1',1.1},{700,1},{'800:1',1.1},{900,1},{'1000:1',1.1}},  --UNCOMMENT FOR 10 WAVES.  EVERY SECOND ONE BEEPS. THE 900Hz PEAK LINES UP, BUT THE SURROUNDING CURVE SKEWS ABOVE 900Hz.
-    video_params        = {w,h,pixelformat},  --OVERRIDES; {number/string}.  DEFAULT pixelformat=yuva420p/yuv420p, DEPENDING.  DEFAULT w=display-width.  BUT THAT'S nil FOR LINUX SMPLAYER (CAN SET {w=1680,h=1050}).
+    video_params        = {w,h,pixelformat},  --OVERRIDES {number/string}.  DEFAULT pixelformat='yuva420p'/'yuv420p', DEPENDING.  DEFAULT w=display-width.  BUT THAT'S nil FOR LINUX SMPLAYER (CAN SET {w=1680,h=1050}).
     options             = {
         'keepaspect      no','force-window yes','geometry 50%',  --no-keepaspect FOR ANDROID. FREE-SIZE IF MPV HAS ITS OWN WINDOW.  force-window PREVENTS MPV FROM VANISHING DURING TRACK CHANGES, & TOGGLING ON AUDIO, UNLESS ANDROID!  geometry APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.
         'vd-lavc-threads 0 ',  --VIDEO-DECODER-LIBRARY-AUDIO-VIDEO-threads OVERRIDES SMPLAYER OR ELSE MAY FAIL TESTING.  
     },
-    windows        = {}, linux = {}, darwin = {},  --OPTIONAL: platform OVERRIDES.
+    windows        = {}, linux = {}, darwin = {},  --OPTIONAL platform OVERRIDES.
     android        = {
-        dual_scale = {},rotate='0',zoompan='1',overlay='(W-w)/2:H*.50-h/2',filterchain='shuffleplanes=1,lutrgb=g=val/4',  --SIMPLE COMPLEX.
+        freqs_fps  = 25/2, volume_fps = 25,
     },
 }
 o,p,m,timers         = {},{},{},{} --o,p=options,PROPERTIES  m=MEMORY={graph,'android-surface-size'}  timers={mute,sid,playback_restarted,seek}  playback_restarted BLOCKS THE PRIOR 2.
 android_surface_size = {}          --{w,h}
 
-function typecast(string)  --ALSO @script-message.  string MAY NOT BE 'string', FOR SIMPLICITY.  load INVALID ON MPV.APP.  CONSOLE CAN USE THIS TO PIPE FROM WITHIN LUA.
-    return   type(string)=='string' and loadstring('return '..string)() or string
+function typecast(arg)  --ALSO @script-message.  load INVALID ON MPV.APP.  CONSOLE CAN USE THIS TO PIPE FROM WITHIN LUA.
+    return   type(arg)=='string' and loadstring('return '..arg)() or arg
 end
 
 function  gp(property)  --ALSO @file-loaded, @seek, @on_toggle & @property_handler.  GET-PROPERTY.
@@ -80,8 +77,8 @@ random        = math.random
 p  .platform  = gp('platform') or os.getenv('OS') and 'windows' or 'linux' --platform=nil FOR OLD MPV.  OS=Windows_NT/nil.  SMPLAYER STILL RELEASED WITH OLD MPV.
 o[p.platform] = {}                                                         --DEFAULT={}
 for  opt,val in pairs(options)
-do o[opt]     = val end               --CLONE
-require 'mp.options'.read_options(o)  --yes/no=true/false BUT OTHER TYPES DON'T AUTO-CAST.
+do o[opt]     = val end              --CLONE
+require 'mp.options'.read_options(o) --yes/no=true/false BUT OTHER TYPES DON'T AUTO-CAST.
 for  opt,val in pairs(o)
 do o[opt] = type(options[opt])~='string' and typecast(val) or val end  --NATIVES PREFERRED, EXCEPT FOR GRAPH INSERTS.  
 
@@ -93,15 +90,15 @@ for opt,val in pairs(o[p.platform])
 do o[opt]          = val end                                     --platform OVERRIDE. 
 label              = mp.get_script_name()                        --autocomplex
 for key in ('np tp'):gmatch('[^ ]+')                             --(tp) OPTIONAL.  OVERRIDE FOR NO TIME-DEPENDENCE PREVENTS DIVISION BY 0.  gmatch=GLOBAL MATCH ITERATOR.  '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON MPV.APP (SAME _VERSION, DIFFERENT BUILD).
-do    o.gsubs[key] = o.period..''=='0' and 0 or o.gsubs[key] end --..'' CONVERTS→string.  
+do    o.gsubs[key] = o.period..''=='0' and '(0)' or o.gsubs[key] end --..'' CONVERTS→string.  
 for opt in ('rotate zoompan filterchain dual_filterchain overlay dual_overlay'):gmatch('[^ ]+')  --options WHICH NEED gsubs.  filterchain OPTIONAL.  
 do          o[opt] = o[opt]..''
     for N          = 1,o.gsubs_passes do for key,gsub in pairs(o.gsubs)           --gsubs DEPEND ON EACH-OTHER.
         do  o[opt] = o[opt]    :gsub('%('..key..'%)', '('..gsub..')') end end end --() ARE MAGIC.  RECURRING BRACKETS ARE AN ISSUE.
 for opt in ('rotate zoompan filterchain dual_filterchain'):gmatch('[^ ]+')  
-do          o[opt] = o[opt]    :gsub('%(fpp%)',('(%s*%s)'):format(o.period,o.volume_fps)) end --ANIMATIONS ARE @volume_fps. OPTIMIZE USING DIFFERENT fps.  dual_filterchain IS LIKE rotate.  (fpp) SUBSTITUTION IS SPECIAL BECAUSE IT DEPENDS ON THE EXACT FILTER. CAN BE string=22/30*25.
+do          o[opt] = o[opt]    :gsub('%(fpp%)',('(%s*%s)'):format(o.period,o.volume_fps)) end --ANIMATIONS ARE @volume_fps. CAN OPTIMIZE USING DIFFERENT fps.  dual_filterchain IS LIKE rotate.  (fpp) SUBSTITUTION IS SPECIAL BECAUSE IT DEPENDS ON THE EXACT FILTER. CAN BE '22/30*25'.
 for opt in ('               overlay     dual_overlay    '):gmatch('[^ ]+')                    --OVERLAYS   ARE @STREAM fps.
-do          o[opt] = o[opt]    :gsub('%(fpp%)',('(%s*%s)'):format(o.period,o.       fps)) end --SHOULD BE INTEGER.
+do          o[opt] = o[opt]    :gsub('%(fpp%)',('(%s*%s)'):format(o.period,o.       fps)) end --fpp SHOULD BE INTEGER.
 o.zoompan          = o.zoompan :gsub('%(n%)'  , '(on)'   )                                    --(n)→(on) FOR zoompan.
 for N,sine in pairs(o.sine_mix)                                                               --EXTENDS o.af_chain INTO A SUBGRAPH, IN EFFECT, OR ELSE IT'S BLANK.  
 do amix            = (",sine='%s',volume='%s'[a%d]%s[a%d]"):format(sine[1],sine[2],N,amix or ',[ao]',N) end --RECURSIVELY GENERATE ALL sine WAVES (WITH THEIR volume).  "," SEPERATES THE SINES FROM THE MIX.
@@ -147,7 +144,7 @@ graph=("[aid%%d]%s%s,asplit[ao],stereotools,%s,apad,asplit[freqs],aformat=s16,sh
 ----avgblur         = sizeX:planes AVERAGE BLUR DEFAULT=1:15  (INTEGER:<16)  sizeY=sizeX (PIXELS)  FOR gbrap planes=8(GREEN)+4(BLUE)+2(RED)+1(ALPHA)=2^3+2^2+2^1+2^0.  CONVERTS JAGGED CURVE INTO BLUR, WHOSE BRIGHTNESS GIVES SMOOTHER CURVE.
 ----trim            = ...:end:...:start_frame:end_frame  DEFAULT start_frame=0  TRIMS 1 FRAME OFF THE START FOR ITS TIMESTAMP, & ENDS THE COMPLEX. IT'S THE MOST ACCURATE WAY TO end albumart (ASIDE FROM --end).
 ----loop            = loop:size  ( >=-1 : >0 )  LOOPS BOTH albumart & image (SEE TOGGLE).
-----aformat,format  = sample_fmts:sample_rates,pix_fmts  s16:Hz,{yuva420p,yuv420p,bgra,gbrp=rgb24,gbrap}  IS THE FINISH ON [vo] (TO REMOVE alpha). MAY BE BLANK.  gbrap (GreatBRitAin Planar) ASSUMED BY shuffleplanes & avgblur. REQUIRED IN FFMPEG-v4.2.  HOWEVER bgra (RGB BACKWARDS) ALSO REQUIRED FOR EFFICIENT SCALING FROM COLORED HALF-PLANES (SOLVES ERRORS). SO IT'S USED IN BTWN gbrap & yuva420p (FORCED BY overlay).  aformat REMOVES doublep PRECISION AFTER dynaudnorm, & DOWNSAMPLES TO 2.1kHz (NYQUIST+5%). 
+----aformat,format  = sample_fmts:sample_rates,pix_fmts  s16:Hz,{yuva420p,yuv420p,bgra,gbrp=rgb24,gbrap}  IS THE FINISH ON [vo] (TO REMOVE alpha). MAY BE BLANK.  gbrap (GreatBRitAin Planar) ASSUMED BY shuffleplanes & avgblur. REQUIRED IN FFMPEG-v4.2.  HOWEVER bgra (RGB BACKWARDS) ALSO REQUIRED FOR EFFICIENT SCALING FROM COLORED HALF-PLANES (SOLVES ERRORS). SO IT'S USED IN BTWN gbrap & yuva420p (FORCED BY overlay).  yuva420p MAY BE MORE OPTIMAL THAN RGB FORMATS (bgra gbrap) OR yuva444p.  aformat REMOVES doublep PRECISION AFTER dynaudnorm, & DOWNSAMPLES TO 2.1kHz (NYQUIST+5%). 
 ----anull             IS PLACEHOLDER @START.
 ----hflip,vflip       HORIZONTAL,VERTICAL  hflip FOR [L] LEFT.  vflip FOR BOTTOM [D] (DOWN).
 ----stereotools       CONVERTS MONO & SURROUND SOUND TO stereo.  ALTERNATIVE TO aformat.  softclip INCOMPATIBLE WITH FFMPEG-v4.
@@ -157,15 +154,15 @@ graph=("[aid%%d]%s%s,asplit[ao],stereotools,%s,apad,asplit[freqs],aformat=s16,sh
 
 
 function file_loaded()  --ALSO @property_handler, @on_toggle & @timers.seek.
-    p.start   = p.start and mp.set_property('start','none') and nil            --REMOVE start; DUE TO INSTA-stop @property_handler.  PERSISTS OTHERWISE.  ALTERNATIVELY CAN seek.
+    p.start   = p.start and mp.set_property('start','none') and nil            --REMOVE start IF DUE TO INSTA-stop @property_handler.  PERSISTS OTHERWISE.  ALTERNATIVELY CAN seek.
     a_id,v    = gp('current-tracks/audio/id'),gp('current-tracks/video') or {} --aid (number/string/false) IS A SETTING FOR a_id (number/nil). aid,a_id = false,1 CAN OCCUR @vid RELOAD.  p.aid & a_id ARE KEPT SEPARATE TO HANDLE EVERY CIRCUMSTANCE.
     W         = o.video_params.w           or gp('display-width'       ) or android_surface_size.w or gp('width' ) or v['demux-w'] or 1280  --number/string.  OVERRIDE  OR  display  OR  android  OR  PARAMETERS  OR  TRACK  OR  (FALLBACK FOR RAW MP3 IN VIRTUALBOX).  width=nil SOMETIMES @file-loaded, & MAY BE MUCH LARGER THAN display SINCE MEMORY IS CHEAP.  
     H         = o.video_params.h           or gp('display-height'      ) or android_surface_size.h or gp('height') or v['demux-h'] or 720
     alpha     = gp('video-params/alpha')   or v.image                    or not v.id  --MPV REQUIRES EXTRA ~.1s TO DETECT alpha, SO GUESS FOR image & ~v.id.
-    format    = o.video_params.pixelformat or gp('current-vo')=='shm'    and 'yuv420p' or alpha and 'yuva420p' or 'yuv420p'  --OVERRIDE  OR  SHARED-MEMORY  OR  TRANSPARENT  OR  NORMAL.  FORCING yuv420p OR yuva420p IS MORE RELIABLE. MPV.APP COMPATIBLE WITH TRANSPARENCY, BUT NOT SMPLAYER.APP.  overlay FORCES yuva420p, BUT alpha ON FILM TRIGGERS BUG/S IN OTHER SCRIPT/S.  lavfi-complex CAN'T DETECT WHETHER alpha EVER EXISTED WITHOUT A DELAYED TRIGGER, BUT THE .1s DELAY CAN CAUSE STUTTER/LAG.
-    FORCE_OFF = not a_id or not vstack     or  p['current-vo']=='null'    --FORCE OFF.  a_id=nil FOR JPEG.  vstack=nil FOR NO SPECTRUM.  current-vo=null FOR ANDROID BACKGROUND-PLAYING.  BUT current-vo=nil IS FINE (PROCEED WITH SPECTRUM).
+    format    = o.video_params.pixelformat or gp('current-vo')=='shm'    and 'yuv420p' or alpha and 'yuva420p'     or 'yuv420p'  --OVERRIDE  OR  SHARED-MEMORY  OR  TRANSPARENT  OR  NORMAL.  FORCING yuv420p OR yuva420p IS MORE RELIABLE. MPV.APP COMPATIBLE WITH TRANSPARENCY, BUT NOT SMPLAYER.APP.  overlay FORCES yuva420p, BUT alpha ON FILM TRIGGERS BUG/S IN OTHER SCRIPT/S.  lavfi-complex CAN'T DETECT WHETHER alpha EVER EXISTED WITHOUT A DELAYED TRIGGER, BUT THE .1s DELAY CAN CAUSE STUTTER/LAG.
+    FORCE_OFF = not a_id or not vstack     or  p['current-vo']=='null'    --FORCE OFF.  a_id=nil FOR JPEG.  vstack=nil FOR NO SPECTRUM.  current-vo=null FOR ANDROID BACKGROUND-PLAYING.  BUT current-vo=nil IS FINE (PROCEED WITH SPECTRUM).  null BAD, nil GOOD!
     if   OFF or FORCE_OFF 
-    then OFF  = nil  --TOGGLE OFF IF OFF.  ALSO COVERS OFF CASES. EXAMPLE: JPEG=OFF-albumart.  SOMETIMES A file-loaded CAN BE JUST A TOGGLE OFF.
+    then OFF  = nil  --TOGGLE OFF IF OFF.  EXAMPLE: JPEG=OFF-albumart.  SOMETIMES A file-loaded CAN BE JUST A TOGGLE OFF.
          on_toggle() 
          return end  --ON BELOW.
     
@@ -265,8 +262,8 @@ reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.  SNAPS EM
 ----script-binding                toggle_complex
 ----script-message-to autocomplex toggle
 ----script-message-to autocomplex cleanup
-----script-message-to autocomplex loadstring <string>
-----script-message                loadstring mp.osd_message(_VERSION)
+----script-message-to autocomplex loadstring <arg>
+----script-message                loadstring print(_VERSION)
 
 ----APP VERSIONS:
 ----MPV      : v0.38.0(.7z .exe v3 .apk)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)    ALL TESTED.  v0.34 INCOMPATIBLE WITH BOTH yt-dlp_x86 & THIS SCRIPT.
@@ -280,7 +277,6 @@ reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.  SNAPS EM
 ----FUTURE VERSION SHOULD MOVE o.double_mute_timeout, o.double_aid_timeout & o.toggle_command TO main.lua. ALL SCRIPTS SHOULD HAVE THESE, UNLESS main OPERATES ALL DOUBLE-TAPS.
 ----FUTURE VERSION SHOULD REPLACE (random) WITH $RANDOM/%RANDOM%.
 ----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts; function on_update.
-----FUTURE VERSION SHOULD IMPROVE IMPLEMENTATION OF o.dual_scale TO {number/string}, NOT JUST {number}.
 ----ISSUE: graph SHOULD BE OPTIMIZED SOMEHOW (extractplanes?). 
 
 ----A DIFFERENT DESIGN COULD COMPRESS 1→10kHz INTO AN ELEVENTH TICKMARK, USING A SECONDARY showfreqs.  

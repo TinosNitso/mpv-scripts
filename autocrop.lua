@@ -30,21 +30,21 @@ options                    = {
     pad_scale_flags        =    'bilinear' ,  --DEFAULT bicubic ('').  BUT bilinear WAS ONCE DEFAULT IN OLD FFMPEG & IS FASTER @frame DOWN-SCALING. bicubic IS BETTER QUALITY.  BUT THIS IS FOR THE PADDING DOWN-SCALER.  
     pad_options            = 'x=(ow-iw)/2:y=(oh-ih)/2:color=BLACK@1',  --CAN SET color=WHITE FOR WHITE SMARTPHONE.  y=0 PADS ONLY THE BOTTOM.  BLACK@0 FOR TRANSPARENCY.  MAROON, PURPLE, DARKBLUE, DARKGREEN, DARKGRAY & PINK ARE ALSO NICE. 
     osd_par_multiplier     =       1       ,  --NEEDED FOR NON-NATIVE SCREEN-RESOLUTIONS.  DISPLAY-PAR=osd-par*osd_par_multiplier.  osd-par=ON-SCREEN-DISPLAY-PIXEL-ASPECT-RATIO.  CAN MEASURE display TO DETERMINE ITS TRUE par.  video-out-params/par ACTUALLY MEANS VIDEO-IN-2DISPLAY (par OF ORIGINAL FILM)!
-    video_out_params       =  {par=1,w,h,pixelformat},  --OVERRIDES, {number/string}.  DEFAULT par=1.  SET {par=1,pixelformat='yuva420p'} FOR TRANSPARENT PADDING.  THIS SCRIPT OVERRIDES FILM par USING ITS OWN MATH.  DEFAULT w=display-width.  BUT THAT'S nil FOR LINUX SMPLAYER (CAN SET {par=1,w=1680,h=1050}).  OVERRIDING par USES MORE CPU BY COMPUTING MORE MEGAPIXEL/S.  THE SOURCE STREAM par/sar COULD ALSO BE VARIABLE!  par=2 MAKES NO DIFFERENCE.
+    video_out_params       =  {par=1,w,h,pixelformat},  --OVERRIDES {number/string}.  DEFAULT par=1.  SET {par=1,pixelformat='yuva420p'} FOR TRANSPARENT PADDING.  THIS SCRIPT OVERRIDES FILM par USING ITS OWN MATH.  DEFAULT w=display-width.  BUT THAT'S nil FOR LINUX SMPLAYER (CAN SET {par=1,w=1680,h=1050}).  OVERRIDING par USES MORE CPU BY COMPUTING MORE MEGAPIXEL/S.  THE SOURCE STREAM par/sar COULD ALSO BE VARIABLE!  par=2 MAKES NO DIFFERENCE.
     options                =  {
         'keepaspect    no','keepaspect-window   no ','geometry 50%          ',  --keepaspect=no FOR ANDROID. keepaspect-window=no FOR MPV.APP.  FREE-SIZE IF MPV HAS ITS OWN WINDOW.  geometry ONLY APPLIES ONCE, IF MPV HAS ITS OWN WINDOW. 
-        'osd-font-size 16','osd-bold            yes','osd-font "COURIER NEW"',  --DEFAULTS=55,no,sans-serif  55p MAY NOT FIT osd.  COURIER NEW NEEDS bold (FANCY).  CONSOLAS PROPRIETARY & INVALID ON MACOS.
+        'osd-font-size 16','osd-bold            yes','osd-font "COURIER NEW"',  --DEFAULTS=55,no,sans-serif  55p MAY NOT FIT osd.  COURIER NEW NEEDS bold (FANCY).  CONSOLAS PROPRIETARY & INVALID ON MACOS.  
         'sub           no','sub-create-cc-track yes',  --DEFAULTS=auto,no.  SUBTITLE CLOSED-CAPTIONS CREATE BLANK TRACK FOR double_sid_timeout (BEST TOGGLE).  JPEG VALID.  UNFORTUNATELY YOUTUBE USUALLY BUGS OUT UNLESS sub=no.  sid=1 LATER @playback-restart.  YOUTUBE cc TAKE TIME TO SHUFFLE.
         'hwdec         no',  --DEFAULT=no.  HARDWARE-DECODER MAY PERFORM BADLY, & BUGS OUT ON ANDROID.
     },
-    windows      = {}, linux = {}, darwin = {},  --OPTIONAL: platform OVERRIDES.
+    windows      = {}, linux = {}, darwin = {},  --OPTIONAL platform OVERRIDES.
     android      = {  
-        options  = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',}, --options APPEND, NOT REPLACE.
+        options  = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',}, --options APPEND, NOT REPLACE.  meta_osd PREFERS MONOSPACE FONT.
     },
     limits       = { nil
-    ----,["path \n media-title SUBSTRING"]={start,end,detect_limit}={SECONDS,-SECONDS,string/number} (OR nil).  NOT CASE SENSITIVE.  detect_limit IS FINAL OVERRIDE.  start & end MAY BOTH BE NEGATIVE &/OR PERCENTAGES.  MATCHES ON FIRST find.  SPACETIME CROPPING IS AN ALTERNATIVE TO SUB-CLIP EXTRACTS.  STARTING & ENDING CREDITS ARE SIMPLER TO CROP THAN INTERMISSION (INTERMEDIATE AUTO-seek). 
+    ----,["path \n media-title SUBSTRING"]={start,end,detect_limit}={SECONDS,-SECONDS,string/number} (OR nil).  NOT CASE SENSITIVE.  start & end MAY BOTH BE NEGATIVE &/OR PERCENTAGES.  detect_limit IS FINAL OVERRIDE.  MATCHES ON FIRST find.  SPACETIME CROPPING IS AN ALTERNATIVE TO SUB-CLIP EXTRACTS.  STARTING & ENDING CREDITS ARE SIMPLER TO CROP THAN INTERMISSION (AUTO-seek). 
         ,["Alanis Morissette Ironic Official "]={4,-20}
-        ,["Aqua Barbie Girl Official Music Video"]={7,-11}
+        ,["Sum 41 Still Waiting Official Music Video"]={63,-4}
         ,["Midnight Oil Dreamworld"]={27}
         ,["Red Army Choir - The March of the Defenders of Moscow (Марш защитников Москвы)"]={detect_limit=40}  --АБЧДЭФГХИЖКЛМНОП РСТУВ  ЙЗЕЁ ЫЮ Я Ц ШЩ ЬЪ
         
@@ -53,8 +53,8 @@ options                    = {
 o,p,m,timers                      = {},{},{},{} --o,p,m=options,PROPERTIES,MEMORY  timers={mute,aid,sid,playback_restarted,re_pause,apply_pad,apply_scale,auto_delay}  playback_restarted BLOCKS THE PRIOR 3. 
 meta,aspects,android_surface_size = {},{},{}    --meta=METADATA FOR detect_crop.  aspects={ON,OFF,restart} FOR PADDING (RELATIVE VALUES).  android_surface_size={w,h}
 
-function typecast(string)  --ALSO @script-message, @apply_pad, @apply_scale & @apply_crop.  string MAY NOT BE 'string', FOR SIMPLICITY.  load INVALID ON MPV.APP.  CONSOLE CAN USE THIS TO PIPE FROM WITHIN LUA.
-    return   type(string)=='string' and loadstring('return '..string)() or string
+function typecast(arg)  --ALSO @script-message, @apply_pad, @apply_scale & @apply_crop.  load INVALID ON MPV.APP.  CONSOLE CAN USE THIS TO PIPE FROM WITHIN LUA.
+    return   type(arg)=='string' and loadstring('return '..arg)() or arg
 end
 
 function  gp(property)  --ALSO @start-file, @file-loaded, @seek, @apply_pad, @apply_scale, @apply_crop & @detect_crop.  GET-PROPERTY.
@@ -102,7 +102,7 @@ function file_loaded()  --ALSO @seek & @property_handler.
         limits           = limits                     or  {}
         limit            = limits.detect_limit        or  o.detect_limit
         limits.start     = limits.start               or  limits[1]
-        set_end          = limits['end']              or  limits[2]  or set_end   and gp('end')~='none' and 'none' --none @playlist-next IF NEEDED.  TRACK-2 SHOULDN'T INHERIT end DUE TO PRIOR set_end.  set_end SIMPLER THAN TRIMMING TIMESTAMPS.  
+        set_end          = limits['end']              or  limits[2] or  set_end   and gp('end')~='none' and 'none' --none @playlist-next IF NEEDED.  TRACK-2 SHOULDN'T INHERIT end DUE TO PRIOR set_end.  set_end SIMPLER THAN TRIMMING TIMESTAMPS.  
         seek             = limits.start               and start_time<limits.start and limits.start                 --SIMPLER THAN set_start BECAUSE media-title UNKNOWN BEFORE file-loaded!
         command          = ''                         
                            ..(seek                    and '   seek    %s absolute exact;' or ''):format(seek)  --ALSO FOR JPEG.
@@ -166,20 +166,20 @@ end
 
 function apply_pad(pad_options,pixelformat,pad_scale_flags,aspect,par) --@script-message, @file_loaded & @seek.  PADDING APPENDS AFTER OTHER SCRIPT/S.  ALL NUMBERS ARE NEEDED TO PREVENT INITIAL STUTTER (GUESSES ARE ESSENTIAL). DELAYED TRIGGER UNACCEPTABLE.
     if not W then return end  --W=nil DURING INSTA-stop FROM OTHER SCRIPT/S.
-    pad_options           = pad_options     or o.pad_options --OPTIONAL@script-message.
-    format                = pixelformat     or o.video_out_params.pixelformat or detect_format  --OVERRIDE  OR  DETECTOR.
-    pad_scale_flags       = pad_scale_flags or o.pad_scale_flags
-    par                   = par             or o.video_out_params.par
-    W2,H2                 = round(W,2),round(H,2)  --W2 ACTS AS LOADED SWITCH.  EVENS ONLY. 
-    aspects.OFF           = W2/H2
-    pad_time,m.aspect     =  gp('time-pos'),nil  --pad_time BLOCKS RE-PADDING TOO QUICKLY.  m.aspect DEFAULTS TO restart VALUE.
-    v                     =  gp('current-tracks/video' ) or  {}  --{} FOR AUDIO.
-    m.  osd_aspect        = (gp('osd-dimensions/aspect') or 0)>0         and p['osd-dimensions/aspect']   or aspects.OFF  --ASSUME FULL-SCREEN IF NECESSARY.  osd-dimensions/aspect=0 @file-loaded, BUT >0 ~.1s LATER. OFTEN MPV HASN'T MEASURED ITS OWN WINDOW YET.  
-    m.video_aspect        =  gp(  'video-params/aspect') or (gp('width') or  v['demux-w'] or W2) / (gp('height') or v['demux-h'] or H2) * (gp('video-params/par') or v['demux-par'] or 1)  --MEMORIZE FOR @seek (MAY PREVENT LAG).  demux-w/demux-h TRIGGERS FOR JPEG+lavfi-complex (demux-par=nil).  W2/H2 MAY TRIGGER FOR RAW-MP3+lavfi-complex.
-    aspects.ON            = (typecast(aspect) or m.video_aspect)  * aspects.OFF / (m.osd_aspect * o.osd_par_multiplier)  --number TYPECAST.
-    aspects.restart       = is1frame and not ON2 and aspects.OFF or aspects.ON  --DEFAULT GRAPH STATE IS ON2 (PADDED), UNLESS is1frame.
+    W2,H2                 =  round(W,2),round(H,2)  --W2 ACTS AS pad LOADED SWITCH.  EVENS ONLY FOR CENTERED PADDING! 
+    aspects.OFF           =  W2/H2
+    pad_options           =  pad_options                 or  o.pad_options --OPTIONAL@script-message.
+    format                =  pixelformat                 or  o.video_out_params.pixelformat or detect_format  --OVERRIDE  OR  DETECTOR.
+    pad_scale_flags       =  pad_scale_flags             or  o.pad_scale_flags
+    par                   =  par                         or  o.video_out_params.par
+    v                     =  gp('current-tracks/video' ) or  {}
+    m.  osd_aspect        = (gp('osd-dimensions/aspect') or  0)>0         and p['osd-dimensions/aspect']   or aspects.OFF  --ASSUME FULL-SCREEN IF NECESSARY.  osd-dimensions/aspect=0 @file-loaded, BUT >0 ~.1s LATER. OFTEN MPV HASN'T MEASURED ITS OWN WINDOW YET.  
+    m.video_aspect        =  gp(  'video-params/aspect') or  (gp('width') or  v['demux-w'] or W2) / (gp('height') or v['demux-h'] or H2) * (gp('video-params/par') or v['demux-par'] or 1)  --MEMORIZE FOR @seek (MAY PREVENT LAG).  demux-w/demux-h TRIGGERS FOR JPEG+lavfi-complex (demux-par=nil).  W2/H2 RARELY TRIGGERS FOR RAW-MP3+lavfi-complex.
+    aspects.ON            = (          typecast(aspect)  or  m.video_aspect)  * aspects.OFF / (m.osd_aspect * o.osd_par_multiplier)  --number TYPECAST.
+    aspects.restart       = is1frame and not ON2         and aspects.OFF or aspects.ON --DEFAULT GRAPH STATE IS ON2 (PADDED), UNLESS is1frame.
+    insta_pause           = not p.pause                  and v.image                   --COMMAND SWITCH.  FOR PNG RELIABILITY.  OTHERWISE CAUSES STUTTER ON FILM @10ms!
     pad_iw,pad_ih         = round(math.min(W2,H2*aspects.restart),2),round(math.min(W2/aspects.restart,H2),2)  --pad INPUT-WIDTH,INPUT-HEIGHT.
-    insta_pause           = not p.pause and v.image  --FOR PNG RELIABILITY.  OTHERWISE CAUSES STUTTER ON FILM!
+    pad_time,m.aspect     =  gp('time-pos'),nil  --pad_time BLOCKS RE-PADDING TOO QUICKLY.  m.aspect DEFAULTS TO restart VALUE.
     
     mp.command((''
                 ..(insta_pause and 'set pause yes;' or '')                                       
@@ -365,20 +365,20 @@ timers.auto_delay=mp.add_periodic_timer(o.auto_delay,detect_crop)
 
 function    event_handler(event)
     event = event.event
-    if      event      == 'start-file'  then mp.command(command_prefix..' vf pre @loop:loop=-1:1')  --INSTA-loop OF LEAD-FRAME IMPROVES JPEG RELIABILITY (HOOKS IN TIMESTAMPS).  video-latency-hacks ALSO RESOLVES THIS ISSUE. 
-    elseif  event      == 'file-loaded' then file_loaded()   
-    elseif  event      == 'end-file'    then v,W,W2,playback_restarted = nil  --CLEAR SWITCHES. 
-    elseif  event      == 'seek'        
-    then reload         = (gp('current-vo') or 'null')=='null' and (remove_filters() or 1) --ANDROID MINIMIZES USING current-vo=null.
-                          or not W  and file_loaded()  --RELOAD @NEW-vo, & @ANDROID-RESTORE.  vo,v=gpu,nil IN STANDALONE MODE.
-         seek_time      =                        p['time-pos'] 
-         if is1frame or   not   (W2 and         gp('time-pos')) then return end   --time-pos=nil PASSED end-file.
-         toggle_t_delay = seek_time and          p['time-pos']<seek_time  - 1 and .5 --DETECTS BACKWARDS-seek, WHICH REQUIRES t+.5s BY TRIAL & ERROR.  COULD ALSO BE MADE ANOTHER OPTION.  revert-seek SLOW & UNNECESSARY.
-         re_pad         =               math.abs(p['time-pos']-pad_time  )>.1 and not (m.osd_aspect==p['osd-dimensions/aspect'] and m.video_aspect==p['video-params/aspect'])  --pad_time BLOCKS CYCLING @seek FOR albumart-lavfi-complex.  IF WINDOW CHANGES aspect, THE DOWN-SCALER SHOULD BE REPLACED, SINCE IT'S DEFAULT ON STATE IS NOW DIFFERENT.  THERE'S A SPECIAL CASE WHERE THIS GETS IT WRONG: THE WINDOW RESIZES DURING seeking, BUT AFTER seek.  ALSO WRONG AFTER script-message SETS CUSTOM aspect.
-                                    and apply_pad()
-         reloop         =   loop    and math.abs(p['time-pos']-start_time)> 1 
-         start_time     = reloop    and    round(p['time-pos'],.001) or start_time
-         reloop         = reloop    and mp.command(('%s vf pre @loop:lavfi=[loop=-1:1,fps=start_time=%s]'):format(command_prefix,start_time))  --JPEG PRECISE seeking: RESET STARTPTS.  PTS MAY GO NEGATIVE!  MAYBE A NULL AUDIO STREAM COULD BE SIMPLER.  IMPRECISE seek TRIGGERS playlist-next OR playlist-prev.
+    if      event         == 'start-file'  then mp.command(command_prefix..' vf pre @loop:loop=-1:1')  --INSTA-loop OF LEAD-FRAME IMPROVES JPEG RELIABILITY (HOOKS IN TIMESTAMPS).  video-latency-hacks ALSO RESOLVES THIS ISSUE. 
+    elseif  event         == 'file-loaded' then file_loaded()   
+    elseif  event         == 'end-file'    then v,W,W2,playback_restarted = nil  --CLEAR SWITCHES. 
+    elseif  event         == 'seek'        
+    then    unload         = gp('current-vo')=='null'           and remove_filters() --ANDROID MINIMIZES USING current-vo=null.  THAT CAN BE INEFFICIENT.
+            reload         =  p['current-vo']~='null' and not W and file_loaded()    --RELOAD @NEW-vo, & @ANDROID-RESTORE.  vo,v=gpu,nil IN STANDALONE MODE.
+            seek_time      =                        p['time-pos'] 
+            if is1frame or not (W2     and         gp('time-pos')) then return   end    --time-pos=nil PASSED end-file.
+            toggle_t_delay = seek_time and          p['time-pos']<seek_time  - 1 and .5 --DETECTS BACKWARDS-seek, WHICH REQUIRES t+.5s BY TRIAL & ERROR.  COULD ALSO BE MADE ANOTHER OPTION.  revert-seek SLOW & UNNECESSARY.
+            re_pad         =               math.abs(p['time-pos']-pad_time  )>.1 and not (m.osd_aspect==p['osd-dimensions/aspect'] and m.video_aspect==p['video-params/aspect'])  --pad_time BLOCKS CYCLING @seek FOR albumart-lavfi-complex.  IF WINDOW CHANGES aspect, THE DOWN-SCALER SHOULD BE REPLACED, SINCE IT'S DEFAULT ON STATE IS NOW DIFFERENT.  THERE'S A SPECIAL CASE WHERE THIS GETS IT WRONG: THE WINDOW RESIZES DURING seeking, BUT AFTER seek.  ALSO WRONG AFTER script-message SETS CUSTOM aspect.
+                                       and apply_pad()
+            reloop         =   loop    and math.abs(p['time-pos']-start_time)> 1 
+            start_time     = reloop    and    round(p['time-pos'],.001) or start_time
+            reloop         = reloop    and mp.command(('%s vf pre @loop:lavfi=[loop=-1:1,fps=start_time=%s]'):format(command_prefix,start_time))  --JPEG PRECISE seeking: RESET STARTPTS.  PTS MAY GO NEGATIVE!  MAYBE A NULL AUDIO STREAM COULD BE SIMPLER.  IMPRECISE seek TRIGGERS playlist-next OR playlist-prev.
     elseif not         (is1frame    and playback_restarted)   --playback-restart: FILTERS' STATES ARE RESET, UNLESS is1frame.  
     then timers.playback_restarted:resume()                   --UNBLOCKS DOUBLE-TAPS.
          m.time_pos,m.aspect,p.seeking = nil                  --FORCES vf-COMMANDS.
@@ -445,8 +445,8 @@ reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.  SNAPS EM
 ----script-message-to autocrop toggle
 ----script-message             toggle_pad
 ----script-message-to autocrop cleanup
-----script-message-to autocrop loadstring   <string>
-----script-message             loadstring   mp.osd_message(_VERSION)
+----script-message-to autocrop loadstring   <arg>
+----script-message             loadstring   print(_VERSION)
 ----script-message             detect_crop  <show_text>
 ----script-message             apply_crop   <meta>
 ----script-message             apply_crop   {w=1920*random(),h=1080*random()}
@@ -469,7 +469,7 @@ reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.  SNAPS EM
 ----FUTURE VERSION SHOULD OPERATE 1fps EITHER AS is1frame MODE, OR SET MINIMUM fps=10; FOR FRAME-BY-FRAME GIFs.  vf-command DOESN'T REDRAW CURRENT FRAME.  BUT AUDIO COULD GLITCH.  THERE'S AT LEAST 3 WAYS OF CROPPING, INCLUDING video-crop.
 ----FUTURE VERSION SHOULD BE CAPABLE OF SMOOTH-CROPPING BY REPLACING BLACK BARS WITH BLACK PADS, & THEN SMOOTH-UNPAD. BECAUSE SMOOTH-PADDING IS EASY.  EFFICIENT TRUE SMOOTH-crop IS IMPOSSIBLE WITH FFMPEG-v6.
 ----FUTURE VERSION SHOULD HAVE o.keep_aspect, TO MAINTAIN TRUE ASPECT @ALL TIMES.
-----FUTURE VERSION SHOULD HAVE o.randomize_aspect. A NEW TIMER CAN RANDOMIZE apply_scale SO THE FILM NEVER STOPS CHANGING SIZE.
+----FUTURE VERSION SHOULD HAVE o.aspect_expr TO RANDOMIZE aspect EVERY HALF-SECOND (IF auto).  EXAMPLE: o.aspect_expr='16/9*random()^(random()*2-1)'  THE FILM NEVER STOPS CHANGING SIZE...
 
 ----COULD BE RENAMED autocrop-mod.lua.  MY LONGEST SCRIPT - LIKE 2.5 SCRIPTS IN 1 (autocrop, autopad & start/end PLAYLIST MANAGER).  A CROP IS A PAD-REMOVAL, SO THE FULL COMBO IS MORE INTUITIVE!
 ----BUG: apply_aspect & apply_pad SCRIPT-MESSAGES HAVE aspect RESET @seek. USER seeking OVERRIDES THE INPUT. FUTURE VERSION SHOULD FIX THIS (MUST MEMORIZE INPUT).

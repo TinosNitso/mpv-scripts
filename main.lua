@@ -41,15 +41,15 @@ options     = {
         'osd-level       1','osc          yes',  --RETURNS osd & osc.
         -- 'sid          1','secondary-sid  1',  --UNCOMMENT FOR SUBTITLE-TRACK-ID OVERRIDE.  USEFUL FOR YOUTUBE + sub-create-cc-track. sid=1 BUGS OUT @file-loaded.
     },
-    windows     = {}, linux = {}, darwin = {},  --OPTIONAL: platform OVERRIDES.
+    windows     = {}, linux = {}, darwin = {},  --OPTIONAL platform OVERRIDES.
     android     = {                                                             
         options = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',}, --options APPEND, NOT REPLACE. 
     },
 }
 o,p,timers = {},{},{}  --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file
 
-function typecast(string)  --ALSO @script-message & @title_update.  string MAY NOT BE 'string', FOR SIMPLICITY.  load INVALID ON MPV.APP.  CONSOLE CAN USE THIS TO PIPE FROM WITHIN LUA.
-    return   type(string)=='string' and loadstring('return '..string)() or string
+function typecast(arg)  --ALSO @script-message & @title_update.  load INVALID ON MPV.APP.  CONSOLE CAN USE THIS TO PIPE FROM WITHIN LUA.
+    return   type(arg)=='string' and loadstring('return '..arg)() or arg
 end
 
 function  gp(property) --ALSO @playback-restart.                GET-PROPERTY
@@ -140,7 +140,7 @@ reload = gp('time-pos') and playback_restart()  --TRIGGER NOW.
 
 ----CONSOLE/GUI COMMANDS & EXAMPLES (main=_):
 ----script-message-to _ cleanup
-----script-message-to _ loadstring <string>
+----script-message-to _ loadstring <arg>
 ----script-message      loadstring mp.osd_message(_VERSION)
 ----script-message      title      <data>          <title_duration>
 ----script-message      title      ${media-title}   6*random()
@@ -163,8 +163,8 @@ reload = gp('time-pos') and playback_restart()  --TRIGGER NOW.
 ----LUA      : v5.1     v5.2  TESTED.
 ----SMPLAYER : v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
-----SAFETY INSPECTION: LUA SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path expand-text show-text seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* SAFE EXCEPT FOR script-opts WHICH MAY HOOK AN UNSAFE EXECUTABLE.
 ----~200 LINES & ~3000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
+----SAFETY INSPECTION: LUA SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path expand-text show-text seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* SAFE EXCEPT FOR script-opts WHICH MAY HOOK AN UNSAFE EXECUTABLE.
 ----FUTURE VERSION SHOULD REMOVE QUOTES FROM URLs WHO ARE DRAG & DROPPED (PATH_HANDLER).
 ----FUTURE VERSION SHOULD HAVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout & o.toggle_command (IN EFFECT).
 ----FUTURE VERSION SHOULD ALSO HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED.  NEEDED FOR android albumart.
