@@ -347,7 +347,7 @@ for message,fn in pairs({cleanup=cleanup,loadstring=typecast,toggle=on_toggle,re
 do mp.register_script_message(message,fn)  end
 reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.
 
-----CONSOLE/GUI COMMANDS & EXAMPLES:
+----CONSOLE SCRIPT-COMMANDS & EXAMPLES:
 ----script-binding           aspeed
 ----script-message-to aspeed toggle
 ----script-message-to aspeed cleanup

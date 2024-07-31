@@ -11,7 +11,7 @@ options     = {
         "autocomplex.lua"       , --NOT FOR CHEAP SMARTPHONE.  ANIMATED AUDIO SPECTRUMS, VOLUME BARS, FPS LIMITER. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE CAN BE LIKE WINGS OF BIRD).  DISABLE FOR TWITTER, & SOMETIMES TO seek THROUGH YOUTUBE VIDEOS.
         "automask.lua"          , --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE (DOUBLE-MUTE).  CAN SPEED-LOAD MONACLE/PENTAGON ON SMARTPHONE.  LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE SPINNING_TRIANGLE=automask2.lua, 500MB RAM EACH, +UNIQUE KEYBINDS).
     },
-    ytdl = {            --YOUTUBE DOWNLOAD. PLACE EXECUTABLE WITH main.lua.  LIST ALL POSSIBLE FILENAMES TO HOOK, IN PREFERRED ORDER.  EXISTING HOOK APPENDS. NO ";" ALLOWED.  CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto.  NOT FOR ANDROID.
+    ytdl = {            --YOUTUBE DOWNLOAD. PLACE EXECUTABLE WITH main.lua.  LIST ALL POSSIBLE FILENAMES TO HOOK, IN PREFERRED ORDER.  EXISTING HOOK APPENDS. NO ";" ALLOWED.  CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto.  NOT FOR ANDROID OR LINUX snap.
         "yt-dlp"      , --.exe
         "yt-dlp_x86"  , --win32  REMOVE THESE TO SHORTEN script-opts.  WILDCARDS INVALID.  
         "yt-dlp_linux", --CASE SENSITIVE.  sudo apt remove yt-dlp TO REMOVE OLD VERSION.  
@@ -69,24 +69,27 @@ do o[opt] = type(options[opt])~='string' and typecast(val) or val end  --NATIVE 
 
 for _,opt in pairs(o[p.platform].options or {}) do table.insert(o.options,opt) end  --platform OVERRIDE APPENDS TO o.options.
 for _,opt in pairs(o.options)
-do  command                   = ('%s no-osd set %s;'):format(command or '',opt) end  --ALL SETS IN 1.
-command                       = command and mp.command(command)
+do  command        = ('%s no-osd set %s;'):format(command or '',opt) end  --ALL SETS IN 1.
+command            = command and mp.command(command)
 for opt,val in pairs(o[p.platform]) 
-do o[opt]                     = val end                       --platform OVERRIDE.  
-split_path                    = require 'mp.utils'.split_path 
-directory                     = split_path(gp('scripts')[1])  --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
-directory_expanded            = mp.command_native({'expand-path',directory}) --command_native EXPANDS '~/' FOR ytdl_hook.  
-COLON                         = p.platform=='windows' and ';' or ':'         --windows=;  UNIX=:  FILE LIST SEPARATOR.  
+do o[opt]          = val end                       --platform OVERRIDE.  
+split_path         = require 'mp.utils'.split_path 
+directory          = split_path(gp('scripts')[1])                 --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
+directory_expanded = mp.command_native({'expand-path',directory}) --command_native EXPANDS '~/' FOR ytdl_hook.  
+title              = mp.create_osd_overlay('ass-events')          --ass-events IS THE ONLY FORMAT. title GETS ITS OWN osd.
+COLON              = p.platform=='windows' and ';' or ':'         --windows=;  UNIX=:  FILE LIST SEPARATOR.  
 for _,ytdl in pairs(o.ytdl)   
-do    ytdl_path               = ('%s%s/%s%s'):format(ytdl_path or '',directory_expanded,ytdl,COLON) end --'/' FOR WINDOWS & UNIX.  TRAILING COLON ALLOWED.
-script_opt,title              = 'ytdl_hook-ytdl_path',mp.create_osd_overlay('ass-events')   --ABBREV, & ass-events IS THE ONLY FORMAT. title GETS ITS OWN osd.
-gp('script-opts')[script_opt] =  ytdl_path..(p['script-opts'][script_opt] or '')            --APPEND EXISTING HOOK FROM SMPLAYER AS FALLBACK.  PREPENDING IT FAILED FOR .AppImage. 
-for opt,val in pairs(o.script_opts)
-do p['script-opts'][opt]      = val end 
+do    ytdl_path    = ('%s%s/%s%s'):format(ytdl_path or '',directory_expanded,ytdl,COLON) end --'/' FOR WINDOWS & UNIX.  "\/" & "//" VALID.  TRAILING COLON ALLOWED.
+
+gp('script-opts')
+for script_opt,val in pairs(o.script_opts)
+do p['script-opts'][ script_opt          ] = val end 
+p   ['script-opts']['ytdl_hook-ytdl_path'] = ytdl_path..(p['script-opts']['ytdl_hook-ytdl_path'] or '')  --APPEND EXISTING HOOK FROM SMPLAYER AS FALLBACK.  PREPENDING IT FAILED FOR .AppImage. 
 mp.set_property_native('script-opts',p['script-opts'])
 
+gp('msg-level')
 for module,level in pairs(o.msg_level)
-do (p['msg-level'] or gp('msg-level'))[module] = level end  --msg-level BEFORE scripts.
+do p['msg-level'][module] = level end  --msg-level BEFORE scripts.
 mp.set_property_native('msg-level',p['msg-level']) 
 
 for _,script  in pairs(o.scripts) 
@@ -94,7 +97,7 @@ do script_lower,script_loaded = script:lower(),nil --SEARCH NOT CASE SENSITIVE.
     for _,val in pairs(p.scripts) 
     do  _,val                 = split_path(val)    --SEARCH NAMES ONLY. 
         script_loaded         = script_loaded or val:lower()==script_lower end  
-    script                    = ('%s/%s'):format(directory,script)  --'/' FOR windows & UNIX.  COULD SET './'=''.
+    script                    = ('%s/%s'):format(directory,script)
     load_script               = not script_loaded and mp.commandv('load-script',script) and table.insert(p.scripts,script) end  --commandv FOR FILENAMES.
 mp.set_property_native('scripts',p.scripts) --OPTIONAL: DECLARE scripts.
 
@@ -138,7 +141,7 @@ for message,fn in pairs({cleanup=cleanup,loadstring=typecast,title=title_update,
 do mp.register_script_message(message,fn)  end
 reload = gp('time-pos') and playback_restart()  --TRIGGER NOW.
 
-----CONSOLE/GUI COMMANDS & EXAMPLES (main=_):
+----CONSOLE SCRIPT-COMMANDS & EXAMPLES (main=_):
 ----script-message-to _ cleanup
 ----script-message-to _ loadstring <arg>
 ----script-message      loadstring mp.osd_message(_VERSION)
@@ -155,7 +158,7 @@ reload = gp('time-pos') and playback_restart()  --TRIGGER NOW.
 ----https://SOURCEFORGE.NET/projects/mpv-player-windows/files/release               FOR NEW MPV WINDOWS BUILDS. CAN REPLACE mpv.exe IN SMPLAYER.
 ----https://laboratory.STOLENDATA.NET/~djinn/mpv_osx                                FOR NEW MPV MACOS   BUILDS.  https://BRACKETS.IO FOR TEXT-EDITOR.  THESE BUILDS WORK FINE BUT '%g' (PATTERN) & Δ (GREEK) ARE INVALID.  
 ----https://GITHUB.COM/mpv-android/mpv-android/releases                             FOR NEW MPV ANDROID BUILDS.  https://CXFILEEXPLORERAPK.NET  &  https://BROMITE.ORG FOR CHROMIUM.
-----https://SMPLAYER.INFO/en/download-linux & https://apt.FRUIT.JE/ubuntu/jammy/mpv FOR LINUX SMPLAYER & MPV.   OFFLINE LINUX ALL-IN-ONE: SMPlayer-24.5.0-x86_64.AppImage  BUT IT HAS POOR PERFORMANCE (NO SMOOTH-PAD OR TRANSPARENCY).
+----https://SMPLAYER.INFO/en/download-linux & https://apt.FRUIT.JE/ubuntu/jammy/mpv FOR LINUX SMPLAYER & MPV.   OFFLINE LINUX ALL-IN-ONE: SMPlayer-24.5.0-x86_64.AppImage  BUT IT HAS POOR PERFORMANCE (NO SMOOTH-PAD).
 
 ----MPV      : v0.38.0(.7z .exe v3 .apk)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)    ALL TESTED.
 ----FFMPEG   : v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4(mpv.app)  v5.1.2(SMPlayer.app)  v4.4.2(.snap)  v4.2.7(.AppImage)  ALL TESTED.  MPV IS STILL OFTEN BUILT WITH 3 VERSIONS OF FFMPEG: v4, v5 & v6.
@@ -166,7 +169,7 @@ reload = gp('time-pos') and playback_restart()  --TRIGGER NOW.
 ----~200 LINES & ~3000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
 ----SAFETY INSPECTION: LUA SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path expand-text show-text seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* SAFE EXCEPT FOR script-opts WHICH MAY HOOK AN UNSAFE EXECUTABLE.
 ----FUTURE VERSION SHOULD REMOVE QUOTES FROM URLs WHO ARE DRAG & DROPPED (PATH_HANDLER).
-----FUTURE VERSION SHOULD HAVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout & o.toggle_command (IN EFFECT).
+----FUTURE VERSION SHOULD HAVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout, o.double_mute_command, o.double_aid_command & o.double_sid_command.
 ----FUTURE VERSION SHOULD ALSO HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED.  NEEDED FOR android albumart.
 ----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts. function on_update.
 
@@ -186,5 +189,5 @@ reload = gp('time-pos') and playback_restart()  --TRIGGER NOW.
 ----flatpak run info.smplayer.SMPlayer  snap run smplayer  FOR flatpak & snap TESTING. 
 ----sudo apt install smplayer flatpak snapd mpv            FOR RELEVANT LINUX INSTALLS. 
 ----flatpak install *.flatpak  snap install *.snap         FOR INSTALLS, AFTER cd TO RELEASES. MUST BE ON INTERNET, EVEN FOR snap.
-----snap DOESN'T WORK WITH "~/", BLOCKS SYSTEM COMMANDS, & WORKS DIFFERENTLY WITH SOME FILTERS LIKE showfreqs (FFMPEG-v4.4).
+----snap DOESN'T WORK WITH "~/", BLOCKS SYSTEM COMMANDS, YOUTUBE, & WORKS DIFFERENTLY WITH SOME FILTERS LIKE showfreqs (OLD FFMPEG).
 
