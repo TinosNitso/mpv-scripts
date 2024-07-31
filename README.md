@@ -2,8 +2,8 @@
 - [Installation](#installation)
 - [Standalone mpv](#standalone-mpv-mpvconf)
 - [App Versions](#app-versions)
+- [Script Commands](#console-commands)
 - [Terminal Commands](#terminal-commands)
-- [Console Commands](#console-commands)
 - [Latest Updates](#latest-updates)
 
 Video clocks, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), animated mask generator ([automask](automask.lua)), dual animated spectrum ([autocomplex](autocomplex.lua)) & insta-cropping ([autocrop](autocrop.lua)) for [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! Newest scripts in `mpv-scripts.zip` on GitHub. Toggle them by double-clicking on mute (m&m). Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. The scripts can be opened & options edited in Notepad. Disable word-wrap for these scripts! [main](main.lua) has much more info, & options for which scripts & subtitles load, & ytdl. I use [Notepad++](https://notepad-plus-plus.org/downloads/) on Windows, & [Brackets](https://BRACKETS.IO) on MacOS.  All free for Windows, Linux, MacOS & Android. But Android has no extra-device randomization & no YouTube.
@@ -50,26 +50,7 @@ FFmpeg versions 6.1 (.deb), 6.0 (.exe .flatpak), 5.1.3, 5.1.2 (.app), 4.4.2 (.sn
 
 Lua versions 5.1 & 5.2 supported.
 
-## Terminal Commands
-To run in Windows from Command Prompt, create a New Text Document in SMPlayer folder & rename it `TEST.CMD`. Also copy in `TEST.MP4`. Then right-click on `TEST.CMD` & click `Edit`. In Notepad copy/paste:
-
-`MPV\MPV --no-config --script=. TEST.MP4`
-
-Then Save it & double-click it. The command line shows warnings, etc. mpv pauses when text in CMD is selected. Most ppl prefer an interface like SMPlayer.
-
-In MacOS go to *Launchpad*→*Other*→*Terminal*. Then the exact `zsh` command is:
-
-- `/Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"`
-
-That uses the mpv bundled with SMPlayer. In Linux the exact command to load YouTube from terminal is:
-
-- `mpv --no-config --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"`
-
-MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh command is:
-
-- `/Applications/mpv.app/Contents/MacOS/mpv --no-config --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"` 
-
-## Console Commands
+## Script-Commands
 Give mpv its own window then press ` & then enter any of these commands (but with proper inputs). The bottom of every script has exact examples, like how to replace black pads with white pads.
 
 - `script-binding toggle_crop`
@@ -89,8 +70,27 @@ Give mpv its own window then press ` & then enter any of these commands (but wit
 - `script-message apply_aspect         <aspect>      <toggle_duration> <toggle_t_delay> <toggle_expr>`
 - `script-message-to automask apply_eq <brightness>  <toggle_duration> <toggle_t_delay> <toggle_expr>`
 
+## Terminal Commands
+To run in Windows from Command Prompt, create a New Text Document in SMPlayer folder & rename it `TEST.CMD`. Also copy in `TEST.MP4`. Then right-click on `TEST.CMD` & click `Edit`. In Notepad copy/paste:
+
+`MPV\MPV --no-config --script=. TEST.MP4`
+
+Then Save it & double-click it. The command line shows warnings, etc. mpv pauses when text in CMD is selected. Most ppl prefer an interface like SMPlayer.
+
+In MacOS go to *Launchpad*→*Other*→*Terminal*. Then the exact `zsh` command is:
+
+- `/Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"`
+
+That uses the mpv bundled with SMPlayer. In Linux the exact command to load YouTube from terminal is:
+
+- `mpv --no-config --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"`
+
+MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh command is:
+
+- `/Applications/mpv.app/Contents/MacOS/mpv --no-config --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"` 
+
 ## Latest Updates
-Above scripts in `mpv-scripts.zip` haven't been properly released yet.  I just have to sharpen some automask examples' timing.
+Above scripts in `mpv-scripts.zip` haven't been properly released yet.  More MacOS testing needed.
 - Added `o.android`, `o.windows`, `o.linux` & `o.darwin` platform overrides to all scripts.  Smartphones work better with different options, like binacles.
 - Added `o.toggle_command` to all scripts except main.  All toggles can activate any command. Replaces `o.osd_on_toggle` for graph inspections.  
 - Added `o.double_aid_timeout` to aspeed, autocrop & automask. Double-aid is similar to double-mute, due to Android (laggy trigger).  A new `playback_restarted` timer blocks all double-tap timers from misfiring. 
@@ -110,7 +110,7 @@ Above scripts in `mpv-scripts.zip` haven't been properly released yet.  I just h
 - Removed `\\,` from all graphs. More elegant codes.
 - All scripts now load even if file *already* loaded.
 - autocrop.lua: `o.limits` now searches `media-title` as well as `path`.  Replaced `o.pad_color` with `o.pad_options` (`x:y:color`). Improved JPEG reliability & `o.meta_osd`.  Removed `function start_file` - now uses `seek` instead of `set start`.
-- automask.lua: Added `o.superperiods` to improve efficiency of new default (triangle gears). Returned `o.fps`. If produced @30fps, film should also be 30fps.  Blue tinted lens (limited tint).  Added examples `SPINNING_SQUARES_DUAL` (opposing twirls) & `HEAD_BANGING_MASK` (old default).  Improved rotational padding.  Bugfix for examples (I broke half of them in the last release).  More examples which load fast.  Removed `o.lead_time` since it's equivalent to shifted `(n)` in `gsubs`.
+- automask.lua: Added `o.superperiods` to improve efficiency. Returned `o.fps`. If produced @30fps, film should also be 30fps.  Blue tinted lens (limited tint).  New default: spinning pyramids. Added examples `SPINNING_SQUARES_DUAL` (opposing twirls) & `HEAD_BANGING_MASK` (old default).  Improved rotational padding.  Bugfix for examples (I broke half of them in the last release).  More examples which load fast.
 - aspeed.lua: `o.speed` now set every half-second in real-time, not film-time.  `--no-config` bugfix for standalone mpv. Removed `o.clocks.no_locales` flag.  Improved AbDays (more accurate, more lowercase).  No-Armenian override for Android.  Faster YouTube load by always loading path - then the controller blocks JPEG using a `block_path` switch.  Enabled `graph` randomization @file-loaded. Improved feedback reliability by checking `samplerate`.  Resync `on_toggle`. Improved event-handling.
 - autocomplex.lua: Simpler default with no dual (increased `o.freqs_fps`).  Bugfix for `aid` off/on. It toggles off & on with only one aid-click. Bugfix for changing `vo` (must insta-stop).
 - autocrop/automask: Bugfix for starting stutter.  `insta_pause` removed from `start-file` function, so can pause during YouTube load. 
