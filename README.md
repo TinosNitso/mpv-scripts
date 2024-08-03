@@ -2,7 +2,7 @@
 - [Installation](#installation)
 - [Standalone mpv](#standalone-mpv-mpvconf)
 - [App Versions](#app-versions)
-- [Script Commands](#console-commands)
+- [Script Commands](#script-commands)
 - [Terminal Commands](#terminal-commands)
 - [Latest Updates](#latest-updates)
 
