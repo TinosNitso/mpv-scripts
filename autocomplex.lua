@@ -14,10 +14,10 @@ options                 = {
     gsubs_passes        =    4 ,  --# OF SUCCESSIVE gsubs.  THEY DEPEND ON EACH OTHER, IN A DAIZY-CHAIN. LIKE (cos)→(c)→(np)→(fpp)  THEY DON'T APPLY TO filterchain.  THEY MAY HELP WITH MORE ADVANCED graph CHOREOGRAPHY.
     gsubs               = {np='(((n))/(fpp))',c='cos(2*PI*(np))',s='sin(2*PI*(np))',m='mod(floor(np),2)',cos='(c)',sin='(s)',mod='(m)',t,n,on,random,},  --SUBSTITUTIONS.  ENCLOSING BRACKETS () ARE ADDED & REQUIRED, IN EFFECT.  SHIFT (n),(np)→((n)+?),((np)+?) TO SYNC WITH OTHER GRAPHS, BY TRIAL & ERROR.  (fpp)=(fps*period)=(FRAMES-PER-PERIOD) IS DERIVED & DEPENDS ON FILTER.  EXAMPLE: USE n=5 FOR STATIONARY COMPLEX.  (t),(n),(on)=(TIME),(FRAME#),(FRAMEOUT#)  (np)=(n AS RATIO TO PERIOD, +SHIFT)=("TIME" AS A RATIO).  (random) IS A RANDOM # BTWN 0 & 1, CHOSEN @file-loaded, @on_toggle & @RELOAD.  (fpp), LIKE fps, COULD ALSO BE NAMED (npp).
     overlay_scale       = {3/4,3/4},  --RATIOS {WIDTH<=1,HEIGHT<=1} (number/string).  CAN SHRINK PRIMARY_SCALE.  USES RECIPROCAL PADDING FOR SAFE zoompan.  3/4=(4/3)/(16/9) WHICH ALIGNS WITH ASPECT=4/3. 
-    filterchain         = 'shuffleplanes=1  ,lutrgb=g=val*.25:a=val*1',  --a CAN DROP alpha.  MIXES IN 25% GREEN-IN-BLUE RATIO, BECAUSE PURE BLUE IS TOO DARK.  PLANES ORDERED LIKE GreatBRitAin (gbrap). COULD BE RENAMED overlay_vf_chain.  SHUFFLE + DILUTION MUCH MORE EFFICIENT THAN colorchannelmixer (+10% CPU).  BLUE, DARKBLUE & BLACK ARE COMPATIBLE WITH cropdetect.  STRIPES IS A DIFFERENT DESIGN (RED/BLUE/WHITE).  COLOR-BLINDNESS COULD BE AN ISSUE.
+    filterchain         = 'shuffleplanes=1  ,lutrgb=g=val*.25:a=val*1',  --val*.5 TO HALVE alpha.  MIXES IN 25% GREEN-IN-BLUE RATIO, BECAUSE PURE BLUE IS TOO DARK.  PLANES ORDERED LIKE GreatBRitAin (gbrap). COULD BE RENAMED overlay_vf_chain.  SHUFFLE + DILUTION MUCH MORE EFFICIENT THAN colorchannelmixer (+10% CPU).  BLUE, DARKBLUE & BLACK ARE COMPATIBLE WITH cropdetect.  STRIPES IS A DIFFERENT DESIGN (RED/BLUE/WHITE).  COLOR-BLINDNESS COULD BE AN ISSUE.
     -- filterchain      = 'shuffleplanes=1:0,lutrgb=g=val*.7         ',  --UNCOMMENT FOR RED & GREEN, INSTEAD OF RED & BLUE (DEFAULT). THIS EXAMPLE DROPS GREEN 30% BECAUSE IT'S TOO BRIGHT.
-    rotate              = 'a=PI/60*(s)*(m) : ow=iw : oh=ih      ',  --RADIANS CLOCKWISE.  PI/60=3°=180°/60.  mod(m) ACTS AS ON/OFF SWITCH.  LARGE ANGLES REQUIRE OUTPUT-WIDTH:OUTPUT-HEIGHT(ow:oh) TO PREVENT CLIPPING.
-    zoompan             = 'z=1             :  x=0  :  y=0       ',  --1:0:0 MEANS NO ZOOMING.  MAY BE NEEDED TO SCOOT ALONG WITH OTHER GRAPHS.
+    rotate              = 'a=PI/60*(s)*(m) : ow=iw : oh=ih      ',  --RADIANS CLOCKWISE.  PI/60=3°=180°/60.  mod(m) ACTS AS ON/OFF SWITCH (SUPERPERIOD).  LARGE ANGLES REQUIRE OUTPUT-WIDTH:OUTPUT-HEIGHT(ow:oh) TO PREVENT CLIPPING.
+    zoompan             = 'z=1             : x=0   : y=0        ',  --1:0:0 MEANS NO ZOOMING.  EXAMPLE: SET TO '1+.1*(s)*(m)'.  MAY BE NEEDED TO SCOOT ALONG WITH OTHER GRAPH/S. BUT FORMULA/S SHOULD USE (np) PHASE OFFSET & ARE COMPLICATED.
     overlay             = 'x=(W-w)/2:y=(H-h)/2-.01*H*(1-(c))*(m)',  --TIME-DEPENDENCE SHOULD MATCH OTHER SCRIPT/S, LIKE automask. A BIG-SCREEN TV HELPS WITH POSITIONING.  POSITIONING ATOP BLACK BARS MAY DRAW ATTENTION TO THEM.
     dual_scale          = {nil,nil}                     ,  --RATIOS {WIDTH,HEIGHT} RELATIVE TO display.  REPLACE nil WITH 1 FOR GREEN/RED DUAL.  THIS DUAL USES THE SAME aid.  BI-QUAD CONCEPT COMES FROM HOW RAW MP3 WORKS (SELF-overlay).
     dual_filterchain    = 'shuffleplanes=1:0      '     ,  --APPLIES AFTER PRIMARY filterchain, TO SWITCH BLUE/GREEN.  EXAMPLE: TO SEESAW IT, APPEND ',rotate=PI/60*(s):c=BLACK@0'  (BUT THAT ADDS TOO MUCH CPU USAGE.)
@@ -25,7 +25,7 @@ options                 = {
     af_chain            = 'anull,dynaudnorm=g=3:p=1:m=1',  --AUDIO FILTERCHAIN FOR [ao]. CAN REPLACE anull WITH OTHER FILTERS, LIKE vibrato.  DYNAMIC AUDIO NORMALIZER BUFFERS OUTPUT, FIXING AN FFMPEG ERROR.  IT'S A NULL-OP & A DIFFERENT FILTER COULD ALSO WORK - DETERMINISTIC FOR 10 HRS.
     freqs_dynaudnorm    = 'g=5:p=1:m=100:b=1'           ,  --DEFAULT=g=31:p=.95:m=10:b=0  THIS IS THE THIRD PASS. AFTER RESAMPLING TO 2.1kHz, & SHIFTING freqs_lead_time.  SPECTRUM SHOULD BE CLEAR EVEN FOR THE FAINTEST SOUNDS.
     freqs_opts          = 's=300x500:mode=line:ascale=lin:win_size=512:win_func=parzen:averaging=2',  --EXTRA OPTIONS.  CAN ALSO SET overlap.  CAN'T CHANGE rate, fscale, colors & cmode (SEE graph SECTION).  INCREASE size FOR SHARPER CURVE (OR CHANGE ITS INTERNAL aspect).  mode={line,bar,dot}  win_func MAY ALSO BE poisson OR cauchy (PARZEN WAS AN AMERICAN STATISTICIAN).  win_size IS # OF DATA POINTS (LIKE TOO MANY PIANO KEYS).  FOR bar USE a=val*.25 IN filterchain.
-    freqs_lead_time     =      '.2',  --'SECONDS'.  +-LEAD TIME FOR SPECTRUM. SUBJECTIVE TRIAL & ERROR (.0 .1 .2 .3 .4 ?). BACKDATES audio TIMESTAMPS. showfreqs HAS AT LEAST 1 FRAME LAG.  A CONDUCTOR'S BATON MAY MOVE AN EXTRA .1s BEFORE THE ORCHESTRA, OR IT'S LIKE HE'S TRYING TO KEEP UP.
+    freqs_lead_time     =      '.1',  --'+-SECONDS'.  LEAD TIME FOR SPECTRUM.  SUBJECTIVE TRIAL & ERROR: 0, .1, .2 OR .3?  BACKDATES audio TIMESTAMPS. showfreqs HAS AT LEAST 1 FRAME LAG.  A CONDUCTOR'S BATON MAY MOVE AN EXTRA .1s BEFORE THE ORCHESTRA, OR IT'S LIKE HE'S TRYING TO KEEP UP.
     freqs_fps           =      30/2,  --FOR PERFECTLY SMOOTH FILM ON CHEAP CPU.  MORE MAY CAUSE FILM TO STUTTER. freqs_clip_h ALSO IMPROVES PERFORMANCE.  USE MORE averaging FOR MORE freqs_fps.
     freqs_fps_albumart  =      30  ,  --FOR RAW MP3 ALSO. CAN EASILY DOUBLE freqs_fps.
     freqs_scale_h       =     '1.2',  --CURVE HEIGHT MAGNIFICATION.  REDUCES CPU CONSUMPTION (LESS DATA IN EFFECT). BUT THE LIPS LOSE TRACTION.  L & R CHANNELS FORM LIKE A DUAL MOUTH (LIKE HOW HUMANS ARE BIPEDAL).  freqs_alpha OPTION UNNECESSARY (EQUIVALENT TO A no_freqs OPTION).
@@ -47,18 +47,18 @@ options                 = {
     -- sine_mix         = {{100,1},{'200:1',1.1},{300,1},{'400:1',1.1},{500,1},{'600:1',1.1},{700,1},{'800:1',1.1},{900,1},{'1000:1',1.1}},  --UNCOMMENT FOR 10 WAVES.  EVERY SECOND ONE BEEPS. THE 900Hz PEAK LINES UP, BUT THE SURROUNDING CURVE SKEWS ABOVE 900Hz.
     video_params        = {w,h,pixelformat},  --OVERRIDES {number/string}.  DEFAULT pixelformat='yuva420p'/'yuv420p', DEPENDING.  DEFAULT w=display-width.  BUT THAT'S nil FOR LINUX SMPLAYER (CAN SET {w=1680,h=1050}).
     options             = {
-        'keepaspect      no','force-window yes','geometry 50%',  --no-keepaspect FOR ANDROID. FREE-SIZE IF MPV HAS ITS OWN WINDOW.  force-window PREVENTS MPV FROM VANISHING DURING TRACK CHANGES, & TOGGLING ON AUDIO, UNLESS ANDROID!  geometry APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.
+        'keepaspect      no','force-window yes','geometry 50%',  --no-keepaspect FOR ANDROID. FREE-SIZE IF MPV HAS ITS OWN WINDOW.  force-window PREVENTS MPV FROM VANISHING DURING TRACK CHANGES, & TOGGLING ON AUDIO.  geometry APPLIES ONCE, IF MPV HAS ITS OWN WINDOW.
         'vd-lavc-threads 0 ',  --VIDEO-DECODER-LIBRARY-AUDIO-VIDEO-threads OVERRIDES SMPLAYER OR ELSE MAY FAIL TESTING.  
     },
-    windows        = {}, linux = {}, darwin = {},  --OPTIONAL platform OVERRIDES.
-    android        = {
-        freqs_fps  = 25/2, volume_fps = 25,
+    windows       = {}, linux = {}, darwin = {},  --OPTIONAL platform OVERRIDES.
+    android       = {
+        freqs_fps = 25/2, freqs_fps_albumart = 25/2, volume_fps = 25, rotate = '0', overlay = '(W-w)/2:(H-h)/2',  --LESS CPU USAGE FOR SMARTPHONE. STILL @FULL fps, THOUGH.
     },
 }
-o,p,m,timers         = {},{},{},{} --o,p=options,PROPERTIES  m=MEMORY={graph,'android-surface-size'}  timers={mute,sid,playback_restarted,seek}  playback_restarted BLOCKS THE PRIOR 2.
-android_surface_size = {}          --{w,h}
+o,p,m,timers           = {},{},{},{} --o,p=options,PROPERTIES.  m=MEMORY={graph,'android-surface-size'}.  timers={mute,sid,playback_restarted,seek}  playback_restarted BLOCKS THE PRIOR 2.
+v,android_surface_size = {},{}       --v=current-tracks/video.  android_surface_size={w,h}
 
-function typecast(arg)  --ALSO @script-message.  load INVALID ON MPV.APP.  CONSOLE CAN USE THIS TO PIPE FROM WITHIN LUA.
+function typecast(arg)  --ALSO @script-message.  load INVALID ON MPV.APP.  THIS script-message CAN REPLACE ANY OTHER.
     return   type(arg)=='string' and loadstring('return '..arg)() or arg
 end
 
@@ -87,10 +87,11 @@ for _,opt in pairs(o.options)
 do command           = ('%s no-osd set %s;'):format(command or '',opt) end  --ALL SETS IN 1.
 command              = command and mp.command(command)
 for opt,val in pairs(o[p.platform])
-do o[opt]            = val end                                     --platform OVERRIDE. 
-label                = mp.get_script_name()                        --autocomplex
-for key in ('np tp'):gmatch('[^ ]+')                             --(tp) OPTIONAL.  OVERRIDE FOR NO TIME-DEPENDENCE PREVENTS DIVISION BY 0.  gmatch=GLOBAL MATCH ITERATOR.  '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON MPV.APP (SAME _VERSION, DIFFERENT BUILD).
-do    o.gsubs[key]   = o.period..''=='0' and '(0)' or o.gsubs[key] end --..'' CONVERTS→string.  
+do o[opt]            = val end              --platform OVERRIDE. 
+label                = mp.get_script_name() --autocomplex
+playback_restarted   = gp('time-pos')       --FILE ALREADY LOADED.
+for key in ('np tp'):gmatch('[^ ]+')        --(tp) OPTIONAL.  OVERRIDE FOR NO TIME-DEPENDENCE PREVENTS DIVISION BY 0.  gmatch=GLOBAL MATCH ITERATOR.  '[^ ]+'='%g+' REPRESENTS LONGEST string EXCEPT SPACE. %g (GLOBAL) PATTERN INVALID ON MPV.APP (SAME _VERSION, DIFFERENT BUILD).
+do    o.gsubs[key]   = o.period..''=='0' and '(0)' or o.gsubs[key] end  --..'' CONVERTS→string.  
 for opt in ('rotate zoompan filterchain dual_filterchain overlay dual_overlay'):gmatch('[^ ]+')  --options WHICH NEED gsubs.  filterchain OPTIONAL.  
 do          o[opt]   = o[opt]..''
     for N            = 1,o.gsubs_passes do for key,gsub in pairs(o.gsubs)           --gsubs DEPEND ON EACH-OTHER.
@@ -204,13 +205,13 @@ do binding_name = 'toggle_complex'..(binding_name and '_'..key or '')  --THE FIR
 
 function    event_handler(event)
     event = event.event
-    if      event=='start-file'  then mp.set_property('lavfi-complex','nullsrc,nullsink')  --UNLOCKS STREAMS & WARNS OTHER SCRIPTS THERE WILL BE A lavfi-complex.  PRIOR lavfi-complex MAY HANG IF [vid2] SUDDENLY DOESN'T EXIST.
-    elseif  event=='file-loaded' then file_loaded()   
+    if      event=='start-file'  then mp.set_property('lavfi-complex','')  --UNLOCKS STREAMS.  PRIOR lavfi-complex MAY HANG IF [vid2] SUDDENLY DOESN'T EXIST.
     elseif  event=='end-file'    then W,playback_restarted = nil  --CLEAR SWITCHES.
+    elseif  event=='file-loaded' then file_loaded()   
     elseif  event=='seek'        then on_seek = gp('time-remaining')==0 and mp.command('playlist-next force') or timers.seek:resume()  --SKIP-10 BUGFIX FOR seek PASSED end-file.  playlist-next FOR MPV PLAYLIST. force FOR SMPLAYER PLAYLIST.  A CONVENIENT WAY TO SKIP NEXT TRACK IN SMPLAYER IS TO SKIP 10 MINUTES, PASSED end-file.
     else    timers.playback_restarted:resume() end  --UNBLOCKS TOGGLE-TIMERS.
 end 
-for event in ('start-file file-loaded end-file seek playback-restart'):gmatch('[^ ]+') 
+for event in ('start-file end-file file-loaded seek playback-restart'):gmatch('[^ ]+') 
 do mp.register_event(event,event_handler) end
 
 timers.playback_restarted = mp.add_periodic_timer(.01,function() playback_restarted = true end)  --playback-restart CAN TRIGGER BEFORE aid, BY LIKE 1ms, FOR albumart.  aid FULLY TOGGLES THIS SCRIPT, SO IT'S LIKE FATAL.
@@ -227,19 +228,18 @@ function property_handler(property,val)
     do toggle = property==key        and (not timers[key]:is_enabled() and (timers[key]:resume() or 1) or on_toggle()) end 
     ow        = o.video_params.w or p['display-width' ] or  android_surface_size.w or p.width  --NEW CANVAS SIZE.
     oh        = o.video_params.h or p['display-height'] or  android_surface_size.h or p.height
-    reload    =           (W~=ow or H~=oh)              and (p.platform~='android' or p.fs) and file_loaded()  --RELOAD UNLESS HALF-SCREEN-ANDROID (IT'S SPECIAL).  IGNORES SMARTPHONE ROTATION (COULD BE AN ACCIDENT). 
+    reload    =           (W~=ow or H~=oh)        and not (not p.fs and p.platform=='android') and file_loaded()  --RELOAD UNLESS HALF-SCREEN-ANDROID (IT'S SPECIAL).  IGNORES SMARTPHONE ROTATION (COULD BE AN ACCIDENT). 
     val       = nil                                                   --TRACK CHANGE BELOW.
                 or property=='aid' and   (a_id    and 'no' or 'auto') --DOESN'T SWITCH BTWN aid TRACKS.  INSTEAD IT MUTES ON/OFF.  THIS SCRIPT TOGGLES ON SINGLE-aid-TAP.
                 or property=='vid' and   (v.id==1 and  2   or 'auto') --ONLY GOOD FOR SWITCHING BTWN 1 & 2.
-    if        not (property=='aid' or property=='vid'      or property=='current-vo') then return end  --INSTA-stop BELOW. THIS SCRIPT USES INSTA-stop INSTEAD OF INSTA-pause.  MPV BLACK-SCREENS WITHOUT INSTA-stop ON gpu-next/gpu/null TOGGLING, ETC.
+    if not (       property=='aid' or property=='vid'      or property=='current-vo') then return end  --INSTA-stop BELOW. THIS SCRIPT USES INSTA-stop INSTEAD OF INSTA-pause.  MPV BLACK-SCREENS WITHOUT INSTA-stop ON gpu-next/gpu/null TOGGLING, ETC.
     p.start   = gp('time-pos')
     
-    mp.command(''  --UNLOCKS complex & INSTA-STOPS.  UNFORTUNATELY SNAPS EMBEDDED MPV (DIMENSIONS CHANGE). AN ANTI-SNAP GRAPH IS MORE CODE.
-               .. 'no-osd set lavfi-complex nullsrc,nullsink;'  --UNLOCK STREAMS.
-               ..('no-osd set start                       %s;'      ):format(p.start)
-               ..(val and 'no-osd set %s                  %s;' or ''):format(property,val)  --set vid 2/auto
-               .. '       stop                 keep-playlist;'  --INSTA-stop.  ALTERNATIVES "video-reload" "rescan-external-files keep-selection" DON'T WORK IN THIS CASE. 
-               .. '       playlist-play-index        current;'
+    mp.command(''  --INSTA-stop.  UNFORTUNATELY SNAPS EMBEDDED MPV (DIMENSIONS CHANGE). AN ANTI-SNAP GRAPH IS MORE CODE.  ALTERNATIVES "video-reload" "rescan-external-files keep-selection" DON'T WORK IN THIS CASE. 
+               ..          'stop          keep-playlist;' 
+               ..         ('no-osd set start         %s;'):format(p.start     )
+               ..(val and ('no-osd set %s            %s;'):format(property,val) or '')  --set vid 2/auto  set aid no/auto
+               ..          'playlist-play-index current;'
     )
 end 
 for property in ('fs mute sid aid vid display-width display-height width height android-surface-size current-vo'):gmatch('[^ ]+')  --BOOLEANS NUMBERS STRINGS
@@ -257,14 +257,13 @@ function cleanup()  --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-op
 end 
 for message,fn in pairs({cleanup=cleanup,loadstring=typecast,toggle=on_toggle})  --SCRIPT CONTROLS.
 do mp.register_script_message(message,fn) end
-reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.  SNAPS EMBEDDED MPV.
 
 ----CONSOLE SCRIPT-COMMANDS & EXAMPLE:
 ----script-binding                toggle_complex
 ----script-message-to autocomplex toggle
 ----script-message-to autocomplex cleanup
 ----script-message-to autocomplex loadstring <arg>
-----script-message                loadstring print(_VERSION)
+----script-message                loadstring "print(m and m.graph or _VERSION)"
 
 ----APP VERSIONS:
 ----MPV      : v0.38.0(.7z .exe v3 .apk)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)    ALL TESTED.  v0.34 INCOMPATIBLE WITH BOTH yt-dlp_x86 & THIS SCRIPT.
@@ -278,7 +277,8 @@ reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.  SNAPS EM
 ----FUTURE VERSION SHOULD MOVE o.double_mute_timeout, o.double_aid_timeout & o.toggle_command TO main.lua. ALL SCRIPTS SHOULD HAVE THESE, UNLESS main OPERATES ALL DOUBLE-TAPS.
 ----FUTURE VERSION SHOULD REPLACE (random) WITH $RANDOM/%RANDOM%.
 ----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts; function on_update.
-----ISSUE: graph SHOULD BE OPTIMIZED SOMEHOW (extractplanes?). 
+----FUTURE VERSION SHOULD PUT UP A BLACK-SCREEN DURING FILE-LOAD, FOR INSTA-OSD/CLOCK (TO TIME THE LOAD).
+----ISSUE: graph SHOULD BE OPTIMIZED SOMEHOW (extractplanes?).  AN EQUALIZER MAY HELP IT SPARK IN CONTACT WITH OTHER GRAPH/S.
 
 ----A DIFFERENT DESIGN COULD COMPRESS 1→10kHz INTO AN ELEVENTH TICKMARK, USING A SECONDARY showfreqs.  
 ----AN INEFFICIENT SMOOTH-TOGGLE COULD WORK BY VSTACKING THE COMPLEX ATOP FILM, & THEN COMMANDING AN EQUALIZER OVERLAYING THE TOP ATOP THE BOTTOM.  NOT WORTH THE EXTRA COMPLEXITY, RISK OF STARTING STUTTER, & CPU USAGE.

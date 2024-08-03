@@ -88,7 +88,7 @@ options                      = {
 o,p,m,timers = {},{},{},{}                         --o,p=options,PROPERTIES  m=MEMORY={map,graph}  timers={mute,aid,sid,playback_restarted,auto,os_sync,osd}  playback_restarted BLOCKS THE PRIOR 3.
 txt,devices,clocks,abdays,LOCALES = {},{},{},{},{} --txtfile IS WRITTEN FROM txt.  devices=LIST OF DEVICES WHICH WILL ACTIVATE, STARTING WITH EXISTING audio-device.  LOCALES IS LIST OF SUB-TABLES, FOR LOTE. NEVER USED BY CHILDREN (UNLESS THEY ALSO HAVE A clock TOO).  os.setlocale('RUSSIAN') LITERALLY BLUE-SCREENS (MPV HAS ITS OWN BSOD).
 
-function typecast(arg)  --ALSO @script-message, @apply_astreamselect & @property_handler.  load INVALID ON MPV.APP.  CONSOLE CAN USE THIS TO PIPE FROM WITHIN LUA.
+function typecast(arg)  --ALSO @script-message, @apply_astreamselect & @property_handler.  load INVALID ON MPV.APP.  THIS script-message CAN REPLACE ANY OTHER.
     return   type(arg)=='string' and loadstring('return '..arg)() or arg
 end
 
@@ -188,7 +188,7 @@ function file_loaded()
     mp.commandv('af','pre',('@%s:lavfi=[%s]'):format(label,m.graph))                  --commandv FOR BYTECODE.  
 end
 
-function apply_astreamselect(map)  --@script-message, @playback-restart, @on_toggle & @property_handler.
+function apply_astreamselect(map)  --@playback-restart, @on_toggle & @property_handler.
     map    = typecast(map) or (N~=0 or not OFF and mpv and txt.seeking=='no') and 1 or 0 --DEDUCE INTENDED map.  1=MUTED INVALID WITHOUT CHILDREN, WHO ARE ALWAYS MUTE.  ALWAYS UNMUTE WHEN FIRST-BORN IS seeking.
     if map==m.map and not af_observed or gp('seeking') then return end  --return CONDITIONS.  EXCESSIVE af-COMMANDS CAUSE LAG. FAILS WHEN seeking (audio-params=nil?).  
     
@@ -218,7 +218,7 @@ function clock_update()  --@os_sync & @on_toggle.
     clock:update()
 end
 timers.osd=mp.add_periodic_timer(1,clock_update) --THIS 1 MOSTLY DETERMINES THE EXACT TICK OF THE clock, WHICH IS USUALLY IRRELEVANT TO AUDIO.  LOSES 6→20 MILLISECONDS/MINUTE (@TICK) WITHOUT resync.  oneshot & pcall TIMERS ARE WORSE.
-clock_update()                                   --INSTANT clock.
+clock_update()                                   --INSTANT clock.  THIS REQUIRES SOME lavfi-complex TRICK.
 
 function os_sync()  --@script-message, @property_handler & @playback-restart.  RUN 10ms LOOP UNTIL SYSTEM CLOCK TICKS. os.time() HAS 1s PRECISION WHICH MAY BE IMPROVED TO 10ms, TO SYNC CHILDREN. 
     if not time1 then timers.os_sync:resume()  --time1=nil IF NOT ALREADY SYNCING (ACTS AS SWITCH). 
@@ -343,7 +343,7 @@ function cleanup()  --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-op
     set_speed       = p.speed~=1 and mp.command(command_prefix..' set speed 1')  --cleanup_speed=1
     mp.keep_running = false  --false FLAG EXIT: COMBINES overlay-remove, remove_key_binding, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
 end 
-for message,fn in pairs({cleanup=cleanup,loadstring=typecast,toggle=on_toggle,resync=os_sync,astreamselect=apply_astreamselect})  --SCRIPT CONTROLS.
+for message,fn in pairs({cleanup=cleanup,loadstring=typecast,toggle=on_toggle,resync=os_sync})  --SCRIPT CONTROLS.
 do mp.register_script_message(message,fn)  end
 reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.
 
@@ -351,10 +351,8 @@ reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.
 ----script-binding           aspeed
 ----script-message-to aspeed toggle
 ----script-message-to aspeed cleanup
-----script-message-to aspeed loadstring    <arg>
-----script-message           loadstring    print(_VERSION)
-----script-message           astreamselect <map>
-----script-message           astreamselect  0
+----script-message-to aspeed loadstring <arg>
+----script-message           loadstring "print(m and m.graph or _VERSION)"
 ----script-message           resync
 
 ----APP VERSIONS:
@@ -370,6 +368,7 @@ reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.
 ----FUTURE VERSION SHOULD REPLACE (random) WITH $RANDOM/%RANDOM%.
 ----FUTURE VERSION SHOULD HAVE o.key_bindings_clock (on_toggle_clock), OR SEPARATE clock.lua.  RESYNCING THE EXACT TICK EVERY MINUTE USES 0% CPU.
 ----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts; function on_update.
+----FUTURE VERSION SHOULD ONLY DECLARE ytdl_hook-* script-opts TO THE CHILDREN.  COULD BE OPTIONAL, LIKE o.suppress_script_opts. IT'S COMPLICATED.
 ----FUTURE VERSION SHOULD REMOVE astats FOR NEW MPV, SO o.speed IS SET EVERY HALF-SECOND IN REAL-TIME.
 ----FUTURE VERSION MAY REPLACE astreamselect WITH volume & amix.  astreamselect WAS A BAD DESIGN CHOICE.
 ----FUTURE VERSION MAY HAVE SMOOTH TOGGLE. txtfile COULD HAVE ANOTHER LINE FOR SMOOTH TOGGLE (SMOOTH-MUTE USING t-DEPENDENT af-command).

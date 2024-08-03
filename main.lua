@@ -1,4 +1,4 @@
-----NO-WORD-WRAP FOR THIS SCRIPT.  https://GITHUB.COM/yt-dlp/yt-dlp/releases  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY & REDTUBE ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  DON'T FORGET TO UPDATE yt-dlp FOR THE NEWEST YT VIDEOS.  X.COM NOT seeking.
+----NO-WORD-WRAP FOR THIS SCRIPT.  https://GITHUB.COM/yt-dlp/yt-dlp/releases  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY, REDTUBE & RUTUBE.RU ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  DON'T FORGET TO UPDATE yt-dlp FOR THE NEWEST YT VIDEOS.  X.COM NOT seeking.
 ----WINDOWS    :  --script=.                       IN SMPLAYER  &/OR  script=../                     IN mpv.conf.  PLACE ALL scripts WITH smplayer.exe & ENTER ITS ADVANCED mpv PREFERENCES.  CAN ALSO CREATE 1-LINE TEXT-FILE  mpv\mpv\mpv.conf  INSIDE smplayer-portable.  mpv.conf ENABLES DOUBLE-CLICKING mpv.exe & DRAG & DROP OF FILES & YOUTUBE URL, IN LINUX/MACOS TOO.  IF NOT PORTABLE, SET-UP IS LIKE FOR LINUX: --script=~/Desktop/mpv-scripts/  
 ----LINUX/MACOS:  --script=~/Desktop/mpv-scripts/  IN SMPLAYER  &/OR  script=~/Desktop/mpv-scripts/  IN mpv.conf.  PLACE mpv-scripts ON Desktop.  EDIT ~/.config/mpv/mpv.conf TO DRAG & DROP DIRECTLY ONTO MPV. IN LINUX CAN RIGHT-CLICK ON AN MP4 & OPEN-WITH-MPV.  LINUX snap: --script=/home/user/Desktop/mpv-scripts/
 ----ANDROID    :    script=/sdcard/Android/media/is.xyz.mpv/          IN ADVANCED SETTINGS:        Edit mpv.conf.  PLACE ALL SCRIPTS IN THIS FOLDER IN INTERNAL MAIN STORAGE. OTHER FOLDERS DON'T WORK.  ENABLE MPV MEDIA-ACCESS USING ITS FILE-PICKER, & SET BACKGROUND-PLAYBACK TO ALWAYS (GENERAL SETTING).  'sdcard'~='SD card'(EXTERNAL)  CAN ALSO INSTALL cx-file-explorer & 920 (.APK).  920 CAN HANDLE WORDWRAP & WHITESPACE.  https://SNAPDROP.NET CAN TRANSFER TO /sdcard/Android/media/is.xyz.mpv/
@@ -6,10 +6,10 @@
 options     = {                
     scripts = {                   --PLACE ALL scripts IN THE SAME FOLDER, & LIST THEIR NAMES HERE.  CAN TOGGLE THEM USING TYPOS/RENAME.  REPETITION BLOCKED.  SPACES & '' ALLOWED.
         "aspeed.lua"            , --EXTRA AUDIO DEVICES SPEED RANDOMIZATION, + SYNCED CLOCKS. INSTA-TOGGLE (DOUBLE-MUTE).  CAN CONVERT MONO TO (RANDOMIZED) SURROUND SOUND, FOR 10 HOURS.  MY FAVOURITE OVERALL. CONVERTS SPEAKERS INTO METAPHORICAL MOCKING-BIRDS.  NOT FULLY ANDROID-COMPATIBLE.
-        "autocrop.lua"          , --CROPS BLACK BARS. TOGGLES FOR BOTH CROPPING & EXTRA PADDING (SMOOTHLY). DOUBLE-MUTE TOGGLES.  ALSO SUPPORTS start & end TIME-CROP SUBCLIPS, & CROPS IMAGES & THROUGH TRANSPARENCY.  ITS meta_osd DISPLAYS ALL version PROPERTIES
+        "autocrop.lua"          , --CROPS BLACK BARS. TOGGLES FOR BOTH CROPPING & EXTRA PADDING (SMOOTHLY). DOUBLE-MUTE TOGGLES.  ALSO SUPPORTS start/end TIME-LIMITS, CROPS IMAGES & CROPS THROUGH TRANSPARENCY.  meta_osd DISPLAYS ALL version PROPERTIES.
         -- "autocrop-smooth.lua", --SMOOTH CROPPING & PADDING. NOT UP TO DATE & NOT FOR ANDROID.  DISABLE autocomplex.lua DUE TO EXCESSIVE CPU USAGE. INCOMPATIBLE WITH .AppImage (FFMPEG-v4.2).
         "autocomplex.lua"       , --NOT FOR CHEAP SMARTPHONE.  ANIMATED AUDIO SPECTRUMS, VOLUME BARS, FPS LIMITER. TOGGLE INTERRUPTS PLAYBACK.  MY FAV FOR RELIGION (A PRIEST'S VOICE CAN BE LIKE WINGS OF BIRD).  DISABLE FOR TWITTER, & SOMETIMES TO seek THROUGH YOUTUBE VIDEOS.
-        "automask.lua"          , --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE (DOUBLE-MUTE).  CAN SPEED-LOAD MONACLE/PENTAGON ON SMARTPHONE.  LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (LIKE SPINNING_TRIANGLE=automask2.lua, 500MB RAM EACH, +UNIQUE KEYBINDS).
+        "automask.lua"          , --ANIMATED FILTERS (MOVING LENSES, ETC). SMOOTH-TOGGLE (DOUBLE-MUTE).  CAN SPEED-LOAD MONACLE/PENTAGON ON SMARTPHONE.  LENS FORMULA MAY ADD GLOW TO DARKNESS.  CAN LOAD AN EXTRA COPY FOR 2 MASKS (UNIQUE KEYBINDS).
     },
     ytdl = {            --YOUTUBE DOWNLOAD. PLACE EXECUTABLE WITH main.lua.  LIST ALL POSSIBLE FILENAMES TO HOOK, IN PREFERRED ORDER.  EXISTING HOOK APPENDS. NO ";" ALLOWED.  CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto.  NOT FOR ANDROID OR LINUX snap.
         "yt-dlp"      , --.exe
@@ -21,7 +21,7 @@ options     = {
     ----['script-opt'      ] =  'val',
         ['osc-timetotal'   ] =  'yes',  --DEFAULT=no      (ON-SCREEN-CONTROLLER SETTINGS. DISABLED INSIDE SMPLAYER.)
         ['osc-timems'      ] =  'yes',  --DEFAULT=no
-        ['osc-fadeduration'] =    '0',  --DEFAULT=200 ms
+        ['osc-fadeduration'] =  '0'  ,  --DEFAULT=200 ms
     },
     msg_level                = {        --THESE APPEND/REPLACE TO EXISTING msg-level.
     ----['module'        ]   = 'level', 
@@ -48,7 +48,7 @@ options     = {
 }
 o,p,timers = {},{},{}  --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file
 
-function typecast(arg)  --ALSO @script-message & @title_update.  load INVALID ON MPV.APP.  CONSOLE CAN USE THIS TO PIPE FROM WITHIN LUA.
+function typecast(arg)  --ALSO @script-message & @title_update.  load INVALID ON MPV.APP.  THIS script-message CAN REPLACE ANY OTHER.
     return   type(arg)=='string' and loadstring('return '..arg)() or arg
 end
 
@@ -72,7 +72,8 @@ for _,opt in pairs(o.options)
 do  command        = ('%s no-osd set %s;'):format(command or '',opt) end  --ALL SETS IN 1.
 command            = command and mp.command(command)
 for opt,val in pairs(o[p.platform]) 
-do o[opt]          = val end                       --platform OVERRIDE.  
+do o[opt]          = val end        --platform OVERRIDE.  
+playback_restarted = gp('time-pos') --FILE ALREADY LOADED.
 split_path         = require 'mp.utils'.split_path 
 directory          = split_path(gp('scripts')[1])                 --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
 directory_expanded = mp.command_native({'expand-path',directory}) --command_native EXPANDS '~/' FOR ytdl_hook.  
@@ -139,12 +140,11 @@ do    timer.oneshot   = 1 --ALL 1SHOT.
 function cleanup() mp.keep_running = false end  --@script-message.  false FLAG EXIT: COMBINES overlay-remove, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
 for message,fn in pairs({cleanup=cleanup,loadstring=typecast,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.  
 do mp.register_script_message(message,fn)  end
-reload = gp('time-pos') and playback_restart()  --TRIGGER NOW.
 
 ----CONSOLE SCRIPT-COMMANDS & EXAMPLES (main=_):
 ----script-message-to _ cleanup
 ----script-message-to _ loadstring <arg>
-----script-message      loadstring mp.osd_message(_VERSION)
+----script-message      loadstring "print(m and m.graph or _VERSION)"
 ----script-message      title      <data>          <title_duration>
 ----script-message      title      ${media-title}   6*random()
 ----script-message      title_remove
