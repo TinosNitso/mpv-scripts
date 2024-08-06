@@ -90,7 +90,7 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 - `/Applications/mpv.app/Contents/MacOS/mpv --no-config --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"` 
 
 ## Latest Updates
-Newest scripts above haven't been properly released yet. More script-messages are needed.
+Newest scripts above in `mpv-scripts.zip` haven't been properly released yet. More/better script-messages & functions are needed.
 - autocrop: Added `o.auto_aspect`. On by default. Randomizes aspect @1Hz.
 - aspeed: Added `o.suppress_script_opts`.
 - automask: `o.res_safety` lowered by 1.
