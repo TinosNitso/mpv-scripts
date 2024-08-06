@@ -33,7 +33,7 @@ options     = {
         'sub-border-size 2','sub-font-size 32',  --DEFAULTS=3,55   SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
         'osd-level       0','osc           no',  --DEFAULTS=3,yes  osd-level=0 PREVENTS UNWANTED MESSAGES @load-script.  osc AWAITS ITS CONFIG.  SOME THINGS MUST BE SWITCHED OFF/ON.  
     },
-    title                  = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,b1,fs##,bord# = \,BOLD,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
+    title                  = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,fs##,bord# = \,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,b1,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BOLD,BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
     title_duration         =  6 , --SECONDS.
     autoloop_duration      =  6 , --SECONDS.  0 MEANS NO AUTO-loop.  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://GITHUB.COM/zc62/mpv-scripts/blob/master/autoloop.lua
     options_delay          = .3 , --SECONDS, FROM playback_start.  title ALSO TRIGGERS THEN.
@@ -43,22 +43,22 @@ options     = {
     },
     windows     = {}, linux = {}, darwin = {},  --OPTIONAL platform OVERRIDES.
     android     = {                                                             
-        options = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',}, --options APPEND, NOT REPLACE. 
+        options = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',},  --options APPEND, NOT REPLACE. 
     },
 }
-o,p,timers = {},{},{}  --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file
+o,p,timers     = {},{},{}  --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file
+min,max,random = math.min,math.max,math.random --ABBREV.
+math.   randomseed(os.time()+mp.get_time())    --os,mp=OPERATING-SYSTEM,MEDIA-PLAYER.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil  BUT COULD ECHO BACK %RANDOM% OR $RANDOM USING A subprocess. 
 
-function typecast(arg)  --ALSO @script-message & @title_update.  load INVALID ON MPV.APP.  THIS script-message CAN REPLACE ANY OTHER.
+function typecast(arg)  --ALSO @script-message & @title_update.  load INVALID ON MPV.APP.
     return   type(arg)=='string' and loadstring('return '..arg)() or arg
 end
 
-function  gp(property) --ALSO @playback-restart.                GET-PROPERTY
-    p       [property]=mp.get_property_native(property)  --mp=MEDIA-PLAYER
+function  gp(property) --ALSO @playback-restart.  GET-PROPERTY.
+    p       [property]=mp.get_property_native(property)  
     return p[property]
 end
 
-math.randomseed(os.time()+mp.get_time()) --UNIQUE EACH LOAD.  os.time=INTEGER SECONDS FROM 1970.  mp.get_time=μs IS MORE RANDOM THAN os.clock=ms.  os.getenv('RANDOM')=nil  BUT COULD ECHO BACK %RANDOM% OR $RANDOM USING A subprocess. 
-random        = math.random              --MAY SIMPLIFY SCRIPT-MESSAGING.
 p  .platform  = gp('platform') or os.getenv('OS') and 'windows' or 'linux' --platform=nil FOR OLD MPV.  OS=Windows_NT/nil.  SMPLAYER STILL RELEASED WITH OLD MPV.
 o[p.platform] = {}                                                         --DEFAULT={}
 for  opt,val in pairs(options)                                             
@@ -137,21 +137,25 @@ for _,timer in pairs(timers)
 do    timer.oneshot   = 1 --ALL 1SHOT.
       timer:kill() end    --FOR OLD MPV. IT CAN'T START timers DISABLED.
 
+function set(script_opt,val)  --@script-message.
+    o[script_opt]=val
+end
+
 function cleanup() mp.keep_running = false end  --@script-message.  false FLAG EXIT: COMBINES overlay-remove, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
-for message,fn in pairs({cleanup=cleanup,loadstring=typecast,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.  
+for message,fn in pairs({loadstring=typecast,cleanup=cleanup,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.  loadstring CAN REPLACE ANY OTHER. 
 do mp.register_script_message(message,fn)  end
 
 ----CONSOLE SCRIPT-COMMANDS & EXAMPLES (main=_):
 ----script-message-to _ cleanup
 ----script-message-to _ loadstring <arg>
-----script-message      loadstring "print(m and m.graph or _VERSION)"
+----script-message      loadstring print(_VERSION)
 ----script-message      title      <data>          <title_duration>
 ----script-message      title      ${media-title}   6*random()
 ----script-message      title_remove
 
 ----mpv TERMINAL COMMAND EXAMPLES:
 ----WINDOWS   CMD:  MPV\MPV --no-config --script=. TEST.MP4    (PLACE scripts & TEST.MP4 INSIDE smplayer.exe FOLDER. THEN COPY/PASTE COMMAND INTO NOTEPAD & SAVE AS TEST.CMD, & DOUBLE-CLICK IT.)
-----LINUX      sh:  mpv --no-config --script=~/Desktop/mpv-scripts/ "https://YOUTU.BE/5qm8PH4xAss"
+----LINUX      sh:  mpv --no-config --script=~/Desktop/mpv-scripts/ "https://YOUTU.BE/5qm8PH4xAss" 
 ----SMPLAYER.APP :  /Applications/SMPlayer.app/Contents/MacOS/mpv --script=~/Desktop/mpv-scripts/ "https://YOUTU.BE/5qm8PH4xAss"      
 ----MACOS MPV.APP:  /Applications/mpv.app/Contents/MacOS/mpv --no-config --script=~/Desktop/mpv-scripts/ "https://YOUTU.BE/5qm8PH4xAss"    (DRAG & DROP mpv.app ONTO Applications.  MACOS MAY BE CASE-SENSITIVE.  URLs DRAG & DROP WITHOUT "".)
 
@@ -166,17 +170,16 @@ do mp.register_script_message(message,fn)  end
 ----LUA      : v5.1     v5.2  TESTED.
 ----SMPLAYER : v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
-----~200 LINES & ~3000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
+----~200 LINES & ~2000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
 ----SAFETY INSPECTION: LUA SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path expand-text show-text seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* SAFE EXCEPT FOR script-opts WHICH MAY HOOK AN UNSAFE EXECUTABLE.
-----FUTURE VERSION SHOULD REMOVE QUOTES FROM URLs WHO ARE DRAG & DROPPED (PATH_HANDLER).
-----FUTURE VERSION SHOULD HAVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout, o.double_mute_command, o.double_aid_command & o.double_sid_command.
 ----FUTURE VERSION SHOULD ALSO HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED.  NEEDED FOR android albumart.
 ----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts. function on_update.
+----FUTURE VERSION COULD  HAVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout, o.double_mute_command, o.double_aid_command & o.double_sid_command.
 
 
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES).  correct-pts ESSENTIAL.  MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
 ----DECLARING local VARIABLES MAY IMPROVE HIGHLIGHTING/COLORING, BUT UNNECESSARY.
-----40%CPU+15%GPU USAGE (5%+15% WITHOUT scripts).  ARGUABLY SMOOTHER THAN VLC, DEPENDING (SENSITIVITY TO HUMAN FACE SMOOTHNESS).  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER). FREE GPU IMPROVES MULTI-TASKING.
+----50%CPU+15%GPU USAGE (5%+15% WITHOUT scripts).  ARGUABLY SMOOTHER THAN VLC, DEPENDING ON VIDEO/VERSION, DUE TO SENSITIVITY TO STEADY-CAM + HUMAN FACE.  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER). FREE GPU IMPROVES MULTI-TASKING.
 ----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS.  ULTIMATELY TV FIRMWARE (1GB) COULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. 
 ----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, TAB-L/R & MULTI-LINE CTRL-EDITING. ENABLES QUICK GRAPH TESTING.  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK PRODUCES 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
 ----VMWARE MACOS: SWITCH  Command(⌘) & Control(^)‎  MODIFIER KEYS.  FOR DVORAK CAN SET:  Select All,Save,Undo,Cut,Copy,Paste = ‎⌥A,⌥O,⌥;,⌥J,⌥K,⌥Q‎  &  Redo,Open Recent... = ‎⌥⇧;,⌥⇧O‎  IN  Keyboard→Shortcuts→App Shortcuts→All Applications→+.  VIRTUALBOX DOESN'T HAVE THIS PROBLEM (DIRECT HARDWARE CAPTURE). BUT UNLOCKED VMWARE PERFORMS BETTER.

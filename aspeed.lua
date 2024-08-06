@@ -8,7 +8,7 @@ options                      = {
     double_mute_timeout      =         .5 ,  --SECONDS FOR DOUBLE-MUTE-TOGGLE        (m&m DOUBLE-TAP).  SET TO 0 TO DISABLE.                    IDEAL FOR SMPLAYER.      REQUIRES AUDIO IN SMPLAYER (OR ELSE USE j&j).  VARIOUS SCRIPT/S CAN BE SIMULTANEOUSLY TOGGLED USING THESE 3 MECHANISMS. 
     double_aid_timeout       =         .5 ,  --SECONDS FOR DOUBLE-AUDIO-ID-TOGGLE    (#&# DOUBLE-TAP).  SET TO 0 TO DISABLE.  BAD FOR YOUTUBE.  ANDROID MUTES USING aid. REQUIRES AUDIO. 
     double_sid_timeout       =         .5 ,  --SECONDS FOR DOUBLE-SUBTITLE-ID-TOGGLE (j&j DOUBLE-TAP).  SET TO 0 TO DISABLE.  BAD FOR YOUTUBE.  IDEAL FOR SMARTPHONE.    REQUIRES sid (sub-create-cc-track FOR BLANK).
-    extra_devices_index_list =         {} ,  --TRY {2,3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS.  1=auto  3=INTERNAL PC.  OVERLAP CAUSES INTERNAL ECHO (AVOID).  EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS & STREAM.  INTERNAL PC SPEAKERS COUNT AS 2 (2 DOUBLE-MOUTHED CHILDREN).
+    extra_devices_index_list =         {} ,  --TRY {3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS.  1=auto  3=INTERNAL PC.  OVERLAP CAUSES INTERNAL ECHO (AVOID).  EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS & STREAM.  INTERNAL PC SPEAKERS COUNT DOUBLE (2 DOUBLE-MOUTHED CHILDREN).
     toggle_command           =         '' ,  --EXECUTES on_toggle, UNLESS BLANK.  'show-text ""' CLEARS THE OSD.  CAN DISPLAY ${media-title}, ${mpv-version}, ${ffmpeg-version}, ${libass-version}, ${platform}, ${current-ao}, ${af}, ${lavfi-complex}.  CAN ALSO 'show-text "'.._VERSION..'"'  OR  'set speed 1'.
     speed                    = '${speed}' ,  --EXPRESSION FOR DYNAMIC speed CONTROL, set EVERY HALF-SECOND.  CAN USE ANY MPV PROPERTY (LIKE ${percent-pos}) IN ANY LUA FORMULA.  '${speed}' IS A NULL-OP.  TOGGLES WITH DOUBLE-mute!
     -- speed                 = '     ${speed}<1.2 and ${speed}+.01 or 1    ',  --UNCOMMENT TO CYCLE speed BTWN 1 & 1.2 OVER 10s.  PRESS BACKSPACE TO RESET BACK TO 1.  REPLACE 1.2 & 1 FOR DIFFERENT BOUNDS.
@@ -20,18 +20,19 @@ options                      = {
         "/Applications/mpv.app/Contents/MacOS/mpv"     , --     mpv.app     (MAY BE CASE-SENSITIVE.)
         "/Applications/SMPlayer.app/Contents/MacOS/mpv", --SMPlayer.app     (USING TERMINAL.)
     },
-    filterchain        = 'anull,dynaudnorm=g=5:p=1:m=100:b=1',  --DEFAULT=g=31:p=.95:m=10:b=0=DYNAMIC-AUDIO-NORMALIZER.  graph COMMENTARY HAS MORE DETAILS.  b=0 SOUNDS BAD WITH SMARTPHONE BACKGROUND TOGGLE.  CAN REPLACE anull WITH EXTRA FILTERS, LIKE vibrato highpass aresample.  (random) IS A RANDOM # BTWN 0 & 1, @file-loaded.
-    mutelr             = 'mutel', --mutel/muter  CONTROLLER ONLY.  PRIMARY CHANNEL HAS NORMAL SYNC TO VIDEO.  HARDWARE USUALLY HAS A PRIMARY, BUT IT'S 50/50 (HEADPHONES OPPOSITE TO SPEAKERS).
-    resync_delay       =     30 , --SECONDS.  RESYNC WITH THIS DELAY.  CPU TIME GOES OFF WITH RANDOM LAG.  TOO DIFFICULT TO DETECT LAG FOR ALL PLAYERS (WEBSITES CAUSE DESYNC). 
-    os_sync_delay      =    .01 , --SECONDS.  PRECISION FOR SYNC TO os.time.  OPERATING SYSTEM TIME IS CHECKED EVERY 10ms FOR THE NEXT TICK.  WIN10 CMD "TIME 0>NUL" GIVES 10ms PRECISION.
-    auto_delay         =    .25 , --SECONDS.  CHILDREN ONLY.  RESPONSE TIME.  THEY CHECK txtfile THIS OFTEN.
-    seek_limit         =    .5  , --SECONDS.  CHILDREN ONLY.  SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit.  seek CAUSES AUDIO TO SKIP. (SKIP VS ACCELERATION.) IT'S LIKE TRYING TO SING FASTER TO CATCH UP TO THE OTHERS.
-    quit_timeout       =     15 , --SECONDS.  CHILDREN ONLY.  quit IF CONTROLLER BREAKS FOR THIS LONG.  
-    pause_timeout      =      5 , --SECONDS.  CHILDREN ONLY.  THEY pause INSTANTLY ON STOP, BUT NOT ON BREAK.
-    max_speed_ratio    =   1.15 , --          CHILDREN ONLY.  speed IS BOUNDED BY [txt.speed/max,txt.speed*max]  1.15 SOUNDS OK, BUT MAYBE NOT 1.25.
-    max_random_percent =     10 , --          CHILDREN ONLY.  DEVIATION FROM PROPER speed. UPDATES EVERY HALF A SECOND.  EXAMPLE: 10%*.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER.  0% STILL CAUSES L/R DRIFT, DUE TO LAG & HALF SECOND RANDOM WALKS BTWN SPEEDS.
-    metadata_osd       =  false , --true FOR audio STATISTICS (astats METADATA).  CONTROLLER ONLY.  SHOULD BE REMOVED IN FUTURE VERSION. MPV-v0.37+ SYNC PROPERLY WITHOUT IT. (IT WAS NECESSARY FOR OLD MPV.)
-    options            = {        --CONTROLLER ONLY.  
+    filterchain          = 'anull,dynaudnorm=g=5:p=1:m=100:b=1',  --DEFAULT=g=31:p=.95:m=10:b=0=DYNAMIC-AUDIO-NORMALIZER.  graph COMMENTARY HAS MORE DETAILS.  b=0 SOUNDS BAD WITH SMARTPHONE BACKGROUND TOGGLE.  CAN REPLACE anull WITH EXTRA FILTERS, LIKE vibrato highpass aresample.  (random) IS A RANDOM # BTWN 0 & 1, @file-loaded.
+    mutelr               = 'mutel', --mutel/muter  CONTROLLER ONLY.  PRIMARY CHANNEL HAS NORMAL SYNC TO VIDEO.  HARDWARE USUALLY HAS A PRIMARY, BUT IT'S 50/50 (HEADPHONES OPPOSITE TO SPEAKERS).
+    resync_delay         =     30 , --SECONDS.  RESYNC WITH THIS DELAY.  CPU TIME GOES OFF WITH RANDOM LAG.  TOO DIFFICULT TO DETECT LAG FOR ALL PLAYERS (WEBSITES CAUSE DESYNC). 
+    os_sync_delay        =    .01 , --SECONDS.  PRECISION FOR SYNC TO os.time.  OPERATING SYSTEM TIME IS CHECKED EVERY 10ms FOR THE NEXT TICK.  WIN10 CMD "TIME 0>NUL" GIVES 10ms PRECISION.
+    auto_delay           =    .25 , --SECONDS.  CHILDREN ONLY.  RESPONSE TIME.  THEY CHECK txtfile THIS OFTEN.
+    seek_limit           =    .5  , --SECONDS.  CHILDREN ONLY.  SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit.  seek CAUSES AUDIO TO SKIP. (SKIP VS ACCELERATION.) IT'S LIKE TRYING TO SING FASTER TO CATCH UP TO THE OTHERS.
+    quit_timeout         =     15 , --SECONDS.  CHILDREN ONLY.  quit IF CONTROLLER BREAKS FOR THIS LONG.  
+    pause_timeout        =      5 , --SECONDS.  CHILDREN ONLY.  THEY pause INSTANTLY ON STOP, BUT NOT ON BREAK.
+    max_speed_ratio      =   1.15 , --          CHILDREN ONLY.  speed IS BOUNDED BY [txt.speed/max,txt.speed*max]  1.15 SOUNDS OK, BUT MAYBE NOT 1.25.
+    max_random_percent   =     10 , --          CHILDREN ONLY.  DEVIATION FROM PROPER speed. UPDATES EVERY HALF A SECOND.  EXAMPLE: 10%*.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER.  0% STILL CAUSES L/R DRIFT, DUE TO LAG & HALF SECOND RANDOM WALKS BTWN SPEEDS.
+    suppress_script_opts =  true  , --          CHILDREN ONLY.  RELAY ytdl_hook-* ONLY.  IF false ALL script-opts ARE VISIBLE IN TASK MANAGER.
+    metadata_osd         =  false , --true FOR audio STATISTICS (astats METADATA).  CONTROLLER ONLY.  SHOULD BE REMOVED IN FUTURE VERSION. MPV-v0.37+ SYNC PROPERLY WITHOUT IT. (IT WAS NECESSARY FOR OLD MPV.)
+    options              = {        --CONTROLLER ONLY.  
         'sub                    no ','sub-create-cc-track yes',  --DEFAULTS=auto,no.  SUBTITLE CLOSED-CAPTIONS CREATE BLANK TRACK FOR double_sid_timeout (BEST TOGGLE).  JPEG VALID.  UNFORTUNATELY YOUTUBE USUALLY BUGS OUT UNLESS sub=no.  sid=1 LATER @playback-restart.
         'osd-scale-by-window    no ','osd-bold            yes','osd-font "COURIER NEW"',  --DEFAULTS=yes,no,sans-serif  osd-scale CAUSES ABDAY MISALIGNMENT.  COURIER NEW IS MONOSPACE & NEEDS bold (FANCY).
         'image-display-duration inf',  --DEFAULT=1  JPEG CLOCK USES inf.
@@ -77,7 +78,7 @@ options                      = {
         "     RUSSIA  РОССИЯ           WHITE  ◙  BLUE  ◙    RED   147M       [-Вс-   -Пн-  -вт-  -Ср-  -Чт-  -Пт-   -Сб-  ]  {\\an3\\c     0\\fs37\\bord0}%a◙{\\cFFFFFF\\fs55\\bord3}%I{\\cA73600       }◙%M{\\c1827D6       }◙%S",  --Вт=W  Ч~=4  SLOVENIA HAS SIMILAR COLORS (CHARGED). SERBIA IS CHARGED REVERSE.  THE COLORS DICTATE THE MEANING OF THE LETTERS.  
         "   BULGARIA  БЪЛГАРИЯ         WHITE  ◙ GREEN  ◙    RED     6M       [-Нд-   -Пн-  -вт-  -Ср-  -Чт-  -Пт-   -Сб-  ]  {\\an3\\c     0\\fs37\\bord0}%a◙{\\cFFFFFF\\fs55\\bord3}%I{\\c  9900       }◙%M{\\c    CC       }◙%S", 
         "  LITHUANIA  LIETUVA          YELLOW ◙ GREEN  ◙    RED     3M       [ sekm   Pirm  antr  tred -ket-  penk   šetd ]  {\\an3\\c     0\\fs28\\bord0}%a◙{\\c13B9FD\\fs55\\bord3}%I{\\c446A00       }◙%M{\\c2D27C1       }◙%S",  --Pirm CAPITALIZED.           USUALLY AbDays ARE LENGTH 2.  antrd=Tue(LENGTH 5 NEEDED).  COUNTS FROM Mon (3DAY,5DAY = Wed,Fri).
-        "    ESTONIA  EESTI            BLUE   ◙ BLACK  ◙  WHITE     1M       [ pühap  esmas teisp kolmp nelja reede  laupä]  {\\an3\\c     0\\fs22\\bord0}%a◙{\\cCE7200\\fs55\\bord3}%I{\\c     0\\bord1}◙%M{\\cFFFFFF\\bord3}◙%S",  --fs22=fs55*2/5 FOR LENGTH 5. USUALLY AbDays ARE LENGTH 1.  neljap=Thu  nelja=4=AMBIGUOUS  (THURSDAY=4DAY)  FUTURE VERSION MIGHT BE LENGTH 4, BECAUSE IT'S ESTONIAN...
+        "    ESTONIA  EESTI            BLUE   ◙ BLACK  ◙  WHITE     1M       [ pühap  esmas teisp kolmp nelja reede  laupä]  {\\an3\\c     0\\fs22\\bord0}%a◙{\\cCE7200\\fs55\\bord3}%I{\\c     0\\bord1}◙%M{\\cFFFFFF\\bord3}◙%S",  --fs22=fs55*2/5 FOR LENGTH 5. USUALLY AbDays ARE LENGTH 1.  neljap=Thu  nelja=4=AMBIGUOUS  (THURSDAY=4DAY)
         "    GERMANY  DEUTSCHLAND      BLACK  ◙  RED   ◙   GOLD    85M       [ Son    mon  -Di-  -Mi-   don   fri   -Sa-  ]  {\\an3\\c     0\\fs37\\bord0}%a◙{\\c     0\\fs55\\bord1}%I{\\c    FF\\bord3}◙%M{\\c  CCFF       }◙%S",  --Donstg=Thu  Do=AMBIGUOUS(Di?).
      -- "          Wedge               BIG    : MEDium : Little   tiny                                                       {\\an3       \\fs70\\bord2}{}%I{          \\fs42      }:%M{\\fs25          }:%S{\\fs15          } %a",  --RATIO=.6  DIAGONAL PATTERN.  MY FAV.
 ----STYLE CODES: \\,N,an#,fs#,bord#,c######,fscx##,alpha##,b1,fn* = \,NEWLINE,ALIGNMENT-NUMPAD,FONT-SIZE(p),BORDER(p),COLOR,FONTSCALEX(%),TRANSPARENCY,BOLD,FONTNAME  (DEFAULT an0=an7=TOPLEFT)    MORE: shad#,be1,i1,u1,s1,fr##,fscy## = SHADOW(p),BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEY(%)  EXAMPLES: USE {\\alpha80} FOR TRANSPARENCY. USE {\\fscx130} FOR +30% IN HORIZONTAL.  A TRANSPARENT clock CAN BE BIGGER. be ACTS LIKE SEMI-BOLD.  IDEAL LATIN/CYRILLIC FONTS (fn*) MAYBE DIFFERENT.
@@ -87,27 +88,28 @@ options                      = {
 }
 o,p,m,timers = {},{},{},{}                         --o,p=options,PROPERTIES  m=MEMORY={map,graph}  timers={mute,aid,sid,playback_restarted,auto,os_sync,osd}  playback_restarted BLOCKS THE PRIOR 3.
 txt,devices,clocks,abdays,LOCALES = {},{},{},{},{} --txtfile IS WRITTEN FROM txt.  devices=LIST OF DEVICES WHICH WILL ACTIVATE, STARTING WITH EXISTING audio-device.  LOCALES IS LIST OF SUB-TABLES, FOR LOTE. NEVER USED BY CHILDREN (UNLESS THEY ALSO HAVE A clock TOO).  os.setlocale('RUSSIAN') LITERALLY BLUE-SCREENS (MPV HAS ITS OWN BSOD).
+min,max,random = math.min,math.max,math.random     --ABBREV.
+math.randomseed(os.time()+mp.get_time())           --os,mp=OPERATING-SYSTEM,MEDIA-PLAYER.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil
 
-function typecast(arg)  --ALSO @script-message, @apply_astreamselect & @property_handler.  load INVALID ON MPV.APP.  THIS script-message CAN REPLACE ANY OTHER.
-    return   type(arg)=='string' and loadstring('return '..arg)() or arg
+function clip(n,    min_n,    max_n)  --@property_handler.  NUMBERS/nil.  FFMPEG SUPPORTS clip, BUT NOT LUA.
+    return    n and min_n and max_n and min(max(n,min_n),max_n)  --min max  min max
 end
 
-function  gp(property)  --ALSO @property_handler.               GET-PROPERTY
-    p       [property]=mp.get_property_native(property)  --mp=MEDIA-PLAYER
-    return p[property]
-end
-
-function round(N,D)  --@property_handler & @clock_update.  N & D ARE number/string/nil.   FFMPEG SUPPORTS round, BUT NOT LUA.  ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1).
+function round(N,D)  --@property_handler & @clock_update.  NUMBERS/STRINGS/nil.  FFMPEG SUPPORTS round, BUT NOT LUA.  ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1).
     D = D or 1
     return N and math.floor(.5+N/D)*D  --round(N)=math.floor(.5+N)
 end
 
-function clip(N,min,max)  --@property_handler.  N, min & max ARE number/nil.  FFMPEG SUPPORTS clip, BUT NOT LUA.
-    return N and min and max and math.min(math.max(N,min),max)  --MIN MAX MIN MAX
+function typecast(arg) --ALSO @script-message, @apply_astreamselect & @property_handler.  load INVALID ON MPV.APP. 
+    if       type(arg)=='string' then return loadstring('return '..arg)() end  --''→nil
+    return        arg
 end
 
-math.randomseed(os.time()+mp.get_time()) --UNIQUE EACH LOAD.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil
-random        = math.random              --MAY SIMPLIFY SCRIPT-MESSAGING.
+function  gp(property)  --ALSO @property_handler.  GET-PROPERTY
+    p       [property]=mp.get_property_native(property)
+    return p[property]
+end
+
 p  .platform  = gp('platform') or os.getenv('OS') and 'windows' or 'linux' --platform=nil FOR OLD MPV.  OS=Windows_NT/nil.  SMPLAYER STILL RELEASED WITH OLD MPV.
 o[p.platform] = {}                                                         --DEFAULT={}
 for  opt,val in pairs(options) 
@@ -138,33 +140,35 @@ do if type(clock)        == 'string'                                            
          table.insert(LOCALES,LOCALE) end end  
 
 if o.clocks.DIRECTIVES_OVERRIDE  
-then clocks,LOCALES  = {''},{{}}      --ONLY 1.  NO-LOCALES.
-    for N            = 0,128          --LOOP OVER ALL POSSIBLE BYTECODE FROM 0→0x80.
-    do char          = string.char(N) --A,a = 0x41,0x61 = 65,97  
-       DIRECTIVE     =   '%'..char
-       invalid       = os.date(DIRECTIVE):sub(1,1)=='%'  --os.date RETURNS %char IF INVALID (SKIP). 
-       clocks[1]     =    clocks[1]..(invalid and '' or (char=='a' and '\n' or '')..('%%%s="%s"  '):format(DIRECTIVE,DIRECTIVE)) end end  --NEWLINE @a.
-o.clocks.offset      =  o.clocks.offset   or 0                         --DEFAULT=0 s.
-clocks               = (o.clocks.duration or 0)==0 and {} or clocks    --duration=nil/0 MEANS clock=nil.
-directory            = require 'mp.utils'.split_path(gp('scripts')[1]) --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
-__script             = ('--script=%s/%s.lua'):format(directory,label)  --"/" FOR WINDOWS & UNIX. .lua COULD BE .js FOR JAVASCRIPT.  
-directory            = mp.command_native({'expand-path',directory})    --command_native EXPANDS '~/', REQUIRED BY io.open.
-txtpath              = ('%s/%s-pid%d.txt'):format(directory,label,o.params.pid or gp('pid'))  --txtfile INSTEAD OF PIPES.
-if N==0 then clock   = clocks[1] and mp.create_osd_overlay('ass-events')  --AT LEAST 1.  ass-events IS THE ONLY VALID OPTION.   COULD ALSO SET res_x & res_y FOR BETTER THAN 720p FONT QUALITY.
-    o.auto_delay     = .5                                             --CONTROLLER auto_delay EXISTS ONLY TO STOP timeout. 
-    p['script-opts'] = mp.get_property('script-opts')                 --string FOR SPAWNING; MAY BE BLANK.  ytdl_hook OPTS POTENTIALLY UNSAFE.  
-    p['script-opts'] = p['script-opts']=='' and '' or p['script-opts']..','  --APPEND ','.  LEADING ',' DISALLOWED.  EXISTING opts GO FIRST.
+then clocks,LOCALES = {''},{{}}      --ONLY 1.  NO-LOCALES.
+    for N           = 0,128          --LOOP OVER ALL POSSIBLE BYTECODE FROM 0→0x80.
+    do char         = string.char(N) --A,a = 0x41,0x61 = 65,97  
+       DIRECTIVE    =   '%'..char
+       invalid      = os.date(DIRECTIVE):sub(1,1)=='%'  --os.date RETURNS %char IF INVALID (SKIP). 
+       clocks[1]    =    clocks[1]..(invalid and '' or (char=='a' and '\n' or '')..('%%%s="%s"  '):format(DIRECTIVE,DIRECTIVE)) end end  --NEWLINE @a.
+o.clocks.offset     =  o.clocks.offset   or 0                         --DEFAULT=0 s.
+clocks              = (o.clocks.duration or 0)==0 and {} or clocks    --duration=nil/0 MEANS clock=nil.
+directory           = require 'mp.utils'.split_path(gp('scripts')[1]) --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
+__script            = ('--script=%s/%s.lua'):format(directory,label)  --"/" FOR WINDOWS & UNIX. .lua COULD BE .js FOR JAVASCRIPT.  
+directory           = mp.command_native({'expand-path',directory})    --command_native EXPANDS '~/', REQUIRED BY io.open.
+txtpath             = ('%s/%s-pid%d.txt'):format(directory,label,o.params.pid or gp('pid'))  --txtfile INSTEAD OF PIPES.
+if N==0 then clock  = clocks[1] and mp.create_osd_overlay('ass-events')  --AT LEAST 1.  ass-events IS THE ONLY VALID OPTION.   COULD ALSO SET res_x & res_y FOR BETTER THAN 720p FONT QUALITY.
+    o.auto_delay    = .5  --EXISTS ONLY TO STOP timeout. 
+    script_opts     = ''  --RELAYED @SPAWN.  
+    for script_opt,val in pairs(gp('script-opts'))
+    do  script_opts = (not o.suppress_script_opts or script_opt: find('ytdl_hook'))
+                       and ('%s%s=%s,'):format(script_opts,script_opt,val) or script_opts end
     
     table.insert   (devices,   gp('audio-device'))   --"wasapi/" (WINDOWS AUDIO SESSION APP. PROGRAM. INTERFACE) OR "pulse/alsa" (LINUX) OR "coreaudio/" (MACOS).
     for _,index in pairs(o.extra_devices_index_list) --ESTABLISHES devices WHICH ACTIVATE (IF mpv).  DUPLICATES ALLOWED.  WOULDN'T MAKE SENSE FOR CHILDREN.
     do table.insert(devices, ( (p['audio-device-list'] or gp('audio-device-list')) [index] or {}).name ) end
     
     for _,command in pairs(o.mpv)  --CONTROLLER command LOOP. 
-    do  mpv               = mpv or mp.command_native({'subprocess',command}).error_string~='init' and command end  --error_string=init IF INCORRECT.  BREAKS ON FIRST CORRECT command.  subprocess RETURNS NATIVELY INTO LUA, SO IS MORE ELEGANT THAN run IN THIS CASE.
+    do  mpv               =  mpv or mp.command_native({'subprocess',command}).error_string~='init' and command end  --error_string=init IF INCORRECT.  BREAKS ON FIRST CORRECT command.  subprocess RETURNS NATIVELY INTO LUA, SO IS MORE ELEGANT THAN run IN THIS CASE.
     for N,audio_device in pairs(devices) 
     do  __audio_device    = audio_device~='auto' and '--audio-device='..audio_device or nil  --auto=nil
     for mutelr in ('mutel muter'):gmatch('[^ ]+') 
-        do  __script_opts = mpv and not (N==1 and mutelr==o.mutelr) and ('--script-opts=%s%s-mutelr=%s,%s-params={N=%d;pid=%d}'):format(p['script-opts'],label,mutelr,label,N,p.pid)  --ONLY IF mpv & NOT PRIMARY CHANNEL.  mutelr & audio-device VARY.  CHILDREN WITH 2 MOUTHS MAY BE MUTED LEFT OR RIGHT.
+        do  __script_opts = mpv and not (N==1 and mutelr==o.mutelr) and ('--script-opts=%s%s-mutelr=%s,%s-params={N=%d;pid=%d}'):format(script_opts,label,mutelr,label,N,p.pid)  --ONLY IF mpv & NOT PRIMARY CHANNEL.  mutelr & audio-device VARY.  CHILDREN WITH 2 MOUTHS MAY BE MUTED LEFT OR RIGHT.
             run_mpv       = __script_opts     and mp.command_native({'run',mpv,'--idle','--no-config',__script,__script_opts,__audio_device}) end end end  --CHILD SPAWN.  command_native FOR SYMBOLS/nil.  idle/config MUST BE SET IN ADVANCE.  --no-config BLOCKS DOUBLE-LOADING.
 
 
@@ -207,8 +211,8 @@ function on_toggle()  --@script-message, @script-binding & @property_handler.  A
     command = o.toggle_command~='' and mp.command(command_prefix..' '..o.toggle_command)
 end
 for key in o.key_bindings: gmatch('[^ ]+') 
-do binding_name = label..(binding_name and '_'..key or '')  --THE FIRST key IS SPECIAL.
-    mp.add_key_binding(key,binding_name,on_toggle) end  
+do mp.add_key_binding(key,label..'_'..key,on_toggle) end  
+mp   .add_key_binding(nil,label          ,on_toggle)  --UNMAPPED binding.
 
 function clock_update()  --@os_sync & @on_toggle.
     clock_remove = clock and OFF and clock:remove()  --clock OFF SWITCH.  COULD BE MADE SMOOTH BY VARYING {\\alpha##} IN clock.data.
@@ -343,7 +347,7 @@ function cleanup()  --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-op
     set_speed       = p.speed~=1 and mp.command(command_prefix..' set speed 1')  --cleanup_speed=1
     mp.keep_running = false  --false FLAG EXIT: COMBINES overlay-remove, remove_key_binding, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
 end 
-for message,fn in pairs({cleanup=cleanup,loadstring=typecast,toggle=on_toggle,resync=os_sync})  --SCRIPT CONTROLS.
+for message,fn in pairs({loadstring=typecast,cleanup=cleanup,toggle=on_toggle,resync=os_sync})  --SCRIPT CONTROLS.  loadstring CAN REPLACE ANY OTHER.
 do mp.register_script_message(message,fn)  end
 reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.
 
@@ -364,11 +368,10 @@ reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.
 
 
 ----~400 LINES & ~7000 WORDS.  SPACE-COMMAS FOR SMARTPHONE.  5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END (CONSOLE COMMANDS). ALSO BLURBS ON WEB.  CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
-----FUTURE VERSION SHOULD MOVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout & o.toggle_command TO main.lua. ALL SCRIPTS SHOULD HAVE THESE, UNLESS main OPERATES ALL DOUBLE-TAPS.
+----FUTURE VERSION COULD  COMBINE DOUBLE-TAPS INTO o.double_tap_properties & o.double_tap_timeout. o.toggle_command SHOULD BE MOVED TO main.lua.
 ----FUTURE VERSION SHOULD REPLACE (random) WITH $RANDOM/%RANDOM%.
-----FUTURE VERSION SHOULD HAVE o.key_bindings_clock (on_toggle_clock), OR SEPARATE clock.lua.  RESYNCING THE EXACT TICK EVERY MINUTE USES 0% CPU.
+----FUTURE VERSION SHOULD SEPARATE clock.lua.  RESYNCING THE EXACT TICK EVERY MINUTE USES 0% CPU.
 ----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts; function on_update.
-----FUTURE VERSION SHOULD ONLY DECLARE ytdl_hook-* script-opts TO THE CHILDREN.  COULD BE OPTIONAL, LIKE o.suppress_script_opts. IT'S COMPLICATED.
 ----FUTURE VERSION SHOULD REMOVE astats FOR NEW MPV, SO o.speed IS SET EVERY HALF-SECOND IN REAL-TIME.
 ----FUTURE VERSION MAY REPLACE astreamselect WITH volume & amix.  astreamselect WAS A BAD DESIGN CHOICE.
 ----FUTURE VERSION MAY HAVE SMOOTH TOGGLE. txtfile COULD HAVE ANOTHER LINE FOR SMOOTH TOGGLE (SMOOTH-MUTE USING t-DEPENDENT af-command).

@@ -12,29 +12,29 @@ options                 = {
     period              =  '.5',  --'SECONDS'.  SET TO 0 FOR STATIONARY (FORCES (np)=(0)).  UNLIKE A MASK, MOTION MAY NOT BE PERIODIC - COMPLEX FREE TO RANDOMLY FLOAT AROUND. IT ACTS LIKE A METRONOME.
     fps                 =   30 ,  --FRAMES PER SECOND FOR [vo].  30fps CAN USE 15% MORE CPU THAN 25fps.  SCRIPT ALSO LIMITS scale. 
     gsubs_passes        =    4 ,  --# OF SUCCESSIVE gsubs.  THEY DEPEND ON EACH OTHER, IN A DAIZY-CHAIN. LIKE (cos)→(c)→(np)→(fpp)  THEY DON'T APPLY TO filterchain.  THEY MAY HELP WITH MORE ADVANCED graph CHOREOGRAPHY.
-    gsubs               = {np='(((n))/(fpp))',c='cos(2*PI*(np))',s='sin(2*PI*(np))',m='mod(floor(np),2)',cos='(c)',sin='(s)',mod='(m)',t,n,on,random,},  --SUBSTITUTIONS.  ENCLOSING BRACKETS () ARE ADDED & REQUIRED, IN EFFECT.  SHIFT (n),(np)→((n)+?),((np)+?) TO SYNC WITH OTHER GRAPHS, BY TRIAL & ERROR.  (fpp)=(fps*period)=(FRAMES-PER-PERIOD) IS DERIVED & DEPENDS ON FILTER.  EXAMPLE: USE n=5 FOR STATIONARY COMPLEX.  (t),(n),(on)=(TIME),(FRAME#),(FRAMEOUT#)  (np)=(n AS RATIO TO PERIOD, +SHIFT)=("TIME" AS A RATIO).  (random) IS A RANDOM # BTWN 0 & 1, CHOSEN @file-loaded, @on_toggle & @RELOAD.  (fpp), LIKE fps, COULD ALSO BE NAMED (npp).
-    overlay_scale       = {3/4,3/4},  --RATIOS {WIDTH<=1,HEIGHT<=1} (number/string).  CAN SHRINK PRIMARY_SCALE.  USES RECIPROCAL PADDING FOR SAFE zoompan.  3/4=(4/3)/(16/9) WHICH ALIGNS WITH ASPECT=4/3. 
+    gsubs               = {np='(((n))/(fpp))',c='cos(2*PI*(np))',s='sin(2*PI*(np))',m='mod(floor(np),2)',cos='(c)',sin='(s)',mod='(m)',t,n,on,random,},  --SUBSTITUTIONS.  ENCLOSING BRACKETS () ARE ADDED & REQUIRED, IN EFFECT.  SHIFT (n),(np)→((n)+?),((np)+?) TO SYNC WITH OTHER GRAPHS, BY TRIAL & ERROR.  (fpp)=(fps*period)=(FRAMES-PER-PERIOD) IS DERIVED & DEPENDS ON FILTER.  EXAMPLE: USE n=5 FOR STATIONARY COMPLEX.  (t),(n),(on)=(TIME),(FRAME#),(FRAMEOUT#)  (np)=(n AS RATIO TO PERIOD, +SHIFT)=("TIME" AS A RATIO).  (random) IS A RANDOM # BTWN 0 & 1, CHOSEN @file-loaded, @on_toggle & @RELOAD.  (fpp), LIKE fps, COULD ALSO BE NAMED (npp).  mod(m) ACTS AS ON/OFF SWITCH (SUPERPERIOD).  
+    overlay_scale       = {.5+3^.5/2/2,.5+3^.5/2/2},  --RATIOS {WIDTH<=1,HEIGHT<=1} (number/string).  SHRINK PRIMARY_SCALE.  USES RECIPROCAL PADDING FOR SAFE zoompan.  .5+3^.5/2/2=1-(1-3^.5/2)/2 FOR EQUILATERAL TRIANGLES (ADD FROM THEIR MIDDLES, + CENTER).
     filterchain         = 'shuffleplanes=1  ,lutrgb=g=val*.25:a=val*1',  --val*.5 TO HALVE alpha.  MIXES IN 25% GREEN-IN-BLUE RATIO, BECAUSE PURE BLUE IS TOO DARK.  PLANES ORDERED LIKE GreatBRitAin (gbrap). COULD BE RENAMED overlay_vf_chain.  SHUFFLE + DILUTION MUCH MORE EFFICIENT THAN colorchannelmixer (+10% CPU).  BLUE, DARKBLUE & BLACK ARE COMPATIBLE WITH cropdetect.  STRIPES IS A DIFFERENT DESIGN (RED/BLUE/WHITE).  COLOR-BLINDNESS COULD BE AN ISSUE.
     -- filterchain      = 'shuffleplanes=1:0,lutrgb=g=val*.7         ',  --UNCOMMENT FOR RED & GREEN, INSTEAD OF RED & BLUE (DEFAULT). THIS EXAMPLE DROPS GREEN 30% BECAUSE IT'S TOO BRIGHT.
-    rotate              = 'a=PI/60*(s)*(m) : ow=iw : oh=ih      ',  --RADIANS CLOCKWISE.  PI/60=3°=180°/60.  mod(m) ACTS AS ON/OFF SWITCH (SUPERPERIOD).  LARGE ANGLES REQUIRE OUTPUT-WIDTH:OUTPUT-HEIGHT(ow:oh) TO PREVENT CLIPPING.
-    zoompan             = 'z=1             : x=0   : y=0        ',  --1:0:0 MEANS NO ZOOMING.  EXAMPLE: SET TO '1+.1*(s)*(m)'.  MAY BE NEEDED TO SCOOT ALONG WITH OTHER GRAPH/S. BUT FORMULA/S SHOULD USE (np) PHASE OFFSET & ARE COMPLICATED.
-    overlay             = 'x=(W-w)/2:y=(H-h)/2-.01*H*(1-(c))*(m)',  --TIME-DEPENDENCE SHOULD MATCH OTHER SCRIPT/S, LIKE automask. A BIG-SCREEN TV HELPS WITH POSITIONING.  POSITIONING ATOP BLACK BARS MAY DRAW ATTENTION TO THEM.
-    dual_scale          = {nil,nil}                     ,  --RATIOS {WIDTH,HEIGHT} RELATIVE TO display.  REPLACE nil WITH 1 FOR GREEN/RED DUAL.  THIS DUAL USES THE SAME aid.  BI-QUAD CONCEPT COMES FROM HOW RAW MP3 WORKS (SELF-overlay).
+    rotate              = 'a=0:ow=iw:oh=ih           '  ,  --RADIANS CLOCKWISE.       EXAMPLE: SET TO '1+PI/60*(s)*(m)'.  PI/60=3°=180°/60.  LARGE ANGLES REQUIRE OUTPUT-WIDTH:OUTPUT-HEIGHT TO PREVENT CLIPPING.
+    zoompan             = 'z=1: x=0 : y=0            '  ,  --1:0:0 MEANS NO ZOOMING.  EXAMPLE: SET TO '1+   .1*(s)*(m)'.  MAY BE NEEDED TO SCOOT ALONG WITH OTHER GRAPH/S. BUT FORMULA/S SHOULD USE (np) PHASE OFFSET & ARE COMPLICATED.
+    overlay             = 'x=(W-w)/2: y=(H-h)/2+W/2/4'  ,  --+W/8 DOWNWARDS ANCHORS EQUILATERAL TRIANGLES (CENTRIX @QUARTER).  ANOTHER IDEA IS TO POSITION ATOP BLACK BARS.
+    dual_scale          = {nil,nil}                     ,  --RATIOS {WIDTH,HEIGHT} (NUMBERS), RELATIVE TO display.  REPLACE nil WITH 1 FOR GREEN/RED DUAL.  THIS DUAL USES THE SAME aid.  BI-QUAD CONCEPT COMES FROM HOW RAW MP3 WORKS (SELF-overlay).
     dual_filterchain    = 'shuffleplanes=1:0      '     ,  --APPLIES AFTER PRIMARY filterchain, TO SWITCH BLUE/GREEN.  EXAMPLE: TO SEESAW IT, APPEND ',rotate=PI/60*(s):c=BLACK@0'  (BUT THAT ADDS TOO MUCH CPU USAGE.)
     dual_overlay        = 'x=(W-w)/2:y=(H-h)/2+H/4'     ,  --DUAL CAN FLY AROUND TOO.  IT COULD FLOAT TO VARIOUS INSTRUMENTS, VIOLINS ETC.  
     af_chain            = 'anull,dynaudnorm=g=3:p=1:m=1',  --AUDIO FILTERCHAIN FOR [ao]. CAN REPLACE anull WITH OTHER FILTERS, LIKE vibrato.  DYNAMIC AUDIO NORMALIZER BUFFERS OUTPUT, FIXING AN FFMPEG ERROR.  IT'S A NULL-OP & A DIFFERENT FILTER COULD ALSO WORK - DETERMINISTIC FOR 10 HRS.
     freqs_dynaudnorm    = 'g=5:p=1:m=100:b=1'           ,  --DEFAULT=g=31:p=.95:m=10:b=0  THIS IS THE THIRD PASS. AFTER RESAMPLING TO 2.1kHz, & SHIFTING freqs_lead_time.  SPECTRUM SHOULD BE CLEAR EVEN FOR THE FAINTEST SOUNDS.
     freqs_opts          = 's=300x500:mode=line:ascale=lin:win_size=512:win_func=parzen:averaging=2',  --EXTRA OPTIONS.  CAN ALSO SET overlap.  CAN'T CHANGE rate, fscale, colors & cmode (SEE graph SECTION).  INCREASE size FOR SHARPER CURVE (OR CHANGE ITS INTERNAL aspect).  mode={line,bar,dot}  win_func MAY ALSO BE poisson OR cauchy (PARZEN WAS AN AMERICAN STATISTICIAN).  win_size IS # OF DATA POINTS (LIKE TOO MANY PIANO KEYS).  FOR bar USE a=val*.25 IN filterchain.
     freqs_lead_time     =      '.1',  --'+-SECONDS'.  LEAD TIME FOR SPECTRUM.  SUBJECTIVE TRIAL & ERROR: 0, .1, .2 OR .3?  BACKDATES audio TIMESTAMPS. showfreqs HAS AT LEAST 1 FRAME LAG.  A CONDUCTOR'S BATON MAY MOVE AN EXTRA .1s BEFORE THE ORCHESTRA, OR IT'S LIKE HE'S TRYING TO KEEP UP.
-    freqs_fps           =      30/2,  --FOR PERFECTLY SMOOTH FILM ON CHEAP CPU.  MORE MAY CAUSE FILM TO STUTTER. freqs_clip_h ALSO IMPROVES PERFORMANCE.  USE MORE averaging FOR MORE freqs_fps.
-    freqs_fps_albumart  =      30  ,  --FOR RAW MP3 ALSO. CAN EASILY DOUBLE freqs_fps.
-    freqs_scale_h       =     '1.2',  --CURVE HEIGHT MAGNIFICATION.  REDUCES CPU CONSUMPTION (LESS DATA IN EFFECT). BUT THE LIPS LOSE TRACTION.  L & R CHANNELS FORM LIKE A DUAL MOUTH (LIKE HOW HUMANS ARE BIPEDAL).  freqs_alpha OPTION UNNECESSARY (EQUIVALENT TO A no_freqs OPTION).
-    freqs_clip_h        =      .25 ,  --MINIMUM=grid_height (CAN'T CLIP LOWER THAN grid, DUE TO RECIPROCAL CANVAS PADDING).  number NEEDED FOR scale COMPUTATIONS.  REDUCES CPU USAGE BY CLIPPING CURVE - CROPS THE TOP OFF SHARP SIGNAL.
-    freqs_interpolation =     false,  --SET TO true TO INTERPOLATE FROM freqs_fps→volume_fps.  ADDS ~7% CPU USAGE. HOWEVER CAN REDUCE fps FROM 30→25 TO SUBTRACT 15% CPU USAGE.   CAN REDUCE freqs_fps_albumart, TO INTERPOLATE FROM IT.  NICE LIGHTNING EFFECT BUT LOOKS JITTERY & FILM MAY STUTTER @autocrop.
+    freqs_fps           =      25/2,  --FOR PERFECTLY SMOOTH FILM ON CHEAP CPU.  MORE MAY CAUSE FILM TO STUTTER. freqs_clip_h ALSO IMPROVES PERFORMANCE.  USE MORE averaging FOR MORE freqs_fps.
+    freqs_fps_albumart  =      25  ,  --FOR RAW MP3 ALSO. CAN EASILY DOUBLE freqs_fps.
+    freqs_scale_h       =       '1',  --CURVE HEIGHT MAGNIFICATION.  REDUCES CPU CONSUMPTION (LESS DATA IN EFFECT). BUT THE LIPS LOSE TRACTION.  L & R CHANNELS FORM LIKE A DUAL MOUTH (LIKE HOW HUMANS ARE BIPEDAL).  freqs_alpha OPTION UNNECESSARY (EQUIVALENT TO A no_freqs OPTION).
+    freqs_clip_h        =       .2 ,  --MINIMUM=grid_height (CAN'T CLIP LOWER THAN grid, DUE TO RECIPROCAL CANVAS PADDING).  number NEEDED FOR scale COMPUTATIONS.  REDUCES CPU USAGE BY CLIPPING CURVE - CROPS THE TOP OFF SHARP SIGNAL.
+    freqs_interpolation =     false,  --COULD BE RENAMED freqs_fade.  INTERPOLATES FROM freqs_fps→volume_fps.  ADDS ~5% CPU USAGE.  NICE LIGHTNING EFFECT BUT LOOKS JITTERY.  CAN REDUCE freqs_fps_albumart, TO INTERPOLATE FROM IT.  
     volume_af_chain     = 'highpass=f=250,dynaudnorm=g=5:p=1:m=100:b=1',  --ALSO APPLIES TO freqs (volume GOES FIRST IN THIS MODEL).  250Hz highpass HELPS CLARIFY THE SPECTRUM.  firequalizer IS AN ALTERNATIVE.
     volume_opts         =     'f=0',  --DEFAULT=1 FOR FADE.  CAN ALSO ENTER EXTRA OPTIONS, LIKE dm & dmc FOR DISPLAY-MAX-LINES.  EXAMPLE: "dm=1:dmc=RED"
     volume_scale        = {.04,.15},  --RATIOS {WIDTH,HEIGHT}; {number/string}.  RELATIVE TO overlay_scale, BEFORE STACKING feet, & BEFORE autocrop.lua.
-    volume_fps          =       30 ,  --PRIMARY ANIMATION fps. STREAM MAYBE 60fps BUT NOT THE EXTRA VISUALS.
+    volume_fps          =       25 ,  --PRIMARY ANIMATION fps. STREAM MAYBE 60fps BUT NOT THE EXTRA VISUALS.
     volume_alpha        =     '.25',  --0 REMOVES BARS (feet REMAIN). OPAQUENESS OF volume BARS.  DUAL volume TAKES CENTER STAGE.
     grid_alpha          =       '1',  --MULTIPLIER    RELATIVE TO volume_alpha. 0 REMOVES grid & feet.
     grid_thickness      =      '.1',  --RATIO         RELATIVE TO grid SPACING.  ~CURVE-THICKNESS.
@@ -52,28 +52,30 @@ options                 = {
     },
     windows       = {}, linux = {}, darwin = {},  --OPTIONAL platform OVERRIDES.
     android       = {
-        freqs_fps = 25/2, freqs_fps_albumart = 25/2, volume_fps = 25, rotate = '0', overlay = '(W-w)/2:(H-h)/2',  --LESS CPU USAGE FOR SMARTPHONE. STILL @FULL fps, THOUGH.
+        overlay   = '(W-w)/2:(H-h)/2',
+        freqs_fps = 25/2, freqs_fps_albumart = 25/2, volume_fps = 25, rotate = '0',   --LESS CPU USAGE FOR SMARTPHONE. STILL 30fps, THOUGH.
     },
 }
 o,p,m,timers           = {},{},{},{} --o,p=options,PROPERTIES.  m=MEMORY={graph,'android-surface-size'}.  timers={mute,sid,playback_restarted,seek}  playback_restarted BLOCKS THE PRIOR 2.
 v,android_surface_size = {},{}       --v=current-tracks/video.  android_surface_size={w,h}
+min,max,random         = math.min,math.max,math.random  --ABBREV.
+math.randomseed(os.time()+mp.get_time())  --os,mp=OPERATING-SYSTEM,MEDIA-PLAYER.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil
 
-function typecast(arg)  --ALSO @script-message.  load INVALID ON MPV.APP.  THIS script-message CAN REPLACE ANY OTHER.
-    return   type(arg)=='string' and loadstring('return '..arg)() or arg
-end
-
-function  gp(property)  --ALSO @file-loaded, @seek, @on_toggle & @property_handler.  GET-PROPERTY.
-    p       [property]=mp.get_property_native(property)  --mp=MEDIA-PLAYER
-    return p[property]
-end
-
-function round(N,D)  --@file-loaded & @on_toggle.  N & D ARE number/string/nil.  ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1).  FFMPEG SUPPORTS round, BUT NOT LUA.
+function round(N,D)  --@file-loaded & @on_toggle.  NUMBERS/STRINGS/nil.  FFMPEG SUPPORTS round, BUT NOT LUA.  ROUND NUMBER N TO NEAREST MULTIPLE OF DIVISOR D (OR 1).
     D = D or 1
     return N and math.floor(.5+N/D)*D  --round(N)=math.floor(.5+N)
 end
 
-math.randomseed(os.time()+mp.get_time())  --UNIQUE EACH LOAD.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil
-random        = math.random 
+function typecast(arg) --ALSO @script-message.  load INVALID ON MPV.APP. 
+    if       type(arg)=='string' then return loadstring('return '..arg)() end  --''→nil
+    return        arg
+end
+
+function  gp(property)  --ALSO @file-loaded, @seek, @on_toggle & @property_handler.  GET-PROPERTY.
+    p       [property]=mp.get_property_native(property) 
+    return p[property]
+end
+
 p  .platform  = gp('platform') or os.getenv('OS') and 'windows' or 'linux' --platform=nil FOR OLD MPV.  OS=Windows_NT/nil.  SMPLAYER STILL RELEASED WITH OLD MPV.
 o[p.platform] = {}                                                         --DEFAULT={}
 for  opt,val in pairs(options)
@@ -200,8 +202,8 @@ function on_toggle()  --@script-message, @script-binding, @property_handler, & @
     command    = a_id and o.toggle_command~='' and mp.command(o.toggle_command)     
 end
 for key in o.key_bindings: gmatch('[^ ]+') 
-do binding_name = 'toggle_complex'..(binding_name and '_'..key or '')  --THE FIRST key IS SPECIAL.
-    mp.add_key_binding(key,binding_name,on_toggle) end  
+do mp.add_key_binding(key,'toggle_complex_'..key,on_toggle) end  
+mp   .add_key_binding(nil,'toggle_complex'      ,on_toggle)  --UNMAPPED binding.
 
 function    event_handler(event)
     event = event.event
@@ -255,7 +257,7 @@ function cleanup()  --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-op
     OFF             = OFF or on_toggle() or true --FORCE TOGGLE OFF.  AN ALTERNATIVE COULD INSTA-stop, BUT THEN start=time-pos PERSISTS.
     mp.keep_running = false                      --false FLAG EXIT: COMBINES remove_key_binding, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
 end 
-for message,fn in pairs({cleanup=cleanup,loadstring=typecast,toggle=on_toggle})  --SCRIPT CONTROLS.
+for message,fn in pairs({loadstring=typecast,cleanup=cleanup,toggle=on_toggle})  --SCRIPT CONTROLS.  loadstring CAN REPLACE ANY OTHER.
 do mp.register_script_message(message,fn) end
 
 ----CONSOLE SCRIPT-COMMANDS & EXAMPLE:
@@ -274,7 +276,7 @@ do mp.register_script_message(message,fn) end
 
 
 ----~300 LINES & ~7000 WORDS.  5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (graph SPECS), & END (CONSOLE COMMANDS). ALSO BLURBS ON WEB.  CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
-----FUTURE VERSION SHOULD MOVE o.double_mute_timeout, o.double_aid_timeout & o.toggle_command TO main.lua. ALL SCRIPTS SHOULD HAVE THESE, UNLESS main OPERATES ALL DOUBLE-TAPS.
+----FUTURE VERSION COULD  COMBINE DOUBLE-TAPS INTO o.double_tap_properties & o.double_tap_timeout. o.toggle_command SHOULD BE MOVED TO main.lua.
 ----FUTURE VERSION SHOULD REPLACE (random) WITH $RANDOM/%RANDOM%.
 ----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts; function on_update.
 ----FUTURE VERSION SHOULD PUT UP A BLACK-SCREEN DURING FILE-LOAD, FOR INSTA-OSD/CLOCK (TO TIME THE LOAD).
