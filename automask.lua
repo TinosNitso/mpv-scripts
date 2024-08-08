@@ -16,7 +16,7 @@ options                 = {
     filterchain         =       '' 
        -- ..'convolution=0m=0 -1 0 -1 7 -1 0 -1 0:0rdiv=1/(7-4),' --UNCOMMENT FOR 33% SHARPEN, USING A 3x3 MATRIX.  WORKS WELL WITH NATURE, BUT NOT ABSTRACT VISUALS.  INCREASE THE 7 & 7 FOR LESS%.  ALTERNATIVELY CAN SHARPEN COLORS ONLY (1m & 2m), INSTEAD OF BRIGHTNESS 0m.  
           ..     'lutyuv=\' y=255*((1-val/255)^4*(1+.6*.15)+.15*(2.5*gauss((255-val)/(255-maxval)/1.7-1.5)-1*gauss(val/minval/1.5-1))/gauss(0)+.005*sin(2*PI*val/minval))'  --y=LUMINANCE.  +.5% SINE WAVE ADDS RIPPLE TO CHANGING DEPTH, BUT COULD ALSO CAUSE FACE WRINKLES. FORMS PART OF lutyuv GLOW-LENS.  \' FOR SYMBOLS.  15% DROP ON WHITE-IS-WHITE (TOO MUCH MIXES GRAYS).  1*gauss MAY MEAN 1 ROUND.  A SIMPLE NEGATIVE IS JUST negval.  CAN USE (random) TO RANDOMIZE.
-          ..              ':u=128*(1+abs(val/128-1)^.9*clip(val-128,-1,1))+8*lt(val,192) '   --u~=BLUE*2.  lt FOR LIMITED-TINT.  10% NON-LINEAR SATURATION.  EYES CAN ADJUST TO TINTED LENSES, BUT FILM MAY ALREADY BE TINTED.  clip IS EQUIVALENT TO sgn, WHICH IS INVALID ON FFMPEG-v4.  LINEAR SATURATION (eq) OVER-SATURATES TOO EASILY. 
+          ..              ':u=128*(1+abs(val/128-1)^.9*clip(val-128,-1,1))+4*lt(val,192) '   --u~=BLUE*2.  lt FOR LIMITED-TINT.  10% NON-LINEAR SATURATION.  EYES CAN ADJUST TO TINTED LENSES, BUT FILM MAY ALREADY BE TINTED.  clip IS EQUIVALENT TO sgn, WHICH IS INVALID ON FFMPEG-v4.  LINEAR SATURATION (eq) OVER-SATURATES TOO EASILY. 
           ..              ':v=128*(1+abs(val/128-1)^.9*clip(val-128,-1,1))              \',' --v~=RED *2.  SUBTRACT FROM BOTH u & v FOR GREEN-TINT.  SAFER TO USE ONLY lutyuv. lutrgb CAN INCREASE LAG (EVEN IF IT'S CODED PERFECTLY). 
           ..       'null        ',  --CAN REPLACE null WITH OTHER FILTERS, LIKE pp (POSTPROCESSING).   TIMELINE SWITCHES ALSO POSSIBLE (FILTER1→FILTER2→ETC).  BUT eq IS RESERVED FOR TOGGLE!
     fps                 =     30 ,  --FRAMES-PER-SECOND FOR UNDERLYING STREAM.  MASK LOOKS CHOPPY IF PRODUCED @30fps BUT DISPLAYED @25fps.
@@ -73,8 +73,8 @@ options                 = {
 }
 o,p,m,timers           = {},{},{},{} --o,p,m=options,PROPERTIES,MEMORY  timers={mute,aid,sid,playback_restarted,re_pause,apply_eq}  playback_restarted BLOCKS THE PRIOR 3.
 g,android_surface_size = {},{}       --g=GEOMETRY table. CONVERTS STRINGS→LISTS.  android_surface_size={w,h}.
-min,max,random         = math.min,math.max,math.random  --ABBREV.
-math.randomseed(os.time()+mp.get_time()) --os,mp=OPERATING-SYSTEM,MEDIA-PLAYER.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil
+abs,max,min,random     = math.abs,math.max,math.min,math.random  --ABBREV.
+math.randomseed(os.time()+mp.get_time())  --os,mp=OPERATING-SYSTEM,MEDIA-PLAYER.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil
 
 function clip(n,    min_n,    max_n)  --@apply_eq.  NUMBERS/nil.  FFMPEG SUPPORTS clip, BUT NOT LUA.
     return    n and min_n and max_n and min(max(n,min_n),max_n)  --min max  min max
@@ -85,12 +85,12 @@ function round(N,D)  --ALSO @file-loaded.  NUMBERS/STRINGS/nil.  FFMPEG SUPPORTS
     return N and math.floor(.5+N/D)*D  --round(N)=math.floor(.5+N)
 end
 
-function typecast(arg) --ALSO @script-message, @apply_eq.  load INVALID ON MPV.APP. 
+function typecast(arg)  --ALSO @apply_eq.  load INVALID ON MPV.APP. 
     if       type(arg)=='string' then return loadstring('return '..arg)() end  --''→nil
     return        arg
 end
 
-function  gp(property)  --ALSO @file-loaded & @apply_eq.  GET-PROPERTY
+function  gp(property)  --ALSO @file-loaded & @apply_eq.  GET-PROPERTY.
     p       [property]=mp.get_property_native(property)
     return p[property]
 end
@@ -113,8 +113,8 @@ label                     = mp.get_script_name()  --automask
 v                         = gp('time-pos') and {} --FILE ALREADY LOADED.
 no_mask                   = o.period..''=='0' or o.periods==0 or o.superperiods==0  --..'' CONVERTS→string.  POSSIBLE no_mask BECAUSE NO TIME DEPENDENCE (fpp=1). HOWEVER MAYBE SECTIONS>1
 if no_mask then o.periods,o.superperiods,o.period,o.fps_mask = 1,1,'1',0 end --period>0 CAN BE ANYTHING (fpp=1).
-periods_looped            = math.max(0,o.periods-o.periods_skipped-1)        --periods_skipped=periods VALID (DISCARDS PRIMARY loop, EXCEPT FOR LEAD FRAME).
-fpp                       = math.max(1,typecast(('round(%s*%s)'):format(o.fps_mask,o.period))) --FRAMES-PER-      PERIOD.  round DETERMINES number FROM string.  FUTURE VERSION MIGHT ALSO SET 1 FOR is1frame.
+periods_looped            = max(0,o.periods-o.periods_skipped-1)        --periods_skipped=periods VALID (DISCARDS PRIMARY loop, EXCEPT FOR LEAD FRAME).
+fpp                       = max(1,typecast(('round(%s*%s)'):format(o.fps_mask,o.period))) --FRAMES-PER-      PERIOD.  round DETERMINES number FROM string.  FUTURE VERSION MIGHT ALSO SET 1 FOR is1frame.
 fpsp,frames_skipped       = fpp *o.periods,fpp*o.periods_skipped                               --FRAMES-PER-SUPER-PERIOD. 
 frames_total              = fpsp*o.superperiods
 o.fps_mask                = ('%s/(%s)'): format(fpp,o.period)  --number→string TO AVOID RECURRING DECIMALS.  DEFAULT 1 FRAME/PERIOD (fpp=1).
@@ -205,8 +205,8 @@ function file_loaded()  --@event_handler & @property_handler.
     m.brightness   = is1frame   and  0                      or      -1      --FILM STARTS OFF.  IF STARTING OR seeking PAUSED, IT TAKES A FEW FRAMES FOR THE MASK TO APPEAR.
     vf_toggle_OFF  = is1frame   and OFF                                     --TOGGLE OFF INSTANTLY.  brightness NEEDED FOR FURTHER TOGGLING.
     start_time     = loop       and round(gp('time-pos'),.001)              --NEAREST MILLISECOND.
-    m.graph        = graph: format(W,H,format,osd_par,W,H,m.brightness,format):gsub('%(random%)','('..random()..')')  --W,H REPEAT FOR scale & zoompan.  format REPEATS FOR EFFICIENCY.
-    for _,vf in pairs(gp('vf'))       --CHECK FOR @loop.  COULD BE THERE DUE TO OTHER vid OR SCRIPT/S.  FETCH vf LAST.  remove_loop BEFORE graph INSERTION.
+    m.graph        = graph: format(W,H,format,osd_par,W,H,m.brightness,format):gsub('%(random%)','('..random()..')')  --W,H REPEAT FOR scale & zoompan.  format REPEATS FOR EFFICIENCY.  A DIFFERENT IDEA IS TO RANDOMLY TOGGLE EVERY FEW SECONDS, IN AUTO.
+    for _,vf in pairs(gp('vf'))  --CHECK FOR @loop.  COULD BE THERE DUE TO OTHER vid OR SCRIPT/S.  FETCH vf LAST.  remove_loop BEFORE graph INSERTION.
     do remove_loop = remove_loop or  vf.label=='loop' end 
     command        = ''
                        ..(remove_loop and 'no-osd vf  remove @loop;'                             or '')
@@ -267,8 +267,8 @@ function   event_handler (event)
     elseif event       == 'seek'        
     then   unload       = gp('current-vo')=='null'           and remove_filter() --ANDROID MINIMIZES USING current-vo=null.  THAT CAN BE INEFFICIENT BECAUSE MASK IS GENERATED & THEN NULLIFIED.  nil GOOD, 'null' BAD!  OLD MPV MAY FAIL TO TRIGGER seek, WHICH COMPLICATES property_handler.
            reload       =  p['current-vo']~='null' and not W and file_loaded()   --RELOAD @NEW-vo, & @ANDROID-RESTORE.  vo,v=gpu,nil IN STANDALONE MODE.
-           reloop       =   loop                   and math.abs(gp('time-pos')-start_time)>1 
-           start_time   = reloop                   and    round( p['time-pos'],.001) or start_time
+           reloop       =   loop                   and abs  (gp('time-pos')-start_time)>1 
+           start_time   = reloop                   and round( p['time-pos'],.001) or start_time
            reloop       = reloop                   and mp.command(('no-osd vf pre @loop:lavfi=[loop=-1:1,fps=%s:%s]'):format(o.fps,start_time)) --JPEG PRECISE seeking: RESET STARTPTS.  PTS MAY GO NEGATIVE!  MAYBE A NULL AUDIO STREAM COULD BE SIMPLER.  IMPRECISE seek TRIGGERS playlist-next OR playlist-prev.
     else   m.brightness = -1  --playback-restart: GRAPH STATE RESETS, UNLESS is1frame.  brightness IRRELEVANT IF is1frame.  
            timers.apply_eq          :resume() 
@@ -316,15 +316,20 @@ function cleanup() --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-opt
     remove_filter()
     mp.keep_running = false  --false FLAG EXIT: COMBINES remove_key_binding, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
 end 
-for message,fn in pairs({loadstring=typecast,cleanup=cleanup,toggle=on_toggle,apply_eq=apply_eq})  --SCRIPT CONTROLS.  loadstring CAN REPLACE ANY OTHER.
+
+function callstring(string) loadstring(string)() end  --@script-message.  CAN REPLACE ANY OTHER.
+function print_arg (arg   ) print(typecast(arg)) end  --@script-message. 
+for message,fn in pairs({loadstring=callstring,print=print_arg,cleanup=cleanup,toggle=on_toggle,apply_eq=apply_eq})  --SCRIPT CONTROLS. 
 do mp.register_script_message(message,fn) end
 
 ----CONSOLE SCRIPT-COMMANDS & EXAMPLES:
 ----script-binding             automask
+----script-message-to automask loadstring <arg>
+----script-message-to automask loadstring mp.keep_running=false
+----script-message-to automask print      <arg>
+----script-message             print      "m and m.graph or _VERSION"
 ----script-message-to automask toggle
 ----script-message-to automask cleanup
-----script-message-to automask loadstring <arg>
-----script-message             loadstring "print(m and m.graph or _VERSION)"
 ----script-message-to automask apply_eq   <brightness> <toggle_duration> <toggle_t_delay> <toggle_expr>
 ----script-message-to automask apply_eq    -1           random()          .12             sin(PI/2*(expr))
 
@@ -348,6 +353,7 @@ do mp.register_script_message(message,fn) end
 ----FUTURE VERSION COULD  COMBINE DOUBLE-TAPS INTO o.double_tap_properties & o.double_tap_timeout. o.toggle_command SHOULD BE MOVED TO main.lua.
 ----FUTURE VERSION SHOULD REPLACE (random) WITH $RANDOM/%RANDOM%.  COULD ALSO REPLACE (GSUB)→$GSUB ($SIGN NOTATION IS MORE ELEGANT).  (n)=n BUT ALSO $n=n (BRACKETS SEEMED MORE INTUITIVE TO BEGIN WITH.)  COULD AT LEAST REMOVE DOUBLE-RECURRING BRACKETS: ((%w+))→(%w+).  $# ALSO REQUIRED (BRACKETS ACTUALLY DON'T WORK FOR SHARPNESS).
 ----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts. function on_update.
+----FUTURE VERSION SHOULD USE lavfi-complex FOR LOOPING JPEG.
 ----FUTURE VERSION SHOULD HAVE o.key_bindings_alt WITH ALTERNATIVE o.toggle_duration & o.toggle_expr.  ALT+M IS LIKE A PIANO PEDAL ON A STRING.
 ----FUTURE VERSION MIGHT  HAVE A REGULAR POLYGON FORMULA.  COULD GENERATE SPINNING PENTAGON OR DODECAGON.  SOME gsubs CAN BE RECURSIVELY GENERATED IN SCRIPT, SUCH AS FOR 100-SIDED POLYGON.  SCANNING VISORS COULD ALSO BE IMPROVED!
 ----SCRIPT WRITTEN TO TRIGGER AN INPUT ERROR ON OLD MPV (<=0.36). MORE RELIABLE THAN VERSION NUMBERS. 

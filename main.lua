@@ -1,4 +1,4 @@
-----NO-WORD-WRAP FOR THIS SCRIPT.  https://GITHUB.COM/yt-dlp/yt-dlp/releases  FOR YOUTUBE STREAMING.  RUMBLE, ODYSSEY, REDTUBE & RUTUBE.RU ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  DON'T FORGET TO UPDATE yt-dlp FOR THE NEWEST YT VIDEOS.  X.COM NOT seeking.
+----NO-WORD-WRAP FOR THIS SCRIPT.  https://GITHUB.COM/yt-dlp/yt-dlp/releases  FOR YOUTUBE STREAMING.  CHECK FOR UPDATED BUILDS OR ELSE SOME NEW UPLOADS AREN'T SUPPORTED.  RUMBLE, ODYSSEY, REDTUBE & RUTUBE.RU ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  X.COM NOT seeking.
 ----WINDOWS    :  --script=.                       IN SMPLAYER  &/OR  script=../                     IN mpv.conf.  PLACE ALL scripts WITH smplayer.exe & ENTER ITS ADVANCED mpv PREFERENCES.  CAN ALSO CREATE 1-LINE TEXT-FILE  mpv\mpv\mpv.conf  INSIDE smplayer-portable.  mpv.conf ENABLES DOUBLE-CLICKING mpv.exe & DRAG & DROP OF FILES & YOUTUBE URL, IN LINUX/MACOS TOO.  IF NOT PORTABLE, SET-UP IS LIKE FOR LINUX: --script=~/Desktop/mpv-scripts/  
 ----LINUX/MACOS:  --script=~/Desktop/mpv-scripts/  IN SMPLAYER  &/OR  script=~/Desktop/mpv-scripts/  IN mpv.conf.  PLACE mpv-scripts ON Desktop.  EDIT ~/.config/mpv/mpv.conf TO DRAG & DROP DIRECTLY ONTO MPV. IN LINUX CAN RIGHT-CLICK ON AN MP4 & OPEN-WITH-MPV.  LINUX snap: --script=/home/user/Desktop/mpv-scripts/
 ----ANDROID    :    script=/sdcard/Android/media/is.xyz.mpv/          IN ADVANCED SETTINGS:        Edit mpv.conf.  PLACE ALL SCRIPTS IN THIS FOLDER IN INTERNAL MAIN STORAGE. OTHER FOLDERS DON'T WORK.  ENABLE MPV MEDIA-ACCESS USING ITS FILE-PICKER, & SET BACKGROUND-PLAYBACK TO ALWAYS (GENERAL SETTING).  'sdcard'~='SD card'(EXTERNAL)  CAN ALSO INSTALL cx-file-explorer & 920 (.APK).  920 CAN HANDLE WORDWRAP & WHITESPACE.  https://SNAPDROP.NET CAN TRANSFER TO /sdcard/Android/media/is.xyz.mpv/
@@ -33,7 +33,7 @@ options     = {
         'sub-border-size 2','sub-font-size 32',  --DEFAULTS=3,55   SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
         'osd-level       0','osc           no',  --DEFAULTS=3,yes  osd-level=0 PREVENTS UNWANTED MESSAGES @load-script.  osc AWAITS ITS CONFIG.  SOME THINGS MUST BE SWITCHED OFF/ON.  
     },
-    title                  = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\,fs##,bord# = \,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,b1,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BOLD,BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
+    title                  = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  $ FOR PROPERTIES.  STYLE OVERRIDES: \\,fs##,bord# = \,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,b1,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BOLD,BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
     title_duration         =  6 , --SECONDS.
     autoloop_duration      =  6 , --SECONDS.  0 MEANS NO AUTO-loop.  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://GITHUB.COM/zc62/mpv-scripts/blob/master/autoloop.lua
     options_delay          = .3 , --SECONDS, FROM playback_start.  title ALSO TRIGGERS THEN.
@@ -46,12 +46,13 @@ options     = {
         options = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',},  --options APPEND, NOT REPLACE. 
     },
 }
-o,p,timers     = {},{},{}  --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file
-min,max,random = math.min,math.max,math.random --ABBREV.
-math.   randomseed(os.time()+mp.get_time())    --os,mp=OPERATING-SYSTEM,MEDIA-PLAYER.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil  BUT COULD ECHO BACK %RANDOM% OR $RANDOM USING A subprocess. 
+o,p,timers = {},{},{}  --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file
+abs,max,min,random = math.abs,math.max,math.min,math.random  --ABBREV.
+math.randomseed(os.time()+mp.get_time())  --os,mp=OPERATING-SYSTEM,MEDIA-PLAYER.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil  BUT COULD ECHO BACK %RANDOM% OR $RANDOM USING A subprocess. 
 
-function typecast(arg)  --ALSO @script-message & @title_update.  load INVALID ON MPV.APP.
-    return   type(arg)=='string' and loadstring('return '..arg)() or arg
+function typecast(arg) --ALSO @title_update.  load INVALID ON MPV.APP.
+    if       type(arg)=='string' then return loadstring('return '..arg)() end  --''→nil
+    return        arg
 end
 
 function  gp(property) --ALSO @playback-restart.  GET-PROPERTY.
@@ -141,16 +142,20 @@ function set(script_opt,val)  --@script-message.
     o[script_opt]=val
 end
 
-function cleanup() mp.keep_running = false end  --@script-message.  false FLAG EXIT: COMBINES overlay-remove, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
-for message,fn in pairs({loadstring=typecast,cleanup=cleanup,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.  loadstring CAN REPLACE ANY OTHER. 
+function cleanup()       mp.keep_running = false end  --@script-message.  false FLAG EXIT: COMBINES overlay-remove, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
+function callstring(string) loadstring(string)() end  --@script-message.  CAN REPLACE ANY OTHER.
+function print_arg (arg   ) print(typecast(arg)) end  --@script-message. 
+for message,fn in pairs({loadstring=callstring,print=print_arg,cleanup=cleanup,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.
 do mp.register_script_message(message,fn)  end
 
 ----CONSOLE SCRIPT-COMMANDS & EXAMPLES (main=_):
-----script-message-to _ cleanup
 ----script-message-to _ loadstring <arg>
 ----script-message      loadstring print(_VERSION)
-----script-message      title      <data>          <title_duration>
-----script-message      title      ${media-title}   6*random()
+----script-message-to _ print      <arg>
+----script-message      print      _VERSION
+----script-message-to _ cleanup
+----script-message      title      <data>         <title_duration>
+----script-message      title      ${media-title}  6*random()
 ----script-message      title_remove
 
 ----mpv TERMINAL COMMAND EXAMPLES:

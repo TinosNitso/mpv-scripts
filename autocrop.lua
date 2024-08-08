@@ -1,13 +1,13 @@
-----NO-WORD-WRAP FOR THIS SCRIPT.  FOR MPV & SMPLAYER. CROPS IN BOTH SPACE & TIME (SUB-CLIPS). CROPS BLACKBARS OFF JPEG, PNG, BMP, GIF, MP3 TAGS, AVI, WEBM, MP4 & YOUTUBE. CAN CHANGE vid TRACK (MP3TAG) & crop ON THE FLY. CROPS RAW AUDIO TO START & END limits.  .TIFF 1-LAYER ONLY, NO WEBP OR PDF.
+----NO-WORD-WRAP FOR THIS SCRIPT.  FOR MPV & SMPLAYER. CROPS IN BOTH SPACE & TIME (SUB-CLIPS). CROPS BLACKBARS OFF JPEG, PNG, BMP, GIF, MP3 TAGS, AVI, WEBM, MP4 & YOUTUBE. CAN CHANGE vid TRACK (MP3TAG) & crop ON THE FLY. CROPS RAW AUDIO TO start/end limits.  .TIFF 1-LAYER ONLY, NO WEBP OR PDF.
 ----DOUBLE-mute TOGGLES BOTH crop & PADDING, ON SMARTPHONE TOO. CAN MAINTAIN CENTER IN HORIZONTAL/VERTICAL, WITH INSTANTANEOUS TOLERANCE VALUES. SUPPORTS BOTH cropdetect & bbox FFMPEG-FILTERS.  IN SMPLAYER AN ADVANCED PREFERENCE IS TO RUN action=aspect_none (SET KEYBOARD SHORTCUT=Tab) FOR ALL FILES. IT HAS SOME FINAL GPU OVERRIDE.
 ----THIS VERSION HAS PROPER aspect TOGGLE (EXTRA PAIR OF BLACK BARS), SMOOTH-pad, BUT NOT SMOOTH-CROP.  BASED ON https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua  BUT WITHOUT video-crop BECAUSE THAT CROPS automask.lua TOO. IT ALWAYS MAINTAINS PERFECT ASPECT (NO SCALING).
 
 options                    = { 
-    auto                   = true ,  --IF REMOVED, CROPS OCCUR ONLY @on_toggle & @playback-restart (BUT ~@UNPAUSE). 
-    auto_delay             =    1 ,  --ORIGINALLY 4 SECONDS.  ALSO APPLIES TO aspect CONTROL (1Hz).
+    auto                   = true ,  --ALSO APPLIES TO auto_aspect.  IF REMOVED, A crop OCCURS @on_toggle & @playback-restart (BUT ~@UNPAUSE). 
+    auto_delay             =    1 ,  --ORIGINALLY 4 SECONDS.  ALSO APPLIES TO aspect CONTROL.
     detect_limit           =  '30',  --ORIGINALLY "24/255" (cropdetect DEFAULT).  INTEGER FOR bbox (DEFAULT=16).  SET TO 0 FOR NO CROPPING.  24 FAILS FOR "Honest Trailers | ", " | Four Corners" & OTHER YT VIDEOS.
     detect_round           =    1 ,  --ORIGINALLY 2.  DEFAULT=16.
-    detect_min_ratio       =   .3 ,  --ORIGINALLY 0.5.
+    detect_min_ratio       =   .25,  --ORIGINALLY 0.5.
     suppress_osd           = true ,  --ORIGINALLY false.
     key_bindings           = 'C     TAB',  --DEFAULT='C'. CASE SENSITIVE. THESE DON'T WORK INSIDE SMPLAYER.  TOGGLE DOESN'T APPLY TO limits.  
     key_bindings_aspect    = 'Shift+TAB',  --TOGGLE SMOOTH-PADDING ONLY (BLACK BAR TABS).  CAN HOLD IN SHIFT TO RAPID TOGGLE.
@@ -17,17 +17,21 @@ options                    = {
     unpause_on_toggle      =     .12 ,  --SECONDS TO UNPAUSE FOR TOGGLE, LIKE FRAME-STEPPING.      SET TO 0 TO DISABLE.  A FEW FRAMES ARE ALREADY DRAWN IN ADVANCE.  is1frame IRRELEVANT.
     toggle_t_delay         =     .12 ,  --SECONDS.  RAPID TOGGLING HAS ~.1s LAG DUE TO A FEW FRAMES WHICH AREN'T REDRAWN FAST ENOUGH.  IT TAKES NEARLY AS LONG AS MESSAGING THE OPPOSITE SIDE OF THE EARTH!  BACKWARDS-seeking ADDS .5s.
     toggle_duration        =     .3  ,  --SECONDS TO STRETCH PADDING. SET TO 0 FOR INSTA-TOGGLE.  MEASURED IN time-pos.  STRETCHES OUT BLACK BARS, IF PLAYING.  SMOOTH-PADDING IS EASY, BUT NOT SMOOTH-CROPPING.  SMPLAYER.APP CAN GIVE MPV ITS OWN WINDOW (window-id=nil).  COULD BE RENAMED vf_command_t_delay.  
-    toggle_expr            = 'sin(PI/2*(expr))^2'      ,  --(expr)=LINEAR-IN-TIME-EXPRESSION  DOMAIN & RANGE BOTH [0,1].  FOR CUSTOMIZED TRANSITION BTWN aspect RATIOS.  NON-LINEAR SINUSOIDAL TRANSITION (HALF-WAVE) CONJOINS AUTO-aspect INTO A SERIES OF SINE WAVES.  HALF-WAVE=(QUARTER-WAVE)^2  A SINE WAVE IS 57% FASTER @MAX-SPEED (PI/2=1.57), SO IT ONLY WORKS IF DURATION≥.5.
+    toggle_expr            = 'sin(PI/2*(expr))^2'      ,  --(expr)=LINEAR-IN-TIME-EXPRESSION  DOMAIN & RANGE BOTH [0,1].  HALF-WAVE=(QUARTER-WAVE)^2  FOR CUSTOMIZED TRANSITION BTWN aspect RATIOS.  NON-LINEAR SINUSOIDAL TRANSITION (HALF-WAVE) CONJOINS AUTO-aspect INTO A SERIES OF SINE WAVES.  A SINE WAVE IS 57% FASTER @MAX-SPEED (PI/2=1.57), SO IT ONLY WORKS IF DURATION≥.5.
     toggle_command         = 'show-text ${media-title}',  --EXECUTES on_toggle, UNLESS BLANK.  CAN DISPLAY ${vf} ${lavfi-complex} ${video-out-params}. 'show-text ""' CLEARS THE OSD.  
-    auto_aspect            = 'min(${video-params/aspect},${osd-dimensions/aspect})/1.5+(max(${video-params/aspect},${osd-dimensions/aspect})*1.5-min(${video-params/aspect},${osd-dimensions/aspect})/1.5)*random()',  --ONLY IF auto, & @auto_delay.  APPLIES WHEN ASPECT-CONTROL IS TOGGLED ON.
-    -- auto_aspect         = 'clip(aspect+2*random()-1,min(${video-params/aspect},${osd-dimensions/aspect})/1.5,max(${video-params/aspect},${osd-dimensions/aspect})*1.5)',  --UNCOMMENT FOR RECURSIVE RANDOM WALKER.  CAN BE FASTER (auto_delay=.5). WHICH IS MORE VICIOUS.  ANOTHER IDEA IS TO CYCLE BTWN MIN & MAX.
-    -- auto_aspect         = '',  --UNCOMMENT FOR NO RANDOMIZATION. 
+    gsubs_passes           = 2,  --# OF SUCCESSIVE gsubs.  THEY DEPEND ON EACH OTHER (mid←max*min).
+    gsubs                  = {['$mid']='($max*$min)^.5',['$max']='(1.5*max(${video-params/aspect},${osd-dimensions/aspect}))',['$min']='(min(${video-params/aspect},${osd-dimensions/aspect})/1.5)',},  --FOR auto_aspect ONLY.  ${PROPERTIES} & $GSUBS.  FOR STATS.
+    auto_aspect            = '       $mid*($max/$min)^ (random()-.5)',                           --ONLY IF auto, & @auto_delay, & ~is1frame.  APPLIES WHEN ASPECT-CONTROL IS TOGGLED ON.  THIS FORMULA PICKS A RANDOM aspect WITHIN 42% OF THE MIN/MAX OF VIDEO/WINDOW SIZES, BASED ON MULTIPLICATIVE MEAN.  A LARGE FLUCTUATION REQUIRES MEDIUM/LARGE auto_delay.
+    -- auto_aspect         = 'clip(aspect*($max/$min)^ (random()-.5),$min,$max)',                --UNCOMMENT FOR RECURSIVE RANDOM WALKER.  CAN BE FASTER (auto_delay=.5), WHICH IS MORE VICIOUS.  A DIFFERENT IDEA IS TO CYCLE BTWN MIN & MAX.
+    -- auto_aspect         = '       $mid+   random()*((random(0,1)==0 and $max or $min)-$mid)', --UNCOMMENT FOR LINEAR DISTRIBUTION, CENTERED ON MULTIPLICATIVE MIDPOINT (OTHERWISE USE ($min+$max)/2).  2 random NUMBERS ARE USED: THE FIRST DETERMINES WHETHER TO ADD OR SUBTRACT (DIFFERENT GRADIENTS).  LINEARITY IS SLIGHTLY MORE AGGRESSIVE (NON-LINEAR GRAVITATES TOWARDS $mid).
+    -- auto_aspect         = ''  ,                                                               --UNCOMMENT FOR NO RANDOMIZATION. 
+    start_aspect_on        = true,  --APPLIES @file-loaded, EXCEPT FOR is1frame (STARTS OFF2). DETERMINES TOGGLE LOGIC-STATE FOR auto_aspect CONTROL.
     detector               = 'cropdetect=limit=%s:round=%s:reset=1',  --%s:%s=detect_limit:detect_round.  reset>0.  OVERRIDES TO 'bbox=%s' FOR JPEG & alpha.
     detect_min_ratio_image =           .1 ,  --OVERRIDE FOR JPEG.
-    keep_center            =        {0,.1},  --{TOLERANCE_X,TOLERANCE_Y}.  SET TO {}  TO MOVE FREELY.  {0,0} MEANS NEVER MOVE (LIKE CROSSHAIRS).  DOESN'T APPLY TO JPEG.  A SINGLE BLACK BAR ON 1 SIDE MAYBE OK. A TRIBAR FLAG WITH BLACK ON TOP OR BOTTOM NEEDS RATIO<1/3. MOVEMENTS IN CENTER TEND TO BE SPURIOUS (LIKE A DARK FLOOR).
+    keep_center            =         {0,0},  --{TOLERANCE_X,TOLERANCE_Y}.  SET TO {}  TO MOVE FREELY.  {0,0} MEANS NEVER MOVE (LIKE CROSSHAIRS).  DOESN'T APPLY TO JPEG.  A SINGLE BLACK BAR ON 1 SIDE MAYBE OK. A TRIBAR FLAG WITH BLACK ON TOP OR BOTTOM NEEDS RATIO<1/3. MOVEMENTS IN CENTER TEND TO BE SPURIOUS (LIKE A DARK FLOOR).
     TOLERANCE              = {.05,time=10},  --INSTANTANEOUS TOLERANCE.    SET TO {0} TO DEACTIVATE THIS.  5% BLACK BARS ARE TOLERATED FOR UP TO time=10 SECONDS. A BIG crop IS INSTANT, BUT NOT LITTLE CROPS, OTHERWISE AN IMAGE MAY KEEP FIDGETING BY A PIXEL OR TWO.
-    USE_INNER_RECTANGLE    =         true ,  --AGGRESSIVE CROPPING. BOTH cropdetect & bbox GENERATE UNNECESSARY x1 x2 y1 y2 NUMBERS, WHICH ENABLE THE INNER RECTANGLE COMPUTATION.  MAYBE FOR STATISTICAL REASONS.  COMPUTE x1,x2 = max(x1,x2-w,x),min(x2,x1+w,x+w) ETC BY SYMMETRY, THEN SHRINK w TO THE NEW x2-x1. 
-    apply_min_ratio        =        false ,  --SET TO true TO crop ALL THE WAY DOWN TO detect_min_ratio. CAN BE SPURIOUS.  false NULLIFIES is_excessive.
+    USE_INNER_RECTANGLE    =        true  ,  --AGGRESSIVE CROPPING. BOTH cropdetect & bbox GENERATE UNNECESSARY x1 x2 y1 y2 NUMBERS, WHICH ENABLE THE INNER RECTANGLE COMPUTATION.  MAYBE FOR STATISTICAL REASONS.  COMPUTE x1,x2 = max(x1,x2-w,x),min(x2,x1+w,x+w) ETC BY SYMMETRY, THEN SHRINK w TO THE NEW x2-x1. 
+    apply_min_ratio        =        true  ,  --SET TO true TO crop ALL THE WAY DOWN TO detect_min_ratio. USUALLY SPURIOUS.  false NULLIFIES is_excessive.
     meta_osd               =        false ,  --SET TO true TO INSPECT VERSIONS, DETECTOR METADATA, ETC.  ALSO WHEN TOGGLED OFF.  DISPLAYS  media-title _VERSION mpv-version ffmpeg-version libass-version platform current-ao,current-vo video-params/alpha osd-width,osd-height pad_iw,pad_ih pad_ow,pad_oh max_w,max_h min_w,min_h w:h:x:y vf-metadata/autocrop.
     msg_level              =       'fatal',  --{no,fatal,error,warn,info}  TYPOS ARE OFTEN fatal.
     pad_scale_flags        =    'bilinear',  --DEFAULT bicubic ('').  BUT bilinear WAS ONCE DEFAULT IN OLD FFMPEG & IS FASTER @frame DOWN-SCALING. bicubic IS BETTER QUALITY.  BUT THIS IS FOR THE PADDING DOWN-SCALER.  
@@ -42,20 +46,23 @@ options                    = {
     },
     windows      = {}, linux = {}, darwin = {},  --OPTIONAL platform OVERRIDES.
     android      = {  
+        -- start_aspect_on = false, auto_aspect = '',  --SMARTPHONE STARTS OFF2.  auto_aspect IS TOO MUCH CPU USAGE.
+        start_aspect_on = false,  --SMARTPHONE STARTS OFF2.
         options  = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',}, --options APPEND, NOT REPLACE.  meta_osd PREFERS MONOSPACE FONT.
     },
-    gsub         = {'[＂⧹⧸：｜ |:\\/"]+',' '},  --{pattern,repl}  REPLACEMENTS APPLY TO limits SUBSTRING SEARCHES.  '  '=' ' LIKE MARKDOWN.  USING ONLY A SINGLE gsub IS MORE EFFICIENT THAN DOUBLE-LOOPING ＂→", ETC.
+    limits_gsub  = {'[ ＂" ⧸/ ：: ⧹\\ ｜| ]+',' '},  --{pattern,repl} REPLACEMENTS APPLY TO SUBSTRING SEARCHES.  '  '=' ' LIKE MARKDOWN.  USING ONLY A SINGLE gsub IS MORE EFFICIENT THAN DOUBLE-LOOPING ＂→", ETC.
     limits       = {
-    ----["path \n media-title SUBSTRING"]={start,end,detect_limit},  --{SECONDS,-SECONDS,string/number}, OR nil.  NOT CASE SENSITIVE.  start & end MAY BOTH BE NEGATIVE &/OR PERCENTAGES.  detect_limit IS FINAL OVERRIDE.  MATCHES ON FIRST find.  SPACETIME CROPPING IS AN ALTERNATIVE TO SUB-CLIP EXTRACTS.  
+    ----["path \n media-title SUBSTRING"]={start,end,detect_limit},  --{SECONDS,-SECONDS,string/number}, OR nil.  NOT CASE SENSITIVE.  start & end MAY BOTH BE NEGATIVE &/OR PERCENTAGES.  detect_limit IS FINAL OVERRIDE.  MATCHES ON FIRST find.  SPACETIME CROPPING IS AN ALTERNATIVE TO SUB-CLIP EXTRACTS.  THESE SHOULD BE MOVED TO A NEW SCRIPT.
 
         ["Alanis Morissette Ironic Official "]={4,-23},
-        ["Aqua Barbie Girl Official Music Video"]={7,-11},
-        ["Evanescence Everybodys Fool Official HD Music Video"]={18},
+        ["Aqua Barbie Girl Official Music Video"]={7,-11},            --AQUASCOPE.
+        ["Evanescence Everybodys Fool Official HD Music Video"]={18}, --AD.
+        [" Greentext Stories Thread"]={20},                           --GREETINGS AND BIENVENUE.
         ["Guns N Roses Sweet Child O Mine Official Music Video"]={0,-11},
         ["Iggy Azalea Fancy ft Charli XCX"]={0,-6},
         ["Iron Maiden The Trooper Official Video"]={0,-13},  --IN HONOR OF THE LIGHT BRIGADE (CRIMEAN WAR).
         ["Katy Perry This Is How We Do Official"]={0,-7},
-        ["Linkin Park Dont Stay"]={detect_limit=40},
+        ["Linkin Park Dont Stay"]={detect_limit=40}, 
         ["Madonna Like A Prayer Official Video"]={12},
         ["Megadeth Sweating Bullets Official Music Video"]={0,-5},
         ["Midnight Oil Dreamworld"]={27},
@@ -65,14 +72,14 @@ options                    = {
         ["Red Hot Chili Peppers Cant Stop Official Music Video"]={0,-9},
         ["Santana Smooth Stereo ft Rob Thomas"]={15},
         ["Sum 41 Fatlip Official Music Video"]={19},
-        ["Sum 41 Still Waiting Official Music Video"]={62,-4},
-        ["Sum 41 Walking Disaster Official Music Video"]={0,-10},
-        ["Taylor Swift Look What You Made Me Do"]={5,-39},
+        ["Sum 41 Still Waiting Official Music Video"]={62,-4},    --THE SUMS.
+        ["Sum 41 Walking Disaster Official Music Video"]={0,-10}, --ROBOT SALE.
+        ["Taylor Swift Look What You Made Me Do"]={5,-39},        --14 SWIFTS.
         ["Weird Al Yankovic Amish Paradise Parody of Gangstas Paradise Official HD Video"]={0,-7,detect_limit=20},
         ["Weird Al Yankovic Fat Official HD Video"]={60+18},
         ["Weird Al Yankovic Like A Surgeon Official HD Video"]={41},
         
-        ["День Победы."]={4,-13},  --АБЧДЭФГХИЖКЛМНОП РСТУВ  ЙЗЕЁ ЫЮ Я Ц ШЩ ЬЪ  
+        [ "День Победы."]={4,-13},  --АБЧДЭФГХИЖКЛМНОП РСТУВ  ЙЗЕЁ ЫЮ Я Ц ШЩ ЬЪ  
         ["＂Den' Pobedy!＂ - Soviet Victory Day Song"]={7},
         ["Экипаж  Одна семья"]={0,-7},
         ["И вновь продолжается бой.Legendary Soviet Song.Z."]={0,-6},
@@ -100,7 +107,7 @@ options                    = {
 }
 o,p,m,timers                      = {},{},{},{} --o,p,m=options,PROPERTIES,MEMORY  timers={mute,aid,sid,playback_restarted,re_pause,apply_pad,apply_scale,auto_delay}  playback_restarted BLOCKS THE PRIOR 3. 
 meta,aspects,android_surface_size = {},{},{}    --meta=METADATA FOR detect_crop.  aspects={ON,OFF,restart} FOR PADDING (RELATIVE VALUES).  android_surface_size={w,h}.
-min,max,random                    = math.min,math.max,math.random  --ABBREV.
+abs,max,min,random                = math.abs,math.max,math.min,math.random  --ABBREV.  m MEANS MEMORY NOT math.
 math.randomseed(os.time()+mp.get_time())  --os,mp=OPERATING-SYSTEM,MEDIA-PLAYER.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil
 
 function clip(n,    min_n,    max_n)  --@apply_scale.  NUMBERS/nil.  FFMPEG SUPPORTS clip, BUT NOT LUA.
@@ -112,7 +119,7 @@ function round(N,D)  --@file-loaded, @seek, @apply_pad & @apply_scale.  NUMBERS/
     return N and math.floor(.5+N/D)*D  --round(N)=math.floor(.5+N)
 end
 
-function typecast(arg) --ALSO @script-message, @apply_pad, @apply_scale & @apply_crop.  load INVALID ON MPV.APP. 
+function typecast(arg)  --ALSO @apply_pad, @apply_scale & @apply_crop.  load INVALID ON MPV.APP. 
     if       type(arg)=='string' then return loadstring('return '..arg)() end  --''→nil
     return        arg
 end
@@ -138,9 +145,11 @@ for  opt,val in pairs(o[p.platform] or {})
 do o[opt]              = val end               --platform OVERRIDE.
 label                  = mp.get_script_name()  --autocrop
 command_prefix         = o.suppress_osd and 'no-osd' or ''
-o.video_out_params.par = o.video_out_params.par or 1       --DEFAULT=1  
-o.gsub[1]              = o.gsub[1] or o.gsub.pattern or '' --DEFAULT=''
-o.gsub[2]              = o.gsub[2] or o.gsub.repl    or '' --DEFAULT REPLACEMENT=''
+o.video_out_params.par = o.video_out_params.par or 1                        --DEFAULT=1  
+o.limits_gsub[1]       = o.limits_gsub[1] or o.limits_gsub.pattern or ''    --DEFAULT=''
+o.limits_gsub[2]       = o.limits_gsub[2] or o.limits_gsub.repl    or ''    --DEFAULT REPLACEMENT=''
+for N                  = 1,o.gsubs_passes do for key,gsub in pairs(o.gsubs) --gsubs MAY DEPEND EACH-OTHER.
+    do o.auto_aspect   = o.auto_aspect:     gsub(key,gsub) end end
 gp('msg-level')[label] = o.msg_level                       --SILENCES mp.msg.  msg-level=table.
 mp.set_property_native('msg-level',p['msg-level']) 
 
@@ -148,9 +157,9 @@ function file_loaded()     --ALSO @event_handler & @property_handler.
     start_time     = round(gp('time-pos'),.001) --NEAREST MILLISECOND FOR JPEG start_time. 
     if not v                                    --ONCE ONLY PER FILE (ON_EVENT).  RAW AUDIO TOO!
     then limits    = nil
-        title      = (gp('path')..'\n'..gp('media-title'))         : gsub(o.gsub[1],o.gsub[2]):lower()  --NOT CASE SENSITIVE.  OFTEN media-title=path
+        title      = (gp('path')..'\n'..gp('media-title'))         : gsub(o.limits_gsub[1],o.limits_gsub[2]):lower()  --NOT CASE SENSITIVE.  OFTEN media-title=path
         for key,o_limits in pairs(o.limits)
-        do  limits = limits                     or  title: find(key: gsub(o.gsub[1],o.gsub[2]):lower(),1,1) and o_limits end  --1,1=init,plain  BREAKS ON FIRST find.  ESTABLISH limits.
+        do  limits = limits                     or  title: find(key: gsub(o.limits_gsub[1],o.limits_gsub[2]):lower(),1,1) and o_limits end  --1,1=init,plain  BREAKS ON FIRST find.  ESTABLISH limits.
         limits     = limits                     or  {}
         limit      = limits.detect_limit        or  o.detect_limit
         limits[1]  = limits[1]                  or  limits.start
@@ -175,10 +184,11 @@ function file_loaded()     --ALSO @event_handler & @property_handler.
     alpha,remove_loop,is1frame_replaced = gp('video-params/alpha'),nil --remove_loop IS A COMMAND SWITCH.
     loop             = v.image      and   gp('lavfi-complex')==''      --ALSO FOR is1frame, FOR SIMPLICITY. 
     is1frame         = v.albumart   and    p['lavfi-complex']==''      --CHANGES @vid.  MP4TAG IS CONSIDERED albumart.  REQUIRE GRAPH REPLACEMENT IF albumart & ~complex. 
+    ON2              = not is1frame and o.start_aspect_on                --SHOULD BE REPLACED WITH OFF2.
     auto             = not is1frame and o.auto                         --~auto FOR is1frame, OR AUDIO GLITCHES.
     keep_center      = loop         and {}                       or o.keep_center  --RAW JPEG CAN MOVE CENTER. 
     detect_min_ratio = v.image      and o.detect_min_ratio_image or o.detect_min_ratio
-    detector         = ((alpha      or v.image)   and 'bbox=%s'  or o.detector):format(limit,o.detect_round)  --bbox FOR alpha & JPEG.
+    detector         = ((alpha or v.image) and 'bbox=%s'            or o.detector):format(limit,o.detect_round)  --bbox FOR alpha & JPEG.
     
     if not detect_format then gp('msg-level')  --detect_format=nil MEANS ONCE ONLY, EVER.  @file-loaded BECAUSE OLD FFMPEG BUGS OUT SOONER.
         mp.set_property('msg-level','all=no')  
@@ -206,7 +216,7 @@ function file_loaded()     --ALSO @event_handler & @property_handler.
     ----cropdetect = limit:round:reset         DEFAULT=24/255:16:0  round:reset ARE IN PIXELS:FRAMES.  reset>0 COUNTS HOW MANY FRAMES PER COMPUTATION.  skip (DEFAULT=2) INCOMPATIBLE WITH FFMPEG-v4. CAN SET skip=0 FOR FASTER STARTUP.  alpha TRIGGERS BAD PERFORMANCE BUG.  image DODGY.
     ----bbox       = min_val                   DEFAULT=16  [0,255]  BOUNDING BOX USED FOR alpha & image.  CAN COMBINE MULTIPLE DETECTORS IN 1 GRAPH.
     ----crop       = w:h:x:y:keep_aspect:exact DEFAULT=iw:ih:(iw-ow)/2:(ih-oh)/2:0:0   keep_aspect REQUIRED TO STOP UNWANTED ERRORS IN MPV LOG.  WON'T CHANGE DIMENSIONS WITH t OR n, NOR eval=frame NOR enable=1 (TIMELINE SWITCH). BUGS OUT IF w OR h IS TOO BIG. SAFER TO AVOID SMOOTH-CROPPING.
-    ----scale      = w:h:flags:...:eval        DEFAULT=iw:ih:bicubic:...:init 
+    ----scale      = w:h:flags:...:eval        DEFAULT=iw:ih:bicubic:...:init  AS NULL-OP CAN BE REPEATED A THOUSAND TIMES WITH 0% CPU USAGE.
     ----pad        = w:h:x:y:color             DEFAULT=0:0:0:0:BLACK  @apply_pad (BELOW)  0 MAY MEAN iw OR ih.  FOR TOGGLE OFF. RETURNS EXTRA BLACK BARS TO CORRECT aspect. MPV HAS A WINDOW TO COLOR IN.
     ----setsar     = sar                       DEFAULT=0  IS THE FINISH.  SAMPLE-ASPECT-RATIO=par  THIS ISN'T WHAT MPV CALLS sar! IT MAY BE RELATIVE (OR A MISNOMER).  FINALIZES OUTPUT DSIZE, OTHERWISE THE PIXELS CAN HAVE ANY SHAPE.  ALSO PREVENTS EMBEDDED MPV FROM SNAPPING ON albumart.  FOR DEBUGGING CAN PLACE setsar=1 EVERYWHERE (ACTS LIKE GRAPH-ARMOR).  THIS IS LIKE 2 SCRIPTS COMBINED, & setsar=1 IS REPEATED THE SAME WAY, FOR RELIABILITY. OTHER SCRIPTS WORK FINE WITHOUT THIS.
     
@@ -229,9 +239,8 @@ function apply_pad(pad_options,pixelformat,pad_scale_flags,aspect,par) --@script
     aspects.restart       = is1frame and not ON2 and aspects.OFF or aspects.ON --DEFAULT GRAPH STATE (restart VALUE) IS ON2 (PADDED), UNLESS is1frame.
     insta_pause           = not p.pause          and v.image --COMMAND SWITCH.  FOR PNG RELIABILITY.  OTHERWISE CAUSES STUTTER ON FILM @10ms!
     pad_time,m.aspect     = gp('time-pos'),aspects.restart   --pad_time BLOCKS RE-PADDING TOO QUICKLY.  
-    pad_iw,pad_ih         = round(math.min(W2,H2*m.aspect),2),round(math.min(W2/m.aspect,H2),2)  --pad INPUT-WIDTH,INPUT-HEIGHT.
-    ON2                   = not is1frame  --SHOULD BE REPLACED WITH OFF2.
-
+    pad_iw,pad_ih         = round(min(W2,H2*m.aspect),2),round(min(W2/m.aspect,H2),2)  --pad INPUT-WIDTH,INPUT-HEIGHT.
+    
     mp.command((''
                 ..(insta_pause and 'set pause yes;' or '')                                       
                 ..'%s vf  append @%s-pad-scale:scale=w=%d:h=%d:flags=%s:eval=frame;'                --PRE-pad DOWN-SCALER. NULL-OP (USUALLY), WHEN ON.
@@ -288,7 +297,7 @@ function apply_scale(aspect,toggle_duration,toggle_t_delay,toggle_expr)  --@scri
     expr            = (toggle_expr       or o.toggle_expr):gsub('%(expr%)','('..expr..')')  --() ARE MAGIC.
     aspect          = ON2 and aspects.ON or aspects.OFF  --aspects.ON DOESN'T NEED TO BE SEPARATELY DEFINED.
     
-    m.pad_iw,pad_iw,m.pad_ih,pad_ih         = round(math.min(W2,H2*m.aspect),2),round(math.min(W2,H2*aspect),2),round(math.min(W2/m.aspect,H2),2),round(math.min(W2/aspect,H2),2)  --pad GRAPH WIDTHS & HEIGHTS: PRIOR(MEMORY)→TARGETS.  STORING THEM PROPERLY IN MEMORY IS MORE CODE, SO DEDUCE FROM m.aspect.
+    m.pad_iw,pad_iw,m.pad_ih,pad_ih         = round(min(W2,H2*m.aspect),2),round(min(W2,H2*aspect),2),round(min(W2/m.aspect,H2),2),round(min(W2/aspect,H2),2)  --pad GRAPH WIDTHS & HEIGHTS: PRIOR(MEMORY)→TARGETS.  STORING THEM PROPERLY IN MEMORY IS MORE CODE, SO DEDUCE FROM m.aspect.
     m.aspect,m.scale_time,m.toggle_duration = aspect,scale_time,toggle_duration  --MEMORY TRANSFER FOR RAPID TOGGLING.
     Dpad_iw,Dpad_ih = pad_iw-m.pad_iw,pad_ih-m.pad_ih  --DIFFERENCE VALUES.  Δ INVALID ON MPV.APP (NO-GREEK).
     
@@ -314,16 +323,16 @@ function apply_crop        (meta)  --@script-message, @detect_crop & @on_toggle.
     meta.max_h   =  meta.max_h             or  p.height
     meta.w       =  meta.w                 or  meta.x and meta.max_w-2*meta.x or m.w or meta.max_w  --ARG  OR  CENTERED  OR  PRIOR-VALUE  OR  FULL-width.
     meta.h       =  meta.h                 or  meta.y and meta.max_h-2*meta.y or m.h or meta.max_h  
-    meta.x       =  meta.x                 or (meta.max_w-meta.w)/2  --ARG  OR  CENTERED
-    meta.y       =  meta.y                 or (meta.max_h-meta.h)/2
-    is_excessive = (meta.w<meta.min_w      or  meta.h    <meta.min_h)
+    meta.x       =  meta.x                 or            (meta.max_w-  meta.w)/2  --ARG  OR  CENTERED
+    meta.y       =  meta.y                 or            (meta.max_h-  meta.h)/2
+    is_excessive = (meta.w<meta.min_w      or      meta.h<meta.min_h)
                    and (mp.msg.info('The area to be cropped is too large.'        ) or 1)
                    and (mp.msg.info('You might need to decrease detect_min_ratio.') or 1)
     
-    if meta.w<meta.min_w then if o.apply_min_ratio 
-         then meta.w,meta.x = meta.min_w,clip(meta.x-(meta.min_w-meta.w)/2,0,meta.max_w-meta.min_w) --MINIMIZE w & clip x.  OFTEN SPURIOUS?
+    if        meta.w<meta.min_w then if o.apply_min_ratio
+         then meta.w,meta.x = meta.min_w,clip(meta.x-(meta.min_w-meta.w)/2,0,meta.max_w-meta.min_w) --MINIMIZE w & clip x, IF is_excessive.
          else meta.w,meta.x = m.w,m.x end end                                                       --NULLIFY DETECTION.
-    if meta.h<meta.min_h then if o.apply_min_ratio
+    if        meta.h<meta.min_h then if o.apply_min_ratio
          then meta.h,meta.y = meta.min_h,clip(meta.y-(meta.min_h-meta.h)/2,0,meta.max_h-meta.min_h) --MINIMIZE h & clip y.
          else meta.h,meta.y = m.h,m.y end end                                                       --NULLIFY.
     
@@ -331,9 +340,9 @@ function apply_crop        (meta)  --@script-message, @detect_crop & @on_toggle.
                     and (meta.w~=m.w or meta.h~=m.h or meta.x~=m.x or meta.y~=m.y)             --REQUIRE CHANGE IN GEOMETRY.
                     and (nil
                          or not m.time_pos or not auto                                         --PROCEED IF INITIALIZING & @script-message.
-                         or math.abs(meta.w-m.w)>wTOLERANCE or math.abs(meta.h-m.h)>hTOLERANCE --PROCEED IF OUTSIDE TOLERANCE.
-                         or math.abs(meta.x-m.x)>wTOLERANCE or math.abs(meta.y-m.y)>hTOLERANCE
-                         or math.abs(p['time-pos']-m.time_pos)>o.TOLERANCE.time+0              --PROCEED IF TIME CHANGES TOO MUCH.  +0 CONVERTS→number.
+                         or abs(meta.w-m.w)>wTOLERANCE or abs(meta.h-m.h)>hTOLERANCE --PROCEED IF OUTSIDE TOLERANCE.
+                         or abs(meta.x-m.x)>wTOLERANCE or abs(meta.y-m.y)>hTOLERANCE
+                         or abs(p['time-pos']-m.time_pos)>o.TOLERANCE.time+0              --PROCEED IF TIME CHANGES TOO MUCH.  +0 CONVERTS→number.
                    ))
     if not is_effective then return   end      --WITHIN TOLERANCE.
     command      = is1frame           and  ''  --is1frame OVERRIDE
@@ -345,25 +354,26 @@ function apply_crop        (meta)  --@script-message, @detect_crop & @on_toggle.
                        ..(m.h==meta.h and  '' or 'vf-command %s-crop h %d;'):format(label,meta.h)  --h=out_h 
                        ..(m.x==meta.x and  '' or 'vf-command %s-crop x %d;'):format(label,meta.x)
                        ..(m.y==meta.y and  '' or 'vf-command %s-crop y %d;'):format(label,meta.y)
-    command      = command~=''        and mp.command(command)              --COULD BE BLANK @on_toggle.
-    kill_auto    = not auto           and timers.auto_delay:kill()         --NO FURTHER DETECTIONS.
+    command      = command~=''        and mp.command(command)      --COULD BE BLANK @on_toggle.
+    kill_auto    = not auto           and timers.auto_delay:kill() --NO FURTHER DETECTIONS.
     
     m.w,m.h,m.x,m.y,m.time_pos = meta.w,meta.h,meta.x,meta.y,p['time-pos'] --number,number,number,number,number:  meta→m  MEMORY TRANSFER. 
     wTOLERANCE,hTOLERANCE = m.w*o.TOLERANCE[1],m.h*o.TOLERANCE[1]          --CHANGE @crop.
 end
 
 function detect_crop(show_text)  --@script-message, @timers.auto_delay, @playback-restart & @on_toggle.
-    timers.auto_delay:resume()                                     --~auto KEEPS CHECKING UNTIL apply_crop.
-    if not (W2 and p.width and p.height) or p.seeking then return  --W2 FOR show-text.  width=nil IF TOGGLING vo.  
+    timers.auto_delay:kill  ()                               
+    timers.auto_delay:resume()                                            --~auto KEEPS CHECKING UNTIL apply_crop.
+    if not (W2 and m.w and p.width and p.height) or p.seeking then return --W2 and m.w FOR show-text.  width=nil IF TOGGLING vo.  
     elseif not  meta.min_w 
-    then        meta.min_w,meta.min_h = p.width*detect_min_ratio,p.height*detect_min_ratio end  --RESET @property_handler.
-    meta            .max_w,meta.max_h = p.width                 ,p.height
+    then        meta.min_w,meta.min_h = p.width*detect_min_ratio,p.height*detect_min_ratio end  --RESETS @property_handler.
     m               .min_w,m   .min_h = meta.min_w              ,meta.min_h
+    meta            .max_w,meta.max_h = p.width                 ,p.height
     
-    aspect      = aspect or  m.aspect                                                            --FOR RANDOM WALKER.
-    aspect      = ON2    and auto and typecast(mp.command_native({'expand-text',o.auto_aspect})) --'' & ' ' BOTH CAST TO nil.
-    auto_aspect = aspect and apply_scale(aspect,o.auto_delay)                                    --SHOULD BE MOVED TO A NEW SCRIPT.
-    show_text   = (show_text or o.meta_osd) and mp.command(('show-text       "'  
+    aspect      = ON2        and auto and not p.pause and (aspect or m.aspect)              --INITIALIZE PRIOR aspect FOR RANDOM WALKER.  ONLY IF auto & UNPAUSED.  THESE 3 LINES SHOULD BE MOVED TO A NEW SCRIPT.
+    aspect      = aspect     and typecast(mp.command_native({'expand-text',o.auto_aspect})) --'' & ' ' BOTH CAST TO nil.
+    auto_aspect = aspect     and apply_scale(aspect,o.auto_delay)                           --
+    show_text   = (show_text or  o.meta_osd) and mp.command(('show-text       "'  
                       ..'media-title           = ${media-title}             \n'  --EXAMPLE VALUES:
                       ..'_VERSION              = %s                         \n'  --Lua 5.1  5.2
                       ..'mpv-version           = ${mpv-version}             \n'  --mpv 0.38.0  →  0.34.0
@@ -378,7 +388,7 @@ function detect_crop(show_text)  --@script-message, @timers.auto_delay, @playbac
                       ..'    max_w,max_h       = ${width},${height}         \n'  --1920,1080
                       ..'    min_w,min_h       = %d,%d                      \n'  --480,270
                       ..'        w:h:x:y       = %d:%d:%d:%d              \n\n'  --1396:1066:263:7
-                      ..'vf-metadata/%s = \n${vf-metadata/%s}                "'            
+                      ..'vf-metadata/%s = \n${vf-metadata/%s}                "'  --SOMETIMES w<0!
                   ):format(_VERSION,pad_iw,pad_ih,W2,H2,meta.min_w,meta.min_h,m.w,m.h,m.x,m.y,label,label))  --nil INVALID ON MPV.APP.
     if OFF then return end
     
@@ -391,25 +401,26 @@ function detect_crop(show_text)  --@script-message, @timers.auto_delay, @playbac
     for key in ('w h x1 y1 x2 y2 x y'):gmatch('[^ ]+') 
     do meta[key] = tonumber(vf_metadata['lavfi.cropdetect.'..key] or vf_metadata['lavfi.bbox.'..key]) end  --tonumber(nil)=nil (BUT 0+nil RAISES ERROR).
     for key in ('w h x1 y1 x2 y2    '):gmatch('[^ ]+') 
-    do if not meta[key] then mp.msg.error('Got empty crop data.')  --REQUIRE ALL KEYS EXCEPT x & y.
+    do if not meta[key] then mp.msg.error('Got empty crop data.') 
             return end end
-    
+    if meta.w<=0 or meta.h<=0 then return end  --cropdetect MALFUNCTION.  EXAMPLES: ACDC BACK IN BLACK (TOO MUCH BLACK). HOTEL CALIFORNIA.
+
     meta.x = meta.x or (meta.x1+meta.x2-meta.w)/2  --bbox GIVES x1 & x2 BUT NOT x. TAKE AVERAGE.  SAME FOR y.
     meta.y = meta.y or (meta.y1+meta.y2-meta.h)/2 
     
     if o.USE_INNER_RECTANGLE 
-    then xNEW  ,yNEW    = math.max(meta.x1,meta.x2-meta.w,meta.x       ),math.max(meta.y1,meta.y2-meta.h,meta.y       )
-        meta.x2,meta.y2 = math.min(meta.x2,meta.x1+meta.w,meta.x+meta.w),math.min(meta.y2,meta.y1+meta.h,meta.y+meta.h)
+    then xNEW  ,yNEW    = max(meta.x1,meta.x2-meta.w,meta.x       ),max(meta.y1,meta.y2-meta.h,meta.y       )
+        meta.x2,meta.y2 = min(meta.x2,meta.x1+meta.w,meta.x+meta.w),min(meta.y2,meta.y1+meta.h,meta.y+meta.h)
         meta.x ,meta.y  = xNEW,yNEW
         meta.w ,meta.h  = meta.x2-meta.x,meta.y2-meta.y end
     
     if keep_center[1] 
-    then xNEW = math.min(meta.x,p.width -(meta.x+meta.w)) --KEEP HORIZONTAL CENTER. EXAMPLE: lavfi-complex REMAINS CENTERED.  
-         wNEW = p.width- xNEW*2                           --wNEW ALWAYS BIGGER THAN meta.w, & ALWAYS SUBTRACTS AN EVEN AMOUNT.
+    then xNEW = min(meta.x,p.width -(meta.x+meta.w)) --KEEP HORIZONTAL CENTER. EXAMPLE: lavfi-complex REMAINS CENTERED.  
+         wNEW = p.width- xNEW*2                      --wNEW ALWAYS BIGGER THAN meta.w, & ALWAYS SUBTRACTS AN EVEN AMOUNT.
          if wNEW-meta.w> wNEW*keep_center[1] then meta.x,meta.w = xNEW,wNEW end end 
     if keep_center[2] 
-    then yNEW = math.min(meta.y,p.height-(meta.y+meta.h)) --KEEP VERTICAL CENTERED. PREVENTS FEET BEING CROPPED OFF PORTRAITS. 
-         hNEW = p.height-yNEW*2                           --hNEW ALWAYS BIGGER THAN meta.h. 
+    then yNEW = min(meta.y,p.height-(meta.y+meta.h)) --KEEP VERTICAL CENTERED. PREVENTS FEET BEING CROPPED OFF PORTRAITS. 
+         hNEW = p.height-yNEW*2                      --hNEW ALWAYS BIGGER THAN meta.h. 
          if hNEW-meta.h> hNEW*keep_center[2] then meta.y,meta.h = yNEW,hNEW end end  --SYMMETRIZE UNLESS DEVIATION FROM CENTER IS SMALL (DEPENDS HOW BIG THE FEET ARE).
     apply_crop(meta)
 end
@@ -426,9 +437,9 @@ function   event_handler    (event)
            seek_time       =    p['time-pos'  ] 
            if is1frame or not (gp('time-pos') and W2) then return end                  --time-pos=nil PASSED end-file.
            backward_seek   = backward_seek or seek_time and p['time-pos']<seek_time-1 --IMPLIES LARGER toggle_t_delay.  revert-seek SLOW & UNNECESSARY.
-           re_pad          =            math.abs(p['time-pos']-pad_time  )>.1 and not (m.osd_aspect==p['osd-dimensions/aspect'] and m.video_aspect==p['video-params/aspect'])  --pad_time BLOCKS CYCLING @seek FOR albumart-lavfi-complex.  IF WINDOW CHANGES aspect, THE DOWN-SCALER SHOULD BE REPLACED, SINCE IT'S DEFAULT ON STATE IS NOW DIFFERENT.  THERE'S A SPECIAL CASE WHERE THIS GETS IT WRONG: THE WINDOW RESIZES DURING seeking, BUT AFTER seek.  ALSO WRONG AFTER script-message SETS CUSTOM aspect.
+           re_pad          =            abs(p['time-pos']-pad_time  )>.1 and not (m.osd_aspect==p['osd-dimensions/aspect'] and m.video_aspect==p['video-params/aspect'])  --pad_time BLOCKS CYCLING @seek FOR albumart-lavfi-complex.  IF WINDOW CHANGES aspect, THE DOWN-SCALER SHOULD BE REPLACED, SINCE IT'S DEFAULT ON STATE IS NOW DIFFERENT.  THERE'S A SPECIAL CASE WHERE THIS GETS IT WRONG: THE WINDOW RESIZES DURING seeking, BUT AFTER seek.  ALSO WRONG AFTER script-message SETS CUSTOM aspect.
                                     and apply_pad()
-           reloop          =   loop and math.abs(p['time-pos']-start_time)> 1 
+           reloop          =   loop and abs(p['time-pos']-start_time)> 1 
            start_time      = reloop and    round(p['time-pos'],.001) or start_time
            reloop          = reloop and mp.command(('%s vf pre @loop:lavfi=[loop=-1:1,fps=start_time=%s]'):format(command_prefix,start_time))  --JPEG PRECISE seeking: RESET STARTPTS.  PTS MAY GO NEGATIVE!  MAYBE A NULL AUDIO STREAM COULD BE SIMPLER.  IMPRECISE seek TRIGGERS playlist-next OR playlist-prev.
     elseif not is1frame_replaced  --playback-restart: FILTERS' STATES ARE RESET, UNLESS is1frame.  
@@ -455,8 +466,8 @@ function property_handler(property,val)
     for key in ('mute aid sid'):gmatch('[^ ]+')  --DOUBLE-TAPS.     W2 MEANS LOADED.
     do toggle                =        property==key             and W2      and playback_restarted and (not timers[key]:is_enabled() and (timers[key]:resume() or 1) or on_toggle()) end  --W2 BLOCKS RAW AUDIO.  TOGGLERS AWAIT playback_restarted.
     vf_observed              =        property=='vf'
-    rescale                  =       (property=='osd-dimensions/aspect'     and ON2                          --CHANGING WINDOW SIZE!  WHEN PAUSED MUST FRAME-STEP OR UNPAUSE.  UNFORTUNATELY is1frame AUDIO GLITCHES (MORE RIGOROUS ALTERNATIVE COULD USE A NEW TIMER).
-                                 or   property=='vf')           and W2      and timers.apply_scale:resume()  --2 RESCALE CONDITIONS!    SHOULD ALSO CHECK ~auto_aspect.
+    rescale                  =       (property=='osd-dimensions/aspect'     and ON2                                      --CHANGING WINDOW SIZE!  WHEN PAUSED MUST FRAME-STEP OR UNPAUSE.  UNFORTUNATELY is1frame AUDIO GLITCHES (MORE RIGOROUS ALTERNATIVE COULD USE A NEW TIMER).
+                                 or   property=='vf')           and W2      and not auto and timers.apply_scale:resume() --2 RESCALE CONDITIONS!  BUT auto STUTTERS (IT HAS SPECIAL SINE WAVES).
     reload                   = v and (nil  --4 RELOADS: @vid, @lavfi-complex, @WxH & @alpha.  
                                  or   property=='vid'           and val     and val~=v.id --SNAPS EMBEDDED MPV. 
                                  or   property=='lavfi-complex' and val~='' and loop      --remove_loop
@@ -493,27 +504,32 @@ function cleanup() --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-opt
     set_end         = set_end and mp.command(command_prefix..' set end none') 
     mp.keep_running = false  --false FLAG EXIT: COMBINES remove_key_binding, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
 end 
-for message,fn in pairs({loadstring=typecast,cleanup=cleanup,toggle=on_toggle,toggle_aspect=on_toggle_aspect,detect_limit=apply_limit,detect_crop=detect_crop,apply_crop=apply_crop,apply_pad=apply_pad,apply_aspect=apply_scale})  --SCRIPT CONTROLS.  loadstring CAN REPLACE ANY OTHER.
+
+function callstring(string) loadstring(string)() end  --@script-message.  CAN REPLACE ANY OTHER.
+function print_arg (arg   ) print(typecast(arg)) end  --@script-message. 
+for message,fn in pairs({loadstring=callstring,print=print_arg,cleanup=cleanup,toggle=on_toggle,toggle_aspect=on_toggle_aspect,apply_limit=apply_limit,detect_crop=detect_crop,apply_crop=apply_crop,apply_pad=apply_pad,apply_aspect=apply_scale})  --SCRIPT CONTROLS.
 do mp.register_script_message(message,fn) end
 reload = gp('time-pos') and file_loaded()  --FILE ALREADY LOADED: TRIGGER NOW.  SNAPS EMBEDDED MPV.
 
 ----CONSOLE SCRIPT-COMMANDS & EXAMPLES:
 ----script-binding             toggle_crop
 ----script-binding             toggle_aspect
+----script-message-to autocrop loadstring   <arg>
+----script-message-to autocrop loadstring   mp.keep_running=false
+----script-message-to autocrop print        <arg>
+----script-message             print        _VERSION
+----script-message-to autocrop cleanup
 ----script-message-to autocrop toggle
 ----script-message             toggle_aspect
-----script-message-to autocrop cleanup
-----script-message-to autocrop loadstring   <arg>
-----script-message             loadstring   print(_VERSION)
-----script-message             detect_limit <detect_limit>
-----script-message             detect_limit  10
+----script-message             apply_limit  <detect_limit>
+----script-message             apply_limit   10
 ----script-message             detect_crop  <show_text>
 ----script-message             apply_crop   <meta>
 ----script-message             apply_crop   {w=1920*random(),h=1080*random()}
-----script-message             apply_aspect <aspect>                              <toggle_duration> <toggle_t_delay>  <toggle_expr>
-----script-message             apply_aspect W/H*(1+8*random())/3                   .5                .12              sin(PI/2*(expr))^2         
-----script-message             apply_pad    <pad_options>                         <pixelformat>     <pad_scale_flags> <aspect>             <par>
-----script-message             apply_pad    x=(ow-iw)/2:y=(oh-ih)/2:color=WHITE@1  yuv420p           bicubic          W/H*(1+8*random())/3  1
+----script-message             apply_aspect <aspect>                                  <toggle_duration> <toggle_t_delay>  <toggle_expr>
+----script-message             apply_aspect ${osd-dimensions/aspect}*(1+3*random())/2  .5                .12              sin(PI/2*(expr))^2         
+----script-message             apply_pad    <pad_options>                             <pixelformat>     <pad_scale_flags> <aspect>             <par>
+----script-message             apply_pad    x=(ow-iw)/2:y=(oh-ih)/2:color=WHITE@1      yuv420p           bicubic          W/H*(1+3*random())/2  1
 
 ----APP VERSIONS:
 ----MPV      : v0.38.0(.7z .exe v3 .apk)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)    ALL TESTED. 
@@ -526,10 +542,11 @@ reload = gp('time-pos') and file_loaded()  --FILE ALREADY LOADED: TRIGGER NOW.  
 ----~500 LINES & ~7000 WORDS.  SPACE-COMMAS FOR SMARTPHONE.  5 KINDS OF COMMENTS: THE TOP (INTRO), LINE EXPLANATIONS, LINE TOGGLES (options), MIDDLE (GRAPH SPECS), & END (CONSOLE COMMANDS). ALSO BLURBS ON WEB.  CAPSLOCK MOSTLY FOR COMMENTARY & TEXTUAL CONTRAST.
 ----FUTURE VERSION COULD  COMBINE DOUBLE-TAPS INTO o.double_tap_properties & o.double_tap_timeout. o.toggle_command SHOULD BE MOVED TO main.lua.
 ----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts; function on_update.
+----FUTURE VERSION SHOULD USE lavfi-complex FOR LOOPING JPEG.
 ----FUTURE VERSION SHOULD OPERATE 1fps EITHER AS is1frame MODE, OR SET MINIMUM fps=10; FOR FRAME-BY-FRAME GIFs.  vf-command DOESN'T REDRAW CURRENT FRAME.  BUT AUDIO COULD GLITCH.  THERE'S AT LEAST 3 WAYS OF CROPPING, INCLUDING video-crop.
 ----FUTURE VERSION SHOULD BE CAPABLE OF SMOOTH-CROPPING BY REPLACING BLACK BARS WITH BLACK PADS, & THEN SMOOTH-UNPAD. BECAUSE SMOOTH-PADDING IS EASY.  EFFICIENT TRUE SMOOTH-crop IS IMPOSSIBLE WITH FFMPEG-v6.
 ----FUTURE VERSION SHOULD HAVE o.keep_aspect, TO MAINTAIN TRUE ASPECT @ALL TIMES.
-----FUTURE VERSION SHOULD MOVE o.limits TO A NEW SCRIPT limits.lua. THERE COULD BE A HUNDRED.  IDEAL automask ALSO MAY DEPEND ON media-title.
+----FUTURE VERSION SHOULD MOVE o.limits TO A NEW SCRIPT limits.lua (OR track-list.lua?). THERE COULD BE A HUNDRED.  
 
 ----COULD BE RENAMED autocrop-mod.lua.  MY LONGEST SCRIPT - LIKE 3 SCRIPTS IN 1, +DOUBLE-TAPS. (autocrop, autopad.lua & limits.lua).  A CROP IS A PAD-REMOVAL, & A start/end IS A TIME-CROP, SO THE FULL 3xCOMBO IS MUCH MORE INTUITIVE!  SCRIPT-MESSAGES ENABLE CLEAN-SPLITTING, THOUGH.
 ----BUG: apply_aspect & apply_pad SCRIPT-MESSAGES RESET aspect. USER seeking OVERRIDES THE INPUT. FUTURE VERSION SHOULD FIX THIS (BY MEMORIZING INPUT).

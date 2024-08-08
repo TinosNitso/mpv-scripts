@@ -10,9 +10,9 @@ options                      = {
     double_sid_timeout       =         .5 ,  --SECONDS FOR DOUBLE-SUBTITLE-ID-TOGGLE (j&j DOUBLE-TAP).  SET TO 0 TO DISABLE.  BAD FOR YOUTUBE.  IDEAL FOR SMARTPHONE.    REQUIRES sid (sub-create-cc-track FOR BLANK).
     extra_devices_index_list =         {} ,  --TRY {3,4} ETC TO ENABLE INTERNAL PC SPEAKERS OR MORE STEREOS.  1=auto  3=INTERNAL PC.  OVERLAP CAUSES INTERNAL ECHO (AVOID).  EACH CHANNEL FROM EACH device IS A SEPARATE PROCESS & STREAM.  INTERNAL PC SPEAKERS COUNT DOUBLE (2 DOUBLE-MOUTHED CHILDREN).
     toggle_command           =         '' ,  --EXECUTES on_toggle, UNLESS BLANK.  'show-text ""' CLEARS THE OSD.  CAN DISPLAY ${media-title}, ${mpv-version}, ${ffmpeg-version}, ${libass-version}, ${platform}, ${current-ao}, ${af}, ${lavfi-complex}.  CAN ALSO 'show-text "'.._VERSION..'"'  OR  'set speed 1'.
-    speed                    = '${speed}' ,  --EXPRESSION FOR DYNAMIC speed CONTROL, set EVERY HALF-SECOND.  CAN USE ANY MPV PROPERTY (LIKE ${percent-pos}) IN ANY LUA FORMULA.  '${speed}' IS A NULL-OP.  TOGGLES WITH DOUBLE-mute!
+    speed                    = '${speed}' ,  --EXPRESSION FOR DYNAMIC speed CONTROL, set EVERY HALF-SECOND.  $ FOR PROPERTIES (LIKE ${percent-pos}).  '${speed}' IS A NULL-OP.  TOGGLES WITH DOUBLE-mute!
     -- speed                 = '     ${speed}<1.2 and ${speed}+.01 or 1    ',  --UNCOMMENT TO CYCLE speed BTWN 1 & 1.2 OVER 10s.  PRESS BACKSPACE TO RESET BACK TO 1.  REPLACE 1.2 & 1 FOR DIFFERENT BOUNDS.
-    -- speed                 = 'clip(${speed}+math.random(-1,+1)/100,1,1.2)',  --UNCOMMENT TO RANDOMIZE VIDEO speed, USING A BOUNDED RANDOM WALK.  -1%,+0%,+1% EVERY HALF-SECOND, RECURSIVELY. +2% TO ADD DRIFT.
+    -- speed                 = 'clip(${speed}+random(-1,+1)/100,1,1.2)',  --UNCOMMENT TO RANDOMIZE VIDEO speed, USING A BOUNDED RANDOM WALK.  -1%,+0%,+1% EVERY HALF-SECOND, RECURSIVELY. +2% TO ADD DRIFT.
     suppress_osd             = true , --REMOVE TO VERIFY speed.
     mpv                      = {      --LIST ALL POSSIBLE mpv COMMANDS, IN ORDER OF PREFERENCE.  REMOVE THEM FOR NO CHILDREN OVERRIDE (clocks, filterchain & speed ONLY).  A COMMAND MAY NOT BE A PATH.  FIRST MATCH SPAWNS ALL CHILDREN.  NOT FOR ANDROID.  
         "mpv"                                          , --LINUX & SMPLAYER (WINDOWS)
@@ -88,8 +88,8 @@ options                      = {
 }
 o,p,m,timers = {},{},{},{}                         --o,p=options,PROPERTIES  m=MEMORY={map,graph}  timers={mute,aid,sid,playback_restarted,auto,os_sync,osd}  playback_restarted BLOCKS THE PRIOR 3.
 txt,devices,clocks,abdays,LOCALES = {},{},{},{},{} --txtfile IS WRITTEN FROM txt.  devices=LIST OF DEVICES WHICH WILL ACTIVATE, STARTING WITH EXISTING audio-device.  LOCALES IS LIST OF SUB-TABLES, FOR LOTE. NEVER USED BY CHILDREN (UNLESS THEY ALSO HAVE A clock TOO).  os.setlocale('RUSSIAN') LITERALLY BLUE-SCREENS (MPV HAS ITS OWN BSOD).
-min,max,random = math.min,math.max,math.random     --ABBREV.
-math.randomseed(os.time()+mp.get_time())           --os,mp=OPERATING-SYSTEM,MEDIA-PLAYER.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil
+abs,max,min,random = math.abs,math.max,math.min,math.random  --ABBREV.
+math.randomseed(os.time()+mp.get_time())  --os,mp=OPERATING-SYSTEM,MEDIA-PLAYER.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil
 
 function clip(n,    min_n,    max_n)  --@property_handler.  NUMBERS/nil.  FFMPEG SUPPORTS clip, BUT NOT LUA.
     return    n and min_n and max_n and min(max(n,min_n),max_n)  --min max  min max
@@ -100,12 +100,12 @@ function round(N,D)  --@property_handler & @clock_update.  NUMBERS/STRINGS/nil. 
     return N and math.floor(.5+N/D)*D  --round(N)=math.floor(.5+N)
 end
 
-function typecast(arg) --ALSO @script-message, @apply_astreamselect & @property_handler.  load INVALID ON MPV.APP. 
+function typecast(arg) --ALSO @apply_astreamselect & @property_handler.  load INVALID ON MPV.APP. 
     if       type(arg)=='string' then return loadstring('return '..arg)() end  --''→nil
     return        arg
 end
 
-function  gp(property)  --ALSO @property_handler.  GET-PROPERTY
+function  gp(property)  --ALSO @property_handler.  GET-PROPERTY.
     p       [property]=mp.get_property_native(property)
     return p[property]
 end
@@ -153,8 +153,8 @@ __script            = ('--script=%s/%s.lua'):format(directory,label)  --"/" FOR 
 directory           = mp.command_native({'expand-path',directory})    --command_native EXPANDS '~/', REQUIRED BY io.open.
 txtpath             = ('%s/%s-pid%d.txt'):format(directory,label,o.params.pid or gp('pid'))  --txtfile INSTEAD OF PIPES.
 if N==0 then clock  = clocks[1] and mp.create_osd_overlay('ass-events')  --AT LEAST 1.  ass-events IS THE ONLY VALID OPTION.   COULD ALSO SET res_x & res_y FOR BETTER THAN 720p FONT QUALITY.
-    o.auto_delay    = .5  --EXISTS ONLY TO STOP timeout. 
-    script_opts     = ''  --RELAYED @SPAWN.  
+    o.auto_delay    = max(.5,o.auto_delay) --EXISTS ONLY TO STOP timeout. 
+    script_opts     = ''                   --RELAYS @SPAWN.  
     for script_opt,val in pairs(gp('script-opts'))
     do  script_opts = (not o.suppress_script_opts or script_opt: find('ytdl_hook'))
                        and ('%s%s=%s,'):format(script_opts,script_opt,val) or script_opts end
@@ -218,7 +218,7 @@ function clock_update()  --@os_sync & @on_toggle.
     clock_remove = clock and OFF and clock:remove()  --clock OFF SWITCH.  COULD BE MADE SMOOTH BY VARYING {\\alpha##} IN clock.data.
     if  OFF or not clock then return end
     abday,clock_index = os.date('%a'),round((os.time()+o.clocks.offset+1)/o.clocks.duration)%#clocks+1          --WHAT DAY IS IT?  INDEX BTWN 1 & #clocks.  SMOOTH TRANSITIONS BTWN STYLES SEEMS TOO DIFFICULT.  THE TIMEFROM1970 IS NEEDED JUST TO DECIDE WHICH STYLE! MPV MIGHT HAVE THE SAME CLOCK STYLE SIMULTANEOUSLY ALL OVER THE EARTH, REGARDLESS OF TIMEZONE OR DST, FOR THE SAME o.clocks.
-    clock.data = os.date(clocks[clock_index]):gsub('{}0','{}'):gsub(abday,LOCALES[clock_index][abday] or abday) --REMOVE LEADING 0 AFTER "{}" NULL-OP STYLE CODE.
+    clock.data = os.date(clocks[clock_index]):gsub('{}0','{}'):gsub(abday,LOCALES[clock_index][abday] or abday) --REMOVES LEADING 0 AFTER "{}" NULL-OP STYLE CODE.  ANOTHER IDEA IS TO expand-text.
     clock:update()
 end
 timers.osd=mp.add_periodic_timer(1,clock_update) --THIS 1 MOSTLY DETERMINES THE EXACT TICK OF THE clock, WHICH IS USUALLY IRRELEVANT TO AUDIO.  LOSES 6→20 MILLISECONDS/MINUTE (@TICK) WITHOUT resync.  oneshot & pcall TIMERS ARE WORSE.
@@ -308,7 +308,7 @@ function property_handler(property,val) --ALSO @timers.auto.  txtfile INPUT/OUTP
     target_pos      = txt.time_pos+time_from_write*txt.speed          --Δtime_pos=Δos_time*speed
     time_gained     = p['time-pos']-target_pos  
     accurate_time   = target~=''    or samples_time  --FLAG FOR seek/set_speed.  REQUIRE NEW MPV OR ELSE astats TRIGGER.
-    seek            = math.abs(time_gained)>o.seek_limit and accurate_time      
+    seek            = abs(time_gained)>o.seek_limit and accurate_time      
     time_gained     = seek and 0    or time_gained                                        --seek→(time_gained=0)
     speed           =    (set_pause or txt.aid=='no' or txt.path=='') and 0               --0 MEANS pause.  CHILDREN ALWAYS START PAUSED.  BLANK path FOR JPEG. 
                       or clip(txt.speed*(1-time_gained/.5)                                --time_gained→0 OVER NEXT .5 SECONDS (MEASURED IN time-pos, THE astats UPDATE TIME). 
@@ -347,16 +347,21 @@ function cleanup()  --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-op
     set_speed       = p.speed~=1 and mp.command(command_prefix..' set speed 1')  --cleanup_speed=1
     mp.keep_running = false  --false FLAG EXIT: COMBINES overlay-remove, remove_key_binding, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
 end 
-for message,fn in pairs({loadstring=typecast,cleanup=cleanup,toggle=on_toggle,resync=os_sync})  --SCRIPT CONTROLS.  loadstring CAN REPLACE ANY OTHER.
+
+function callstring(string) loadstring(string)() end  --@script-message.  CAN REPLACE ANY OTHER.
+function print_arg (arg   ) print(typecast(arg)) end  --@script-message. 
+for message,fn in pairs({loadstring=callstring,print=print_arg,cleanup=cleanup,toggle=on_toggle,resync=os_sync})  --SCRIPT CONTROLS.
 do mp.register_script_message(message,fn)  end
 reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.
 
 ----CONSOLE SCRIPT-COMMANDS & EXAMPLES:
 ----script-binding           aspeed
-----script-message-to aspeed toggle
-----script-message-to aspeed cleanup
 ----script-message-to aspeed loadstring <arg>
-----script-message           loadstring "print(m and m.graph or _VERSION)"
+----script-message-to aspeed loadstring mp.keep_running=false
+----script-message-to aspeed print      <arg>
+----script-message           print      "m and m.graph or _VERSION"
+----script-message-to aspeed cleanup
+----script-message-to aspeed toggle
 ----script-message           resync
 
 ----APP VERSIONS:
