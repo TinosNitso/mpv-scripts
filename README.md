@@ -62,8 +62,9 @@ Give mpv its own window then press ` & then enter any of these commands (but wit
 - `script-message cleanup`
 - `script-message title_remove`
 - `script-message loadstring           <arg>`
+- `script-message print                <arg>`
 - `script-message title                <data> <title_duration>`
-- `script-message detect_limit         <detect_limit>`
+- `script-message apply_limit          <detect_limit>`
 - `script-message detect_crop          <show_text>`
 - `script-message apply_crop           <meta>`
 - `script-message apply_pad            <pad_options> <pixelformat>     <pad_scale_flags> <aspect> <par>`
@@ -90,9 +91,12 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 - `/Applications/mpv.app/Contents/MacOS/mpv --no-config --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"` 
 
 ## Latest Updates
-Newest scripts above in `mpv-scripts.zip` haven't been properly released yet. More/better script-messages & functions are needed.
-- autocrop: Added `o.auto_aspect`. On by default. Randomizes aspect @1Hz.
+Newest scripts above in `mpv-scripts.zip` haven't been properly released yet. More/better script-messages are needed. Also, albumart stutters @load.
+- Added `script-message print` to all scripts.
+- Added functions `callstring` & `print_arg` to all scripts.
+- Added UNMAPPED script-bindings for all toggles.
+- autocrop: Added `o.auto_aspect`, `o.start_aspect_on`, `o.gsubs` & `o.gsubs_passes`. Randomizes aspect @1Hz. All these gsubs apply to just one formula, `o.auto_aspect`, which is statistical.  Bugfix for negative detections (w<0).
 - aspeed: Added `o.suppress_script_opts`.
+- autocomplex: `rotate` & `zoompan` now opt-in (absent by default). These null-ops actually reduce performance.
 - automask: `o.res_safety` lowered by 1.
-- Added nil script-bindings.
 
