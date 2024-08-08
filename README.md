@@ -91,7 +91,7 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 - `/Applications/mpv.app/Contents/MacOS/mpv --no-config --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"` 
 
 ## Latest Updates
-Newest scripts above in `mpv-scripts.zip` haven't been properly released yet. More/better script-messages are needed. Also, albumart stutters @load.
+Newest scripts above in `mpv-scripts.zip` haven't been properly released yet. More/better script-messages are needed. 
 - Added `script-message print` to all scripts.
 - Added functions `callstring` & `print_arg` to all scripts.
 - Added UNMAPPED script-bindings for all toggles.
