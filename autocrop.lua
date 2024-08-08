@@ -44,14 +44,13 @@ options                    = {
         'sub           no','sub-create-cc-track yes',  --DEFAULTS=auto,no.  SUBTITLE CLOSED-CAPTIONS CREATE BLANK TRACK FOR double_sid_timeout (BEST TOGGLE).  JPEG VALID.  UNFORTUNATELY YOUTUBE USUALLY BUGS OUT UNLESS sub=no.  sid=1 LATER @playback-restart.  YOUTUBE cc TAKE TIME TO SHUFFLE.
         'hwdec         no',  --DEFAULT=no.  HARDWARE-DECODER MAY PERFORM BADLY, & BUGS OUT ON ANDROID.
     },
-    windows      = {}, linux = {}, darwin = {},  --OPTIONAL platform OVERRIDES.
-    android      = {  
-        -- start_aspect_on = false, auto_aspect = '',  --SMARTPHONE STARTS OFF2.  auto_aspect IS TOO MUCH CPU USAGE.
-        start_aspect_on = false,  --SMARTPHONE STARTS OFF2.
-        options  = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',}, --options APPEND, NOT REPLACE.  meta_osd PREFERS MONOSPACE FONT.
+    windows = {}, linux = {}, darwin = {},  --OPTIONAL platform OVERRIDES.
+    android = {  
+        start_aspect_on = false, auto_aspect = '',  --SMARTPHONE STARTS OFF2.  auto_aspect IS TOO MUCH CPU USAGE.
+        options = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',}, --options APPEND, NOT REPLACE.  meta_osd PREFERS MONOSPACE FONT.
     },
-    limits_gsub  = {'[ ＂" ⧸/ ：: ⧹\\ ｜| ]+',' '},  --{pattern,repl} REPLACEMENTS APPLY TO SUBSTRING SEARCHES.  '  '=' ' LIKE MARKDOWN.  USING ONLY A SINGLE gsub IS MORE EFFICIENT THAN DOUBLE-LOOPING ＂→", ETC.
-    limits       = {
+    limits_gsub = {'[ ＂" ⧸/ ：: ⧹\\ ｜| ]+',' '},  --{pattern,repl} REPLACEMENTS APPLY TO SUBSTRING SEARCHES.  '  '=' ' LIKE MARKDOWN.  USING ONLY A SINGLE gsub IS MORE EFFICIENT THAN DOUBLE-LOOPING ＂→", ETC.
+    limits      = {
     ----["path \n media-title SUBSTRING"]={start,end,detect_limit},  --{SECONDS,-SECONDS,string/number}, OR nil.  NOT CASE SENSITIVE.  start & end MAY BOTH BE NEGATIVE &/OR PERCENTAGES.  detect_limit IS FINAL OVERRIDE.  MATCHES ON FIRST find.  SPACETIME CROPPING IS AN ALTERNATIVE TO SUB-CLIP EXTRACTS.  THESE SHOULD BE MOVED TO A NEW SCRIPT.
 
         ["Alanis Morissette Ironic Official "]={4,-23},
@@ -150,7 +149,7 @@ o.limits_gsub[1]       = o.limits_gsub[1] or o.limits_gsub.pattern or ''    --DE
 o.limits_gsub[2]       = o.limits_gsub[2] or o.limits_gsub.repl    or ''    --DEFAULT REPLACEMENT=''
 for N                  = 1,o.gsubs_passes do for key,gsub in pairs(o.gsubs) --gsubs MAY DEPEND EACH-OTHER.
     do o.auto_aspect   = o.auto_aspect:     gsub(key,gsub) end end
-gp('msg-level')[label] = o.msg_level                       --SILENCES mp.msg.  msg-level=table.
+gp('msg-level')[label] = o.msg_level  --SILENCES mp.msg.  msg-level=table.
 mp.set_property_native('msg-level',p['msg-level']) 
 
 function file_loaded()     --ALSO @event_handler & @property_handler.  
@@ -189,7 +188,7 @@ function file_loaded()     --ALSO @event_handler & @property_handler.
     keep_center      = loop         and {}                       or o.keep_center  --RAW JPEG CAN MOVE CENTER. 
     detect_min_ratio = v.image      and o.detect_min_ratio_image or o.detect_min_ratio
     detector         = ((alpha or v.image) and 'bbox=%s'            or o.detector):format(limit,o.detect_round)  --bbox FOR alpha & JPEG.
-    
+         
     if not detect_format then gp('msg-level')  --detect_format=nil MEANS ONCE ONLY, EVER.  @file-loaded BECAUSE OLD FFMPEG BUGS OUT SOONER.
         mp.set_property('msg-level','all=no')  
         error_format      = not mp.command(('%s vf pre @%s-crop:lavfi-format    '):format(command_prefix,label))  --      ERROR IN FFMPEG-v4   , BUT NOT v6   (.7z       RELEASE).  MPV OFTEN BUILT WITH v4.2→v6.1.  v4 REQUIRES SPECIFYING format.  command RETURNS true IF SUCCESSFUL.  MORE RELIABLE THAN VERSION NUMBERS BECAUSE THOSE CAN BE ANYTHING.  @%s-crop FOR SIMPLICITY.
@@ -237,8 +236,8 @@ function apply_pad(pad_options,pixelformat,pad_scale_flags,aspect,par) --@script
     m.video_aspect        =  gp(  'video-params/aspect') or  (gp('width') or  v['demux-w'] or W2) / (gp('height') or v['demux-h'] or H2) * (gp('video-params/par') or v['demux-par'] or 1)  --MEMORIZE FOR @seek (MAY PREVENT LAG).  demux-w/demux-h TRIGGERS FOR JPEG+lavfi-complex (demux-par=nil).  W2/H2 RARELY TRIGGERS FOR RAW-MP3+lavfi-complex.
     aspects.ON            = (          typecast(aspect)  or  m.video_aspect)  * aspects.OFF / (m.osd_aspect * o.osd_par_multiplier)  --number TYPECAST.
     aspects.restart       = is1frame and not ON2 and aspects.OFF or aspects.ON --DEFAULT GRAPH STATE (restart VALUE) IS ON2 (PADDED), UNLESS is1frame.
-    insta_pause           = not p.pause          and v.image --COMMAND SWITCH.  FOR PNG RELIABILITY.  OTHERWISE CAUSES STUTTER ON FILM @10ms!
-    pad_time,m.aspect     = gp('time-pos'),aspects.restart   --pad_time BLOCKS RE-PADDING TOO QUICKLY.  
+    insta_pause           = not p.pause          and loop  --COMMAND SWITCH.  FOR PNG RELIABILITY.  OTHERWISE CAUSES STUTTER ON FILM @10ms!
+    pad_time,m.aspect     = gp('time-pos'),aspects.restart --pad_time BLOCKS RE-PADDING TOO QUICKLY.  
     pad_iw,pad_ih         = round(min(W2,H2*m.aspect),2),round(min(W2/m.aspect,H2),2)  --pad INPUT-WIDTH,INPUT-HEIGHT.
     
     mp.command((''
@@ -364,7 +363,7 @@ end
 function detect_crop(show_text)  --@script-message, @timers.auto_delay, @playback-restart & @on_toggle.
     timers.auto_delay:kill  ()                               
     timers.auto_delay:resume()                                            --~auto KEEPS CHECKING UNTIL apply_crop.
-    if not (W2 and m.w and p.width and p.height) or p.seeking then return --W2 and m.w FOR show-text.  width=nil IF TOGGLING vo.  
+    if not (W2 and p.width and p.height) or p.seeking then return --W2 and m.w FOR show-text.  width=nil IF TOGGLING vo.  
     elseif not  meta.min_w 
     then        meta.min_w,meta.min_h = p.width*detect_min_ratio,p.height*detect_min_ratio end  --RESETS @property_handler.
     m               .min_w,m   .min_h = meta.min_w              ,meta.min_h
@@ -389,7 +388,7 @@ function detect_crop(show_text)  --@script-message, @timers.auto_delay, @playbac
                       ..'    min_w,min_h       = %d,%d                      \n'  --480,270
                       ..'        w:h:x:y       = %d:%d:%d:%d              \n\n'  --1396:1066:263:7
                       ..'vf-metadata/%s = \n${vf-metadata/%s}                "'  --SOMETIMES w<0!
-                  ):format(_VERSION,pad_iw,pad_ih,W2,H2,meta.min_w,meta.min_h,m.w,m.h,m.x,m.y,label,label))  --nil INVALID ON MPV.APP.
+                  ):format(_VERSION,pad_iw,pad_ih,W2,H2,meta.min_w,meta.min_h,m.w or 0,m.h or 0,m.x or 0,m.y or 0,label,label))  --nil INVALID ON MPV.APP.
     if OFF then return end
     
     vf_metadata = gp('vf-metadata/'..label)                                  --Get the metadata.
@@ -444,8 +443,8 @@ function   event_handler    (event)
            reloop          = reloop and mp.command(('%s vf pre @loop:lavfi=[loop=-1:1,fps=start_time=%s]'):format(command_prefix,start_time))  --JPEG PRECISE seeking: RESET STARTPTS.  PTS MAY GO NEGATIVE!  MAYBE A NULL AUDIO STREAM COULD BE SIMPLER.  IMPRECISE seek TRIGGERS playlist-next OR playlist-prev.
     elseif not is1frame_replaced  --playback-restart: FILTERS' STATES ARE RESET, UNLESS is1frame.  
     then is1frame_replaced = is1frame
-         m.w,m.h,m.x,m.y               = p.width,p.height,0,0 --restart MEMORY STATE.
-         m.aspect,m.time_pos,p.seeking = aspects.restart,nil  --nil FORCES vf-COMMANDS.
+         m.w,m.h,m.x,m.y   = p.width,p.height,0,0            --restart MEMORY STATE.
+         m.aspect,m.time_pos,p.seeking = aspects.restart,nil --nil FORCES vf-COMMANDS.
          
          detect_crop()                          --AFTER seeking.  STARTS timers.auto_delay.
          timers.apply_scale       :resume()     --IF PAUSED IT TAKES A FEW FRAMES TO TURN ON.
