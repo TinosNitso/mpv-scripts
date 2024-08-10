@@ -46,13 +46,13 @@ options     = {
         options = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',},  --options APPEND, NOT REPLACE. 
     },
 }
-o,p,timers = {},{},{}  --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file
+o,p,timers = {},{},{}  --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file.
 abs,max,min,random = math.abs,math.max,math.min,math.random  --ABBREV.
 math.randomseed(os.time()+mp.get_time())  --os,mp=OPERATING-SYSTEM,MEDIA-PLAYER.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil  BUT COULD ECHO BACK %RANDOM% OR $RANDOM USING A subprocess. 
 
-function typecast(arg) --ALSO @title_update.  load INVALID ON MPV.APP.
-    if       type(arg)=='string' then return loadstring('return '..arg)() end  --''→nil
-    return        arg
+function native_expand(arg) --ALSO @print_arg, @show & @title_update.  IRONICALLY expand WOULD USE A command_native, BUT native_expand IS SOMETHING ELSE! LIKE ${...}+${...}=2+2.
+    if type(arg)~='string' then return arg end
+    return loadstring('return '..mp.command_native({'expand-text',arg}))()   --''→nil.  load INVALID ON MPV.APP.  SOMETIMES for LOOPS ARE REQUIRED TO FULLY EXPAND.
 end
 
 function  gp(property) --ALSO @playback-restart.  GET-PROPERTY.
@@ -66,7 +66,7 @@ for  opt,val in pairs(options)
 do o[opt]     = val end               --CLONE
 require 'mp.options'.read_options(o)  --yes/no=true/false BUT OTHER TYPES DON'T AUTO-CAST.  GUI USER MAY ENTER RAW TABLES & 1+1 INSTEAD OF 2, ETC.
 for  opt,val in pairs(o)
-do o[opt] = type(options[opt])~='string' and typecast(val) or val end  --NATIVE TYPECAST ENFORCES ORIGINAL TYPES.
+do if type(options[opt])~='string' then o[opt]=native_expand(val) end end  --NATIVE TYPECAST ENFORCES ORIGINAL TYPES.
 
 for _,opt in pairs(o[p.platform].options or {}) do table.insert(o.options,opt) end  --platform OVERRIDE APPENDS TO o.options.
 for _,opt in pairs(o.options)
@@ -123,8 +123,8 @@ function title_update(data,title_duration)  --@script-message & @timers.playback
     command              = ''
     for _,opt in pairs(o.options_delayed)  --PLAYBACK (TITULAR) OVERRIDES.  osc RE-ACTIVATES HERE.
     do command           = ('%s no-osd set %s;'):format(command,opt) end
-    command              = command~='' and mp.  command(command)
-    timers.title.timeout = typecast(title_duration) or o.title_duration
+    command              = command~='' and mp.command  (command)
+    timers.title.timeout = native_expand(title_duration)         or o.title_duration
     title.data           = mp.command_native({'expand-text',data or o.title})
     title:update()  --AWAITS UNPAUSE (PLAYING MESSAGE).  ALSO AWAITS TIMEOUT, OR ELSE OLD MPV COULD HANG UNDER EXCESSIVE LAG.
     timers.title:kill()
@@ -138,24 +138,28 @@ for _,timer in pairs(timers)
 do    timer.oneshot   = 1 --ALL 1SHOT.
       timer:kill() end    --FOR OLD MPV. IT CAN'T START timers DISABLED.
 
-function set(script_opt,val)  --@script-message.
-    o[script_opt]=val
+function set(script_opt ,val)  --@script-message IN FUTURE VERSION.
+    o       [script_opt]=val
 end
 
-function cleanup()       mp.keep_running = false end  --@script-message.  false FLAG EXIT: COMBINES overlay-remove, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
-function callstring(string) loadstring(string)() end  --@script-message.  CAN REPLACE ANY OTHER.
-function print_arg (arg   ) print(typecast(arg)) end  --@script-message. 
-for message,fn in pairs({loadstring=callstring,print=print_arg,cleanup=cleanup,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.
+function callstring(string) loadstring(string)()      end  --@script-message.  CAN REPLACE ANY OTHER.  IRONICALLY GOOD EXAMPLES GET THEIR OWN NAMES.
+function print_arg (arg   ) print(native_expand(arg)) end  --@script-message. 
+function show(arg,duration) mp.osd_message(native_expand(arg),native_expand(duration)) end  --@script-message. 
+function exit(            ) mp.keep_running = false   end  --@script-message.  false FLAG EXIT: COMBINES overlay-remove, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
+for message,fn in pairs({loadstring=callstring,print=print_arg,show=show,exit=exit,quit=exit,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.
 do mp.register_script_message(message,fn)  end
 
 ----CONSOLE SCRIPT-COMMANDS & EXAMPLES (main=_):
-----script-message-to _ loadstring <arg>
-----script-message      loadstring print(_VERSION)
-----script-message-to _ print      <arg>
+----script-message-to _ loadstring <string>
+----script-message      loadstring math.randomseed(365)
+----script-message      print      <arg>
 ----script-message      print      _VERSION
-----script-message-to _ cleanup
+----script-message      show       <arg>          <duration>
+----script-message      show       _VERSION       6*random()
+----script-message-to _ exit
+----script-message-to _ quit
 ----script-message      title      <data>         <title_duration>
-----script-message      title      ${media-title}  6*random()
+----script-message      title      ${media-title} 6*random()
 ----script-message      title_remove
 
 ----mpv TERMINAL COMMAND EXAMPLES:
@@ -178,7 +182,7 @@ do mp.register_script_message(message,fn)  end
 ----~200 LINES & ~2000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
 ----SAFETY INSPECTION: LUA SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path expand-text show-text seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* SAFE EXCEPT FOR script-opts WHICH MAY HOOK AN UNSAFE EXECUTABLE.
 ----FUTURE VERSION SHOULD ALSO HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED.  NEEDED FOR android albumart.
-----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts. function on_update.
+----FUTURE VERSION SHOULD HAVE script-message set TO CHANGE o ON THE FLY.  OR RESPOND TO CHANGING script-opts (function on_update).
 ----FUTURE VERSION COULD  HAVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout, o.double_mute_command, o.double_aid_command & o.double_sid_command.
 
 

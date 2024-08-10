@@ -26,7 +26,7 @@ options                      = {
     os_sync_delay        =    .01 , --SECONDS.  PRECISION FOR SYNC TO os.time.  OPERATING SYSTEM TIME IS CHECKED EVERY 10ms FOR THE NEXT TICK.  WIN10 CMD "TIME 0>NUL" GIVES 10ms PRECISION.
     auto_delay           =    .25 , --SECONDS.  CHILDREN ONLY.  RESPONSE TIME.  THEY CHECK txtfile THIS OFTEN.
     seek_limit           =    .5  , --SECONDS.  CHILDREN ONLY.  SYNC BY seek INSTEAD OF speed, IF time_gained>seek_limit.  seek CAUSES AUDIO TO SKIP. (SKIP VS ACCELERATION.) IT'S LIKE TRYING TO SING FASTER TO CATCH UP TO THE OTHERS.
-    quit_timeout         =     15 , --SECONDS.  CHILDREN ONLY.  quit IF CONTROLLER BREAKS FOR THIS LONG.  
+    quit_timeout         =     10 , --SECONDS.  CHILDREN ONLY.  quit IF CONTROLLER BREAKS FOR THIS LONG.  15s CAUSED RARE YT-BUG.
     pause_timeout        =      5 , --SECONDS.  CHILDREN ONLY.  THEY pause INSTANTLY ON STOP, BUT NOT ON BREAK.
     max_speed_ratio      =   1.15 , --          CHILDREN ONLY.  speed IS BOUNDED BY [txt.speed/max,txt.speed*max]  1.15 SOUNDS OK, BUT MAYBE NOT 1.25.
     max_random_percent   =     10 , --          CHILDREN ONLY.  DEVIATION FROM PROPER speed. UPDATES EVERY HALF A SECOND.  EXAMPLE: 10%*.5s=50 MILLISECONDS INTENTIONAL MAX DEVIATION, PER SPEAKER.  0% STILL CAUSES L/R DRIFT, DUE TO LAG & HALF SECOND RANDOM WALKS BTWN SPEEDS.
@@ -100,9 +100,9 @@ function round(N,D)  --@property_handler & @clock_update.  NUMBERS/STRINGS/nil. 
     return N and math.floor(.5+N/D)*D  --round(N)=math.floor(.5+N)
 end
 
-function typecast(arg) --ALSO @apply_astreamselect & @property_handler.  load INVALID ON MPV.APP. 
-    if       type(arg)=='string' then return loadstring('return '..arg)() end  --''→nil
-    return        arg
+function native_expand(arg)  --ALSO @print_arg, @show, @apply_astreamselect & @property_handler.
+    if type(arg)~='string' then return arg end
+    return loadstring('return '..mp.command_native({'expand-text',arg}))()   --''→nil.  load INVALID ON MPV.APP.
 end
 
 function  gp(property)  --ALSO @property_handler.  GET-PROPERTY.
@@ -116,10 +116,10 @@ for  opt,val in pairs(options)
 do o[opt]     = val end               --CLONE
 require 'mp.options'.read_options(o)  --yes/no=true/false BUT OTHER TYPES DON'T AUTO-CAST.
 for  opt,val in pairs(o)
-do o[opt] = type(options[opt])~='string' and typecast(val) or val end  --NATIVES PREFERRED, EXCEPT FOR GRAPH INSERTS.  
-N         = o.params.N  --N ABBREVIATES CHILD-PAIR# (0, 1, OR MORE COME IN PAIRS).
+do if type(options[opt])~='string' then o[opt]=native_expand(val) end end  --NATIVE TYPECAST ENFORCES ORIGINAL TYPES.
 
 for _,opt in pairs(o[p.platform].options or {}) do table.insert(o.options,opt) end  --platform OVERRIDE APPENDS TO o.options.
+N              = o.params.N  --N ABBREVIATES CHILD-PAIR# (0, 1, OR MORE COME IN PAIRS).
 for _,opt in pairs(N==0  and o.options   or o.options_children)                                   
 do  command    = ('%s no-osd set %s;'):format(command or '',opt) end  --ALL SETS IN 1.
 command        = command and mp.command (command)
@@ -149,12 +149,12 @@ then clocks,LOCALES = {''},{{}}      --ONLY 1.  NO-LOCALES.
 o.clocks.offset     =  o.clocks.offset   or 0                         --DEFAULT=0 s.
 clocks              = (o.clocks.duration or 0)==0 and {} or clocks    --duration=nil/0 MEANS clock=nil.
 directory           = require 'mp.utils'.split_path(gp('scripts')[1]) --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
-__script            = ('--script=%s/%s.lua'):format(directory,label)  --"/" FOR WINDOWS & UNIX. .lua COULD BE .js FOR JAVASCRIPT.  
+__script            = ('--script=%s/%s.lua'):format   (directory,label)  --"/" FOR WINDOWS & UNIX. .lua COULD BE .js FOR JAVASCRIPT.  
 directory           = mp.command_native({'expand-path',directory})    --command_native EXPANDS '~/', REQUIRED BY io.open.
-txtpath             = ('%s/%s-pid%d.txt'):format(directory,label,o.params.pid or gp('pid'))  --txtfile INSTEAD OF PIPES.
+txtpath             = ('%s/%s-pid%d.txt'   ):format   (directory,label,o.params.pid or gp('pid'))  --txtfile INSTEAD OF PIPES.
 if N==0 then clock  = clocks[1] and mp.create_osd_overlay('ass-events')  --AT LEAST 1.  ass-events IS THE ONLY VALID OPTION.   COULD ALSO SET res_x & res_y FOR BETTER THAN 720p FONT QUALITY.
-    o.auto_delay    = max(.5,o.auto_delay) --EXISTS ONLY TO STOP timeout. 
-    script_opts     = ''                   --RELAYS @SPAWN.  
+    o.auto_delay    = max(1,o.auto_delay) --EXISTS ONLY TO PREVENT quit_timeout. 
+    script_opts     = ''                  --RELAYS @SPAWN.  
     for script_opt,val in pairs(gp('script-opts'))
     do  script_opts = (not o.suppress_script_opts or script_opt: find('ytdl_hook'))
                        and ('%s%s=%s,'):format(script_opts,script_opt,val) or script_opts end
@@ -193,7 +193,7 @@ function file_loaded()
 end
 
 function apply_astreamselect(map)  --@playback-restart, @on_toggle & @property_handler.
-    map    = typecast(map) or (N~=0 or not OFF and mpv and txt.seeking=='no') and 1 or 0 --DEDUCE INTENDED map.  1=MUTED INVALID WITHOUT CHILDREN, WHO ARE ALWAYS MUTE.  ALWAYS UNMUTE WHEN FIRST-BORN IS seeking.
+    map    = native_expand  (map) or (N~=0 or not OFF and mpv and txt.seeking=='no') and 1 or 0  --DEDUCE INTENDED map.  1=MUTED INVALID WITHOUT CHILDREN, WHO ARE ALWAYS MUTE.  ALWAYS UNMUTE WHEN FIRST-BORN IS seeking.
     if map==m.map and not af_observed or gp('seeking') then return end  --return CONDITIONS.  EXCESSIVE af-COMMANDS CAUSE LAG. FAILS WHEN seeking (audio-params=nil?).  
     
     m .map,af_observed = map,nil 
@@ -256,20 +256,20 @@ timers.playback_restarted = mp.add_periodic_timer(.01,function() playback_restar
 
 function property_handler(property,val) --ALSO @timers.auto.  txtfile INPUT/OUTPUT.  ONLY EVER pcall, FOR RELIABLE INSTANT write & SIMULTANEOUS io.remove.
     p[property or ''] = val             --p['']=nil  DUE TO IDLER.
-    seeking           = (p.seeking or  not p['audio-params/samplerate'] or p.pause) and 'yes' or 'no' --COULD BE RENAMED not_playing_audio, OR STALLED.  IF FIRST-CHILD seeking/PAUSED, PARENT MUST UNMUTE.  ALSO samplerate=nil OCCURS AS YOUTUBE LOADS.  (AGGRESSIVELY UNMUTE.)  
-    speed             =       N==0     and not (property or OFF or p.pause) and typecast(mp.command_native({'expand-text',o.speed})) or p.speed  --~property MEANS IDLER.  speed=p.speed UNLESS CONTROLLER SETS EVERY HALF-SECOND, UNLESS OFF OR PAUSED.  
-    set_speed         = p.speed~=speed and mp.command(('%s set speed %s'):format(command_prefix,speed))  --CONTROLLER TITULAR command.
+    seeking           = (p.seeking or not p['audio-params/samplerate'] or p.pause) and 'yes' or 'no'    --COULD BE RENAMED not_playing_audio, OR STALLED.  IF FIRST-CHILD seeking/PAUSED, PARENT MUST UNMUTE.  ALSO samplerate=nil OCCURS AS YT LOADS (AGGRESSIVELY UNMUTE).  THIS ISN'T GOOD ENOUGH - CAN'T DETECT HUNG YT.
+    target            = target     or seeking=='no' and (mp.command(('af-command %s map %d astreamselect'):format(label,m.map)) and 'astreamselect' or '')  --NEW MPV OR OLD. v0.37.0+ SUPPORTS TARGETED COMMANDS.  command RETURNS true IF SUCCESSFUL. MORE RELIABLE THAN VERSION NUMBERS BECAUSE THOSE CAN BE ANYTHING.  TARGETED COMMANDS WERE INTRODUCED WITH time-pos BUGFIX.  astreamselect ONLY WORKS AFTER samples_time.
+    speed             =       N==0     and not (property or OFF or p.pause) and native_expand(o.speed) or p.speed --~property MEANS IDLER.  speed=p.speed UNLESS CONTROLLER SETS EVERY HALF-SECOND, UNLESS OFF OR PAUSED.  
+    set_speed         = p.speed~=speed and mp.command(('%s set speed %s'):format(command_prefix,speed)) --CONTROLLER TITULAR command.
     samples_time      =           property=='af-metadata/'..label and val['lavfi.astats.Overall.Number_of_samples']/p['audio-params/samplerate']  --ALWAYS A HALF INTEGER, OR nil.  TIME=SAMPLE#/samplerate  (SOURCE SAMPLERATE) 
     af_observed       =           property=='af' or af_observed  --af-command-OVERRIDE.  af/vf OFTEN RESET GRAPH STATES, BUT WITHOUT TRIGGERING playback-restart!
-    if not mp2os_time or          property=='af' or set_speed and property=='speed'  --5 return CONDITIONS.  1) AWAIT SYNC.  2) af_observed.  3) set_speed OBSERVATION ENDS HERE. 
-        or N         == 0 and not property  and seeking=='no'    --4) CONTROLLER IDLER  ENDS HERE, UNLESS JPEG OR PAUSED/seeking. IT DOES write OBSERVATIONS.  seeking SAVES YOUTUBE LOAD.  AN ISSUE WITH MANY DIRECT LINKS TO 1 function IS COMPLICATED RETURNS.
-        or N         ~= 0 and     property  and not samples_time --5) CHILD OBSERVATION ENDS HERE, EXCEPT ON astats TRIGGER. CONTROLLER PROCEEDS.
+    if not mp2os_time     or      property=='af' or set_speed and property=='speed' --5 return CONDITIONS.  1) AWAIT SYNC.  2) af_observed.  3) set_speed OBSERVATION ENDS HERE. 
+        or N         ~= 0 and     property  and not samples_time                    --4) CHILD OBSERVATION ENDS HERE, EXCEPT ON astats TRIGGER. CONTROLLER PROCEEDS.
+        or N         == 0 and not property  and target==''    and seeking=='no'     --5) OLD MPV IDLER (CONTROLLER) ENDS HERE, UNLESS "seeking"/JPEG.  NEW MPV IDLER PROCEEDS BECAUSE THAT'S .1% MORE RELIABLE WHEN YT HANGS FOR 20s+. CAUSES DOUBLE THE WRITES.  seeking SAVES YT LOAD.  AN ISSUE WITH MANY DIRECT LINKS TO 1 function IS COMPLICATED RETURNS.
     then return end  
     os_time           =  mp2os_time+mp.get_time()  --TIMEFROM1970 PRECISE TO 10ms.
-    target            =  target or seeking=='no'           and (mp.command(('af-command %s map %d astreamselect'):format(label,m.map)) and 'astreamselect' or '')  --NEW MPV OR OLD. v0.37.0+ SUPPORTS TARGETED COMMANDS.  command RETURNS true IF SUCCESSFUL. MORE RELIABLE THAN VERSION NUMBERS BECAUSE THOSE CAN BE ANYTHING.  TARGETED COMMANDS WERE INTRODUCED WITH time-pos BUGFIX.  astreamselect ONLY WORKS AFTER samples_time.
     resync            = (property=='frame-drop-count'      or  os_time-sync_time>o.resync_delay) and os_sync() --ON_LAG & EVERY MINUTE.  ON_LAG COULD MULTI-RESYNC (LINK TO playback-restart).
-    initial_time_pos  =  property~='frame-drop-count'      and initial_time_pos or target==''    and samples_time  and samples_time>20 and gp('time-pos')-samples_time  --FOR OLD MPV.  EXCESSIVE LAG RESETS SAMPLE COUNT.  v0.36 CAN'T SYNC WITHOUT astats. BOTH MP4 & MP3 LAGGED BEHIND THE CHILDREN. time-pos, playback-time & audio-pts WORKED WELL OVER 1 MINUTE, BUT NOT 1 HOUR.  SAMPLE COUNT STABILIZES WITHIN 20s (YOUTUBE+lavfi-complex). IT'S ALWAYS A HALF-INTEGER @MEASUREMENT.  initial_time_pos=initial_time_pos_relative_to_samples_time  THIS # STAYS THE SAME FOR THE NEXT 10 HOURS. 
-    p['time-pos']     =  initial_time_pos and samples_time and initial_time_pos+samples_time     or gp('time-pos') or 0  --0 DURING YOUTUBE LOAD TO STOP timeout.  OLD MPV USES ALT-METRIC WHOSE CHANGE IS BASED ON astats (METRIC SWITCH). 
+    initial_time_pos  =  property~='frame-drop-count'      and initial_time_pos or target==''    and samples_time  and samples_time>20 and gp('time-pos')-samples_time  --FOR OLD MPV.  EXCESSIVE LAG RESETS SAMPLE COUNT.  v0.36 CAN'T SYNC WITHOUT astats. BOTH MP4 & MP3 LAGGED BEHIND THE CHILDREN. time-pos, playback-time & audio-pts WORKED WELL OVER 1 MINUTE, BUT NOT 1 HOUR.  SAMPLE COUNT STABILIZES WITHIN 20s (YT+lavfi-complex). IT'S ALWAYS A HALF-INTEGER @MEASUREMENT.  initial_time_pos=initial_time_pos_relative_to_samples_time  THIS # STAYS THE SAME FOR THE NEXT 10 HOURS. 
+    p['time-pos']     =  initial_time_pos and samples_time and initial_time_pos+samples_time     or gp('time-pos') or 0  --0 DURING YT LOAD TO STOP timeout.  OLD MPV USES ALT-METRIC WHOSE CHANGE IS BASED ON astats (METRIC SWITCH). 
     txtfile           = io.open(txtpath)  --MODES r/r+ WORK.  ALTERNATIVE io.lines RAISES ERROR.  CONTROLLER READS TOO, FOR FEEDBACK. 
     if txtfile        
     then lines        = txtfile: lines()  --ITERATOR RETURNS 0 OR 7 LINES, AS function. 
@@ -277,13 +277,13 @@ function property_handler(property,val) --ALSO @timers.auto.  txtfile INPUT/OUTP
         for line in ('aid volume speed os_time time_pos seeking'):gmatch('[^ ]+')  --LINES 2→7.
         do txt[line]  = txt.path and lines() or txt[line] end 
         txtfile: close()          --NEEDED FOR win32 os.remove@shutdown (DEPENDS ON BUILD).
-        apply_astreamselect() end --BUGFIX FOR SLOW FIRST-CHILD, AUTO-DEDUCES map.  LONG YOUTUBE VIDEO-seeking TENDS TO GLITCH.  ALL FAMILY MEMBERS HAVE 2 MOUTHS - THE PARENT UNMUTES ONE OF ITS OWN IF THE FIRST-BORN IS SLOW.  FOR TESTING, GIVE CHILD1 ITS OWN VIDEO & THEN MAKE IT seek. 
+        apply_astreamselect() end --BUGFIX FOR SLOW FIRST-CHILD, AUTO-DEDUCES map.  LONG YT VIDEO-seeking TENDS TO GLITCH.  ALL FAMILY MEMBERS HAVE 2 MOUTHS - THE PARENT UNMUTES ONE OF ITS OWN IF THE FIRST-BORN IS SLOW.  FOR TESTING, GIVE CHILD1 ITS OWN VIDEO & THEN MAKE IT seek. 
     
     if  N           == 0 then for key in ('mute aid sid'):gmatch('[^ ]+')            
         do toggle    = property== key and playback_restarted and (not timers[key]:is_enabled() and (timers[key]:resume() or 1) or on_toggle()) end 
         osd_message  = samples_time   and not OFF            and o.metadata_osd                and mp.osd_message(mp.get_property_osd('af-metadata/'..label):gsub('\n','    '))  --TAB EACH STAT (TOO MANY LINES), UNLESS OFF.
-        txt.speed    = seeking=='yes' and   0     or speed    --seeking→pause FIXES PLAYLIST/YOUTUBE STARTING GLITCHES.
-        txt.path     = not block_path and p.path  or ''       --BLANK @load-script & @JPEG.  ALWAYS RELAY path UNLESS block_path.  YOUTUBE SHOULD RELOAD FREELY & INSTANTLY, AFTER FAILURE.
+        txt.speed    = seeking=='yes' and   0     or speed    --seeking→pause FIXES PLAYLIST/YT STARTING GLITCH.
+        txt.path     = not block_path and p.path  or ''       --BLANK @load-script & @JPEG.  ALWAYS RELAY path UNLESS block_path.  YT SHOULD RELOAD FREELY & INSTANTLY, AFTER FAILURE.
         txt.aid      =                    p.aid   or 'no'     --no    @load-script.  aid=number/string/false  a_id=number/nil=current-tracks/audio/id UNNECESSARY.
         txt.volume   = (txt.mute or p.mute) and 0 or p.volume --OFF-SWITCH & mute.
         txt.os_time,txt.time_pos = round(os_time,.001),round(p['time-pos'],.001) end --ms PRECISION.
@@ -315,7 +315,7 @@ function property_handler(property,val) --ALSO @timers.auto.  txtfile INPUT/OUTP
                               *(1+random(-o.max_random_percent,o.max_random_percent)/100) --random BOUNDS [.9,1.1] MAYBE SHOULD BE [.91,1.1]=[1/1.1,1.1].  1% SKEWED TOWARDS SLOWING IT DOWN EXCESSIVELY.
                               ,txt.speed/o.max_speed_ratio,txt.speed*o.max_speed_ratio)   --speed LIMIT RELATIVE TO CONTROLLER.  15% EXTRA WHEN USER UNPAUSES (FOR CHILDREN TO CATCH UP).
     set_volume      = txt.volume~= p.volume..'' 
-    set_aid         = txt.aid   ~=(p.aid   or 'no')..''    and txt.aid~='no'  --..'' CONVERTS→string.  txt.aid=auto/no/#.  NEVER set no, OR ELSE YOUTUBE TAKES LONGER TO LOAD (~WRONG).  no FOR JPEG.  
+    set_aid         = txt.aid   ~=(p.aid   or 'no')..''    and txt.aid~='no'  --..'' CONVERTS→string.  txt.aid=auto/no/#.  NEVER set no, OR ELSE YT TAKES LONGER TO LOAD (SWITCHING aid/sid GLITCHES).  no FOR JPEG.  
     set_pause       = speed>0   == p.pause and (speed ==0  and 'yes' or 'no') --txt.pause INFERRED.
     set_speed       = speed>0              and accurate_time 
     command         = ''                   
@@ -324,12 +324,12 @@ function property_handler(property,val) --ALSO @timers.auto.  txtfile INPUT/OUTP
                       ..(set_pause         and ('   set  pause  %s;'        ):format(               set_pause ) or '')
                       ..(set_speed         and ('%s set  speed  %s;'        ):format(command_prefix,speed     ) or '')
                       ..(seek              and ('   seek %s absolute exact;'):format(               target_pos) or '')  --absolute MORE RELIABLE.  SYNC USING seek INSTEAD OF speed (BETTER TO SKIP THE TRACK THAN ACCELERATE ITS SPEED).
-    loadfile        = txt.path~=''         and txt.path~=p.path and mp.commandv('loadfile',txt.path)  --commandv FOR FILENAMES.  FLAGS INCOMPATIBLE WITH MPV-v0.34.  RARELY, YOUTUBE MUST RELOAD.
+    loadfile        = txt.path~=''         and txt.path~=p.path and mp.commandv('loadfile',txt.path)  --commandv FOR FILENAMES.  FLAGS INCOMPATIBLE WITH MPV-v0.34.  RARELY, YT MUST RELOAD.
     command         =  command~=''         and mp.command(command)
 end
 for property in ('pause seeking mute aid sid speed volume frame-drop-count audio-params/samplerate path af af-metadata/'..label):gmatch('[^ ]+')  --BOOLEANS NUMBERS STRINGS table.  INSTANT write TO txtfile. CASCADE @volume REQUIRES pcall. volume NOT WORKING ON ANDROID.  samplerate MAY DEPEND ON lavfi-complex.  
     do mp.observe_property(property,'native'    ,function(property,val) pcall(property_handler,property,val)  end) end --TRIGGERS INSTANTLY.  astats TRIGGERS EVERY HALF-SECOND, ON playback-restart, frame-drop-count & shutdown.
-timers.auto = mp.add_periodic_timer(o.auto_delay,function(            ) pcall(property_handler             )  end)     --IDLER & RESPONSE TIMER. STARTS INSTANTLY TO STOP YOUTUBE TIMING OUT. TRIGGERS EVERY QUARTER/HALF SECOND.  SHOULD ALWAYS BE RUNNING FOR RELIABILITY.
+timers.auto = mp.add_periodic_timer(o.auto_delay,function(            ) pcall(property_handler             )  end)     --IDLER & RESPONSE TIMER. STARTS INSTANTLY TO STOP YT TIMING OUT. TRIGGERS EVERY QUARTER/HALF SECOND.  SHOULD ALWAYS BE RUNNING FOR RELIABILITY.
 
 for       property in ('mute aid sid'):gmatch('[^ ]+')  --1SHOT NULL-OP DOUBLE-TAPS.  current-tracks/audio/selected(double_ao_timeout) & current-tracks/sub/selected(double_sub_timeout) ARE STRONGER ALT-CONDITIONS REQUIRING OFF/ON, AS OPPOSED TO ID#.  current-ao ALSO DOES WHAT current-tracks/audio/selected DOES, BUT SAFER @playlist-next.  SMPLAYER DOUBLE-MUTE WHILE seeking MAY FAIL (CANCELS ITSELF OUT).  
 do timers[property]    = mp.add_periodic_timer(o[('double_%s_timeout'):format(property)],function()end) end
@@ -341,33 +341,38 @@ function remove_filter() --@cleanup
     for _,af in pairs(p.af) do af_remove = af.label==label and mp.command(('%s af remove @%s'):format(command_prefix,label)) end  --CHECK FIRST.
 end
 
-function cleanup()  --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-opts.
-    os.remove(txtpath)
-    remove_filter() 
-    set_speed       = p.speed~=1 and mp.command(command_prefix..' set speed 1')  --cleanup_speed=1
-    mp.keep_running = false  --false FLAG EXIT: COMBINES overlay-remove, remove_key_binding, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
-end 
+function callstring(string) loadstring    (string)()                                   end  --@script-message.  CAN REPLACE ANY OTHER.
+function print_arg (arg   ) print         (native_expand(arg))                         end  --@script-message. 
+function show(arg,duration) mp.osd_message(native_expand(arg),native_expand(duration)) end  --@script-message. 
+function exit(            ) mp.keep_running = false                                    end  --@script-message & @cleanup.  false FLAG EXIT: COMBINES overlay-remove, remove_key_binding, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
 
-function callstring(string) loadstring(string)() end  --@script-message.  CAN REPLACE ANY OTHER.
-function print_arg (arg   ) print(typecast(arg)) end  --@script-message. 
-for message,fn in pairs({loadstring=callstring,print=print_arg,cleanup=cleanup,toggle=on_toggle,resync=os_sync})  --SCRIPT CONTROLS.
+function cleanup ()  --@script-message.  ENABLES SCRIPT-RELOAD WITH NEW script-opts.
+    remove_filter() 
+    os.remove(txtpath)
+    set_speed = p.speed~=1 and mp.set_property_number('speed',1)  --cleanup_speed=1
+    exit()
+end 
+for message,fn in pairs({loadstring=callstring,print=print_arg,show=show,exit=exit,quit=cleanup,toggle=on_toggle,resync=os_sync})  --SCRIPT CONTROLS.
 do mp.register_script_message(message,fn)  end
 reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.
 
 ----CONSOLE SCRIPT-COMMANDS & EXAMPLES:
 ----script-binding           aspeed
-----script-message-to aspeed loadstring <arg>
-----script-message-to aspeed loadstring mp.keep_running=false
-----script-message-to aspeed print      <arg>
-----script-message           print      "m and m.graph or _VERSION"
-----script-message-to aspeed cleanup
+----script-message-to aspeed loadstring <string>
+----script-message-to aspeed loadstring math.randomseed(365)
+----script-message           print      <arg>
+----script-message           print      "m and m.graph"
+----script-message           show       <arg>                       <duration>
+----script-message           show       "m and m.graph or _VERSION" 10*random()
+----script-message-to aspeed exit
+----script-message-to aspeed quit
 ----script-message-to aspeed toggle
 ----script-message           resync
 
 ----APP VERSIONS:
 ----MPV      : v0.38.0(.7z .exe v3 .apk)  v0.37.0(.app)  v0.36.0(.app .flatpak .snap)  v0.35.1(.AppImage)  v0.34.0(win32)    ALL TESTED.
 ----FFMPEG   : v6.1(.deb)  v6.0(.7z .exe .flatpak)  v5.1.4(mpv.app)  v5.1.2(SMPlayer.app)  v4.4.2(.snap)  v4.2.7(.AppImage)  ALL TESTED.  MPV IS STILL OFTEN BUILT WITH 3 VERSIONS OF FFMPEG: v4, v5 & v6.
-----PLATFORMS:  windows  linux  darwin  android  ALL TESTED.  WIN-10 MACOS-11 LINUX-DEBIAN-MATE ANDROID-11.  WON'T OPEN JPEG/YOUTUBE ON ANDROID.
+----PLATFORMS: windows  linux  darwin  android  ALL TESTED.  WIN-10 MACOS-11 LINUX-DEBIAN-MATE ANDROID-11.  WON'T OPEN JPEG/YOUTUBE ON ANDROID.
 ----LUA      : v5.1     v5.2  TESTED.
 ----SMPLAYER : v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
@@ -376,7 +381,7 @@ reload = gp('time-pos') and file_loaded()  --file-loaded: TRIGGER NOW.
 ----FUTURE VERSION COULD  COMBINE DOUBLE-TAPS INTO o.double_tap_properties & o.double_tap_timeout. o.toggle_command SHOULD BE MOVED TO main.lua.
 ----FUTURE VERSION SHOULD REPLACE (random) WITH $RANDOM/%RANDOM%.
 ----FUTURE VERSION SHOULD SEPARATE clock.lua.  RESYNCING THE EXACT TICK EVERY MINUTE USES 0% CPU.
-----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts; function on_update.
+----FUTURE VERSION SHOULD HAVE script-message set TO CHANGE o ON THE FLY.  OR RESPOND TO CHANGING script-opts (function on_update).
 ----FUTURE VERSION SHOULD REMOVE astats FOR NEW MPV, SO o.speed IS SET EVERY HALF-SECOND IN REAL-TIME.
 ----FUTURE VERSION MAY REPLACE astreamselect WITH volume & amix.  astreamselect WAS A BAD DESIGN CHOICE.
 ----FUTURE VERSION MAY HAVE SMOOTH TOGGLE. txtfile COULD HAVE ANOTHER LINE FOR SMOOTH TOGGLE (SMOOTH-MUTE USING t-DEPENDENT af-command).
