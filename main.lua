@@ -38,21 +38,23 @@ options     = {
     autoloop_duration      =  6 , --SECONDS.  0 MEANS NO AUTO-loop.  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://GITHUB.COM/zc62/mpv-scripts/blob/master/autoloop.lua
     options_delay          = .3 , --SECONDS, FROM playback_start.  title ALSO TRIGGERS THEN.
     options_delayed        = {    --@playback_started+options_delay, FOR EVERY FILE.
-        'osd-level       1','osc          yes',  --RETURNS osd & osc.
-        -- 'sid          1','secondary-sid  1',  --UNCOMMENT FOR SUBTITLE-TRACK-ID OVERRIDE.  USEFUL FOR YOUTUBE + sub-create-cc-track. sid=1 BUGS OUT @file-loaded.
+        'osd-level 1','osc yes',  --RETURNS osd & osc.
+        -- SUBTITLE_OVERRIDE; 'sid 1','secondary-sid 1',  --UNCOMMENT FOR SUBTITLE-TRACK-ID OVERRIDE.  USEFUL FOR YOUTUBE + sub-create-cc-track. sid=1 BUGS OUT @file-loaded.
     },
     windows     = {}, linux = {}, darwin = {},  --OPTIONAL platform OVERRIDES.
     android     = {                                                             
         options = {'osd-fonts-dir /system/fonts/','osd-font "DROID SANS MONO"',},  --options APPEND, NOT REPLACE. 
     },
 }
+
 o,p,timers = {},{},{}  --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file.
 abs,max,min,random = math.abs,math.max,math.min,math.random  --ABBREV.
 math.randomseed(os.time()+mp.get_time())  --os,mp=OPERATING-SYSTEM,MEDIA-PLAYER.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil  BUT COULD ECHO BACK %RANDOM% OR $RANDOM USING A subprocess. 
 
-function native_expand(arg) --ALSO @print_arg, @show & @title_update.  IRONICALLY expand WOULD USE A command_native, BUT native_expand IS SOMETHING ELSE! LIKE ${...}+${...}=2+2.
+function pexpand(arg)  --ALSO @print_arg, @show & @title_update.  PROTECTED/PROPERTY EXPANSION.  '${speed}+2'=3.  COULD BE RENAMED ppexpand.
     if type(arg)~='string' then return arg end
-    return loadstring('return '..mp.command_native({'expand-text',arg}))()   --''→nil.  load INVALID ON MPV.APP.  SOMETIMES for LOOPS ARE REQUIRED TO FULLY EXPAND.
+    pcode, pval  = pcall(loadstring('return '..mp.command_native({'expand-text',arg})))  --''→nil.  load INVALID ON MPV.APP.  PROTECTED-CALL.
+    if pcode then return pval end  --OTHERWISE pval=error-string.
 end
 
 function  gp(property) --ALSO @playback-restart.  GET-PROPERTY.
@@ -65,18 +67,17 @@ o[p.platform] = {}                                                         --DEF
 for  opt,val in pairs(options)                                             
 do o[opt]     = val end               --CLONE
 require 'mp.options'.read_options(o)  --yes/no=true/false BUT OTHER TYPES DON'T AUTO-CAST.  GUI USER MAY ENTER RAW TABLES & 1+1 INSTEAD OF 2, ETC.
-for  opt,val in pairs(o)
-do if type(options[opt])~='string' then o[opt]=native_expand(val) end end  --NATIVE TYPECAST ENFORCES ORIGINAL TYPES.
+for opt,val in pairs(o) do if type(options[opt])~='string' then o[opt]=pexpand(val) end end  --NATIVE TYPECAST ENFORCES ORIGINAL TYPES.
 
 for _,opt in pairs(o[p.platform].options or {}) do table.insert(o.options,opt) end  --platform OVERRIDE APPENDS TO o.options.
 for _,opt in pairs(o.options)
 do  command        = ('%s no-osd set %s;'):format(command or '',opt) end  --ALL SETS IN 1.
 command            = command and mp.command(command)
 for opt,val in pairs(o[p.platform]) 
-do o[opt]          = val end        --platform OVERRIDE.  
-playback_restarted = gp('time-pos') --FILE ALREADY LOADED.
-split_path         = require 'mp.utils'.split_path 
-directory          = split_path(gp('scripts')[1])                 --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
+do o[opt]          = val end                                      --platform OVERRIDE.  
+utils              = require 'mp.utils'                           --@pexpand_to_string.
+playback_restarted = gp('time-pos')                               --FILE ALREADY LOADED.
+directory          = utils.split_path(gp('scripts')[1])           --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
 directory_expanded = mp.command_native({'expand-path',directory}) --command_native EXPANDS '~/' FOR ytdl_hook.  
 title              = mp.create_osd_overlay('ass-events')          --ass-events IS THE ONLY FORMAT. title GETS ITS OWN osd.
 COLON              = p.platform=='windows' and ';' or ':'         --windows=;  UNIX=:  FILE LIST SEPARATOR.  
@@ -97,7 +98,7 @@ mp.set_property_native('msg-level',p['msg-level'])
 for _,script  in pairs(o.scripts) 
 do script_lower,script_loaded = script:lower(),nil --SEARCH NOT CASE SENSITIVE. 
     for _,val in pairs(p.scripts) 
-    do  _,val                 = split_path(val)    --SEARCH NAMES ONLY. 
+    do  _,val                 = utils.split_path(val)    --SEARCH NAMES ONLY. 
         script_loaded         = script_loaded or val:lower()==script_lower end  
     script                    = ('%s/%s'):format(directory,script)
     load_script               = not script_loaded and mp.commandv('load-script',script) and table.insert(p.scripts,script) end  --commandv FOR FILENAMES.
@@ -115,7 +116,7 @@ mp.register_event('end-file',function() playback_restarted,playback_started = se
 
 function on_pause(_,  paused)                
     p.pause     =     paused
-    try_restart = not paused and playback_restarted and playback_restart()  --UNPAUSE MAY BE A FIFTH STAGE AFTER playback-restart.
+    return not paused and playback_restarted and playback_restart()  --UNPAUSE MAY BE A FIFTH STAGE AFTER playback-restart.
 end 
 mp.observe_property('pause','bool',on_pause)
 
@@ -124,7 +125,7 @@ function title_update(data,title_duration)  --@script-message & @timers.playback
     for _,opt in pairs(o.options_delayed)  --PLAYBACK (TITULAR) OVERRIDES.  osc RE-ACTIVATES HERE.
     do command           = ('%s no-osd set %s;'):format(command,opt) end
     command              = command~='' and mp.command  (command)
-    timers.title.timeout = native_expand(title_duration)         or o.title_duration
+    timers.title.timeout = pexpand(title_duration)               or o.title_duration
     title.data           = mp.command_native({'expand-text',data or o.title})
     title:update()  --AWAITS UNPAUSE (PLAYING MESSAGE).  ALSO AWAITS TIMEOUT, OR ELSE OLD MPV COULD HANG UNDER EXCESSIVE LAG.
     timers.title:kill()
@@ -138,23 +139,32 @@ for _,timer in pairs(timers)
 do    timer.oneshot   = 1 --ALL 1SHOT.
       timer:kill() end    --FOR OLD MPV. IT CAN'T START timers DISABLED.
 
-function set(script_opt ,val)  --@script-message IN FUTURE VERSION.
+function pexpand_to_string(string)  --@pprint & @show.  RETURNS string/nil, UNLIKE pexpand.
+    val = pexpand(string)
+    return type(val)=='string' and val or val and utils.to_string(val)
+end 
+
+function show(string,duration)  --@script-message. 
+    string = pexpand_to_string(string)
+    return string and mp.osd_message(string,pexpand(duration))
+end
+
+function set(script_opt ,val)  --@script-message IN FUTURE VERSION.  ULTIMATELY A GUI COULD CONTROL ALL SCRIPTS BY SENDING HUNDRED/S OF set COMMANDS. SIMPLER THAN SETTING script-opts. THE ORIGINAL options ARE ONLY AN EXAMPLE.
     o       [script_opt]=val
 end
 
-function callstring(string) loadstring(string)()      end  --@script-message.  CAN REPLACE ANY OTHER.  IRONICALLY GOOD EXAMPLES GET THEIR OWN NAMES.
-function print_arg (arg   ) print(native_expand(arg)) end  --@script-message. 
-function show(arg,duration) mp.osd_message(native_expand(arg),native_expand(duration)) end  --@script-message. 
-function exit(            ) mp.keep_running = false   end  --@script-message.  false FLAG EXIT: COMBINES overlay-remove, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
-for message,fn in pairs({loadstring=callstring,print=print_arg,show=show,exit=exit,quit=exit,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.
+function callstring(string) loadstring(string)()             end  --@script-message.  CAN REPLACE ANY OTHER.  IRONICALLY GOOD EXAMPLES GET THEIR OWN NAMES.  IF pcall, COULD BE RENAMED ploadstring. OR scall (STRING-CALL). 
+function pprint    (string) print(pexpand_to_string(string)) end  --@script-message.  PROTECTED PRINT. 
+function exit      (      ) mp.keep_running = false          end  --@script-message.  false FLAG EXIT: COMBINES overlay-remove, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
+for message,fn in pairs({loadstring=callstring,print=pprint,show=show,exit=exit,quit=exit,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.
 do mp.register_script_message(message,fn)  end
 
-----CONSOLE SCRIPT-COMMANDS & EXAMPLES (main=_):
+----SCRIPT-COMMANDS & EXAMPLES:
 ----script-message-to _ loadstring <string>
 ----script-message      loadstring math.randomseed(365)
-----script-message      print      <arg>
+----script-message      print      <string>
 ----script-message      print      _VERSION
-----script-message      show       <arg>          <duration>
+----script-message      show       <string>       <duration>
 ----script-message      show       _VERSION       6*random()
 ----script-message-to _ exit
 ----script-message-to _ quit
@@ -188,7 +198,7 @@ do mp.register_script_message(message,fn)  end
 
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES).  correct-pts ESSENTIAL.  MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
 ----DECLARING local VARIABLES MAY IMPROVE HIGHLIGHTING/COLORING, BUT UNNECESSARY.
-----50%CPU+15%GPU USAGE (5%+15% WITHOUT scripts).  ARGUABLY SMOOTHER THAN VLC, DEPENDING ON VIDEO/VERSION, DUE TO SENSITIVITY TO STEADY-CAM + HUMAN FACE.  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER). FREE GPU IMPROVES MULTI-TASKING.
+----50%CPU+25%GPU USAGE (5%+15% WITHOUT scripts).  ARGUABLY SMOOTHER THAN VLC, DEPENDING ON VIDEO/VERSION, DUE TO SENSITIVITY TO STEADY-CAM + HUMAN FACE.  FREE/CHEAP GPU MAY ACTUALLY REDUCE PERFORMANCE (CAN CHECK BY ROLLING BACK DISPLAY DRIVER IN DEVICE MANAGER). FREE GPU IMPROVES MULTI-TASKING.
 ----UNLIKE A PLUGIN THE ONLY BINARY IS MPV ITSELF, & SCRIPTS COMMAND IT. MOVING MASK, SPECTRUM, audio RANDOMIZATION & CROPS ARE NOTHING BUT MPV COMMANDS. MOST TIME DEPENDENCE IS BAKED INTO GRAPH FILTERS. EACH SCRIPT PREPS & CONTROLS GRAPH/S OF FFMPEG-FILTERS.  ULTIMATELY TV FIRMWARE (1GB) COULD BE CAPABLE OF CROPPING, MASK & SPECTRAL OVERLAYS. 
 ----NOTEPAD++ HAS KEYBOARD SHORTCUTS FOR LINEDUPLICATE, LINEDELETE, UPPERCASE, lowercase, COMMENTARY TOGGLES, TAB-L/R & MULTI-LINE CTRL-EDITING. ENABLES QUICK GRAPH TESTING.  NOTEPAD++ HAS SCINTILLA, GIMP HAS SCM (SCHEME), PDF HAS LaTeX & WINDOWS HAS AUTOHOTKEY (AHK).  AHK PRODUCES 1MB .exe, WITH 1 SECOND REPRODUCIBLE BUILD TIME.   
 ----VMWARE MACOS: SWITCH  Command(⌘) & Control(^)‎  MODIFIER KEYS.  FOR DVORAK CAN SET:  Select All,Save,Undo,Cut,Copy,Paste = ‎⌥A,⌥O,⌥;,⌥J,⌥K,⌥Q‎  &  Redo,Open Recent... = ‎⌥⇧;,⌥⇧O‎  IN  Keyboard→Shortcuts→App Shortcuts→All Applications→+.  VIRTUALBOX DOESN'T HAVE THIS PROBLEM (DIRECT HARDWARE CAPTURE). BUT UNLOCKED VMWARE PERFORMS BETTER.
