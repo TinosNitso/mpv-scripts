@@ -62,14 +62,14 @@ Give mpv its own window then press ` & then enter any of these commands (but wit
 - `script-message exit`
 - `script-message quit`
 - `script-message title_remove`
-- `script-message loadstring           <arg>`
-- `script-message print                <arg>`
-- `script-message show                 <arg>  <duration>`
-- `script-message title                <data> <title_duration>`
+- `script-message loadstring           <string>`
+- `script-message print                <string>`
+- `script-message show                 <string> <duration>      `
+- `script-message title                <data>   <title_duration>`
 - `script-message apply_limit          <detect_limit>`
-- `script-message detect_crop          <show_text>`
-- `script-message apply_crop           <meta>`
-- `script-message apply_pad            <pad_options> <pixelformat>     <pad_scale_flags> <aspect> <par>`
+- `script-message detect_crop          <show_text>   `
+- `script-message apply_crop           <meta>        `
+- `script-message apply_pad            <pad_options> <pixelformat>     <pad_scale_flags> <par>        `
 - `script-message apply_aspect         <aspect>      <toggle_duration> <toggle_t_delay>  <toggle_expr>`
 - `script-message-to automask apply_eq <brightness>  <toggle_duration> <toggle_t_delay>  <toggle_expr>`
 
@@ -93,14 +93,14 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 - `/Applications/mpv.app/Contents/MacOS/mpv --no-config --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"` 
 
 ## Latest Updates
-Newest scripts above in `mpv-scripts.zip` haven't been properly released yet. Better script-messages are needed. 
-- Added script-message & function `exit`     to all scripts.
-- Added script-message & function `show`     to all scripts.
-- Added `script-message print`               to all scripts.
-- Added functions `callstring` & `print_arg` to all scripts. More rigorous codes.
+Newest scripts above in `mpv-scripts.zip` haven't been properly released yet. `script-message set` is required to simplify other functions. It's simpler for a GUI to send a hundred set commands than to use `script-opts`. 
+- Added script-message & function `exit` to all scripts.
+- Added script-message & function `show` to all scripts.
+- Added `script-message print`           to all scripts.
+- Added functions `callstring`, `pprint` & `pexpand_to_string` to all scripts. More rigorous codes. More elegant options. 
 - Added UNMAPPED script-bindings for all toggles.
-- autocrop: Added `o.auto_aspect`, `o.start_aspect_on`, `o.gsubs` & `o.gsubs_passes`. Randomizes aspect @1Hz. All these gsubs apply to just one formula, `o.auto_aspect`, which is statistical.  Examples include cycle btwn video/window aspects, random walker & linear distribution.  Bugfix for negative detections (w<0).  Removed `o.apply_min_ratio`.
-- aspeed: Added `o.suppress_script_opts`.
-- automask: `o.res_safety` lowered by 1.
+- autocrop: Added `o.auto_aspect`, `o.start_aspect_on`, `o.gsubs_passes`, `o.gsubs` & `o.framerate`. Randomizes aspect @1Hz. The gsubs are for auto_aspect.  Bugfix for negative detections (w<0).  Removed `o.apply_min_ratio`.  Added `function apply_framerate()` which interpolates to 50fps by default (the final filter).  9 examples include RANDOM_POWER, CYCLE_min_max, CYCLE_HDTV_TV, RANDOM_N_FULLSCREEN, UP_AND_ACROSS, ACROSS_AND_DOWN, UP_LEFT_RIGHT_DOWN, RANDOM_WALKER & LINEAR_DISTRIBUTION.  
+- automask: `o.res_safety` lowered by 1.  Added eq example in `o.filterchain` (mask can increase contrast).
+- aspeed: Added `o.suppress_script_opts`. Added RANDOM_SPEED `o.speed` example.
 - autocomplex/automask: `rotate` & `zoompan` now opt-in (absent by default). These null-ops can reduce performance.
 
