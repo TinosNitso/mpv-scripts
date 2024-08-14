@@ -6,9 +6,9 @@
 - [Terminal Commands](#terminal-commands)
 - [Latest Updates](#latest-updates)
 
-Video clocks, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), animated mask generator ([automask](automask.lua)), dual animated spectrum ([autocomplex](autocomplex.lua)) & insta-cropping ([autocrop](autocrop.lua)) for [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! Newest scripts in `mpv-scripts.zip` on GitHub. Toggle them by double-clicking on mute (m&m). Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. The scripts can be opened & options edited in Notepad. Disable word-wrap for these scripts! [main](main.lua) has much more info, & options for which scripts & subtitles load, & ytdl. I use [Notepad++](https://notepad-plus-plus.org/downloads/) on Windows, & [Brackets](https://BRACKETS.IO) on MacOS.  All free for Windows, Linux, MacOS & Android. But Android has no extra-device randomization & no YouTube.
+Video clocks, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), animated mask generator ([automask](automask.lua)), animated spectrum ([autocomplex](autocomplex.lua)) & insta-cropping ([autocrop](autocrop.lua)) for [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! Newest scripts in `mpv-scripts.zip` on GitHub. Toggle them by double-clicking on mute (m&m). Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. The scripts can be opened & options edited in Notepad. Disable word-wrap for these scripts! [main](main.lua) has much more info, & options for which scripts & subtitles load, & ytdl. I use [Notepad++](https://notepad-plus-plus.org/downloads/) on Windows, & [Brackets](https://BRACKETS.IO) on MacOS.  All free for Windows, Linux, MacOS & Android. But Android has no extra-device randomization & no YouTube.
 
-To use on YouTube select Open→URL in SMPlayer. Rumble, Odyssey & RedTube also compatible. Double-clicking mute makes the mask smoothly vanish or re-appear, along with black-bars (smooth padding), & the audio switches btwn randomized & normal. aspeed.lua options can activate chipmunk mode on left-channel (in sync), as well as tri-color clocks! autocrop handles transparent input, too, along with a track-list with start & end times. mpv has instant zoom, but unfortunately no scroll bar (to pan around with mouse, etc). Keyboard shortcuts only work if mpv has its own window (SMPlayer preference).
+To use on YouTube select Open→URL in SMPlayer. Rumble, Odyssey & RedTube also compatible. Double-clicking mute makes the mask smoothly vanish or re-appear, along with black-bars (smooth padding), & the audio switches btwn randomized & normal. aspeed.lua options can activate chipmunk mode on left-channel (in sync), as well as tri-color clocks! autocrop handles transparent input, too, along with a track-list with start & end times. mpv has instant zoom, but no scroll bar (to pan around with mouse, etc). Keyboard shortcuts only work if mpv has its own window (SMPlayer preference).
 
 See [doc](doc) folder for pdf manuals.
 
@@ -51,24 +51,28 @@ FFmpeg versions 6.1 (.deb), 6.0 (.exe .flatpak), 5.1.3, 5.1.2 (.app), 4.4.2 (.sn
 Lua versions 5.1 & 5.2 supported.
 
 ## Script-Commands
-Give mpv its own window then press ` & then enter any of these commands (but with proper inputs). The bottom of every script has exact examples, like how to replace black pads with white pads.
+Give mpv its own window then press ` & then enter any of these commands (but with proper inputs if needed). The bottom of every script has exact examples, like how to replace black pads with white pads.
 
-- `script-binding toggle_crop`
-- `script-binding toggle_aspect`
+- `script-binding toggle_crop   `
+- `script-binding toggle_aspect `
 - `script-binding toggle_complex`
-- `script-binding aspeed`
-- `script-binding automask`
-- `script-message toggle`
-- `script-message exit`
-- `script-message quit`
-- `script-message title_remove`
-- `script-message loadstring           <string>`
-- `script-message print                <string>`
-- `script-message show                 <string> <duration>      `
-- `script-message title                <data>   <title_duration>`
+- `script-binding aspeed        `
+- `script-binding automask      `
+- `script-message toggle        `
+- `script-message toggle_aspect `
+- `script-message exit          `
+- `script-message quit          `
+- `script-message title_remove  `
+- `script-message resync        `
+- `script-message loadstring           <string>      `
+- `script-message print                <string>      `
+- `script-message apply_framerate      <framerate>   `
 - `script-message apply_limit          <detect_limit>`
-- `script-message detect_crop          <show_text>   `
 - `script-message apply_crop           <meta>        `
+- `script-message show                 <string>      <duration>             `
+- `script-message set                  <script_opt>  <val>                  `
+- `script-message title                <data>        <title_duration>       `
+- `script-message detect_crop          <keep_center> <apply_inner_rectangle>`
 - `script-message apply_pad            <pad_options> <pixelformat>     <pad_scale_flags> <par>        `
 - `script-message apply_aspect         <aspect>      <toggle_duration> <toggle_t_delay>  <toggle_expr>`
 - `script-message-to automask apply_eq <brightness>  <toggle_duration> <toggle_t_delay>  <toggle_expr>`
@@ -93,14 +97,16 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 - `/Applications/mpv.app/Contents/MacOS/mpv --no-config --script=~/Desktop/mpv-scripts/ "https://youtu.be/5qm8PH4xAss"` 
 
 ## Latest Updates
-Newest scripts above in `mpv-scripts.zip` haven't been properly released yet. `script-message set` is required to simplify other functions. It's simpler for a GUI to send a hundred set commands than to use `script-opts`. 
-- Added script-message & function `exit` to all scripts.
 - Added script-message & function `show` to all scripts.
-- Added `script-message print`           to all scripts.
-- Added functions `callstring`, `pprint` & `pexpand_to_string` to all scripts. More rigorous codes. More elegant options. 
-- Added UNMAPPED script-bindings for all toggles.
-- autocrop: Added `o.auto_aspect`, `o.start_aspect_on`, `o.gsubs_passes`, `o.gsubs` & `o.framerate`. Randomizes aspect @1Hz. The gsubs are for auto_aspect.  Bugfix for negative detections (w<0).  Removed `o.apply_min_ratio`.  Added `function apply_framerate()` which interpolates to 50fps by default (the final filter).  9 examples include RANDOM_POWER, CYCLE_min_max, CYCLE_HDTV_TV, RANDOM_N_FULLSCREEN, UP_AND_ACROSS, ACROSS_AND_DOWN, UP_LEFT_RIGHT_DOWN, RANDOM_WALKER & LINEAR_DISTRIBUTION.  
-- automask: `o.res_safety` lowered by 1.  Added eq example in `o.filterchain` (mask can increase contrast).
-- aspeed: Added `o.suppress_script_opts`. Added RANDOM_SPEED `o.speed` example.
-- autocomplex/automask: `rotate` & `zoompan` now opt-in (absent by default). These null-ops can reduce performance.
+- Added script-message & function `set`  to all scripts.
+- Added script-message & function `exit` to all scripts.
+- Added           `script-message print` to all scripts.
+- Added functions `callstring`, `pprint` & `pexpand_to_string` to all scripts. More rigorous codes. More elegant options.
+- Added `function is_filter_present` to aspeed, autocrop & automask.
+- Added nil script-bindings for all toggles.
+- autocrop: Added `o.auto_aspect`, `o.auto_delay_aspect`, `o.start_aspect_on`, `o.gsubs_passes`, `o.gsubs` & `o.framerate`. Crop & aspect toggles now separated. Randomizes aspect @1Hz. The gsubs are for auto_aspect.  Bugfix for negative detections (w<0).  Removed `o.apply_min_ratio`.  Added script-message & function `apply_framerate` which interpolates to 50fps.  Improved `meta_osd`.  Removed `timers.apply_scale`.  9 examples include RANDOM_POWER; RANDOM_WALKER; CYCLE_min_max; CYCLE_HDTV_TV; RANDOM_N_FULLSCREEN; UP_AND_ACROSS; ACROSS_AND_DOWN; UP_LEFT_RIGHT_DOWN; & LINEAR_DISTRIBUTION.  
+- automask: `o.res_safety` lowered by 1.  Added `eq=enable=0:...` & `convolution=enable=0:...` to `o.filterchain` (mask can increase contrast).  Removed `timers.apply_eq`.
+- autocomplex: Added `o.freqs_samplerate` & "GREEN_BLUE;" example. Setting 4200 Hz makes each baton worth 200Hz.
+- aspeed: Added `o.suppress_script_opts`. Added "RANDOM_SPEED;" `o.speed` example.
+- `rotate` & `zoompan` now opt-in (autocomplex & automask). These null-ops can reduce performance.
 
