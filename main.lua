@@ -1,6 +1,6 @@
 ----NO-WORD-WRAP FOR THIS SCRIPT.  https://GITHUB.COM/yt-dlp/yt-dlp/releases  FOR YOUTUBE STREAMING.  CHECK FOR UPDATED BUILDS OR ELSE SOME NEW UPLOADS AREN'T SUPPORTED.  RUMBLE, ODYSSEY, REDTUBE & RUTUBE.RU ALSO.  CAN RE-ASSIGN open_url IN SMPLAYER (EXAMPLE: CTRL+U & SHIFT+TAB).  X.COM NOT seeking.
 ----WINDOWS    :  --script=.                       IN SMPLAYER  &/OR  script=../                     IN mpv.conf.  PLACE ALL scripts WITH smplayer.exe & ENTER ITS ADVANCED mpv PREFERENCES.  CAN ALSO CREATE 1-LINE TEXT-FILE  mpv\mpv\mpv.conf  INSIDE smplayer-portable.  mpv.conf ENABLES DOUBLE-CLICKING mpv.exe & DRAG & DROP OF FILES & YOUTUBE URL, IN LINUX/MACOS TOO.  IF NOT PORTABLE, SET-UP IS LIKE FOR LINUX: --script=~/Desktop/mpv-scripts/  
-----LINUX/MACOS:  --script=~/Desktop/mpv-scripts/  IN SMPLAYER  &/OR  script=~/Desktop/mpv-scripts/  IN mpv.conf.  PLACE mpv-scripts ON Desktop.  EDIT ~/.config/mpv/mpv.conf TO DRAG & DROP DIRECTLY ONTO MPV. IN LINUX CAN RIGHT-CLICK ON AN MP4 & OPEN-WITH-MPV.  LINUX snap: --script=/home/user/Desktop/mpv-scripts/
+----LINUX/MACOS:  --script=~/Desktop/mpv-scripts/  IN SMPLAYER  &/OR  script=~/Desktop/mpv-scripts/  IN mpv.conf.  PLACE mpv-scripts ON Desktop.  EDIT ~/.config/mpv/mpv.conf TO DRAG & DROP DIRECTLY ONTO MPV. IN MACOS CAN "Keep in Dock".  IN LINUX CAN RIGHT-CLICK ON AN MP4 & OPEN-WITH-MPV.  LINUX snap: --script=/home/user/Desktop/mpv-scripts/  
 ----ANDROID    :    script=/sdcard/Android/media/is.xyz.mpv/          IN ADVANCED SETTINGS:        Edit mpv.conf.  PLACE ALL SCRIPTS IN THIS FOLDER IN INTERNAL MAIN STORAGE. OTHER FOLDERS DON'T WORK.  ENABLE MPV MEDIA-ACCESS USING ITS FILE-PICKER, & SET BACKGROUND-PLAYBACK TO ALWAYS (GENERAL SETTING).  'sdcard'~='SD card'(EXTERNAL)  CAN ALSO INSTALL cx-file-explorer & 920 (.APK).  920 CAN HANDLE WORDWRAP & WHITESPACE.  https://SNAPDROP.NET CAN TRANSFER TO /sdcard/Android/media/is.xyz.mpv/
 
 options     = {                
@@ -14,7 +14,7 @@ options     = {
     ytdl = {            --YOUTUBE DOWNLOAD. PLACE EXECUTABLE WITH main.lua.  LIST ALL POSSIBLE FILENAMES TO HOOK, IN PREFERRED ORDER.  EXISTING HOOK APPENDS. NO ";" ALLOWED.  CAN SET SMPLAYER Preferences→Network TO USE mpv INSTEAD OF auto.  NOT FOR ANDROID OR LINUX snap.
         "yt-dlp"      , --.exe
         "yt-dlp_x86"  , --win32  REMOVE THESE TO SHORTEN script-opts.  WILDCARDS INVALID.  
-        "yt-dlp_linux", --CASE SENSITIVE.  sudo apt remove yt-dlp TO REMOVE OLD VERSION.  
+        "yt-dlp_linux", --CASE SENSITIVE.  RIGHT-CLICK→Properties→Permissions→Allow executing file as program.  sudo apt remove yt-dlp TO REMOVE OLD VERSION.  
         "yt-dlp_macos", 
     },
     script_opts              = {        --THESE APPEND/REPLACE EXISTING script-opts.
@@ -33,9 +33,9 @@ options     = {
         'sub-border-size 2','sub-font-size 32',  --DEFAULTS=3,55   SIZES OVERRIDE SMPLAYER. SUBS DRAWN @720p.
         'osd-level       0','osc           no',  --DEFAULTS=3,yes  osd-level=0 PREVENTS UNWANTED MESSAGES @load-script.  osc AWAITS ITS CONFIG.  SOME THINGS MUST BE SWITCHED OFF/ON.  
     },
-    title                  = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  $ FOR PROPERTIES.  STYLE OVERRIDES: \\,fs##,bord# = \,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,b1,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BOLD,BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
-    title_duration         =  6 , --SECONDS.
-    autoloop_duration      =  6 , --SECONDS.  0 MEANS NO AUTO-loop.  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://GITHUB.COM/zc62/mpv-scripts/blob/master/autoloop.lua
+    title                  = '{\\fs40\\bord2}${media-title}',  --REMOVE FOR NO title.  STYLE OVERRIDES: \\N,fs##,bord# = NEWLINE,FONTSIZE(p),BORDER(p)  MORE: alpha##,an#,c######,shad#,b1,be1,i1,u1,s1,fn*,fr##,fscx##,fscy## = TRANSPARENCY,ALIGNMENT-NUMPAD,COLOR,SHADOW(p),BOLD,BLUREDGES,ITALIC,UNDERLINE,STRIKEOUT,FONTNAME,FONTROTATION(°ANTI-CLOCKWISE),FONTSCALEX(%),FONTSCALEY(%)  cFF=RED,cFF0000=BLUE,ETC  title HAS NO TOGGLE.
+    title_duration         = 6  , --SECONDS.
+    autoloop_duration      = 6  , --SECONDS.  0 MEANS NO AUTO-loop.  MAX duration TO ACTIVATE INFINITE loop, FOR GIF & SHORT MP4.  NOT FOR JPEG (MIN>0).  BASED ON https://GITHUB.COM/zc62/mpv-scripts/blob/master/autoloop.lua
     options_delay          = .3 , --SECONDS, FROM playback_start.  title ALSO TRIGGERS THEN.
     options_delayed        = {    --@playback_started+options_delay, FOR EVERY FILE.
         'osd-level 1','osc yes',  --RETURNS osd & osc.
@@ -47,17 +47,17 @@ options     = {
     },
 }
 
-o,p,timers = {},{},{}  --o,p=options,PROPERTIES.  timers={playback_start,title} TRIGGER ONCE PER file.
+o,p,timers = {},{},{}  --o,p=options,PROPERTIES.  timers={title_update,title_remove} TRIGGER ONCE PER file.
 abs,max,min,random = math.abs,math.max,math.min,math.random  --ABBREV.
 math.randomseed(os.time()+mp.get_time())  --os,mp=OPERATING-SYSTEM,MEDIA-PLAYER.  os.time()=INTEGER SECONDS FROM 1970.  mp.get_time()=μs IS MORE RANDOM THAN os.clock()=ms.  os.getenv('RANDOM')=nil  BUT COULD ECHO BACK %RANDOM% OR $RANDOM USING A subprocess. 
 
-function pexpand(arg)  --ALSO @print_arg, @show & @title_update.  PROTECTED/PROPERTY EXPANSION.  '${speed}+2'=3.  COULD BE RENAMED ppexpand.
+function pexpand(arg)  --ALSO @pexpand_to_string, @show & @title_update.  PROTECTED PROPERTY EXPANSION.  '${speed}+2'=3.  COULD BE RENAMED ppexpand.
     if type(arg)~='string' then return arg end
-    pcode, pval  = pcall(loadstring('return '..mp.command_native({'expand-text',arg})))  --''→nil.  load INVALID ON MPV.APP.  PROTECTED-CALL.
-    if pcode then return pval end  --OTHERWISE pval=error-string.
+    pcode, pval  = pcall(loadstring('return '..mp.command_native({'expand-text',arg}))) --''→nil.  load INVALID ON MPV.APP.  PROTECTED-CALL.
+    if pcode then return pval end                                                       --OTHERWISE pcode,pval=false,string.
 end
 
-function  gp(property) --ALSO @playback-restart.  GET-PROPERTY.
+function  gp(property) --ALSO @playback_restart.  GET-PROPERTY.
     p       [property]=mp.get_property_native(property)  
     return p[property]
 end
@@ -75,7 +75,7 @@ do  command        = ('%s no-osd set %s;'):format(command or '',opt) end  --ALL 
 command            = command and mp.command(command)
 for opt,val in pairs(o[p.platform]) 
 do o[opt]          = val end                                      --platform OVERRIDE.  
-utils              = require 'mp.utils'                           --@pexpand_to_string.
+utils              = require 'mp.utils'                           --ALSO @pexpand_to_string.
 playback_restarted = gp('time-pos')                               --FILE ALREADY LOADED.
 directory          = utils.split_path(gp('scripts')[1])           --ASSUME PRIMARY DIRECTORY IS split FROM WHATEVER THE USER ENTERED FIRST.  mp.get_script_directory() & mp.get_script_file() DON'T WORK THE SAME WAY.
 directory_expanded = mp.command_native({'expand-path',directory}) --command_native EXPANDS '~/' FOR ytdl_hook.  
@@ -109,7 +109,7 @@ function playback_restart()  --ALSO @on_pause
     if playback_started or p.pause then return end --AWAIT UNPAUSE, IF PAUSED.  PROCEED ONCE ONLY, PER file.
     playback_started   = true                      --ONLY AFTER UNPAUSE.
     set_loop           = gp('duration')>0 and p.duration<o.autoloop_duration and mp.set_property('loop','inf') --autoloop BEFORE DELAY.
-    timers.playback_start:resume()
+    timers.title_update:resume()
 end
 mp.register_event('playback-restart',   playback_restart)  
 mp.register_event('end-file',function() playback_restarted,playback_started = set_loop and mp.set_property('loop','no') and nil end)  --CLEAR SWITCHES FOR NEXT FILE.  UNDO-set_loop.
@@ -120,21 +120,22 @@ function on_pause(_,  paused)
 end 
 mp.observe_property('pause','bool',on_pause)
 
-function title_update(data,title_duration)  --@script-message & @timers.playback_start.  DELAY REQUIRED TO SUPPRESS UNWANTED MESSAGES DUE TO SMPLAYER.
-    command              = ''
+function title_update(data,title_duration)  --@script-message & @playback_restart.  ALSO SETS options_delayed.  DELAY REQUIRED TO SUPPRESS UNWANTED MESSAGES DUE TO SMPLAYER.
+    command                     = ''
     for _,opt in pairs(o.options_delayed)  --PLAYBACK (TITULAR) OVERRIDES.  osc RE-ACTIVATES HERE.
-    do command           = ('%s no-osd set %s;'):format(command,opt) end
-    command              = command~='' and mp.command  (command)
-    timers.title.timeout = pexpand(title_duration)               or o.title_duration
-    title.data           = mp.command_native({'expand-text',data or o.title})
+    do command                  = ('%s no-osd set %s;'):format(command,opt) end
+    command                     = command~='' and mp.command  (command)
+    timers.title_remove.timeout = pexpand(title_duration)               or o.title_duration
+    title.data                  = mp.command_native({'expand-text',data or o.title})
     title:update()  --AWAITS UNPAUSE (PLAYING MESSAGE).  ALSO AWAITS TIMEOUT, OR ELSE OLD MPV COULD HANG UNDER EXCESSIVE LAG.
-    timers.title:kill()
-    timers.title:resume()
+    timers.title_remove:kill()
+    timers.title_remove:resume()
 end 
-function title_remove() title:remove() end  --@script-message & @timers.title.
+timers.title_update = mp.add_periodic_timer(o.options_delay,title_update)
 
-timers.playback_start = mp.add_periodic_timer(o.options_delay,title_update)
-timers.title          = mp.add_periodic_timer(0              ,title_remove)  --timeout CONTROLLED LATER.
+function title_remove() title:remove() end  --@script-message & @title_update.
+timers.  title_remove = mp.add_periodic_timer(0,title_remove)  --timeout CONTROLLED LATER.
+
 for _,timer in pairs(timers) 
 do    timer.oneshot   = 1 --ALL 1SHOT.
       timer:kill() end    --FOR OLD MPV. IT CAN'T START timers DISABLED.
@@ -149,27 +150,29 @@ function show(string,duration)  --@script-message.
     return string and mp.osd_message(string,pexpand(duration))
 end
 
-function set(script_opt ,val)  --@script-message IN FUTURE VERSION.  ULTIMATELY A GUI COULD CONTROL ALL SCRIPTS BY SENDING HUNDRED/S OF set COMMANDS. SIMPLER THAN SETTING script-opts. THE ORIGINAL options ARE ONLY AN EXAMPLE.
-    o       [script_opt]=val
+function set(script_opt,val)  --@script-message.  DOESN'T RELOAD DEPENDENT FUNCTIONS.
+    o[script_opt]=type(o[script_opt])=='string' and val or pexpand(val)  --NATIVE TYPECAST.
 end
 
 function callstring(string) loadstring(string)()             end  --@script-message.  CAN REPLACE ANY OTHER.  IRONICALLY GOOD EXAMPLES GET THEIR OWN NAMES.  IF pcall, COULD BE RENAMED ploadstring. OR scall (STRING-CALL). 
 function pprint    (string) print(pexpand_to_string(string)) end  --@script-message.  PROTECTED PRINT. 
 function exit      (      ) mp.keep_running = false          end  --@script-message.  false FLAG EXIT: COMBINES overlay-remove, unregister_event, unregister_script_message, unobserve_property & timers.*:kill().
-for message,fn in pairs({loadstring=callstring,print=pprint,show=show,exit=exit,quit=exit,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.
-do mp.register_script_message(message,fn)  end
+for message,fn in pairs({loadstring=callstring,print=pprint,show=show,exit=exit,quit=exit,set=set,title=title_update,title_remove=title_remove})  --SCRIPT CONTROLS.
+do mp.register_script_message(message,fn) end
 
 ----SCRIPT-COMMANDS & EXAMPLES:
 ----script-message-to _ loadstring <string>
 ----script-message      loadstring math.randomseed(365)
 ----script-message      print      <string>
 ----script-message      print      _VERSION
-----script-message      show       <string>       <duration>
-----script-message      show       _VERSION       6*random()
+----script-message      show       <string>     <duration>
+----script-message      show       _VERSION     6*random()
+----script-message      set        <script_opt> <val>
+----script-message      set        title        {\\fs40\\bord2}$${media-title}\\N$${path}
 ----script-message-to _ exit
 ----script-message-to _ quit
-----script-message      title      <data>         <title_duration>
-----script-message      title      ${media-title} 6*random()
+----script-message      title      <data>                   <title_duration>
+----script-message      title      ${media-title}\\N${path} 10*random()
 ----script-message      title_remove
 
 ----mpv TERMINAL COMMAND EXAMPLES:
@@ -189,11 +192,11 @@ do mp.register_script_message(message,fn)  end
 ----LUA      : v5.1     v5.2  TESTED.
 ----SMPLAYER : v24.5, RELEASES .7z .exe .dmg .flatpak .snap .AppImage win32  &  .deb-v23.12  ALL TESTED.
 
-----~200 LINES & ~2000 WORDS.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
+----~200 LINES & ~3000 WORDS.  ~8000 TYPICAL.  SPACE-COMMAS FOR SMARTPHONE. SOME TEXT EDITORS DON'T HAVE LEFT/RIGHT KEYS.  LEADING COMMAS ON EACH LINE ARE AVOIDED.  
 ----SAFETY INSPECTION: LUA SCRIPTS CAN BE CHECKED FOR os.execute io.popen mp.command* utils.subprocess*    load-script subprocess* run COMMANDS MAY BE UNSAFE, BUT expand-path expand-text show-text seek playlist-next playlist-play-index stop quit af* vf* ARE ALL SAFE.  set* SAFE EXCEPT FOR script-opts WHICH MAY HOOK AN UNSAFE EXECUTABLE.
-----FUTURE VERSION SHOULD ALSO HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED.  NEEDED FOR android albumart.
-----FUTURE VERSION SHOULD HAVE script-message set TO CHANGE o ON THE FLY.  OR RESPOND TO CHANGING script-opts (function on_update).
-----FUTURE VERSION COULD  HAVE o.double_mute_timeout, o.double_aid_timeout, o.double_sid_timeout, o.double_mute_command, o.double_aid_command & o.double_sid_command.
+----FUTURE VERSION SHOULD HAVE o.doubletap_timeout, o.double_mute_command, o.double_aid_command & o.double_sid_command.
+----FUTURE VERSION SHOULD HAVE o.double_pause_timeout=0 (p&p DOUBLE-TAP).  BUT NOT WHEN PAUSED.  NEEDED FOR android albumart.
+----FUTURE VERSION SHOULD RESPOND TO CHANGING script-opts (function on_update).
 
 
 ----aspect_none reset_zoom  SMPLAYER ACTIONS CAN START EACH FILE (ADVANCED PREFERENCES).  correct-pts ESSENTIAL.  MOUSE WHEEL FUNCTION CAN BE SWITCHED FROM seek TO volume. seek WITH GRAPHS IS SLOW, BUT zoom & volume INSTANT. FINAL video-zoom CONTROLLED BY SMPLAYER→[gpu]. 
