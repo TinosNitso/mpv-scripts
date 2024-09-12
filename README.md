@@ -2,13 +2,13 @@
 - [Installation](#installation)
 - [Standalone mpv](#standalone-mpv-mpvconf)
 - [App Versions](#app-versions)
-- [Script Commands](#script-commands)
+- [Script-Commands](#script-commands)
 - [Terminal Commands](#terminal-commands)
 - [Latest Updates](#latest-updates)
 
 Video clocks, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), animated mask generator ([automask](automask.lua)), animated spectrum ([autocomplex](autocomplex.lua)) & insta-cropping ([autocrop](autocrop.lua)) for [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! Newest scripts in `mpv-scripts.zip` on GitHub. Toggle them by double-clicking on mute (m&m). Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. The scripts can be opened & options edited in Notepad. Disable word-wrap for these scripts! [main](main.lua) has much more info, & options for which scripts & subtitles load, & ytdl. I use [Notepad++](https://notepad-plus-plus.org/downloads/) on Windows, & [Brackets](https://BRACKETS.IO) on MacOS.  All free for Windows, Linux, MacOS & Android. But Android has no extra-device randomization & no YouTube.
 
-To use on YouTube select Open→URL in SMPlayer. Rumble, Odyssey & RedTube also compatible. Double-clicking mute makes the mask smoothly vanish or re-appear, along with black-bars (smooth padding), & the audio switches btwn randomized & normal. aspeed.lua options can activate chipmunk mode on left-channel (in sync), as well as tri-color clocks! autocrop handles transparent input, too, along with a track-list with start & end times. mpv has instant zoom, but no scroll bar (to pan around with mouse, etc). Keyboard shortcuts only work if mpv has its own window (SMPlayer preference).
+To use on YouTube select Open→URL in SMPlayer. Rumble, Odyssey, RedTube & rutube.ru also compatible. Double-clicking mute makes the mask smoothly vanish or re-appear, along with black-bars (smooth padding), & the audio switches btwn randomized & normal. aspeed.lua options can activate chipmunk mode on left-channel (in sync), as well as tri-color clocks! autocrop handles transparent input, too, along with a track-list with start & end times. mpv has instant zoom, but no scroll bar (to pan around with mouse, etc). Keyboard shortcuts only work if mpv has its own window (SMPlayer preference).  main has a subtitle override after playback-restart.
 
 See [doc](doc) folder for pdf manuals.
 
@@ -31,7 +31,7 @@ On Android, go to mpv→SETTINGS→Advanced→Edit mpv.conf, then enter
 
 Then copy scripts in to that exact folder, in internal main storage. However leave out autocomplex.lua (lags on smartphone).  `sdcard` is internal, unlike `SD card`.  Then use mpv file-picker to open an MP4 to give mpv media read-permission. In Android-11 media-apps can't normally run scripts from outside a media folder.  aspeed.lua struggles primarily because Android apps are singletons who can't spawn subprocesses.  I use [cx-file-explorer](https://cxfileexplorerapk.net) as explorer, 920 for text-editing, & chromium for browsing. [SNAPDROP.NET](https://SNAPDROP.NET) for lua transfer to smartphone.  
 
-![](https://github.com/TinosNitso/mpv-scripts/blob/main/SCREENSHOT.JPG)
+![](SCREENSHOT.JPG)
 
 ## Standalone mpv (`mpv.conf`)
 It's also possible to double-click on `mpv.exe` or `mpv.app` & then drag & drop files & URLs directly on mpv, with all scripts fully active! This requires editing `mpv.conf`, like with Android. In Linux edit `~/.config/mpv/mpv.conf` & then right-click on an MP4 & open-with-mpv. In MacOS go mpv→Preferences... & use only 1 line:
@@ -51,7 +51,7 @@ FFmpeg versions 6.1 (.deb), 6.0 (.exe .flatpak), 5.1.3, 5.1.2 (.app), 4.4.2 (.sn
 Lua versions 5.1 & 5.2 supported.
 
 ## Script-Commands
-Give mpv its own window then press ` & then enter any of these commands (but with proper inputs if needed). The bottom of every script has exact examples, like how to replace black pads with white pads.
+Give mpv its own window then press ` & then enter any of these commands (but with proper inputs when needed). The bottom of every script has exact examples, like how to replace black pads with white pads.
 
 - `script-binding toggle_crop   `
 - `script-binding toggle_aspect `
@@ -110,3 +110,6 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 - aspeed: Added `o.suppress_script_opts`. Added "RANDOM_SPEED;" `o.speed` example.
 - `rotate` & `zoompan` now opt-in (autocomplex & automask). These null-ops can reduce performance.
 
+Also all releases now display correct screenshots.  In retrospect `o.framerate` is actually a bad thing (should be `nil`).
+
+  
