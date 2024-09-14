@@ -34,7 +34,8 @@ On Android, go to mpv→SETTINGS→Advanced→Edit mpv.conf, then enter
 Then copy scripts in to that exact folder, in internal main storage. However leave out autocomplex.lua (lags on smartphone).  `sdcard` is internal, unlike `SD card`.  Then use mpv file-picker to open an MP4 to give mpv media read-permission. In Android-11 media-apps can't normally run scripts from outside a media folder.  aspeed.lua struggles primarily because Android apps are singletons who can't spawn subprocesses.  I use [cx-file-explorer](https://cxfileexplorerapk.net) as explorer, 920 for text-editing, & chromium for browsing. [SNAPDROP.NET](https://SNAPDROP.NET) for lua transfer to smartphone.  
 
 ## Screenshots
-![](SCREENSHOT.JPG)
+![](SCREENSHOT.jpg)
+![](SCREENSHOT.gif)
 [![YOUTUBE](https://img.youtube.com/vi/BNbbRB1pJ78/0.jpg)](https://www.youtube.com/watch?v=BNbbRB1pJ78)
 
 ## Standalone mpv (`mpv.conf`)
