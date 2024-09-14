@@ -1,16 +1,18 @@
 # mpv-scripts
+- [Intro](#intro)
 - [Installation](#installation)
+- [Screenshots](#screenshots)
 - [Standalone mpv](#standalone-mpv-mpvconf)
 - [App Versions](#app-versions)
 - [Script-Commands](#script-commands)
 - [Terminal Commands](#terminal-commands)
+- [Doc](doc)
 - [Latest Updates](#latest-updates)
 
+## Intro
 Video clocks, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), animated mask generator ([automask](automask.lua)), animated spectrum ([autocomplex](autocomplex.lua)) & insta-cropping ([autocrop](autocrop.lua)) for [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! Newest scripts in `mpv-scripts.zip` on GitHub. Toggle them by double-clicking on mute (m&m). Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. The scripts can be opened & options edited in Notepad. Disable word-wrap for these scripts! [main](main.lua) has much more info, & options for which scripts & subtitles load, & ytdl. I use [Notepad++](https://notepad-plus-plus.org/downloads/) on Windows, & [Brackets](https://BRACKETS.IO) on MacOS.  All free for Windows, Linux, MacOS & Android. But Android has no extra-device randomization & no YouTube.
 
 To use on YouTube select Open→URL in SMPlayer. Rumble, Odyssey, RedTube & rutube.ru also compatible. Double-clicking mute makes the mask smoothly vanish or re-appear, along with black-bars (smooth padding), & the audio switches btwn randomized & normal. aspeed.lua options can activate chipmunk mode on left-channel (in sync), as well as tri-color clocks! autocrop handles transparent input, too, along with a track-list with start & end times. mpv has instant zoom, but no scroll bar (to pan around with mouse, etc). Keyboard shortcuts only work if mpv has its own window (SMPlayer preference).  main has a subtitle override after playback-restart.
-
-See [doc](doc) folder for pdf manuals.
 
 ## Installation
 In Windows extract all `.lua` scripts from the `.zip` & copy/paste them into `smplayer-portable` (or smplayer) folder. Then in SMPlayer Advanced Preferences enter 
@@ -31,7 +33,9 @@ On Android, go to mpv→SETTINGS→Advanced→Edit mpv.conf, then enter
 
 Then copy scripts in to that exact folder, in internal main storage. However leave out autocomplex.lua (lags on smartphone).  `sdcard` is internal, unlike `SD card`.  Then use mpv file-picker to open an MP4 to give mpv media read-permission. In Android-11 media-apps can't normally run scripts from outside a media folder.  aspeed.lua struggles primarily because Android apps are singletons who can't spawn subprocesses.  I use [cx-file-explorer](https://cxfileexplorerapk.net) as explorer, 920 for text-editing, & chromium for browsing. [SNAPDROP.NET](https://SNAPDROP.NET) for lua transfer to smartphone.  
 
+## Screenshots
 ![](SCREENSHOT.JPG)
+[![YOUTUBE](https://img.youtube.com/vi/BNbbRB1pJ78/0.jpg)](https://www.youtube.com/watch?v=BNbbRB1pJ78)
 
 ## Standalone mpv (`mpv.conf`)
 It's also possible to double-click on `mpv.exe` or `mpv.app` & then drag & drop files & URLs directly on mpv, with all scripts fully active! This requires editing `mpv.conf`, like with Android. In Linux edit `~/.config/mpv/mpv.conf` & then right-click on an MP4 & open-with-mpv. In MacOS go mpv→Preferences... & use only 1 line:
