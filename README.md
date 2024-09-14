@@ -1,9 +1,9 @@
 # mpv-scripts
 - [Intro](#intro)
 - [Installation](#installation)
-- [Screenshots](#screenshots)
 - [Standalone mpv](#standalone-mpv-mpvconf)
 - [App Versions](#app-versions)
+- [Screenshots](#screenshots)
 - [Script-Commands](#script-commands)
 - [Terminal Commands](#terminal-commands)
 - [Doc](doc)
@@ -33,11 +33,6 @@ On Android, go to mpv→SETTINGS→Advanced→Edit mpv.conf, then enter
 
 Then copy scripts in to that exact folder, in internal main storage. However leave out autocomplex.lua (lags on smartphone).  `sdcard` is internal, unlike `SD card`.  Then use mpv file-picker to open an MP4 to give mpv media read-permission. In Android-11 media-apps can't normally run scripts from outside a media folder.  aspeed.lua struggles primarily because Android apps are singletons who can't spawn subprocesses.  I use [cx-file-explorer](https://cxfileexplorerapk.net) as explorer, 920 for text-editing, & chromium for browsing. [SNAPDROP.NET](https://SNAPDROP.NET) for lua transfer to smartphone.  
 
-## Screenshots
-![](SCREENSHOT.jpg)
-![](SCREENSHOT.gif)
-[![YOUTUBE](https://img.youtube.com/vi/BNbbRB1pJ78/0.jpg)](https://www.youtube.com/watch?v=BNbbRB1pJ78)
-
 ## Standalone mpv (`mpv.conf`)
 It's also possible to double-click on `mpv.exe` or `mpv.app` & then drag & drop files & URLs directly on mpv, with all scripts fully active! This requires editing `mpv.conf`, like with Android. In Linux edit `~/.config/mpv/mpv.conf` & then right-click on an MP4 & open-with-mpv. In MacOS go mpv→Preferences... & use only 1 line:
 
@@ -54,6 +49,11 @@ SMPlayer-24.5.0 supported.  Releases tested include .7z .exe .app .AppImage .fla
 FFmpeg versions 6.1 (.deb), 6.0 (.exe .flatpak), 5.1.3, 5.1.2 (.app), 4.4.2 (.snap) & 4.3.2 (.AppImage) supported.
 
 Lua versions 5.1 & 5.2 supported.
+
+## Screenshots
+![](SCREENSHOT.jpg)
+![](SCREENSHOT.webp)
+[![](https://IMG.YOUTUBE.COM/vi/BNbbRB1pJ78/0.jpg)YouTube](https://YOUTU.BE/BNbbRB1pJ78)
 
 ## Script-Commands
 Give mpv its own window then press ` & then enter any of these commands (but with proper inputs when needed). The bottom of every script has exact examples, like how to replace black pads with white pads.
