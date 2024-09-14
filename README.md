@@ -51,7 +51,7 @@ FFmpeg versions 6.1 (.deb), 6.0 (.exe .flatpak), 5.1.3, 5.1.2 (.app), 4.4.2 (.sn
 Lua versions 5.1 & 5.2 supported.
 
 ## Screenshots
-![](SCREENSHOT.jpg)
+![SCREENSHOT](https://github.com/user-attachments/assets/317f0457-35a5-4091-a738-1db8a202abec)
 ![](SCREENSHOT.webp)
 
 https://github.com/user-attachments/assets/3cf3d543-77ed-4ca9-9b58-4b877979fb21
