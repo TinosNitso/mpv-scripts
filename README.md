@@ -118,6 +118,6 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 - aspeed: Added `o.suppress_script_opts`. Added "RANDOM_SPEED;" `o.speed` example.
 - `rotate` & `zoompan` now opt-in (autocomplex & automask). These null-ops can reduce performance.
 
-Also all releases now display correct screenshots.  In retrospect `o.framerate` is actually a bad thing (should be `nil`).
+Also the releases now display correct screenshots.  In retrospect `o.framerate` is actually a bad thing (should be `nil`).  Also the clocks are all too big.
 
-  
+
