@@ -19,7 +19,7 @@ In Windows extract all `.lua` scripts from the `.zip` & copy/paste them into `sm
 
 `--script=.`
 
-`.` is the directory containing `main.lua`. Then hit OK & play. Overall I consider playback smoother than VLC. [main](main.lua) is also a README, but in lua, & has more details. For YouTube also extract [yt-dlp](https://github.com/yt-dlp/yt-dlp/releases) into the same folder. Don't forget to update yt-dlp!
+`.` is the directory containing `main.lua`. Then hit OK & play. Overall I consider playback smoother than VLC. [main](main.lua) is also a README, but in lua, & has more details. For YouTube also extract [yt-dlp](https://github.com/yt-dlp/yt-dlp/releases) into the same folder. Don't forget to update yt-dlp!  To remove the mpv/SMPlayer TitleBar use AutoHotkey (my ahk scripts are [here](https://github.com/TinosNitso/AutoHotkey)).
 
 If not portable, or in Linux & MacOS, create folder `mpv-scripts` on Desktop. Then extract all scripts into it.  Then in SMPlayer enter
 
@@ -56,7 +56,7 @@ Lua versions 5.1 & 5.2 supported.
 
 https://github.com/user-attachments/assets/3cf3d543-77ed-4ca9-9b58-4b877979fb21
 
-Better quality on [YouTube](https://YOUTU.BE/BNbbRB1pJ78).
+The audio is copyrighted. Better quality on [YouTube](https://YOUTU.BE/BNbbRB1pJ78).
 
 ## Script-Commands
 Give mpv its own window then press ` & then enter any of these commands (but with proper inputs when needed). The bottom of every script has exact examples, like how to replace black pads with white pads.
