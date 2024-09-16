@@ -1,4 +1,6 @@
 # mpv-scripts
+## Contents
+- [Contents](#contents)
 - [Intro](#intro)
 - [Installation](#installation)
 - [Standalone mpv](#standalone-mpv-mpvconf)
@@ -6,7 +8,7 @@
 - [Screenshots](#screenshots)
 - [Script-Commands](#script-commands)
 - [Terminal Commands](#terminal-commands)
-- [Doc](doc)
+- [Docs](doc)
 - [Latest Updates](#latest-updates)
 
 ## Intro
@@ -118,6 +120,7 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 - aspeed: Added `o.suppress_script_opts`. Added "RANDOM_SPEED;" `o.speed` example.
 - `rotate` & `zoompan` now opt-in (autocomplex & automask). These null-ops can reduce performance.
 
-Also the releases now display correct screenshots.  In retrospect `o.framerate` is actually a bad thing (should be `nil`).  Also the clocks are all too big.
+The releases now display correct screenshots.  Also, webp & mp4/YT screenshots have been added.
 
+Future version will set `o.framerate=nil`. Interpolation is just a bad thing!  Also, `o.auto_aspect` needs to be centered on `${video-params/aspect}`, so that the median aspect is true. Tall videos are fattened too much with the current formula.
 
