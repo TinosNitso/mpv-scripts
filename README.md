@@ -56,9 +56,9 @@ Lua versions 5.1 & 5.2 supported.
 ![](https://github.com/user-attachments/assets/317f0457-35a5-4091-a738-1db8a202abec)
 ![](SCREENSHOT.webp)
 
-https://github.com/user-attachments/assets/3cf3d543-77ed-4ca9-9b58-4b877979fb21
+https://github.com/user-attachments/assets/98cec5c2-43ac-422d-85b7-932719acf47c
 
-The exact audio is copyrighted. Better quality on [YouTube](https://YOUTU.BE/BNbbRB1pJ78).  Original [here](https://youtu.be/gWtGerBuNRA).
+Also on [YouTube](https://YOUTU.BE/BNbbRB1pJ78).  The exact audio is copyrighted by someone else (original [here](https://youtu.be/gWtGerBuNRA)).
 
 ## Script-Commands
 Give mpv its own window then press ` & then enter any of these commands (but with proper inputs when needed). The bottom of every script has exact examples, like how to replace black pads with white pads.
