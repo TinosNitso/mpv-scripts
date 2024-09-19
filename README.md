@@ -59,7 +59,7 @@ Lua versions 5.1 & 5.2 supported.
 
 https://github.com/user-attachments/assets/98cec5c2-43ac-422d-85b7-932719acf47c
 
-Also on [YouTube](https://YOUTU.BE/le2JGgjRJBw).  The exact audio is copyrighted elsewhere (original [here](https://youtu.be/gWtGerBuNRA)).  Many geometries are possible, like the old default:
+Also on [YouTube](https://YOUTU.BE/le2JGgjRJBw).  The exact audio is copyrighted elsewhere (original [here](https://youtu.be/gWtGerBuNRA)).  The video is from Адмиралъ (2008 film).  Many geometries are possible, like the old default:
 
 ![Old version - 1.5.5](https://github.com/TinosNitso/mpv-scripts/releases/download/v1.5.5/SCREENSHOT.webp)
 
@@ -128,4 +128,6 @@ The releases now display correct screenshots.  Also, webp & mp4/YT screenshots h
 ## Errors
 - `o.framerate` should be `nil`. Interpolation is always a bad thing, it turns out.
 - `o.auto_aspect` should be centered on `${video-params/aspect}`, so that the median aspect is true. Thin videos are fattened too much with the current formula. 
+- The double/dual trumpets are timed wrong.
+- `o.limits` media-titles have many typos.
 
