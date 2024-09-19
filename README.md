@@ -19,7 +19,7 @@
 - [autocomplex.lua](autocomplex.lua):	Animated spectra.  Easiest way to check whether mono audio is pretending to be stereo. Mono YT videos are still often standard, even with the best vloggers. Cheap stereo/double mics are available on eBay, but uncommon.
 - [automask.lua](automask.lua):	Animated mask generator.
 
-For [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! All free for Windows, Linux, MacOS & Android.  Newest scripts in `mpv-scripts.zip` on GitHub. Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. SMPlayer can zoom easily. Most keyboard shortcuts only work if mpv has its own window (SMPlayer advanced preference).
+For [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! All free for Windows, Linux, MacOS & Android.  Newest scripts are in [mpv-scripts.zip](mpv-scripts.zip) on GitHub. Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. SMPlayer can zoom easily. Most keyboard shortcuts only work if mpv has its own window (SMPlayer advanced preference).
 
 The scripts can be opened & options edited in [Notepad++](https://notepad-plus-plus.org/downloads/). Disable word-wrap for these scripts!  I use [Brackets](https://BRACKETS.IO) on MacOS.  
 
@@ -28,11 +28,11 @@ Most scripts can be toggled by double-clicking on mute (m&m double-tap). The mas
 To use on YouTube select Open→URL in SMPlayer (Ctrl+U, or can set Shift+Tab for power users). Rumble, Odyssey, RedTube & rutube.ru are also compatible. 
 
 ## Installation
-In Windows extract all `.lua` scripts from the `.zip` & copy/paste them into `smplayer-portable` folder. Then in SMPlayer Advanced Preferences enter 
+In Windows extract all `.lua` scripts from the `.zip` into the `smplayer-portable` folder. Then in SMPlayer Advanced Preferences enter 
 
 `--script=.`
 
-Then hit OK & play. Overall I consider playback smoother than VLC. [main](main.lua) is also a README, but in lua, & has more details. `.` means the working directory.  To remove the mpv/SMPlayer TitleBar use AutoHotkey (my ahk scripts are [here](https://github.com/TinosNitso/AutoHotkey)).
+Then hit OK & play. Overall I consider playback smoother than VLC. `.` means the working directory.  To remove the mpv/SMPlayer TitleBar use AutoHotkey (my ahk scripts are [here](https://github.com/TinosNitso/AutoHotkey)).
 
 For YouTube also extract [yt-dlp](https://github.com/yt-dlp/yt-dlp/releases) into the same folder. Don't forget to update it later on!  
 
