@@ -10,6 +10,7 @@
 - [Terminal Commands](#terminal-commands)
 - [Docs](doc)
 - [Latest Updates](#latest-updates)
+- [Errors](#errors)
 
 ## Intro
 Video clocks, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), animated mask generator ([automask](automask.lua)), animated spectrum ([autocomplex](autocomplex.lua)) & insta-cropping ([autocrop](autocrop.lua)) for [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! Newest scripts in `mpv-scripts.zip` on GitHub. Toggle them by double-clicking on mute (m&m). Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. The scripts can be opened & options edited in Notepad. Disable word-wrap for these scripts! [main](main.lua) has much more info, & options for which scripts & subtitles load, & ytdl. I use [Notepad++](https://notepad-plus-plus.org/downloads/) on Windows, & [Brackets](https://BRACKETS.IO) on MacOS.  All free for Windows, Linux, MacOS & Android. But Android has no extra-device randomization & no YouTube.
@@ -58,7 +59,7 @@ Lua versions 5.1 & 5.2 supported.
 
 https://github.com/user-attachments/assets/98cec5c2-43ac-422d-85b7-932719acf47c
 
-Also on [YouTube](https://YOUTU.BE/le2JGgjRJBw).  The exact audio is copyrighted elsewhere (original [here](https://youtu.be/gWtGerBuNRA)).  Many geometries are possible, like my old fav:
+Also on [YouTube](https://YOUTU.BE/le2JGgjRJBw).  The exact audio is copyrighted elsewhere (original [here](https://youtu.be/gWtGerBuNRA)).  Many geometries are possible, like the old default:
 
 ![Old version - 1.5.5](https://github.com/TinosNitso/mpv-scripts/releases/download/v1.5.5/SCREENSHOT.webp)
 
@@ -124,5 +125,8 @@ MacOS users can also drag & drop `mpv.app` onto Applications. Then the zsh comma
 
 The releases now display correct screenshots.  Also, webp & mp4/YT screenshots have been added.
 
-Future version will set `o.framerate=nil`. Interpolation is just a bad thing!  Also, `o.auto_aspect` needs to be centered on `${video-params/aspect}`, so that the median aspect is true. Tall videos are fattened too much with the current formula.
+## Errors
+- `o.framerate` should be `nil`. Interpolation is always a bad thing, it turns out.
+- `o.auto_aspect` should be centered on `${video-params/aspect}`, so that the median aspect is true. Thin videos are fattened too much with the current formula. 
+- БЪЛГАРИЯ should be `RED ◙ WHITE ◙ GREEN` not `WHITE  ◙ GREEN  ◙    RED`. This means the tri-color progression is wrong! БЪЛГАРИЯ should be with LËTZEBUERG/NEDERLAND, not paired with РОССИЯ. It was the Cyrillic pairing which confused me. 🙁
 
