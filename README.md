@@ -13,18 +13,30 @@
 - [Errors](#errors)
 
 ## Intro
-Video clocks, multi-stereo audio-speed randomization ([aspeed](aspeed.lua)), animated mask generator ([automask](automask.lua)), animated spectrum ([autocomplex](autocomplex.lua)) & insta-cropping ([autocrop](autocrop.lua)) for [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! Newest scripts in `mpv-scripts.zip` on GitHub. Toggle them by double-clicking on mute (m&m). Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. The scripts can be opened & options edited in Notepad. Disable word-wrap for these scripts! [main](main.lua) has much more info, & options for which scripts & subtitles load, & ytdl. I use [Notepad++](https://notepad-plus-plus.org/downloads/) on Windows, & [Brackets](https://BRACKETS.IO) on MacOS.  All free for Windows, Linux, MacOS & Android. But Android has no extra-device randomization & no YouTube.
+- [main.lua](main.lua):	Loads scripts, yt-dlp, title & subtitle override.  Android has no YT.  Also has more detailed commentary/readme.
+- [aspeed.lua](aspeed.lua):	Multi-stereo speed randomization & tri-color clocks.  Android has no extra-devices.  Also has chipmunk mode for left-channel.
+- [autocrop.lua](autocrop.lua):	Cropping, start/end limits & aspect/padding randomization.  Handles transparent input.
+- [autocomplex.lua](autocomplex.lua):	Animated spectra.  Easiest way to check whether mono audio is pretending to be stereo. Mono YT videos are still often standard, even with the best vloggers. Cheap stereo/double mics are available on eBay, but uncommon.
+- [automask.lua](automask.lua):	Animated mask generator.
 
-To use on YouTube select Open→URL in SMPlayer. Rumble, Odyssey, RedTube & rutube.ru also compatible. Double-clicking mute makes the mask smoothly vanish or re-appear, along with black-bars (smooth padding), & the audio switches btwn randomized & normal. aspeed.lua options can activate chipmunk mode on left-channel (in sync), as well as tri-color clocks! autocrop handles transparent input, too, along with a track-list with start & end times. mpv has instant zoom, but no scroll bar (to pan around with mouse, etc). Keyboard shortcuts only work if mpv has its own window (SMPlayer preference).  main has a subtitle override after playback-restart.
+For [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! All free for Windows, Linux, MacOS & Android.  Newest scripts in `mpv-scripts.zip` on GitHub. Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. SMPlayer can zoom easily. Most keyboard shortcuts only work if mpv has its own window (SMPlayer advanced preference).
+
+The scripts can be opened & options edited in [Notepad++](https://notepad-plus-plus.org/downloads/). Disable word-wrap for these scripts!  I use [Brackets](https://BRACKETS.IO) on MacOS.  
+
+Most scripts can be toggled by double-clicking on mute (m&m double-tap). The mask smoothly vanishes or re-appears, along with the black-bars, & the audio switches btwn randomized & normal. 
+
+To use on YouTube select Open→URL in SMPlayer (Ctrl+U, or can set Shift+Tab for power users). Rumble, Odyssey, RedTube & rutube.ru are also compatible. 
 
 ## Installation
-In Windows extract all `.lua` scripts from the `.zip` & copy/paste them into `smplayer-portable` (or smplayer) folder. Then in SMPlayer Advanced Preferences enter 
+In Windows extract all `.lua` scripts from the `.zip` & copy/paste them into `smplayer-portable` folder. Then in SMPlayer Advanced Preferences enter 
 
 `--script=.`
 
-`.` is the directory containing `main.lua`. Then hit OK & play. Overall I consider playback smoother than VLC. [main](main.lua) is also a README, but in lua, & has more details. For YouTube also extract [yt-dlp](https://github.com/yt-dlp/yt-dlp/releases) into the same folder. Don't forget to update yt-dlp!  To remove the mpv/SMPlayer TitleBar use AutoHotkey (my ahk scripts are [here](https://github.com/TinosNitso/AutoHotkey)).
+Then hit OK & play. Overall I consider playback smoother than VLC. [main](main.lua) is also a README, but in lua, & has more details. `.` means the working directory.  To remove the mpv/SMPlayer TitleBar use AutoHotkey (my ahk scripts are [here](https://github.com/TinosNitso/AutoHotkey)).
 
-If not portable, or in Linux & MacOS, create folder `mpv-scripts` on Desktop. Then extract all scripts into it.  Then in SMPlayer enter
+For YouTube also extract [yt-dlp](https://github.com/yt-dlp/yt-dlp/releases) into the same folder. Don't forget to update it later on!  
+
+If not portable, or in Linux or MacOS, create folder `mpv-scripts` on Desktop. Then extract all scripts into it.  Then in SMPlayer enter
 
 `--script=~/Desktop/mpv-scripts/`
 
@@ -34,18 +46,21 @@ On Android, go to mpv→SETTINGS→Advanced→Edit mpv.conf, then enter
 
 `script=/sdcard/Android/media/is.xyz.mpv/`
 
-Then copy scripts in to that exact folder, in internal main storage. However leave out autocomplex.lua (lags on smartphone).  `sdcard` is internal, unlike `SD card`.  Then use mpv file-picker to open an MP4 to give mpv media read-permission. In Android-11 media-apps can't normally run scripts from outside a media folder.  aspeed.lua struggles primarily because Android apps are singletons who can't spawn subprocesses.  I use [cx-file-explorer](https://cxfileexplorerapk.net) as explorer, 920 for text-editing, & chromium for browsing. [SNAPDROP.NET](https://SNAPDROP.NET) for lua transfer to smartphone.  
+Then copy the scripts in to that exact folder, in internal main storage. However leave out autocomplex.lua (it lags on smartphone).  `sdcard` is internal, unlike `SD card`.  Then use mpv file-picker to open an MP4 to give mpv media read-permission. In Android-11 media-apps can't normally run scripts from outside a media folder.  aspeed.lua struggles primarily because Android apps are singletons who can't spawn subprocesses.  I use [cx-file-explorer](https://cxfileexplorerapk.net) as explorer, 920 for text-editing, & chromium for browsing. [SNAPDROP.NET](https://SNAPDROP.NET) for script transfer to smartphone.  
 
 ## Standalone mpv (`mpv.conf`)
-It's also possible to double-click on `mpv.exe` or `mpv.app` & then drag & drop files & URLs directly on mpv, with all scripts fully active! This requires editing `mpv.conf`, like with Android. In Linux edit `~/.config/mpv/mpv.conf` & then right-click on an MP4 & open-with-mpv. In MacOS go mpv→Preferences... & use only 1 line:
+It's also possible to double-click on `mpv.exe` or `mpv.app` & then drag & drop files & URLs directly on mpv, with all scripts fully active! This requires editing `mpv.conf`, like with Android. For Windows + SMPlayer create New Text Document `smplayer-portable\mpv\mpv\mpv.conf`. Then with Notepad enter the 1 line 
+
+`script=../`
+
+& save.  Then double-click `smplayer-portable\mpv\mpv.exe` & drag/drop files/URLs. Simpler than terminal commands!
+
+In Linux edit `~/.config/mpv/mpv.conf` & then right-click on an MP4 & open-with-mpv. In MacOS go mpv→Preferences... & use only 1 line:
 
 `script=~/Desktop/mpv-scripts/`
 
-In Windows + SMPlayer: Create New Text Document `smplayer-portable\mpv\mpv\mpv.conf` with Notepad, containing only the 1 line `script=../`. Then double-click `smplayer-portable\mpv\mpv.exe` & drag/drop files/URLs. Simpler than terminal commands!
-
 ## App Versions
-
-mpv versions 0.38.0, 0.37.0, 0.36.0, 0.35.1 & 0.34.0 supported. v0.37+ preferred. mpv.exe can be [replaced](https://sourceforge.net/projects/mpv-player-windows/files/release/), within smplayer-portable. New MacOS builds are [here](https://laboratory.stolendata.net/~djinn/mpv_osx/), & Android is [here](https://github.com/mpv-android/mpv-android/releases).
+mpv versions 0.38.0, 0.37.0, 0.36.0, 0.35.1 & 0.34.0 supported. v0.37+ preferred. mpv.exe can be [replaced](https://sourceforge.net/projects/mpv-player-windows/files/release/), within `smplayer-portable/mpv`. New MacOS builds are [here](https://laboratory.stolendata.net/~djinn/mpv_osx/), & Android builds are [here](https://github.com/mpv-android/mpv-android/releases).
 
 SMPlayer-24.5.0 supported.  Releases tested include .7z .exe .app .AppImage .flatpak & .snap.
 
@@ -64,7 +79,7 @@ Also on [YouTube](https://YOUTU.BE/le2JGgjRJBw).  The exact audio is copyrighted
 ![Old version - 1.5.5](https://github.com/TinosNitso/mpv-scripts/releases/download/v1.5.5/SCREENSHOT.webp)
 
 ## Script-Commands
-Give mpv its own window then press ` & then enter any of these commands (but with proper inputs when needed). The bottom of every script has exact examples, like how to replace black pads with white pads.
+Give mpv its own window, then press ` & then enter any of these commands (but with proper inputs when needed). The bottom of every script has exact examples, like how to replace black pads with white pads.
 
 - `script-binding toggle_crop   `
 - `script-binding toggle_aspect `
