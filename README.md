@@ -13,8 +13,8 @@
 - [Errors](#errors)
 
 ## Intro
-- [main.lua](main.lua):	Loads scripts, yt-dlp, title & subtitle override.  Android has no YT.  Also has more detailed commentary/readme.
-- [aspeed.lua](aspeed.lua):	Multi-stereo speed randomization & tri-color clocks.  Android has no extra-devices.  Also has chipmunk mode for left-channel.
+- [main.lua](main.lua):	Loads scripts, yt-dlp, title & subtitle override.  Has more detailed commentary/readme.  Android has no YT.
+- [aspeed.lua](aspeed.lua):	Multi-stereo speed randomization & tri-color clocks.  Has chipmunk mode for left-channel.  Android has no randomization.
 - [autocrop.lua](autocrop.lua):	Cropping, start/end limits & aspect/padding randomization.  Handles transparent input.
 - [autocomplex.lua](autocomplex.lua):	Animated spectra.  Easiest way to check whether mono audio is pretending to be stereo. Mono YT videos are still often standard, even with the best vloggers. Cheap stereo/double mics are available on eBay, but uncommon.
 - [automask.lua](automask.lua):	Animated mask generator.
