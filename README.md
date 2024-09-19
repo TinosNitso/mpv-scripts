@@ -1,6 +1,4 @@
 # mpv-scripts
-## Contents
-- [Contents](#contents)
 - [Intro](#intro)
 - [Installation](#installation)
 - [Standalone mpv](#standalone-mpv-mpvconf)
