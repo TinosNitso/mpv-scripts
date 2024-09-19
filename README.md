@@ -12,9 +12,9 @@
 
 ## Intro
 - [main.lua](main.lua):	Loads scripts, yt-dlp, title & subtitle override.  Has more detailed commentary/readme.  Android has no YT.
-- [aspeed.lua](aspeed.lua):	Multi-stereo speed randomization & tri-color clocks.  Has chipmunk mode for left-channel.  Android has no randomization.
+- [aspeed.lua](aspeed.lua):	Multi-stereo speed randomization & tri-color clocks.  Has chipmunk mode for left-channel.  Android has no randomization.  Cheap USB→3.5mm adapters are for sale on eBay.
 - [autocrop.lua](autocrop.lua):	Cropping, start/end limits & aspect/padding randomization.  Handles transparent input.
-- [autocomplex.lua](autocomplex.lua):	Animated spectra.  Easiest way to check whether mono audio is pretending to be stereo. Mono YT videos are still often standard, even with the best vloggers. Cheap stereo/double mics are available on eBay, but uncommon.
+- [autocomplex.lua](autocomplex.lua):	Animated spectra.  Easiest way to check whether mono audio is pretending to be stereo. Mono YT videos are still often standard, even with the best vloggers. Cheap stereo/double mics are for sale on eBay, but uncommon.
 - [automask.lua](automask.lua):	Animated mask generator.
 
 For [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! All free for Windows, Linux, MacOS & Android.  Newest scripts are in [mpv-scripts.zip](mpv-scripts.zip) on GitHub. Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. SMPlayer can zoom easily. Most keyboard shortcuts only work if mpv has its own window (SMPlayer advanced preference).
