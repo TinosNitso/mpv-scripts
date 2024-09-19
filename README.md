@@ -128,5 +128,4 @@ The releases now display correct screenshots.  Also, webp & mp4/YT screenshots h
 ## Errors
 - `o.framerate` should be `nil`. Interpolation is always a bad thing, it turns out.
 - `o.auto_aspect` should be centered on `${video-params/aspect}`, so that the median aspect is true. Thin videos are fattened too much with the current formula. 
-- БЪЛГАРИЯ should be `RED ◙ WHITE ◙ GREEN` not `WHITE  ◙ GREEN  ◙    RED`. This means the tri-color progression is wrong! БЪЛГАРИЯ should be with LËTZEBUERG/NEDERLAND, not paired with РОССИЯ. It was the Cyrillic pairing which confused me. 🙁
 
