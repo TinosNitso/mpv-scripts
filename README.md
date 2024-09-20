@@ -21,7 +21,7 @@ For [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! All free for Wind
 
 The scripts can be opened & options edited in [Notepad++](https://notepad-plus-plus.org/downloads/). Disable word-wrap for these scripts!  I use [Brackets](https://BRACKETS.IO) on MacOS.  
 
-Most scripts can be toggled by double-clicking on mute (m&m double-tap). The mask smoothly vanishes or re-appears, along with the black-bars, & the audio switches btwn randomized & normal. 
+Most scripts can be toggled by double-clicking on mute (m&m double-tap). The mask smoothly vanishes or re-appears, along with the black-bars, the clock insta-toggles, & the audio switches btwn randomized & normal. 
 
 To use on YouTube select Open→URL in SMPlayer (Ctrl+U, or can set Shift+Tab for power users). Rumble, Odyssey, RedTube & rutube.ru are also compatible. 
 
