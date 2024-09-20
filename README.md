@@ -47,15 +47,21 @@ On Android, go to mpv→SETTINGS→Advanced→Edit mpv.conf, then enter
 Then copy the scripts in to that exact folder, in internal main storage. However leave out autocomplex.lua (it lags on smartphone).  `sdcard` is internal, unlike `SD card`.  Then use mpv file-picker to open an MP4 to give mpv media read-permission. In Android-11 media-apps can't normally run scripts from outside a media folder.  aspeed.lua struggles primarily because Android apps are singletons who can't spawn subprocesses.  I use [cx-file-explorer](https://cxfileexplorerapk.net) as explorer, 920 for text-editing, & chromium for browsing. [SNAPDROP.NET](https://SNAPDROP.NET) for script transfer to smartphone.  
 
 ## Standalone mpv (`mpv.conf`)
-It's also possible to double-click on `mpv.exe` or `mpv.app` & then drag & drop files & URLs directly on mpv, with all scripts fully active! This requires editing `mpv.conf`, like with Android. For Windows + SMPlayer create New Text Document `smplayer-portable\mpv\mpv\mpv.conf`. Then with Notepad enter the 1 line 
+It's also possible to double-click on `mpv.exe` or `mpv.app` & then drag & drop files & URLs directly on mpv, with all scripts fully active! It's simpler than terminal commands. This requires editing `mpv.conf`, like with Android. For Windows + SMPlayer create New Text Document `smplayer-portable\mpv\mpv\mpv.conf`. Then with Notepad enter the 2 lines
 
-`script=../`
+```
+script=../
+idle  =yes
+```
 
-& save.  Then double-click `smplayer-portable\mpv\mpv.exe` & drag/drop files/URLs. Simpler than terminal commands!
+& save.  Then double-click `smplayer-portable\mpv\mpv.exe` & drag/drop files/URLs.
 
-In Linux edit `~/.config/mpv/mpv.conf` & then right-click on an MP4 & open-with-mpv. In MacOS go mpv→Preferences... & use only 1 line:
+In Linux edit `~/.config/mpv/mpv.conf` & then right-click on an MP4 & open-with-mpv. In MacOS go mpv→Preferences... & enter
 
-`script=~/Desktop/mpv-scripts/`
+```
+script=~/Desktop/mpv-scripts/
+idle  =yes
+```
 
 ## App Versions
 mpv versions 0.38.0, 0.37.0, 0.36.0, 0.35.1 & 0.34.0 supported. v0.37+ preferred. mpv.exe can be [replaced](https://sourceforge.net/projects/mpv-player-windows/files/release/), within `smplayer-portable/mpv`. New MacOS builds are [here](https://laboratory.stolendata.net/~djinn/mpv_osx/), & Android builds are [here](https://github.com/mpv-android/mpv-android/releases).
