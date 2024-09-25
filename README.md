@@ -14,7 +14,7 @@
 - [main.lua](main.lua):	Loads scripts, yt-dlp, title & subtitle override.  Has more detailed commentary/readme.  Android has no YT.
 - [aspeed.lua](aspeed.lua):	Multi-stereo speed randomization & tri-color clocks.  Has chipmunk mode for left-channel.  Android has no randomization.  USB to 3.5mm sound cards are under $5 on ebay.
 - [autocrop.lua](autocrop.lua):	Cropping, start/end limits & aspect/padding randomization.  Handles transparent input.
-- [autocomplex.lua](autocomplex.lua):	Animated spectra.  Easiest way to check whether mono audio is pretending to be stereo. Mono YT videos are still often standard, even with the best vloggers. Stereo/double mics are under $10 on ebay ("universal mini").
+- [autocomplex.lua](autocomplex.lua):	Animated spectra.  Easiest way to check whether mono audio is pretending to be stereo. Mono YT videos are still often standard, even with the best vloggers.
 - [automask.lua](automask.lua):	Animated mask generator.
 
 For [SMPlayer](https://smplayer.info) & [mpv](https://mpv.io)! All free for Windows, Linux, MacOS & Android.  Newest scripts are in [mpv-scripts.zip](mpv-scripts.zip) on GitHub. Pictures, videos & audio can be drag & dropped onto SMPlayer, to light them up. SMPlayer can zoom easily. Most keyboard shortcuts only work if mpv has its own window (SMPlayer advanced preference).
@@ -50,8 +50,8 @@ Then copy the scripts in to that exact folder, in internal main storage. However
 It's also possible to double-click on `mpv.exe` or `mpv.app` & then drag & drop files & URLs directly on mpv, with all scripts fully active! It's simpler than terminal commands. This requires editing `mpv.conf`, like with Android. For Windows + SMPlayer create New Text Document `smplayer-portable\mpv\mpv\mpv.conf`. Then with Notepad enter the 2 lines
 
 ```
-script=../
-idle  =yes
+script = ../
+idle   = yes
 ```
 
 & save.  Then double-click `smplayer-portable\mpv\mpv.exe` & drag/drop files/URLs.
@@ -59,8 +59,8 @@ idle  =yes
 In Linux edit `~/.config/mpv/mpv.conf` & then right-click on an MP4 & open-with-mpv. In MacOS go mpv→Preferences... & enter
 
 ```
-script=~/Desktop/mpv-scripts/
-idle  =yes
+script = ~/Desktop/mpv-scripts/
+idle   = yes
 ```
 
 ## App Versions
