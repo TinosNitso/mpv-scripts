@@ -146,7 +146,10 @@ The releases now display correct screenshots.  Also, webp & mp4/YT screenshots h
 
 ## Errors
 - `o.framerate` should be `nil`. Interpolation is always a bad thing, it turns out.
-- `o.auto_aspect` should be centered on `${video-params/aspect}`, so that the median aspect is true. Thin videos are fattened too much with the current formula. 
-- The double/dual trumpets are timed wrong.
+- `o.auto_aspect` should be centered on `${video-params/aspect}`, so that the median aspect is true. Thin videos are widened too much with the current formula. 
+- The double/dual trumpets below are timed wrong. 🙁
 - `o.limits` media-titles have many typos.
+- Subtitles are numbered wrong (`sub-create-cc-track` should be `no`).
+- Auto-loop isn't looping properly, like on YouTube. Filters are needed.
+- mpv-0.39 & FFmpeg-v7 are fully compatible, but log errors. More error fishing is needed to clean up the logs. mpv-v0.34→0.39 & FFmpeg-v4→v7 are compatible. 🙂
 
